@@ -1,0 +1,118 @@
+external procedure PastePPrwsFromCPr(record PaymPayrollVc,var row PaymPayrollVc,record CalcPayrollVc,var integer);
+external procedure PPrSumUp(var record PaymPayrollVc);
+external function boolean GetNextPaymPayrollSerNr(date,var LongInt);
+external function boolean OneEmplOnPaymPayroll(record PaymPayrollVc,var string);
+
+global
+updating procedure CreatePaymPayrollMn(record RcVc RepSpec)
+begin
+  record CalcPayrollVc CPr;
+  record PaymPayrollVc PPr;
+  row PaymPayrollVc PPrw;
+  record ContractVc Contrr;
+  string 20 frempl,toempl;
+  LongInt frcontr,tocontr;
+  boolean TrHs,testf,newrecord,grouppaym;
+  integer pprwnr;
+  string 120 name;
+  
+  if (RepSpec.flags[0]!=0) then begin 
+    grouppaym = true;
+  end else begin
+    grouppaym = false;
+  end;  
+
+  frempl = FirstInRange(RepSpec.f1,20);
+  toempl = LastInRange(RepSpec.f1,20);
+  frcontr = FirstInRange(RepSpec.f2,20);
+  tocontr = LastInRange(RepSpec.f2,20);  
+
+  newrecord = true;        
+  ResetLoop(CPr);
+  TrHs = true;
+  CPr.CalcDate = RepSpec.sStartDate;
+  CPr.ContrSerNr = frcontr;
+  CPr.OKFlag = 1;
+  CPr.PaymFlag = 0;
+  while (LoopKey("CalcDate",CPr,4,TrHs)) begin
+    if (DateInRange(CPr.CalcDate,RepSpec.sStartDate,RepSpec.sEndDate)==false) then begin
+      TrHs = false;
+    end;
+    if (TrHs) then begin
+      testf = true;
+      if (nonblank(frempl)) then begin
+        Contrr.SerNr = CPr.ContrSerNr;
+        if (ReadFirstMain(Contrr,1,true)) then begin
+          if (Contrr.EmplCode<frempl) or (Contrr.EmplCode>toempl) then begin
+            testf = false;
+          end;
+        end;
+      end;
+      if ((frcontr>0)) then begin
+        if ((CPr.ContrSerNr<frcontr) or (CPr.ContrSerNr>tocontr)) then begin
+          testf = false;
+        end;
+      end;
+      if (CPr.OKFlag==0) then begin
+        testf = false;
+      end;
+      if (CPr.PaymFlag!=0) then begin
+        testf = false;
+      end;
+      if (CPr.Invalid!=0) then begin
+        testf=false;
+      end;
+      if (testf) then begin
+        if (grouppaym==false) then begin
+          newrecord = true;        
+        end else begin
+          if (MatRowCnt(CPr)>(99-pprwnr)) then begin
+            if (RecordInsert(PPr,true)) then begin end; 
+            newrecord = true;        
+          end;
+        end;
+        if (newrecord) then begin
+          pprwnr=0;
+          RecordNew(PPr);
+          PPr.SerNr=-1;
+          if blankdate(RepSpec.d1) then begin
+            PPr.PaymDate=CurrentDate;
+          end else begin
+            PPr.PaymDate=RepSpec.d1;
+          end;          
+          PPr.PMCode=RepSpec.f3;
+          if (GetNextPaymPayrollSerNr(PPr.PaymDate,PPr.SerNr)) then begin end;
+          if (grouppaym) then begin
+            newrecord = false;
+          end else begin
+            PPr.ObjCode=CPr.ObjCode;
+          end;
+        end;
+        PastePPrwsFromCPr(PPr,PPrw,CPr,pprwnr);
+        PPrSumUp(PPr);
+        if (OneEmplOnPaymPayroll(PPr,name)) then begin
+          PPr.Name = name;
+        end else begin
+          PPr.Name = "";
+        end;
+        if (grouppaym) then begin
+          if (pprwnr==99) then begin
+            if (RecordInsert(PPr,true)) then begin end; 
+            newrecord = true;
+          end;
+        end else begin
+          if (pprwnr>0) then begin  
+            if (RecordInsert(PPr,true)) then begin end; 
+          end;
+        end;
+      end;
+    end;
+  end;
+  if (grouppaym) then begin
+    if (pprwnr>0) and (pprwnr<99) then begin
+      if (RecordInsert(PPr,true)) then begin end; 
+    end;
+  end;          
+LCreatePaymPayrollMn:;
+  return;
+end;

@@ -1,0 +1,219 @@
+external function boolean GetNextVacDaysFBSerNr(var LongInt);
+external function boolean ContractExsists(LongInt);
+external updating procedure UpdateVacBalFromVacDaysFBr(record VacDaysFBVc,boolean);
+external procedure SetMarkFlag(integer,var integer);
+
+global
+function LongInt VacDaysFBVcRecordDefaults(var record VacDaysFBVc VDFBr,record VacDaysFBVc VDFB2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+   
+  if (SingleUserMode) then begin
+    if (GetNextVacDaysFBSerNr(VDFBr.SerNr)) then begin end;
+  end else begin
+    VDFBr.SerNr = -1;
+  end;
+  VacDaysFBVcRecordDefaults = res; 
+  return;
+end;
+
+global
+function LongInt VacDaysFBVcRecordDuplicate(var record VacDaysFBVc VDFBr,record VacDaysFBVc VDFB2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+ 
+  VDFBr.OKFlag = 0;
+  SetMarkFlag(VDFBr.OKFlag,VDFBr.OKMark);
+  VDFBr.Invalid = 0;
+
+  if (SingleUserMode) then begin
+    if (GetNextVacDaysFBSerNr(VDFBr.SerNr)) then begin end;
+  end else begin
+    VDFBr.SerNr =-1;
+  end;
+  VacDaysFBVcRecordDuplicate = res; 
+  return;
+end;
+
+global
+function LongInt VacDaysFBVcRecordCheck(var record VacDaysFBVc VDFBr,record VacDaysFBVc VDFB2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  record VacDaysFBVc VDFB3r;
+  row VacDaysFBVc VDFBrw;
+  row VacDaysFBVc VDFB2rw;
+  record VacBalanceVc VBr;
+  row VacBalanceVc VBrw;
+  integer rwcnt,rwcnt1,i,j;
+  LongInt updatemode,insertmode;
+  boolean yearflag;
+  
+  insertmode=1;
+  updatemode=2;
+  res = 0;
+
+  if (VDFB2r.Invalid!=0) then begin
+    RecordCheckError(1282,"",0,"");      
+    res = -1; 
+    goto LVacDaysFBVcRecordCheck;
+  end;
+  if (stat!=insertmode) then begin
+    if (VDFB2r.OKFlag!=0) then begin
+      goto LVacDaysFBVcRecordCheck;
+    end;
+  end;
+  
+  if (stat==updatemode) then begin
+    if (VDFBr.SerNr<=0)  then begin
+      VDFBr.SerNr = VDFB2r.SerNr;
+    end;
+  end;
+  if (VDFBr.SerNr==-1) then begin
+    if (GetNextVacDaysFBSerNr(VDFBr.SerNr)) then begin end;
+  end;
+
+  if (stat==insertmode) or (stat==updatemode and VDFBr.SerNr!=VDFB2r.SerNr) then begin
+    VDFB3r.SerNr = VDFBr.SerNr;
+    if (ReadFirstMain(VDFB3r,1,true)) then begin
+      RecordCheckError(1547," " & VDFBr.SerNr,-1,"SerNr");      
+      res = -1; 
+      goto LVacDaysFBVcRecordCheck;
+    end;
+  end;   
+  if (len(VDFBr.SerNr)<=0 or (VDFBr.SerNr<=0)) then begin
+    RecordCheckError(1500343,"",-1,"SerNr");      
+    res = -1; 
+    goto LVacDaysFBVcRecordCheck;
+  end;
+  if (VDFBr.Year<=0) then begin
+    RecordCheckError(1500337,"",-1,"Year");      
+    res = -1; 
+    goto LVacDaysFBVcRecordCheck;
+  end;
+ 
+  rwcnt=MatRowCnt(VDFBr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(VDFBr,i,VDFBrw);
+    if (VDFBrw.ContrSerNr<=0) then begin
+      RecordCheckError(1500318,"",i,"ContrSerNr");      
+      res = -1; 
+      goto LVacDaysFBVcRecordCheck; 
+    end else begin
+      if (ContractExsists(VDFBrw.ContrSerNr)==false) then begin
+        RecordCheckError(1500332," v›i ei ole aktiivne " & VDFBrw.ContrSerNr,i,"ContrSerNr");      
+        res = -1; 
+        goto LVacDaysFBVcRecordCheck; 
+      end;
+    end;
+    VBr.ContrSerNr = VDFBrw.ContrSerNr;
+    if (ReadFirstKey("ContrSerNr",VBr,1,true)) then begin
+      yearflag = false;
+      rwcnt1 = MatRowCnt(VBr);
+      for (j=0;j<rwcnt1;j=j+1) begin
+        MatRowGet(VBr,j,VBrw);
+        if (VBrw.Year==VDFBr.Year) then begin
+          yearflag = true;
+        end;
+      end;
+      if (yearflag==false) then begin
+        RecordCheckError(1500505,"",i,"ContrSerNr");
+        res = -1; 
+        goto LVacDaysFBVcRecordCheck;
+      end;
+    end;
+  end;
+LVacDaysFBVcRecordCheck:;
+  if (res==-1) then begin
+    VDFBr.OKFlag=0;
+    SetMarkFlag(VDFBr.OKFlag,VDFBr.OKMark);
+  end;
+  VacDaysFBVcRecordCheck = res;
+  return;
+end;
+
+global
+function LongInt VacDaysFBVcRecordSave(var record VacDaysFBVc VDFBr,record VacDaysFBVc VDFB2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+ 
+  SetMarkFlag(VDFBr.OKFlag,VDFBr.OKMark);
+  VacDaysFBVcRecordSave = res; 
+  return;
+end;
+
+global
+updating function LongInt VacDaysFBVcRecordSaveAfter(var record VacDaysFBVc VDFBr,record VacDaysFBVc VDFB2r,LongInt stat,LongInt long4)
+begin
+  LongInt res,wn;
+  
+  if (VDFBr.OKFlag!=0) then begin
+    UpdateVacBalFromVacDaysFBr(VDFBr,true);
+  end;
+  VacDaysFBVcRecordSaveAfter = res;
+  return;
+end;
+
+global
+function LongInt VacDaysFBVcRecordUpdate(var record VacDaysFBVc VDFBr,record VacDaysFBVc VDFB2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+ 
+  SetMarkFlag(VDFBr.OKFlag,VDFBr.OKMark);
+  VacDaysFBVcRecordUpdate = res; 
+  return;
+end;
+
+global
+updating function LongInt VacDaysFBVcRecordUpdateAfter(var record VacDaysFBVc VDFBr,record VacDaysFBVc VDFB2r,LongInt stat,LongInt long4)
+begin
+  LongInt res,wn;
+  
+  if ((VDFBr.OKFlag!=0) and (VDFB2r.OKFlag==0)) then begin
+    UpdateVacBalFromVacDaysFBr(VDFBr,true);
+  end;
+  if ((VDFBr.OKFlag==0) and (VDFB2r.OKFlag!=0)) then begin
+    UpdateVacBalFromVacDaysFBr(VDFBr,false);
+  end;
+  VacDaysFBVcRecordUpdateAfter = res;
+  return;
+end;
+
+global
+function LongInt VacDaysFBVcRecordRemoveTest(var record VacDaysFBVc VDFBr,record VacDaysFBVc VDFB2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+
+  res = 1;
+  if (VDFBr.OKFlag!=0) then begin
+    MessageBox(1560,"")
+    res = 0;
+  end;
+  VacDaysFBVcRecordRemoveTest = res; 
+  return;
+end;
+
+global
+updating function LongInt VacDaysFBVcRecordInvalidateTest(var record VacDaysFBVc VDFBr,record VacDaysFBVc VDFB2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+
+  res = 0;
+  if (VDFBr.Invalid==0) and (VDFBr.OKFlag!=0) then begin
+    VDFBr.Invalid = 1;
+    res = 1;
+  end;
+
+LVacDaysFBVcRecordInvalidateTest:;
+  VacDaysFBVcRecordInvalidateTest = res;  
+  return;
+end;
+
+global
+updating function LongInt VacDaysFBVcRecordImport(var record VacDaysFBVc VDFBr,record VacDaysFBVc VDFB2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+
+  SetMarkFlag(VDFBr.OKFlag,VDFBr.OKMark);
+  VacDaysFBVcRecordImport = res; 
+  return;
+end;

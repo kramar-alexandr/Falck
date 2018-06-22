@@ -1,0 +1,304 @@
+external function integer CheckObjs(string,string,var string);
+external function boolean ContractExsistsAndActive(LongInt);
+external function boolean AbsTypeExsists(string);
+external function string 20 GetIllAbsTypeCode(var integer,var integer,var val);
+external function string 20 GetVacAbsTypeCode(LongInt);
+external updating procedure UpdateVacBalFromAbsr(record AbsenseVc,boolean);
+external function Boolean SerNrTestAbsenceVc(LongInt,date);
+external procedure SetMarkFlag(integer,var integer);
+
+global
+function LongInt AbsenceVcRecordDefaults(var record AbsenceVc Absr,record AbsenceVc Abs2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+
+  Absr.SerNr = -1;
+  Absr.StartDate=CurrentDate;
+  if (SingleUserMode) then begin
+    Absr.SerNr = NextSerNr("AbsenceVc",Absr.StartDate,-1,false,"");
+  end;
+  AbsenceVcRecordDefaults = res; 
+  return;
+end;
+
+global
+function LongInt AbsenceVcRecordDuplicate(var record AbsenceVc Absr,record AbsenceVc Abs2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+ 
+  Absr.SerNr = -1;
+  Absr.OKFlag = 0;
+  SetMarkFlag(Absr.OKFlag,Absr.OKMark);
+  if (SingleUserMode) then begin
+    Absr.SerNr = NextSerNr("AbsenceVc",Absr.StartDate,-1,false,"");
+  end;
+  Absr.CalcSerNr=0;
+
+  AbsenceVcRecordDuplicate = res; 
+  return;
+end;
+
+global
+function LongInt AbsenceVcRecordCheck(var record AbsenceVc Absr,record AbsenceVc Abs2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  record AbsenceVc Abs3r;
+  row AbsenceVc Absrw;
+  row AbsenceVc Abs2rw;
+  record ContractVc Contrr;
+  record VacBalanceVc VBr;
+  row VacBalanceVc VBrw;
+  integer rwcnt,rwcnt1,i,j,tmp,vacdays;
+  val tmp1;
+  string 255 tstr;
+  LongInt updatemode,insertmode,errcode;
+  string 20 illabstype,vacabstype;
+  boolean yearflag;
+  
+  insertmode=1;
+  updatemode=2;
+  res = 0;
+
+  if (stat!=insertmode) then begin
+    if (Abs2r.OKFlag!=0) then begin
+      goto LAbsenceVcRecordCheck;
+    end;
+  end;
+  
+  if (stat==updatemode) then begin
+    if (Absr.SerNr<=0)  then begin
+      Absr.SerNr = Abs2r.SerNr;
+    end;
+  end;
+  if (Absr.SerNr==-1) then begin
+    Absr.SerNr = NextSerNr("AbsenceVc",Absr.StartDate,-1,false,"");
+  end;
+  if (SerNrTestAbsenceVc(Absr.SerNr,Absr.StartDate)==false) then begin
+    RecordCheckError(1557,"",-1,"SerNr");      
+    res = -1; 
+    goto LAbsenceVcRecordCheck;
+  end;
+
+  if (stat==insertmode) or (stat==updatemode and Absr.SerNr!=Abs2r.SerNr) then begin
+    Abs3r.SerNr = Absr.SerNr;
+    if (ReadFirstMain(Abs3r,1,true)) then begin
+      RecordCheckError(1547," " & Absr.SerNr,-1,"SerNr");      
+      res = -1; 
+      goto LAbsenceVcRecordCheck;
+    end;
+  end;   
+  if (len(Absr.SerNr)<=0 or (Absr.SerNr<=0)) then begin
+    RecordCheckError(1500343,"",-1,"SerNr");      
+    res = -1; 
+    goto LAbsenceVcRecordCheck;
+  end;
+  
+  if (Absr.ContrSerNr<=0) then begin
+    RecordCheckError(1500318,"",-1,"ContrSerNr");      
+    res = -1; 
+    goto LAbsenceVcRecordCheck; 
+  end else begin
+    if (ContractExsistsAndActive(Absr.ContrSerNr)==false) then begin
+      RecordCheckError(1500332," v›i ei ole aktiivne " & Absr.ContrSerNr,-1,"ContrSerNr");      
+      res = -1; 
+      goto LAbsenceVcRecordCheck; 
+    end;
+  end;
+
+  if (blank(Absr.AbsTypeCode)) then begin
+    RecordCheckError(1500340,"",-1,"AbsTypeCode");      
+      res = -1; 
+      goto LAbsenceVcRecordCheck; 
+  end else begin
+    if (AbsTypeExsists(Absr.AbsTypeCode)==false) then begin
+      RecordCheckError(1500339," " & Absr.AbsTypeCode,-1,"AbsTypeCode");      
+      res = -1; 
+      goto LAbsenceVcRecordCheck; 
+    end;
+  end;
+  if blank(Absr.StartDate) then begin
+    RecordCheckError(1500321,"",-1,"StartDate");      
+    res = -1; 
+    goto LAbsenceVcRecordCheck;
+  end;
+  if blank(Absr.EndDate) then begin
+    RecordCheckError(1500334,"",-1,"EndDate");      
+    res = -1; 
+    goto LAbsenceVcRecordCheck;
+  end else begin
+    if (Absr.EndDate<Absr.StartDate) then begin
+      RecordCheckError(1500322,"",-1,"EndDate");      
+      res = -1; 
+      goto LAbsenceVcRecordCheck;
+    end;
+  end;
+  Contrr.SerNr = Absr.ContrSerNr;
+  if (ReadFirstMain(Contrr,1,true)) then begin
+    if ((DateInRange(Absr.StartDate,Contrr.StartDate,Contrr.EndDate))==false) or ((DateInRange(Absr.EndDate,Contrr.StartDate,Contrr.EndDate))==false) then begin
+      RecordCheckError(1500438,"",-1,"StartDate");      
+      res = -1; 
+      goto LAbsenceVcRecordCheck;
+    end;
+  end;
+  if (nonblank(Absr.ObjCode)) then begin
+    errcode = CheckObjs("",Absr.ObjCode,tstr);
+    if (errcode!=0) then begin
+      RecordCheckError(errcode,tstr,-1,"ObjCode");      
+      res = -1; 
+      goto LAbsenceVcRecordCheck;
+    end;
+  end;
+  illabstype = GetIllAbsTypeCode(tmp,tmp,tmp1);
+  if (Absr.AbsTypeCode==illabstype) and blank(Absr.AbsPaymDate) then begin
+    RecordCheckError(1500342,"",-1,"AbsPaymDate");      
+    res = -1; 
+    goto LAbsenceVcRecordCheck;
+  end;
+  if (Absr.ContinueFlag!=0) then begin
+    if (len(Absr.SerNr)<=0 or (Absr.PrevAbsSerNr<=0)) then begin
+      RecordCheckError(1500378,"",-1,"PrevAbsSerNr");      
+      res = -1; 
+      goto LAbsenceVcRecordCheck;
+    end;
+  end;
+
+  vacabstype = GetVacAbsTypeCode(Absr.ContrSerNr);
+  if (Absr.AbsTypeCode==vacabstype) then begin
+    rwcnt=MatRowCnt(Absr);
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(Absr,i,Absrw);
+      if (Absrw.Year<=0) then begin
+        RecordCheckError(1500337,"",i,"Year");      
+        res = -1; 
+        goto LAbsenceVcRecordCheck;
+      end else begin
+        for (j=i;j<rwcnt;j=j+1) begin
+          if (j>i) then begin
+            MatRowGet(Absr,j,Abs2rw);
+            if (Absrw.Year==Abs2rw.Year) then begin
+              RecordCheckError(1500360,"",j,"Year");      
+              res = -1; 
+              goto LAbsenceVcRecordCheck;
+            end;
+          end;
+        end;
+      end;
+      if ((Absrw.Days<0) or (Absrw.Days==0 and Absrw.HDays==0)) then begin
+        RecordCheckError(1500361,"",i,"Days");      
+        res = -1; 
+        goto LAbsenceVcRecordCheck;
+      end;
+    end;
+    for (j=0;j<rwcnt;j=j+1) begin
+      MatRowGet(Absr,j,Abs2rw);
+      if (Absrw.Year>0) then begin
+        vacdays=vacdays+Abs2rw.Days+Abs2rw.HDays; 
+      end;
+    end;
+    if (vacdays!=Absr.CalendarDays) then begin
+      RecordCheckError(1500362,"",0,"Days");      
+      res = -1; 
+      goto LAbsenceVcRecordCheck;
+    end;
+    VBr.ContrSerNr = Absr.ContrSerNr;
+    if (ReadFirstKey("ContrSerNr",VBr,1,true)) then begin
+      rwcnt=MatRowCnt(Absr);
+      rwcnt1 = MatRowCnt(VBr);
+      for (i=0;i<rwcnt;i=i+1) begin
+        MatRowGet(Absr,i,Absrw);
+        yearflag = false;
+        for (j=0;j<rwcnt1;j=j+1) begin
+          MatRowGet(VBr,j,VBrw);
+          if (VBrw.Year==Absrw.Year) then begin
+            yearflag = true;
+          end;
+        end;
+        if (yearflag==false) then begin
+          RecordCheckError(1500505,"",i,"Year");
+          res = -1; 
+          goto LAbsenceVcRecordCheck;
+        end;
+      end;
+    end;
+  end;
+LAbsenceVcRecordCheck:;
+  AbsenceVcRecordCheck = res;
+  if (res==-1) then begin
+    Absr.OKFlag=0;
+    SetMarkFlag(Absr.OKFlag,Absr.OKMark);
+  end;
+  return;
+end;
+
+global
+updating function LongInt AbsenceVcRecordSave(var record AbsenceVc Absr,record AbsenceVc Abs2r,LongInt stat,LongInt long4)
+begin
+  LongInt res,wn;
+  
+  SetMarkFlag(Absr.OKFlag,Absr.OKMark);
+  AbsenceVcRecordSave = res;
+  return;
+end;
+
+global
+updating function LongInt AbsenceVcRecordSaveAfter(var record AbsenceVc Absr,record AbsenceVc Abs2r,LongInt stat,LongInt long4)
+begin
+  LongInt res,wn;
+  
+  if (Absr.OKFlag!=0) then begin
+    UpdateVacBalFromAbsr(Absr,true);
+  end;
+  SetMarkFlag(Absr.OKFlag,Absr.OKMark);
+  AbsenceVcRecordSaveAfter = res;
+  return;
+end;
+
+global
+updating function LongInt AbsenceVcRecordUpdate(var record AbsenceVc Absr,record AbsenceVc Abs2r,LongInt stat,LongInt long4)
+begin
+  LongInt res,wn;
+  
+  SetMarkFlag(Absr.OKFlag,Absr.OKMark);
+  AbsenceVcRecordUpdate = res;
+  return;
+end;
+
+global
+updating function LongInt AbsenceVcRecordUpdateAfter(var record AbsenceVc Absr,record AbsenceVc Abs2r,LongInt stat,LongInt long4)
+begin
+  LongInt res,wn;
+  
+  if ((Absr.OKFlag!=0) and (Abs2r.OKFlag==0)) then begin
+    UpdateVacBalFromAbsr(Absr,true);
+  end;
+  if ((Absr.OKFlag==0) and (Abs2r.OKFlag!=0)) then begin
+    UpdateVacBalFromAbsr(Absr,false);
+  end;
+  SetMarkFlag(Absr.OKFlag,Absr.OKMark);
+  AbsenceVcRecordUpdateAfter = res;
+  return;
+end;
+
+global
+function LongInt AbsenceVcRecordRemoveTest(var record AbsenceVc Absr,record AbsenceVc Abs2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+
+  res = 1;
+  if (Absr.OKFlag!=0) then begin
+    MessageBox(1560,"")
+    res = 0;
+  end;
+  AbsenceVcRecordRemoveTest = res; 
+  return;
+end;
+  
+global
+updating function LongInt AbsenceVcRecordImport(var record AbsenceVc Absr,record AbsenceVc Abs2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+
+  SetMarkFlag(Absr.OKFlag,Absr.OKMark);
+  AbsenceVcRecordImport = res; 
+  return;
+end;

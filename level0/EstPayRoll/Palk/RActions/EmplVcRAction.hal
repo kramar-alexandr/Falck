@@ -1,0 +1,256 @@
+external function integer CheckObjs(string,string,var string);
+external function boolean EmplrInUse(string,var boolean);
+external function boolean GetNextEmplNr(var string);
+external procedure SetMarkFlag(integer,var integer);
+external procedure PasteTaxInEmpl(var record EmplVc,date);
+
+global
+function LongInt EmplVcRecordDefaults(var record EmplVc Emplr,record EmplVc Empl2r,LongInt stat,LongInt long4)
+begin
+  LongInt res,errcode;
+  
+  if (SingleUserMode) then begin
+    if (GetNextEmplNr(Emplr.Code)) then begin end;
+  end else begin
+    Emplr.Code = "";
+  end;
+  PasteTaxInEmpl(Emplr,CurrentDate);
+  EmplVcRecordDefaults = res; 
+  return;
+end;
+
+global
+function LongInt EmplVcRecordDuplicate(var record EmplVc Emplr,record EmplVc Empl2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+ 
+  Emplr.ClosedFlag=0;
+  SetMarkFlag(Emplr.ClosedFlag,Emplr.ClosedMark);  
+  if (SingleUserMode) then begin
+    if (GetNextEmplNr(Emplr.Code)) then begin end;
+  end else begin
+    Emplr.Code = "";
+  end;
+  EmplVcRecordDuplicate = res; 
+  return;
+end;
+
+global
+function LongInt EmplVcRecordCheck(var record EmplVc Emplr,record EmplVc Empl2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  record EmplVc Empl3r;
+  row EmplVc Emplrw;
+  row EmplVc Empl2rw;
+  record BankVc Bankr;  
+  record TaxVc Taxr;
+  integer errcode,rwcnt,i,j,d,m,y;
+  string 255 tstr;
+  LongInt updatemode,insertmode;
+  boolean closedcontr;
+
+  insertmode=1;
+  updatemode=2;
+  res = 0;
+
+  if (blank(Emplr.Code)) then begin
+    if (stat==updatemode) and nonblank(Empl2r.Code) then begin
+      Emplr.Code=Empl2r.Code;
+    end else begin
+      if (GetNextEmplNr(Emplr.Code)) then begin end;
+    end;
+  end;
+  if (stat==insertmode) or (stat==updatemode and Emplr.Code!=Empl2r.Code) then begin
+    Empl3r.Code = Emplr.Code;
+    if (ReadFirstMain(Empl3r,1,true)) then begin
+      RecordCheckError(1547," " & Emplr.Code,-1,"Code");      
+      res = -1; 
+      goto LEmplVcRecordCheck;
+    end;
+  end;   
+  if (len(Emplr.Code)<=0) then begin
+    RecordCheckError(1500300,"",-1,"Code");      
+    res = -1; 
+    goto LEmplVcRecordCheck;
+  end;
+
+  if (Emplr.ClosedFlag!=0) then begin
+    if (EmplrInUse(Emplr.Code,closedcontr)) then begin
+      if (closedcontr==false) then begin
+        MessageBox(1500483,"")
+        res = -1; 
+        goto LEmplVcRecordCheck;
+      end;
+    end;
+  end;
+
+  if (nonblank(Emplr.IDCode)) then begin
+    Empl3r.IDCode = Emplr.IDCode;
+    while (LoopKey("IDCode",Empl3r,1,true)) begin
+      if (Empl3r.IDCode==Emplr.IDCode) and (Empl3r.Code!=Emplr.Code) then begin
+        RecordCheckError(1500344," , tšštaja kood on " & Empl3r.Code,-1,"IDCode");      
+        res = -1; 
+        goto LEmplVcRecordCheck;   
+      end;
+    end;
+  end;
+  
+  if (len(Emplr.IDCode)!=11) and (Emplr.ClosedFlag==0) then begin
+    MessageBox(1500301,"");      
+  end;
+
+  if (nonblank(Emplr.BirthDate)) then begin
+    d=GetDay(Emplr.BirthDate);
+    m=GetMonth(Emplr.BirthDate);
+    y=GetYear(Emplr.BirthDate);
+    if ((d<1) or (d>31) or (m<1) or (m>12) or (y<1000) or (y>2999)) then begin
+      RecordCheckError(1500439,Emplr.BirthDate,-1,"BirthDate");      
+      res = -1; 
+      goto LEmplVcRecordCheck;
+    end;
+  end;
+
+  if (nonblank(Emplr.BankCode)) then begin
+    Bankr.Code = Emplr.BankCode;
+    if (ReadFirstMain(Bankr,1,true)==false) then begin
+      RecordCheckError(1500302," " & Emplr.BankCode,-1,"BankCode");      
+      res = -1; 
+      goto LEmplVcRecordCheck;
+    end;
+  end;
+
+  if (nonblank(Emplr.ObjCode)) then begin
+    errcode = CheckObjs("",Emplr.ObjCode,tstr);
+    if (errcode!=0) then begin
+      RecordCheckError(errcode,tstr,-1,"ObjCode");      
+      res = -1; 
+      goto LEmplVcRecordCheck;
+    end;
+  end;
+
+  rwcnt=MatRowCnt(Emplr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(Emplr,i,Emplrw);
+    if nonblank(Emplrw.TaxCode) then begin
+      Taxr.Code=Emplrw.TaxCode;
+      if (ReadFirstMain(Taxr,1,true)==false) then begin
+        RecordCheckError(1500303," " & Emplrw.TaxCode,i,"TaxCode");      
+        res = -1; 
+        goto LEmplVcRecordCheck;
+      end else begin
+        if (Emplr.NotResidentFlag!=0) then begin
+          if (Taxr.TaxType==2) then begin //pension
+            RecordCheckError(1500487," " & Emplrw.TaxCode,i,"TaxCode");      
+          end;
+        end;
+      end;
+      if blank(Emplrw.SDate) then begin
+        RecordCheckError(1500304,"",i,"SDate");      
+        res = -1; 
+        goto LEmplVcRecordCheck;
+      end;
+
+      for (j=i+1;j<rwcnt;j=j+1) begin
+        MatRowGet(Emplr,j,Empl2rw);
+        if (Emplrw.TaxCode==Empl2rw.TaxCode) then begin
+          if (DateInRange(Empl2rw.SDate,Emplrw.SDate,Emplrw.EDate)) then begin
+            RecordCheckError(1500305,"",j,"SDate");      
+            res = -1; 
+            goto LEmplVcRecordCheck;
+          end;
+          if (DateInRange(Empl2rw.EDate,Emplrw.SDate,Emplrw.EDate)) then begin
+            RecordCheckError(1500305,"",j,"EDate");      
+            res = -1; 
+            goto LEmplVcRecordCheck;
+          end;
+          if (nonblankdate(Emplrw.EDate)) then begin
+            if ((Empl2rw.SDate<Emplrw.SDate) and (Empl2rw.EDate>Emplrw.EDate)) then begin
+              RecordCheckError(1500305,"",j,"SDate");      
+              res = -1; 
+              goto LEmplVcRecordCheck;
+            end;
+          end;
+        end;
+      end;    
+    end;
+  end;
+LEmplVcRecordCheck:;
+  EmplVcRecordCheck = res;
+  return;
+end;
+
+global
+updating function LongInt EmplVcRecordSave(record EmplVc Emplr,record EmplVc Empl2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+
+  SetMarkFlag(Emplr.ClosedFlag,Emplr.ClosedMark); 
+  EmplVcRecordSave = res;
+  return;
+end;
+
+global
+updating function LongInt EmplVcRecordSaveAfter(record EmplVc Emplr,record EmplVc Empl2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  record SRBlock SRRec;
+
+  BlockLoad(SRRec);
+  SRRec.LastGuestCode = Emplr.Code;
+  BlockStore(SRRec);
+  SetMarkFlag(Emplr.ClosedFlag,Emplr.ClosedMark); 
+LEmplVcRecordSaveAfter:;
+  EmplVcRecordSaveAfter = res;
+  return;
+end;
+
+global
+updating function LongInt EmplVcRecordUpdate(record EmplVc Emplr,record EmplVc Empl2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  
+  SetMarkFlag(Emplr.ClosedFlag,Emplr.ClosedMark); 
+  EmplVcRecordUpdate = res;
+  return;
+end;
+
+global
+function LongInt EmplVcRecordInIndex(record EmplVc Emplr,string indexname)
+begin
+  LongInt res;
+
+  res = 1;
+  if (Emplr.ClosedFlag!=0) then begin
+    if (indexname=="CodeUnclosed")  then begin res = 0; end;
+    if (indexname=="SurnameUnclosed")  then begin res = 0; end;
+  end;
+
+  EmplVcRecordInIndex = res;
+  return;
+end;
+
+global
+function LongInt EmplVcRecordRemoveTest(var record EmplVc Emplr,record EmplVc Empl2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+  boolean testf,tmp;
+
+  res = 1;
+  testf = EmplrInUse(Emplr.Code,tmp);
+  if ((testf) and (Emplr.ClosedFlag==0)) then begin
+    MessageBox(1500306,"");
+    res = 0;
+  end;
+  EmplVcRecordRemoveTest = res; 
+  return;
+end;
+
+global
+updating function LongInt EmplVcRecordImport(var record EmplVc Emplr,record EmplVc Empl2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+
+  SetMarkFlag(Emplr.ClosedFlag,Emplr.ClosedMark);
+  EmplVcRecordImport = res; 
+  return;
+end;

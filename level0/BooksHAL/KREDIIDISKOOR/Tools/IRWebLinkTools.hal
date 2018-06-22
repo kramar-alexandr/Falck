@@ -1,0 +1,90 @@
+//KB 27.07.2017 new functions for IR services
+external updating procedure UpdateIRServiceLastDateAndTime(string);
+external function boolean IRServiceActivated(string);
+remote updating procedure StoreCUServiceUsage(date,string,Integer,string,Integer,Integer);//cust, ts - 2018/04, e-service statistic
+
+global
+function string 255 GetCompanyInfoBrowserLink(string regNr, string endpoint)
+begin
+  string 255 link;
+  string 255 trimmedRegNr;
+
+  trimmedRegNr = Trim(regNr);
+  if (nonblank(trimmedRegNr)) then begin
+    switch(endpoint) begin
+      case "creditreport":
+        link = "https://www.inforegister.ee/index.php?option=com_krdx_search&view=" & endpoint & "&how=" & trimmedRegNr & "&Itemid=2&utm_source=Partner&utm_medium=erp&utm_campaign=Excellent&utm_content=raport";
+      case "report":
+        link = "https://www.inforegister.ee/index.php?option=com_krdx_search&view=" & endpoint & "&how=" & trimmedRegNr & "&Itemid=79&lang=et&utm_source=Partner&utm_medium=erp&utm_campaign=Excellent&utm_content=profile";
+      case "connections":
+        link = "https://www.inforegister.ee/index.php?option=com_krdx_graph&view=graph&task=search&node=" & trimmedRegNr & "&Itemid=117&lang=et&utm_source=Partner&utm_medium=erp&utm_campaign=Excellent&utm_content=vorgustik";
+    end;
+  end;
+  GetCompanyInfoBrowserLink = link;
+  return;
+end;
+
+procedure OpenIRCompanyInfo(string link)
+begin
+  record CYBlock CYb;
+
+  if (IRServiceActivated("ACCESSWEBLINK")) then begin
+    if (nonblank(link)) then begin
+      OpenWebBrowser(link);
+    end;
+    queued.UpdateIRServiceLastDateAndTime("ACCESSWEBLINK");
+    BlockLoad(CYb);
+    queued.StoreCUServiceUsage(CurrentDate,CYb.OrgNr,9,"IRWEBLINK",1,1);//cust, ts - 2018/04, e-service statistic
+  end else begin
+    MessageBox(1500008,"");
+  end;
+  return;
+end;
+
+global
+procedure DblOpenConnections(string dblstr,string regNr,Integer currepwn)
+begin
+  string 255 link;
+
+  link = GetCompanyInfoBrowserLink(regNr,"connections");
+  OpenIRCompanyInfo(link);
+  return;
+end;
+
+global
+procedure DblOpenCreditInfo(string dblstr,string regNr,Integer currepwn)
+begin
+  string 255 link;
+
+  link = GetCompanyInfoBrowserLink(regNr,"creditreport");
+  OpenIRCompanyInfo(link);
+  return;
+end;
+
+global
+procedure DblOpenInfoRegInWeb(string dblstr,string regNr,Integer currepwn)
+begin
+  string 255 link;
+
+  link = GetCompanyInfoBrowserLink(regNr,"report");
+  OpenIRCompanyInfo(link);
+  return;
+end;
+
+global
+procedure CompanyInfoWebLinkIRsm()
+begin
+  record CUVc CUr;
+  Integer wn;
+  string 255 link;
+
+  wn = CurWindow;
+  GetWindowRecord(wn,CUr);
+  if (nonblank(CUr.RegNr1)) then begin
+    link = GetCompanyInfoBrowserLink(CUr.RegNr1,"report");
+    OpenIRCompanyInfo(link);
+  end else begin
+    MessageBox(1500003,"");
+  end;
+  return;
+end;

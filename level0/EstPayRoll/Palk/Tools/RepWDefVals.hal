@@ -1,0 +1,339 @@
+external function val GetWorkDaysNorm();
+
+global
+procedure TSDRClassReportDefaults(integer wn)
+begin
+  record RcVc RepSpec;
+
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"TSDRClass");
+  RepSpec.flags[1] = GetYear(AddMonth(CurrentDate,-1));
+  RepSpec.flags[2] = GetMonth(AddMonth(CurrentDate,-1));
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure PaymPayrollXMLEClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+  record OPTBlock OPTb;
+  record LocalMachineBlock LMb;
+  
+  BlockLoad(OPTb);
+  BlockLoad(LMb);
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"PaymPayrollXMLEClass");  
+  RepSpec.OnlyUnprntd = 1;
+  RepSpec.ArtMode = OPTb.DOSFlag;
+  RepSpec.flags[4] = OPTb.Bankfees;
+  RepSpec.flags[0] = OPTb.OnDUEDate;
+  RepSpec.f12 = LMb.DefExpCodepage;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure PayRollDataEClassReportDefaults(integer wn)
+begin
+  record RcVc RepSpec;
+
+  DeSelectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"PayRollDataEClass");
+  RepSpec.flags[0]=1;
+  RepSpec.flags[1]=1;
+  RepSpec.flags[2]=1;
+  RepSpec.flags[3]=1;
+  RepSpec.flags[4]=1;
+  RepSpec.flags[5]=1;
+  RepSpec.flags[6]=1;
+  RepSpec.flags[7]=1;
+  RepSpec.flags[8]=1;
+  RepSpec.flags[9]=1;
+  RepSpec.flags[10]=1;
+  RepSpec.flags[11]=1;
+  RepSpec.flags[12]=1;
+  RepSpec.flags[13]=1;
+  RepSpec.flags[14]=1;
+  RepSpec.flags[15]=1;
+  RepSpec.flags[16]=1;
+  RepSpec.flags[17]=1;
+  RepSpec.flags[18]=1;
+  RepSpec.flags[19]=1;
+  RepSpec.flags[20]=1;
+  RepSpec.flags[21]=1;
+  RepSpec.flags[22]=1;
+  RepSpec.flags[23]=1;
+  RepSpec.flags[24]=1;
+  RepSpec.flags[25]=1;
+  RepSpec.flags[26]=1;
+  RepSpec.flags[27]=1;
+  RepSpec.flags[28]=1;
+  RepSpec.flags[29]=1;
+  RepSpec.UsedOnly=1;
+  RepSpec.SimVerf=1;
+  RepSpec.TSep=1;
+  RepSpec.AccSpec=1;
+  RepSpec.CorrM=1;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure ConvertOldPayrollDataVClassReportDefaults(integer wn)
+begin
+  record RcVc RepSpec;
+  date sdate,edate;
+
+  DeSelectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"ConvertOldPayrollDataVClass");
+  RepSpec.d1 = CurrentDate;
+  RepSpec.f2=GetYear(CurrentDate);
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure CreateCalcPayrollVClassReportDefaults(integer wn)
+begin
+  record RcVc RepSpec;
+  date sdate,edate;
+
+  DeSelectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"CreateCalcPayrollVClass");
+  sdate.day=1;
+  sdate.month=GetMonth(CurrentDate);
+  sdate.year=GetYear(CurrentDate);
+  edate=sdate;
+  edate.day=DaysInMonth(GetYear(sdate),GetMonth(sdate));
+  RepSpec.Period2Str = sdate & ":" & edate;
+  RepSpec.d1 = edate;
+  RepSpec.flags[0]=1;
+  RepSpec.flags[1]=1;
+  RepSpec.flags[2]=1;
+  RepSpec.flags[3]=1;
+  RepSpec.flags[4]=1;
+  RepSpec.flags[5]=1;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure CreatePaymPayrollVClassReportDefaults(integer wn)
+begin
+  record RcVc RepSpec;
+  date sdate,edate;
+
+  DeSelectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"CreatePaymPayrollVClass");
+  sdate.day=1;
+  sdate.month=GetMonth(CurrentDate);
+  sdate.year=GetYear(CurrentDate);
+  edate=sdate;
+  edate.day=DaysInMonth(GetYear(sdate),GetMonth(sdate));
+  RepSpec.Period2Str = sdate & ":" & edate;
+  RepSpec.d1 = CurrentDate;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure CreateVacBalanceVClassReportDefaults(integer wn)
+begin
+  record RcVc RepSpec;
+  date sdate,edate;
+
+  DeSelectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"CreateVacBalanceVClass");
+  RepSpec.flags[1]=GetYear(CurrentDate);
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure CreateVacCalcPayrollVClassReportDefaults(integer wn)
+begin
+  record RcVc RepSpec;
+  date sdate,edate;
+
+  DeSelectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"CreateVacCalcPayrollVClass");
+  sdate.day=1;
+  sdate.month=GetMonth(CurrentDate);
+  sdate.year=GetYear(CurrentDate);
+  edate=sdate;
+  edate.day=DaysInMonth(GetYear(sdate),GetMonth(sdate));
+  RepSpec.Period2Str = sdate & ":" & edate;
+  RepSpec.d1 = edate;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure OkCalcPayrollVClassReportDefaults(integer wn)
+begin
+  record RcVc RepSpec;
+  date sdate,edate;
+
+  DeSelectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"OkCalcPayrollVClass");
+  sdate.day=1;
+  sdate.month=GetMonth(CurrentDate);
+  sdate.year=GetYear(CurrentDate);
+  edate=sdate;
+  edate.day=DaysInMonth(GetYear(sdate),GetMonth(sdate));
+  RepSpec.Period2Str = sdate & ":" & edate;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure OkPaymPayrollVClassReportDefaults(integer wn)
+begin
+  record RcVc RepSpec;
+  date sdate,edate;
+
+  DeSelectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"OkPaymPayrollVClass");
+  sdate.day=1;
+  sdate.month=GetMonth(CurrentDate);
+  sdate.year=GetYear(CurrentDate);
+  edate=sdate;
+  edate.day=DaysInMonth(GetYear(sdate),GetMonth(sdate));
+  RepSpec.Period2Str = sdate & ":" & edate;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure UpdateHistoryRegistersVClassReportDefaults(integer wn)
+begin
+  record RcVc RepSpec;
+  date sdate,edate;
+
+  DeSelectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"UpdateHistoryRegistersVClass");
+  RepSpec.flags[0]=1;
+  RepSpec.flags[1]=1;
+  RepSpec.flags[2]=1;
+  RepSpec.flags[3]=1;
+  RepSpec.flags[4]=1;
+  RepSpec.flags[5]=1;
+  RepSpec.flags[6]=1;
+  RepSpec.flags[7]=1;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure CreateWorkedHoursVClassReportDefaults(integer wn)
+begin
+  record RcVc RepSpec;
+  date sdate,edate;
+
+  DeSelectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"CreateWorkedHoursVClass");
+  RepSpec.flags[1] = GetYear(CurrentDate);
+  RepSpec.flags[2] = GetMonth(CurrentDate);
+  RepSpec.vals0 = GetWorkDaysNorm();
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure VacBalanceRClassReportDefaults(integer wn)
+begin
+  record RcVc RepSpec;
+
+  DeSelectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"VacBalanceRClass");
+  RepSpec.d1=CurrentDate;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure VacBalToUseRClassReportDefaults(integer wn)
+begin
+  record RcVc RepSpec;
+
+  DeSelectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"VacBalToUseRClass");
+  RepSpec.d1=CurrentDate;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure WorkedHoursRClassReportDefaults(integer wn)
+begin
+  record RcVc RepSpec;
+
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"WorkedHoursRClass");
+  RepSpec.flags[1] = GetYear(AddMonth(CurrentDate,-1));
+  RepSpec.flags[2] = GetMonth(AddMonth(CurrentDate,-1));
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure VacCalcRClassReportDefaults(integer wn)
+begin
+  record RcVc RepSpec;
+
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"VacCalcRClass");
+  RepSpec.d1 = CurrentDate;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure TSDEClassReportDefaults(integer wn)
+begin
+  record RcVc RepSpec;
+  date sdate,edate;
+
+  DeSelectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"TSDEClass");
+  RepSpec.flags[1] = GetYear(AddMonth(CurrentDate,-1));
+  RepSpec.flags[2] = GetMonth(AddMonth(CurrentDate,-1));
+  RepSpec.flags[4] = 1;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;

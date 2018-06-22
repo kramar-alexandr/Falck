@@ -1,0 +1,157 @@
+external procedure YearCheck(var LongInt);
+
+global 
+function Boolean VacDaysFBDClassDeleteRowTest(Integer wn,Integer rownr)
+begin
+  record VacDaysFBVc VDFBr;
+  integer updatemode;
+  boolean res;
+
+  res = true;
+  updatemode = 2;
+  if (WindowState(wn)==updatemode) then begin
+    GetPrevWindowRecord(wn,VDFBr);
+  end else begin
+    GetWindowRecord(wn,VDFBr);
+  end;
+  if (VDFBr.OKFlag!=0) then begin
+    res = false;
+  end;
+
+  VacDaysFBDClassDeleteRowTest = res;
+  return;
+end;
+
+global
+function boolean VacDaysFBDClassActiveEditField(integer wn,string fieldname,integer fn,integer wnst,integer rownr,integer changed)
+begin
+  boolean res;
+  record VacDaysFBVc VDFBr;
+  
+  res = true;  
+  GetWindowRecord(wn,VDFBr);
+  if (VDFBr.OKFlag!=0) then begin
+    res = false;
+  end;  
+  if (wnst==Rs_update) then begin
+    switch (fieldname) begin
+      case "SerNr": res = false;
+    end;
+  end;
+  VacDaysFBDClassActiveEditField = res;
+  return;
+end;
+
+global
+function boolean VacDaysFBDClassOKFlagButtonAction(integer wn,integer value)
+begin
+  boolean res;
+  record VacDaysFBVc VDFBr;
+  integer normalmode,updatemode;
+  
+  res = true;
+  normalmode = 0;
+  updatemode = 2;
+  if (WindowState(wn)==normalmode) then begin
+    GetWindowRecord(wn,VDFBr);
+    if (VDFBr.OKFlag!=0) then begin
+      res = false;
+      if (UserCanAction("UnOKAll",false)) then begin
+        res = true;
+      end;
+    end;
+  end;  
+  if (WindowState(wn)==updatemode) then begin
+    GetPrevWindowRecord(wn,VDFBr);
+    if (VDFBr.OKFlag!=0) then begin
+      res = false;
+    end;
+  end;  
+  VacDaysFBDClassOKFlagButtonAction = res;
+  return;
+end;
+
+function boolean VacDaysFBDClassContrSerNrEFAfter(integer wn,integer rownr,integer changedf)
+  begin  
+  record VacDaysFBVc VDFBr;
+  row VacDaysFBVc VDFBrw;
+  record ContractVc Contrr;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,VDFBr);
+    DeselectWindow(wn,false);
+    MatRowGet(VDFBr,rownr,VDFBrw);
+    Contrr.SerNr = VDFBrw.ContrSerNr;
+    ClearRow(VDFBr,VDFBrw,1);
+    VDFBrw.ContrSerNr = Contrr.SerNr;
+    if (ReadFirstMain(Contrr,1,true)) then begin
+      VDFBrw.Firstname = Contrr.Firstname;
+      VDFBrw.Surname = Contrr.Surname;
+    end;
+    MatRowPut(VDFBr,rownr,VDFBrw);
+    PutWindowRecord(wn,VDFBr);
+  end;
+
+  VacDaysFBDClassContrSerNrEFAfter = true;
+  return;
+end;
+
+function boolean VacDaysFBDClassYearEFAfter(integer wn,integer rownr,integer changedf)
+  begin  
+  record VacDaysFBVc VDFBr;
+  string 10 tmp;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,VDFBr);
+    DeselectWindow(wn,false);
+    if (VDFBr.Year>0) then begin
+      YearCheck(VDFBr.Year);        
+    end;
+    PutWindowRecord(wn,VDFBr);
+  end;
+
+  VacDaysFBDClassYearEFAfter = true;
+  return;
+end;
+
+global
+function boolean VacDaysFBDClassAfterEditField(integer wn,string fieldname,integer fn, integer rownr,integer changed)
+begin
+  boolean res;
+
+  switch (fieldname) begin
+    case "ContrSerNr": res = VacDaysFBDClassContrSerNrEFAfter(wn,rownr,changed);
+    case "Year": res = VacDaysFBDClassYearEFAfter(wn,rownr,changed);
+  end;
+
+  VacDaysFBDClassAfterEditField = res;
+  return;
+end;
+
+global
+function Boolean VacDaysFBDClassOpenRecord(Integer wn,string fieldname,Integer fn,Integer rownr)
+begin
+  Boolean res;
+  record VacDaysFBVc VDFBr;
+  row VacDaysFBVc VDFBrw;
+  record ContractVc Contrr;
+  Integer nwn;
+
+  GetWindowRecord(wn,VDFBr);  
+  DeselectWindow(wn,false);
+  if (rownr>=0) then begin
+    MatRowGet(VDFBr,rownr,VDFBrw);
+  end;
+  switch (fieldname) begin
+    case "ContrSerNr":
+      if (VDFBrw.ContrSerNr>0) then begin
+        Contrr.SerNr = VDFBrw.ContrSerNr;
+        if (ReadFirstMain(Contrr,1,true)) then begin
+          nwn = OpenWindow("ContractDClass",1,0,"","",Contrr);    
+          res = true;
+        end;
+      end;
+    end;
+  VacDaysFBDClassOpenRecord = res;
+  return;
+end;

@@ -1,0 +1,106 @@
+external function boolean IsIllAbsTypeFlag(string);
+external function boolean IsVacAbsTypeFlag(string);
+external function boolean PaymTypeExsists(string);
+external function boolean AccGroupExsists(string);
+
+global
+updating function LongInt SalSettingBlockCheck(var record SalSettingBlock SSr,record SalSettingBlock SS2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  
+  res = 0;
+  if (nonblank(SSr.WorkDaysNorm)) then begin
+    if ((SSr.WorkDaysNorm<0) or (SSr.WorkDaysNorm>24)) then begin
+      RecordCheckError(1500338,"",-1,"WorkDaysNorm");      
+      res = -1; 
+      goto LSalSettingBlockCheck;
+    end;
+  end;
+  if (blank(SSr.VacAbsTypeCode)) then begin
+    RecordCheckError(1500340,"",-1,"VacAbsTypeCode");      
+    res = -1; 
+    goto LSalSettingBlockCheck; 
+  end else begin
+    if (IsVacAbsTypeFlag(SSr.VacAbsTypeCode)==false) then begin
+      RecordCheckError(1500499," ",-1,"VacAbsTypeCode");      
+      res = -1; 
+      goto LSalSettingBlockCheck; 
+    end;
+  end;
+  if (blank(SSr.StudyAbsTypeCode)) then begin
+    RecordCheckError(1500340,"",-1,"StudyAbsTypeCode");      
+    res = -1; 
+    goto LSalSettingBlockCheck; 
+  end else begin
+    if (IsVacAbsTypeFlag(SSr.StudyAbsTypeCode)==false) then begin
+      RecordCheckError(1500499," ",-1,"StudyAbsTypeCode");      
+      res = -1; 
+      goto LSalSettingBlockCheck; 
+    end;
+  end;
+  if (blank(SSr.ChildAbsTypeCode)) then begin
+    RecordCheckError(1500340,"",-1,"ChildAbsTypeCode");      
+    res = -1; 
+    goto LSalSettingBlockCheck; 
+  end else begin
+    if (IsVacAbsTypeFlag(SSr.ChildAbsTypeCode)==false) then begin
+      RecordCheckError(1500499," ",-1,"ChildAbsTypeCode");      
+      res = -1; 
+      goto LSalSettingBlockCheck; 
+    end;
+  end;
+  if (blank(SSr.AdvPaymTypeCode)) then begin
+    RecordCheckError(1500316,"",-1,"AdvPaymTypeCode");      
+    res = -1; 
+    goto LSalSettingBlockCheck; 
+  end else begin
+    if (PaymTypeExsists(SSr.AdvPaymTypeCode)==false) then begin
+      RecordCheckError(1500326," " & SSr.AdvPaymTypeCode,-1,"AdvPaymTypeCode");      
+      res = -1; 
+      goto LSalSettingBlockCheck; 
+    end;
+  end;
+  if (blank(SSr.DeductAdvPaymTypeCode)) then begin
+    RecordCheckError(1500316,"",-1,"DeductAdvPaymTypeCode");      
+    res = -1; 
+    goto LSalSettingBlockCheck; 
+  end else begin
+    if (PaymTypeExsists(SSr.DeductAdvPaymTypeCode)==false) then begin
+      RecordCheckError(1500326," " & SSr.DeductAdvPaymTypeCode,-1,"DeductAdvPaymTypeCode");      
+      res = -1; 
+      goto LSalSettingBlockCheck; 
+    end;
+  end;
+  if (blank(SSr.CalcTransDate)) then begin
+    RecordCheckError(1500342,"",-1,"CalcTransDate");      
+    res = -1; 
+    goto LSalSettingBlockCheck; 
+  end;
+  if (blank(SSr.PaymTransDate)) then begin
+    RecordCheckError(1500342,"",-1,"PaymTransDate");      
+    res = -1; 
+    goto LSalSettingBlockCheck; 
+  end;
+  if (nonblank(SSr.AccGroupCode)) then begin
+    if (AccGroupExsists(SSr.AccGroupCode)==false) then begin
+      RecordCheckError(1500331," " & SSr.AccGroupCode,-1,"AccGroupCode");      
+      res = -1; 
+      goto LSalSettingBlockCheck;
+    end;
+  end;
+  if (blank(SSr.IllAbsTypeCode)) then begin
+    RecordCheckError(1500340,"",-1,"IllAbsTypeCode");      
+    res = -1; 
+    goto LSalSettingBlockCheck; 
+  end else begin
+    if (IsIllAbsTypeFlag(SSr.IllAbsTypeCode)==false) then begin
+      RecordCheckError(1500500," ",-1,"IllAbsTypeCode");      
+      res = -1; 
+      goto LSalSettingBlockCheck; 
+    end;
+  end;
+  
+LSalSettingBlockCheck:;  
+  SalSettingBlockCheck = res;
+  return;
+end;

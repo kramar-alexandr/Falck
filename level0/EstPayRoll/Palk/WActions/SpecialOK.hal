@@ -1,0 +1,118 @@
+external procedure StripEndingSpaces(var string);
+external function string 255 StringFromSysList(Integer,Integer);
+
+global
+procedure PasteFromWn(Integer wn,string paststr)
+begin
+  Integer mwn;
+  
+  mwn = MotherWindow(wn);
+  CloseWindow(wn);
+  if (mwn!=0) then begin
+    PasteString(mwn,paststr);
+    if (GetWindowFileName(mwn)=="PaymPayrollVc") begin
+      record PaymPayrollVc PPr;
+      switch (WindowActiveField(mwn)) begin
+        case "CalcSerNr":
+          WindowFieldGoto(mwn,PPr,-1,"CalcSerNr",true);
+      end;
+    end;
+
+    if (GetWindowFileName(mwn)=="AbsenceVc") begin
+      record AbsenceVc Absr;
+      switch (WindowActiveField(mwn)) begin
+        case "PrevAbsSerNr":
+          WindowFieldGoto(mwn,Absr,-1,"PrevAbsSerNr",true);
+      end;
+    end;    
+  end;
+  return;
+end;
+
+function string 255 SerNrFromSysList(Integer wn)
+begin
+  string 255 tstr,res;
+  Integer sel;
+  Integer i,slen;
+  
+  tstr = "";
+  sel = SelectedListLine(wn);
+  if (sel>-1) then begin
+    tstr = GetListString(wn,sel);
+    slen = len(tstr);
+    for (i=1;i<slen;i=i+1) begin
+      if (mid(tstr,i,1)==":") then begin
+        res=mid(tstr,i+6,20);
+        goto L1;
+      end;
+    end;  
+L1:;
+    StripEndingSpaces(res);
+  end;
+  SerNrFromSysList = res;
+  return;
+end;
+
+procedure PasteNrFromSysList(Integer wn)
+begin
+  string 20 tstr;
+
+  tstr=SerNrFromSysList(wn);
+  PasteFromWn(wn,tstr);
+  return;
+end;
+
+procedure PasteStringFromSysList(Integer wn)
+begin
+  string 20 tstr;
+
+  tstr=StringFromSysList(wn,-2);
+  PasteFromWn(wn,tstr);
+  return;
+end;
+
+global
+function Boolean CalcPayrollSClassOnOKWindow(Integer wn)
+begin
+  Integer mwn;
+ 
+  mwn = MotherWindow(wn);
+  switch (GetWindowClass(mwn)) begin
+    case "PaymPayrollDClass":
+      PasteNrFromSysList(wn);
+  end;
+  CalcPayrollSClassOnOKWindow = false;
+  return;
+end;
+
+global
+function Boolean PrevAbsenceSClassOnOKWindow(Integer wn)
+begin
+  Integer mwn;
+ 
+  mwn = MotherWindow(wn);
+  switch (GetWindowClass(mwn)) begin
+    case "AbsenceDClass":
+      PasteNrFromSysList(wn);
+  end;
+  PrevAbsenceSClassOnOKWindow = false;
+  return;
+end;
+
+global
+function Boolean TSDErrorSClassOnOKWindow(Integer wn)
+begin
+
+  PasteStringFromSysList(wn);
+  TSDErrorSClassOnOKWindow = false;
+  return;
+end;
+
+global
+function Boolean TSDRowsSClassOnOKWindow(Integer wn)
+begin
+
+  PasteStringFromSysList(wn);
+  TSDRowsSClassOnOKWindow = false;
+  return;
+end;

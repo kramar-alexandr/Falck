@@ -1,0 +1,44 @@
+external procedure NextM4Number(string,var string);
+
+global
+function boolean GetNextAbsTypeNr(var string posnr)
+begin
+  boolean res;
+  record AbsTypeVc ATr;
+  
+  ATr.Code = "ZZZZZZZZZZZZZZZZZZZ";
+  if (ReadLastMain(ATr,1,false)) then begin
+    NextM4Number(ATr.Code,posnr);
+  end else begin
+    posnr = "1";
+  end;
+  GetNextAbsTypeNr = res;
+  return;
+end;
+
+global
+function boolean ATrInUse(string atcode)
+begin
+  boolean res;
+  record AbsenceVc Absr;
+  record SalSettingBlock SalSettingRec;
+  integer rwcnt,i;
+ 
+//Puudumised
+  Absr.AbsTypeCode = atcode;
+  if (ReadFirstKey("AbsTypeCode",Absr,1,true)) then begin
+    res=true;
+    goto LATrInUse;
+  end;
+
+//Lausendamine, Palk
+  BlockLoad(SalSettingRec);
+  if (SalSettingRec.VacAbsTypeCode==atcode) or (SalSettingRec.IllAbsTypeCode==atcode) or (SalSettingRec.StudyAbsTypeCode==atcode) or (SalSettingRec.ChildAbsTypeCode==atcode) then begin
+    res=true;
+    goto LATrInUse;
+  end;
+
+LATrInUse:;
+  ATrInUse = res; 
+  return;
+end;

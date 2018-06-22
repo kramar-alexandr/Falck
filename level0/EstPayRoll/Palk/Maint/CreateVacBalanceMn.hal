@@ -1,0 +1,61 @@
+external updating function boolean CreateVacBalFromContrr(record ContractVc);
+external procedure InsertVacBalRow(record VacBalanceVc,var row VacBalanceVc,integer,date,date,var integer);
+external procedure SetMarkFlag(integer,var integer);
+external procedure GetFullYear(integer,var date,var date);
+
+global
+updating procedure CreateVacBalanceMn(record RcVc RepSpec)
+begin
+  record VacBalanceVc VBr;
+  record VacBalanceVc oldVBr;
+  row VacBalanceVc VBrw;
+  record ContractVc Contrr;
+  integer rwcnt,i,year,yearcnt,rw,maxyear;
+  boolean testf;
+  date sd,ed;
+  
+  year=RepSpec.flags[1];
+  ResetLoop(Contrr);
+  Contrr.SerNr = -1;
+  while (LoopMain(Contrr,1,true)) begin  
+    if (Contrr.Status==1) then begin
+      CreateVacBalFromContrr(Contrr);
+    end;
+  end;  
+  
+  ResetLoop(Contrr);
+  Contrr.SerNr = -1;
+  while (LoopMain(Contrr,1,true)) begin  
+    if (Contrr.Status==1) then begin
+      VBr.ContrSerNr = Contrr.SerNr;
+      if (ReadFirstKey("ContrSerNr",VBr,1,true)) then begin
+        RecordCopy(oldVBr,VBr);    
+        testf = true;
+        maxyear = 0;
+        rwcnt = MatRowCnt(VBr);
+        for (i=0;i<rwcnt;i=i+1) begin
+          MatRowGet(VBr,i,VBrw);
+          if (VBrw.Year>maxyear) then begin
+            maxyear = VBrw.Year;
+          end;
+        end;
+        if (maxyear>=year) then begin
+          testf = false;
+        end;  
+        if (testf) then begin
+          yearcnt = maxyear;
+          while (yearcnt<year) begin
+            rw = rwcnt;
+            yearcnt = yearcnt + 1;
+            GetFullYear(yearcnt,sd,ed);
+            InsertVacBalRow(VBr,VBrw,yearcnt,sd,ed,rw);
+          end;          
+          VBr.OKFlag = 0;
+          SetMarkFlag(VBr.OKFlag,VBr.OKMark);
+          RecordUpdate(oldVBr,VBr,false);
+        end; 
+      end;
+    end;
+  end;
+  return;
+end;

@@ -1,0 +1,208 @@
+//KB 16.08.2017 new report and functions for Inforegister company search requests
+external procedure GetAreaFromFile(Area,string);
+external procedure ExtractObjWithSeparator(string,string,Boolean,var Integer,var string);
+external function boolean ProcessOrganizationsReply(area, var area, boolean);
+external function boolean TokenNotAccepted(area);
+external function boolean IRServiceActivated(string);
+external function boolean DoSendEstAddressLookupIR(string,string,var area);
+remote procedure DoSendCompanyInfoLookupIRRemote(string,var area,var Boolean);
+
+function string 255 cutString(string namestr)
+begin
+  string 255 cutlist,cutlist2,newnamestr;
+
+  newnamestr = namestr;
+  cutlist = USetStr(34607);
+  cutlist2 = USetStr(34608);
+  if (SetInSet(right(namestr,2),cutlist)) then begin
+    newnamestr = Left(namestr,(len(namestr)-3));
+  end;
+  if (SetInSet(right(namestr,3),cutlist2)) then begin
+    newnamestr = Left(namestr,(len(namestr)-4));
+  end;
+  cutString = newnamestr;
+  return;
+end;
+
+procedure EstAddrLookupPrintResults(string name, string regnr, integer aCnt, record RcVc RepSpec)
+begin
+  if (aCnt == 0) then begin
+    StartFormat(15);
+    OutString(0,0,USetStr(1500048),false);
+    OutString(2,0,USetStr(1500049),false);
+    EndFormat;
+  end;
+  Gray_Divider(0,1);
+  StartFormat(15);
+  OutStringID(0,"DblCompanyInfoIRRn",name,false,regnr & ";" & RepSpec.ArtMode);
+  OutString(2,0,regnr,false);
+  EndFormat;
+  return;
+end;
+
+global
+procedure EstAddrLookupIRRn(record RcVc RepSpec)
+begin
+  xml xmlReply;
+  integer res;
+  string 255 subxkey,tstr,name,regnr;
+  string 10 s;
+  integer i,aCnt,rw, pos;
+  area a_reply;
+  area a_processedReply;
+  longint totalResults,maxResults;
+  record IRSetBlock IRSetBlockr;
+  boolean testf;
+
+/* this control was performed once before running the report. Do you need it here?
+  if (IRServiceActivated("IRSENDESTADRLOOKUP") == false) then begin
+    MessageBox(1500008,"");
+    goto LSKIPALL;
+  end;
+*/
+  testf = DoSendEstAddressLookupIR(RepSpec.f2,RepSpec.f3,a_reply);
+  
+  BlockLoad(IRSetBlockr);
+  rw = 1;
+  maxResults = IRSetBlockr.SearchResQaunt;
+  if (maxResults > 50 OR maxResults <= 0) then begin
+    maxResults = 50;
+  end;
+  StartReportJob(USetStr(1500100));
+  if (nonblank(RepSpec.f2)) then begin 
+    tstr = USetStr(1500049) & ": " & RepSpec.f2;
+    Header(rw,tstr,1);
+    rw = rw + 1;
+  end;
+  if (nonblank(RepSpec.f3)) then begin 
+    tstr = USetStr(1500048) & ": " & RepSpec.f3;
+    Header(rw,tstr,1);
+    rw = rw + 1;
+  end;
+  EndHeader;
+  if (testf == false) then begin
+    res = -1;
+    StartFormat(15);
+    OutString(0,0,USetStr(1500103),false);
+    EndFormat;
+    goto LEstAddrLookupIRRn;
+  end;
+  if (TokenNotAccepted(a_reply)) then begin
+    res = -1;
+    StartFormat(15);
+    OutString(0,0,USetStr(1500010),false);
+    EndFormat;
+    goto LEstAddrLookupIRRn;
+  end;
+  if (GetAreaLength(a_reply)<=1) then begin
+    res = -1;
+    StartFormat(15);
+    OutString(0,0,USetStr(1500101),false);
+    EndFormat;
+    goto LEstAddrLookupIRRn;
+  end;
+  xmlReply = ParseXMLArea(a_reply);
+  if (XmlNodeExists(xmlReply,"result") == false) then begin
+    res = 2;
+    StartFormat(15);
+    OutString(0,0,USetStr(1500104),false);
+    EndFormat;
+    goto LEstAddrLookupIRRn;
+  end;
+  totalResults = StringToLongInt(XmlGet(xmlReply,"result/totalResults"));
+  if (totalResults > maxResults) then begin
+    StartFormat(15);
+    OutString(0,0,USetStr(1500102) &  maxResults & " / " & totalResults,false);
+    EndFormat;
+    StartFormat(15);
+    OutString(0,0,USetStr(1500106),false);
+    EndFormat;
+    //no goto, just inform
+  end;
+  if (totalResults == 0) then begin
+    res = 2;
+    StartFormat(15);
+    OutString(0,0,USetStr(1500105),false);
+    EndFormat;
+    goto LEstAddrLookupIRRn;
+  end;
+  if (ProcessOrganizationsReply(a_reply, a_processedReply,false) == false) then begin
+    res = -1;
+    StartFormat(15);
+    OutString(0,0,USetStr(1500103),false);
+    EndFormat;
+    goto LEstAddrLookupIRRn;
+  end;
+  aCnt = 0;
+  SetRepCol(2,-150);
+  xmlReply = ParseXMLArea(a_processedReply);
+  if (XmlNodeExists(xmlReply,"companies")) then begin
+    for (i=0; XmlNodeExists(xmlReply,"companies/company[" & i &"]/"); i=i+1) begin
+      subxkey = "companies/company[" & i &"]/";
+      name = XmlGet(xmlReply,subxkey  & "legalName");
+      regnr = XmlGet(xmlReply,subxkey & "registrationCode");
+      EstAddrLookupPrintResults(name,regnr,aCnt,RepSpec);
+      aCnt = aCnt + 1;
+      if (aCnt >= maxResults) then begin;
+        goto LENDOFLOOP;
+      end;
+    end;
+  end;
+LENDOFLOOP:;
+  Black_Divider(0,1);
+  StartFormat(15);
+  OutString(6,0,USetStr(1500047) & aCnt,false);
+  EndFormat;  
+LEstAddrLookupIRRn:;
+  if (res == -1) then begin
+    StartFormat(15);
+    OutString(0,0,USetStr(1500046),false);
+    EndFormat;
+  end;
+  if (res == 2) then begin
+    StartFormat(15);
+    OutString(0,0,USetStr(1500106),false);
+    EndFormat;
+  end; 
+  EndJob;
+LSKIPALL:;
+  return;
+end;
+
+global
+function Boolean DoSendCompanyInfoLookupIR(string regno,var area reply)
+begin
+  Boolean res;
+
+  DoSendCompanyInfoLookupIRRemote(regno,reply,res);
+  
+  DoSendCompanyInfoLookupIR = res;
+  return;
+end;
+
+global
+procedure DblCompanyInfoIRRn(string dblstr,string l,Integer currepwn)
+begin
+  record RcVc RepSpec;
+  string 255 tstr,regnr,wnstr;
+  integer wn,pos;
+  
+  pos = 0;
+  tstr = l;
+  ExtractObjWithSeparator(";",tstr,false,pos,regnr);
+  ExtractObjWithSeparator(";",tstr,false,pos,wnstr);
+  ReportDefaults(RepSpec,"EstAddrLookupRClass");
+  wn = StringToInt(wnstr);
+  if (nonblank(l)) then begin
+    RepSpec.Media = mtScreen;
+    RepSpec.f2 = regnr;
+    RepSpec.flags[0] = 0;
+    if (wn > 0 AND WindowValid(wn)) then begin
+      RepSpec.flags[1] = WindowState(wn);
+    end;
+    RepSpec.ArtMode = wn;
+    RepSpec.repname = "CompanyInfoIRRn";
+    RunReport(RepSpec,0);
+  end;
+  return;
+end;

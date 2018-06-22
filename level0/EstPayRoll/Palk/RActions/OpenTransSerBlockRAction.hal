@@ -1,0 +1,49 @@
+external function Integer SerBlockCheckOverlap(LongInt,LongInt,LongInt,LongInt);
+
+global
+updating function LongInt OpenTransSerBlockCheck(var record OpenTransSerBlock OTSerr,record OpenTransSerBlock OTSer2r,LongInt stat,LongInt long4)
+BEGIN
+  LongInt res;
+  Integer j,i,rwcnt,pmrwcnt;
+  row OpenTransSerBlock OTSerrw;
+  row OpenTransSerBlock OTSer2rw;
+  record PMBlock PMRec;
+  row PMBlock PMrw;  
+  
+  res = 0;
+  BlockLoad(PMRec);
+  pmrwcnt = MatRowCnt(PMRec);
+  rwcnt = MatRowCnt(OTSerr);
+  for (i=0; i<rwcnt;i=i+1) begin
+    MatRowGet(OTSerr,i,OTSerrw);
+    if (OTSerrw.TSerStart<=0) then begin
+      RecordCheckError(2210,"",i,"TSerStart");   
+      res = -1;
+      goto LOpenTransSerBlockCheck;        
+    end;
+    if (OTSerrw.TSerEnd<=0) then begin
+      RecordCheckError(2210,"",i,"TSerEnd");   
+      res = -1;
+      goto LOpenTransSerBlockCheck;        
+    end;
+    if ((NonBlankDate(OTSerrw.StartDate)) and (NonBlankDate(OTSerrw.EndDate))) then begin
+      if (OTSerrw.StartDate>OTSerrw.EndDate) then begin
+        RecordCheckError(20851,"",i,"EndDate");   
+        res = -1;
+        goto LOpenTransSerBlockCheck;        
+      end;
+    end;
+    for (j=0;j<i;j=j+1) begin
+      MatRowGet(OTSerr,j,OTSer2rw);
+      res = SerBlockCheckOverlap(OTSerrw.TSerStart,OTSerrw.TSerEnd,OTSer2rw.TSerStart,OTSer2rw.TSerEnd);      
+      if (res!=0) then begin
+        RecordCheckError(res,"",i,"TSerStart");   
+        res = -1;
+        goto LOpenTransSerBlockCheck;        
+      end;
+    end;      
+  end;  
+LOpenTransSerBlockCheck:;  
+  OpenTransSerBlockCheck = res;
+  return;
+end;

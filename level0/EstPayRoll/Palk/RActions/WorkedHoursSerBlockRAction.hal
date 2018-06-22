@@ -1,0 +1,49 @@
+external function Integer SerBlockCheckOverlap(LongInt,LongInt,LongInt,LongInt);
+
+global
+updating function LongInt WorkedHoursSerBlockCheck(var record WorkedHoursSerBlock WHSerr,record WorkedHoursSerBlock WHSer2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  Integer j,i,rwcnt,pmrwcnt;
+  row WorkedHoursSerBlock WHSerrw;
+  row WorkedHoursSerBlock WHSer2rw;
+  record PMBlock PMRec;
+  row PMBlock PMrw;  
+  
+  res = 0;
+  BlockLoad(PMRec);
+  pmrwcnt = MatRowCnt(PMRec);
+  rwcnt = MatRowCnt(WHSerr);
+  for (i=0; i<rwcnt;i=i+1) begin
+    MatRowGet(WHSerr,i,WHSerrw);
+    if (WHSerrw.TSerStart<=0) then begin
+      RecordCheckError(2210,"",i,"TSerStart");   
+      res = -1;
+      goto LWorkedHoursSerBlockCheck;        
+    end;
+    if (WHSerrw.TSerEnd<=0) then begin
+      RecordCheckError(2210,"",i,"TSerEnd");   
+      res = -1;
+      goto LWorkedHoursSerBlockCheck;        
+    end;
+    if ((NonBlankDate(WHSerrw.StartDate)) and (NonBlankDate(WHSerrw.EndDate))) then begin
+      if (WHSerrw.StartDate>WHSerrw.EndDate) then begin
+        RecordCheckError(20851,"",i,"EndDate");   
+        res = -1;
+        goto LWorkedHoursSerBlockCheck;        
+      end;
+    end;
+    for (j=0;j<i;j=j+1) begin
+      MatRowGet(WHSerr,j,WHSer2rw);
+      res = SerBlockCheckOverlap(WHSerrw.TSerStart,WHSerrw.TSerEnd,WHSer2rw.TSerStart,WHSer2rw.TSerEnd);      
+      if (res!=0) then begin
+        RecordCheckError(res,"",i,"TSerStart");   
+        res = -1;
+        goto LWorkedHoursSerBlockCheck;        
+      end;
+    end;      
+  end;  
+LWorkedHoursSerBlockCheck:;  
+  WorkedHoursSerBlockCheck = res;
+  return;
+end;

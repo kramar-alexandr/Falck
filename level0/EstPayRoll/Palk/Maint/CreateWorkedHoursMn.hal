@@ -1,0 +1,189 @@
+external function boolean IsWHPaymType(string);
+external function Boolean IsHolliday(Date,record ExceptDatesVc,Boolean);
+external function Boolean GetExceptDates(record ExceptDatesVc,integer);
+external procedure GetDaysAndHoursTotal(record WorkedHoursVc,integer,var val,var integer);
+
+function string 20 GetWHTTypeCode(string ptcode,date whdate)
+begin
+  string 20 res;
+  record WorkHourTypeVc WHTr;  
+  boolean TrHs;
+  
+  TrHs = true;
+  ResetLoop(WHTr);
+  WHTr.PaymTypeCode = ptcode;
+  while (LoopKey("PaymTypeCode",WHTr,1,TrHs)) begin
+    if (WHTr.PaymTypeCode!=ptcode) then begin TrHs = false; end;
+    if (TrHs) then begin
+      if (DateInRange(whdate,WHTr.StartDate,WHTr.EndDate)) then begin
+        res=WHTr.Code;
+        goto LGetWHTTypeCode;
+      end;
+    end;
+  end;
+LGetWHTTypeCode:;  
+  GetWHTTypeCode = res; 
+  return;
+end;
+
+procedure PasteHoursInWHrw(row WorkedHoursVc WHrw,integer day,val hours)
+begin
+  switch (day) begin
+    case 1: WHrw.d1 = hours;
+    case 2: WHrw.d2 = hours;
+    case 3: WHrw.d3 = hours;
+    case 4: WHrw.d4 = hours;
+    case 5: WHrw.d5 = hours;
+    case 6: WHrw.d6 = hours;
+    case 7: WHrw.d7 = hours;
+    case 8: WHrw.d8 = hours;
+    case 9: WHrw.d9 = hours;
+    case 10: WHrw.d10 = hours;
+    case 11: WHrw.d11 = hours;
+    case 12: WHrw.d12 = hours;
+    case 13: WHrw.d13 = hours;
+    case 14: WHrw.d14 = hours;
+    case 15: WHrw.d15 = hours;
+    case 16: WHrw.d16 = hours;
+    case 17: WHrw.d17 = hours;
+    case 18: WHrw.d18 = hours;
+    case 19: WHrw.d19 = hours;
+    case 20: WHrw.d20 = hours;
+    case 21: WHrw.d21 = hours;
+    case 22: WHrw.d22 = hours;
+    case 23: WHrw.d23 = hours;
+    case 24: WHrw.d24 = hours;
+    case 25: WHrw.d25 = hours;
+    case 26: WHrw.d26 = hours;
+    case 27: WHrw.d27 = hours;
+    case 28: WHrw.d28 = hours;
+    case 29: WHrw.d29 = hours;
+    case 30: WHrw.d30 = hours;
+    case 31: WHrw.d31 = hours;
+  end;  
+  return;
+end;
+  
+global
+updating procedure CreateWorkedHoursMn(record RcVc RepSpec)
+begin
+  record WorkedHoursVc WHr;
+  record WorkedHoursVc WH2r;
+  row WorkedHoursVc WHrw;
+  row WorkedHoursVc WH2rw;
+  record ContractVc Contrr;
+  row ContractVc Contrrw;
+  record ExceptDatesVc EDr;
+  integer rwcnt,rwcnt1,i,j,d,year,month,rw,days,dtot;
+  LongInt frcontr,tocontr;
+  date whdate,thedate;
+  boolean testf,testf1,TrHs,saveflag,excflag;
+  val hours,htot;
+  
+  year = RepSpec.flags[1];
+  month = RepSpec.flags[2];
+  frcontr = FirstInRange(RepSpec.f1,20);
+  tocontr = LastInRange(RepSpec.f1,20);
+  hours = RepSpec.vals0;
+  whdate.day = 01;
+  whdate.month = month;
+  whdate.year = year;
+  thedate.year = year;
+  thedate.month = month;
+
+  rw = 0;
+  saveflag = false;
+  RecordNew(WHr);
+  WHr.Year = year;
+  WHr.Month = month;
+  if (GetExceptDates(EDr,year)) then begin excflag = true; end;
+
+  TrHs = true;
+  ResetLoop(Contrr);
+  Contrr.SerNr = frcontr;
+  while (LoopMain(Contrr,1,TrHs)) begin
+    if ((frcontr>0)) then begin
+      if ((Contrr.SerNr<frcontr) or (Contrr.SerNr>tocontr)) then begin
+        TrHs = false;
+      end;
+    end;
+    if (TrHs) then begin
+      testf = true;
+      if (Contrr.Status!=1) then begin testf = false; end;
+      if (testf) then begin
+        rwcnt = MatRowCnt(Contrr);
+        for (i=0;i<rwcnt;i=i+1) begin
+          testf1 = true;
+          MatRowGet(Contrr,i,Contrrw);
+          if (nonblank(Contrrw.PosCode)) then begin
+            if (nonblank(RepSpec.f2)) then begin
+              if (Contrrw.PaymTypeCode!=RepSpec.f2) then begin testf1 = false;
+              end;
+            end;
+            if (testf1) then begin
+              if (IsWHPaymType(Contrrw.PaymTypeCode)) then begin
+                if (DateInRange(whdate,Contrrw.SDate,Contrrw.EDate)) then begin
+                  ResetLoop(WH2r);
+                  WH2r.Year = year;
+                  WH2r.Month = month;
+                  if (ReadFirstKey("Year",WH2r,2,true)) then begin
+                    rwcnt = MatRowCnt(WH2r);
+                    for (j=0;j<rwcnt;j=j+1) begin
+                      MatRowGet(WH2r,j,WH2rw);
+                      if (WH2rw.ContrSerNr==Contrr.SerNr) then begin testf1 = false; end;
+                    end;
+                  end;
+                  if (testf1) then begin
+                    ClearRow(WHr,WHrw,1);
+                    WHrw.ContrSerNr = Contrr.SerNr;
+                    WHrw.PosCode = Contrrw.PosCode;
+                    WHrw.Firstname = Contrr.Firstname;
+                    WHrw.Surname = Contrr.Surname;
+                    WHrw.WorkHourTypeCode = GetWHTTypeCode(Contrrw.PaymTypeCode,whdate);            
+                    if nonblank(Contrr.ObjCode) then begin
+                      WHrw.ObjCode = Contrr.ObjCode;
+                    end;
+                    if nonblank(WHrw.ObjCode) then begin
+                      if nonblank(Contrrw.ObjCode) then begin
+                        WHrw.ObjCode = WHrw.ObjCode & ", " & Contrrw.ObjCode;
+                      end;
+                    end else begin
+                      WHrw.ObjCode = Contrrw.ObjCode;
+                    end;
+                    days = DaysInMonth(year,month);
+                    for (d=1;d<=days;d=d+1) begin
+                      thedate.day = d;                    
+                      if (DateInRange(thedate,Contrr.StartDate,Contrr.EndDate)) then begin
+                        if (excflag) then begin
+                          if (IsHolliday(thedate,EDr,false)==false) then begin
+                            PasteHoursInWHrw(WHrw,d,hours);
+                          end;
+                        end else begin
+                          PasteHoursInWHrw(WHrw,d,hours);
+                        end;
+                      end;
+                    end;
+                    MatRowInsert(WHr,rw,WHrw);
+                    GetDaysAndHoursTotal(WHr,rw,htot,dtot);
+                    WHrw.DaysTotal=dtot;
+                    WHrw.HoursTotal=htot;
+                    MatRowPut(WHr,rw,WHrw);
+                    rw = rw + 1;
+                    saveflag = true;
+                  end;
+                end;
+              end;
+            end;
+          end;
+        end;        
+      end;
+    end;
+  end;
+  if (saveflag) then begin
+    WHr.SerNr = NextSerNr("WorkedHoursVc",whdate,-1,false,"");//Bk fix, ts - 2018/05
+    if (WHr.SerNr > 0) then begin
+      if (RecordInsert(WHr,false)) then begin end;
+    end;
+  end;
+  return;
+end;

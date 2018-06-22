@@ -1,0 +1,665 @@
+//BK cust start > Sepa import
+//nk updated to Books 8.1 2016-02.28/2016-03-02
+//BK cust end > Sepa import
+
+external procedure IPVc_PastePayDate(var record IPVc,Integer);
+external function Boolean IPVc_PasteCustCode(var record IPVc,Integer,var LongInt);
+external procedure IPVc_PasteRecVal(var record IPVc,Integer);
+external procedure OPVc_PasteRecVal(var record OPVc,Integer);
+external function Boolean FindStringInString(string,string);
+external procedure IPVc_PasteOrderNr(var record IPVc,Integer);
+external procedure OPVc_PasteOrderNr(var record OPVc,Integer);
+external procedure IPVc_PasteCUPNr(var record IPVc,Integer);
+external function Boolean PasteInvIn2IPr(var record IPVc,Integer,Date,var val,Boolean,var Boolean);
+external procedure RecordAction_raExpandPay2(var record IPVc,Integer,string);
+external procedure RecordAction_raExpandVEPay(var record OPVc,Integer);
+external procedure RemoveCharacterFromString(var string,string);
+external procedure IPSumup(var record IPVc);
+external procedure OPSumup(var record OPVc,Boolean);
+external procedure OPVc_PasteVECode(var record OPVc,Integer);
+external function Boolean PasteInvIn2OPr(var record OPVc,Integer,Date,Integer,val,var string,Boolean,var Boolean);
+external procedure OPPastePayMode(var record OPVc);
+external procedure IPPastePayMode(var record IPVc);
+external procedure ExtractObj(string,var Integer,var string);
+
+function string 5 FindPMbyIBANCode(string IBANcode)
+begin 
+  record PMBlock PMb;
+  row PMBlock PMrw;
+  string 5 pmres;
+  integer i,rwcnt;
+
+  BlockLoad(PMb);
+  rwcnt = MatRowCnt(PMb);
+  for (i=0; i<rwcnt; i=i+1) begin
+    MatRowGet(PMb,i,PMrw);
+    if (PMrw.BankNr==IBANcode) then begin
+      pmres = PMrw.Code;
+      i = rwcnt;
+    end;
+  end;
+  FindPMbyIBANCode = pmres;
+
+  return;
+end;
+
+updating 
+procedure SEPACreateIP(record IPVc IPr,boolean OKIPr)
+begin
+  record IPVc oldIPr;
+
+  IPSumup(IPr);
+  IPr.SerNr = NextSerNr("IPVc",IPr.TransDate,-1,false,"");
+  if RecordStore(IPr,false) then begin 
+    if (OKIPr) then begin 
+      RecordCopy(oldIPr,IPr);
+      IPr.OKFlag = 1;
+      if (RecordUpdate(oldIPr,IPr,true)==0) then begin
+      end;
+    end;
+  end;
+
+  return;
+end;
+
+updating 
+procedure SEPACreateOP(record OPVc OPr,boolean OKOPr)
+begin
+  record OPVc oldOPr;
+
+  OPSumup(OPr,true);
+  OPr.SerNr = NextSerNr("OPVc",OPr.TransDate,-1,false,"");
+  if RecordStore(OPr,false) then begin 
+    if (OKOPr) then begin 
+      RecordCopy(oldOPr,OPr);
+      OPr.OrderedFlag = 1;
+      OPr.DoneFlag = 1;
+      if (RecordUpdate(oldOPr,OPr,true)==0) then begin
+      end;
+    end;
+  end;
+
+  return;
+end;
+
+function string 255 RemoveShortWords(string tstr,var string rmw)
+begin
+  record SEPABankFileBlock SEPABankFileBl;
+  string 255 tmpword,ch,res;
+  integer i,cnt;
+  integer arrlen;
+  array string 255 words;
+
+  BlockLoad(SEPABankFileBl);
+  
+  arrlen = 0;
+  rmw = "";
+  tmpword = "";
+  cnt = len(tstr);
+  for (i=0;i<cnt;i=i+1) begin
+    ch = mid(tstr,i,1);
+    if (ch==" " and len(tmpword)>0) then begin
+      arrlen = arrlen+1;
+      words[arrlen] = tmpword;
+      tmpword = "";
+    end else begin
+      tmpword = tmpword & ch;
+    end;
+  end;
+  
+  if (len(tmpword)>0) then begin
+    arrlen = arrlen+1;
+    words[arrlen] = tmpword;
+    tmpword = "";
+  end;
+  
+  words[0] = arrlen;
+  if (arrlen>=1) then begin 
+    for (i=1;i<=arrlen;i=i+1) begin
+      if (SetInSet(words[i],SEPABankFileBl.Abbreviation)==false) then begin 
+        if nonblank(res) then begin 
+           res = res & " "; 
+        end;
+        res = res & words[i];
+      end else begin
+        rmw = words[i];
+      end;  
+    end;
+  end;
+  RemoveShortWords = res;
+  return;
+end;
+
+
+function boolean FindSepaContact(var record CUVc CUr,string custid,string custname,string refstr,integer vendor)
+begin
+  boolean cufound;
+  string 255 shortcustname,removedword;
+  record SEPABankFileBlock SEPABankFileBl;
+
+  BlockLoad(SEPABankFileBl);
+
+  if (vendor==0) then begin 
+    if (nonblank(refstr)) then begin
+      CUr.RegNr2 = refstr;
+      if ReadFirstKey("ActRegNr2",CUr,1,true) then begin 
+        cufound = true;
+      end;
+    end;
+    if (nonblank(custid)) then begin
+      if (cufound==false) then begin 
+        CUr.RegNr1 = custid;
+        if ReadFirstKey("ActRegNr1",CUr,1,true) then begin 
+          cufound = true;
+        end;
+      end;
+      if (cufound==false) then begin 
+        CUr.RegNr2 = custid;
+        if ReadFirstKey("ActRegNr2",CUr,1,true) then begin 
+          cufound = true;
+        end;
+      end;
+    end;
+  end else begin
+    if nonblank(custid) then begin
+      CUr.BankAccount = custid;
+      if ReadFirstKey("ActBankAccount",CUr,1,true) then begin 
+        cufound = true;
+      end;  
+      if (cufound==false) then begin 
+        CUr.IBANCode = custid;
+        if ReadFirstKey("ActIBAN",CUr,1,true) then begin 
+          cufound = true;
+        end;
+      end;
+    end;
+  end;
+
+  if (cufound==false) then begin 
+    CUr.Name = custname;
+    if ReadFirstKey("Name",CUr,1,true) then begin 
+      cufound = true;
+      //LogText(0,"Search 1"  & "/" & CUr.Name);
+    end;
+  end;
+  if (cufound==false) and nonblank(SEPABankFileBl.Abbreviation) then begin 
+    shortcustname = RemoveShortWords(custname,removedword);
+    CUr.Name = shortcustname & " " & removedword;
+    if ReadFirstKey("Name",CUr,1,true) then begin 
+      cufound = true;
+      //LogText(0,"Search 2"  & "/" & CUr.Name);
+    end;
+    if (cufound==false) then begin 
+      CUr.Name = removedword & " " & shortcustname;
+      if ReadFirstKey("Name",CUr,1,true) then begin 
+        cufound = true;
+        //LogText(0,"Search 3"  & "/" & CUr.Name);
+      end;
+    end;
+    if (cufound==false) then begin 
+      CUr.Name = shortcustname;
+      if ReadFirstKey("Name",CUr,1,true) then begin 
+        cufound = true;
+        //LogText(0,"Search 4"  & "/" & CUr.Name);
+      end;
+    end;
+  end;
+  FindSepaContact = cufound;
+  return;
+end;
+
+function Date SEPA_StringToDate(string sdate)
+begin 
+  date ddate;
+  
+  ddate.day = StringToInt(Right(sdate,2));
+  ddate.year = StringToInt(Left(sdate,4));
+  ddate.month = StringToInt(Mid(sdate,5,2));
+  SEPA_StringToDate = ddate;
+  return;
+end;  
+
+updating
+procedure NewIPrecord(var record IPVc IPr,date bankdate,string pm)
+begin
+  RecordNew(IPr);
+  IPr.RecNumber = CurrentDate & " " & CurrentTime;
+  IPr.PayMode = pm;
+  IPPastePayMode(IPr);
+  IPr.TransDate = bankdate;
+  IPr.RegDate = CurrentDate;
+  IPr.OKFlag = 0;
+  //IPr.Comment = "SEPA Import " & CurrentDate;
+  return;
+end;
+
+updating
+procedure NewOPRecord(var record OPVc OPr,date bankdate,string pm)
+begin
+  RecordNew(OPr);
+  OPr.PayMode = pm;
+  OPPastePayMode(OPr);
+  OPr.PayDate = bankdate;
+  OPr.TransDate = bankdate;
+  OPr.RegDate = CurrentDate;
+  OPr.DoneFlag = 0;
+  //OPr.BankName = "SEPA Import " & CurrentDate;
+  return;
+end;
+
+
+updating
+procedure AddToOPVc(record OPVc OPr,var boolean newop, xml xdata, string xstr, date bankdate,boolean OKOPVc,string pm,string curncy)
+begin 
+  Boolean storedf,cufound;
+  record CUVc CUr;
+  record POVc POr;
+  record APPayVc APPayr;
+  record NotepadVc Noter;
+  record VIVc VIr;
+  string 255 tstr,custname,number,custid,warning;
+  row OPVc OPrw;
+  LongInt error;
+  Integer rwnum;
+  val paidsum;
+  LongInt prepaym;
+  boolean invoicefound,prepaymfound;
+  Boolean res,installmentf;
+  val chk;
+  string 60 ostr;
+  Integer pos,keys;
+
+  rwnum = MatRowCnt(OPr);
+  if (newop==false) then begin 
+    if (OPr.TransDate!=bankdate) and (MatRowCnt(OPr)>0) then begin 
+      SEPACreateOP(OPr,OKOPVc);
+      newop = true;
+    end;
+  end;
+  if (newop==false) then begin 
+    if (rwnum>=199) then begin 
+      SEPACreateOP(OPr,OKOPVc);
+      newop = true;
+    end;
+  end;
+  if (newop) then begin 
+    NewOPRecord(OPr,bankdate,pm);
+    newop = false;
+    rwnum = 0;
+  end;
+
+  custid = XmlGet(xdata,xstr & "NtryDtls/TxDtls/RltdPties/CdtrAcct/Id/IBAN");
+  custname = XmlGet(xdata,xstr & "NtryDtls/TxDtls/RltdPties/Cdtr/Nm");
+  cufound = FindSepaContact(CUr,custid,custname,"",1);
+  if blank(custid) then begin 
+   // goto LAddToOPVc;
+  end; 
+  paidsum = StringToVal(XmlGet(xdata,xstr & "NtryDtls/TxDtls/AmtDtls/TxAmt/Amt"),M4Val);
+  if (paidsum==0) then begin
+    goto LAddToOPVc;
+  end;
+  if blank(custname) then begin 
+    goto LAddToOPVc;
+  end;
+  ClearRow(OPr,OPrw,1);    
+  if (cufound) then begin 
+    OPrw.VECode = CUr.Code;
+    MatRowPut(OPr,rwnum,OPrw);
+    OPVc_PasteVECode(OPr,rwnum);
+    MatRowGet(OPr,rwnum,OPrw);
+  end;
+  //comment
+  tstr = XmlGet(xdata,xstr & "NtryDtls/TxDtls/RmtInf/Ustrd");
+
+  AddToText(UpperCase(tstr),Noter);
+  if (StringInText("ETTEMAKSUARVE",Noter)) or (StringInText("ETTEMAKS",Noter)) then begin
+    number = StripNonDigits(tstr);
+    prepaym = number;
+    OPrw.OrderNr = prepaym;
+    POr.SerNr = OPrw.OrderNr;
+    if ReadFirstMain(POr,1,true) then begin 
+      MatRowPut(OPr,rwnum,OPrw);
+      OPVc_PasteOrderNr(OPr,rwnum);
+      MatRowGet(OPr,rwnum,OPrw);
+      prepaymfound = true;
+    end else begin
+      OPrw.PrepayNr = -1;
+      APPayr.VEPNr = prepaym;
+      if ReadFirstMain(APPayr,1,true) then begin 
+        OPrw.PrepayNr = prepaym;
+        prepaymfound = true;
+      end;
+    end; 
+  end else begin
+//  if StringInText("ARVE",Noter) then begin
+    pos = 0;
+    ExtractObj(tstr,pos,ostr);
+    while (nonblank(ostr)) begin
+      number = StripNonDigits(ostr);    
+      if (blank(number)) then begin
+        goto LSkipInvoice;
+      end;
+      VIr.InvoiceNr = number;
+      keys = 1;
+      if (cufound) then begin 
+        VIr.VECode = CUr.Code;
+        keys = 2;
+      end;
+      if ReadFirstKey("InvoiceNr",VIr,keys,true) then begin 
+        OPrw.VISerNr = VIr.SerNr;
+        MatRowPut(OPr,rwnum,OPrw);
+        invoicefound = PasteInvIn2OPr(OPr,rwnum,OPr.TransDate,1,chk,warning,false,installmentf);
+        MatRowGet(OPr,rwnum,OPrw);
+        invoicefound = true;
+        ExtractObj(tstr,pos,ostr);
+        if (nonblank(ostr) and (OPrw.RecVal < paidsum)) then begin
+          OPrw.Comment = custname & ", " & tstr; 
+          paidsum = paidsum - OPrw.RecVal;
+          if (CUr.BankAccount==custid) and nonblank(custid) then begin 
+            OPrw.BankAcc = custid;
+          end;
+          MatRowPut(OPr,rwnum,OPrw);
+          OPVc_PasteRecVal(OPr,rwnum);
+          rwnum = MatRowCnt(OPr);
+          ClearRow(OPr,OPrw,1);
+          if (cufound) then begin 
+            OPrw.VECode = CUr.Code;
+            MatRowPut(OPr,rwnum,OPrw);
+            OPVc_PasteVECode(OPr,rwnum);
+            MatRowGet(OPr,rwnum,OPrw);
+          end;
+        end;
+      end else begin
+        ExtractObj(tstr,pos,ostr);
+      end;
+    end;
+  end;
+LSkipInvoice:;
+  OPrw.Comment = custname & ", " & tstr; 
+  OPrw.BankCurncy = curncy;
+  OPrw.BankVal = paidsum;
+  OPrw.RecCurncy = curncy;
+  OPrw.RecVal = paidsum;
+  if (CUr.BankAccount==custid) and nonblank(custid) then begin 
+    OPrw.BankAcc = custid;
+  end;
+  MatRowPut(OPr,rwnum,OPrw);
+  OPVc_PasteRecVal(OPr,rwnum);
+  if (invoicefound==false) and (prepaymfound==false) and cufound then begin 
+    MatRowGet(OPr,rwnum,OPrw);
+    OPrw.VISerNr = -1;
+    OPrw.PrepayNr = -1;
+    OPrw.OrderNr = -1;
+    MatRowPut(OPr,rwnum,OPrw);
+    RecordAction_raExpandVEPay(OPr,rwnum);
+  end;
+LAddToOPVc:;
+  return;
+end;
+
+updating
+procedure AddToIPVc(record IPVc IPr,var boolean newip, xml xdata, string xstr, date bankdate,boolean OKIPVc,string pm,string curncy)
+begin 
+  Boolean storedf,cufound;
+  record CUVc CUr;
+  record ORVc ORr;
+  record ARPayVc ARPayr;
+  record NotepadVc Noter;
+  record ARVc ARr;
+  string 255 tstr,custname,number,custid,refstr;
+  row IPVc IPrw;
+  LongInt error;
+  Integer rwnum;
+  val paidsum;
+  LongInt prepaym;
+  boolean invoicefound, prepaymfound;
+  Boolean res,installmentf;
+  val chk;
+  string 60 ostr;
+  Integer pos,keys;
+
+  rwnum = MatRowCnt(IPr);
+  if (newip==false) then begin 
+    if (IPr.TransDate!=bankdate) and (MatRowCnt(IPr)>0) then begin 
+      SEPACreateIP(IPr,OKIPVc);
+      newip = true;
+    end;
+  end;
+  if (newip==false) then begin 
+    if (rwnum>=200) then begin //20
+      SEPACreateIP(IPr,OKIPVc);
+      newip = true;
+    end;
+  end;
+  if (newip) then begin 
+    NewIPrecord(IPr,bankdate,pm);
+    newip = false;
+    rwnum = 0;
+  end;
+  if (XmlNodeExists(xdata,xstr & "NtryDtls/TxDtls/RltdPties/Dbtr/Id/OrgId/Othr/Id")) begin
+    custid = XmlGet(xdata,xstr & "NtryDtls/TxDtls/RltdPties/Dbtr/Id/OrgId/Othr/Id");
+  end else begin
+    custid = XmlGet(xdata,xstr & "NtryDtls/TxDtls/RltdPties/Dbtr/Id/PrvtId/Othr/Id");
+  end;
+  refstr = XmlGet(xdata,xstr & "NtryDtls/TxDtls/RmtInf/Strd/CdtrRefInf/Ref");  
+  refstr = StringToLongInt(refstr);
+  custname = XmlGet(xdata,xstr & "NtryDtls/TxDtls/RltdPties/Dbtr/Nm");
+  cufound = FindSepaContact(CUr,custid,custname,refstr,0);
+  paidsum = StringToVal(XmlGet(xdata,xstr & "NtryDtls/TxDtls/AmtDtls/TxAmt/Amt"),M4Val);
+  if (paidsum==0) then begin
+    goto LAddToIPVc;
+  end;
+  if blank(custname) then begin 
+    goto LAddToIPVc;
+  end;
+  tstr = XmlGet(xdata,xstr & "NtryDtls/TxDtls/RmtInf/Ustrd");//reference string
+  if (cufound) then begin
+    AddToText(UpperCase(tstr),Noter);
+    if (StringInText("ETTEMAKSUARVE",Noter)) or (StringInText("ETTEMAKS",Noter)) then begin
+      number = StripNonDigits(tstr);
+      if (nonblank(number)) then begin
+        prepaym = StringToLongInt(number);
+        ORr.SerNr = prepaym;
+        if ReadFirstMain(ORr,1,true) then begin 
+          if (ORr.CustCode==CUr.Code) then begin
+            rwnum = MatRowCnt(IPr);
+            ClearRow(IPr,IPrw,1);    
+            IPrw.OrderNr = prepaym;
+            MatRowPut(IPr,rwnum,IPrw);
+            IPVc_PasteOrderNr(IPr,rwnum);
+            prepaymfound = true;
+          end;
+        end else begin
+          IPrw.OrderNr = -1;
+          ARPayr.CUPNr = prepaym;
+          if ReadFirstMain(ARPayr,1,true) then begin 
+            if (ARPayr.CustCode==CUr.Code) then begin
+              rwnum = MatRowCnt(IPr);
+              ClearRow(IPr,IPrw,1);    
+              IPrw.CustCode = CUr.Code;
+              MatRowPut(IPr,rwnum,IPrw);
+              if (IPVc_PasteCustCode(IPr,rwnum,error)) then begin
+              end;
+              MatRowGet(IPr,rwnum,IPrw);
+              IPrw.CUPNr = prepaym;
+              MatRowPut(IPr,rwnum,IPrw);
+              prepaymfound = true;
+            end;
+          end;
+        end;
+      end; 
+    end else begin
+      pos = 0;
+      ExtractObj(tstr,pos,ostr);
+      while (nonblank(ostr)) begin
+        number = StripNonDigits(ostr);    
+        ARr.InvoiceNr = number;
+        if ReadFirstMain(ARr,1,true) then begin 
+          if (ARr.CustCode!=CUr.Code) then begin
+            goto LNextInvoice;
+          end;
+          if (ARr.RVal<=0) then begin
+            goto LNextInvoice;
+          end;
+          rwnum = MatRowCnt(IPr);
+          ClearRow(IPr,IPrw,1);        
+          IPrw.InvoiceNr = number;
+          MatRowPut(IPr,rwnum,IPrw);
+          invoicefound = PasteInvIn2IPr(IPr,rwnum,IPr.TransDate,chk,false,installmentf);
+          MatRowGet(IPr,rwnum,IPrw);
+          if (IPrw.RecVal < paidsum) then begin
+            paidsum = paidsum - IPrw.RecVal;
+          end else begin
+            IPrw.RecVal = paidsum;
+            MatRowPut(IPr,rwnum,IPrw);
+            IPVc_PasteRecVal(IPr,rwnum);
+            paidsum = 0;
+            MatRowGet(IPr,rwnum,IPrw);
+          end;
+          IPrw.Comment = tstr;
+          MatRowPut(IPr,rwnum,IPrw);
+          if (paidsum==0) then begin
+            goto LAddToIPVc;
+          end;
+        end;
+LNextInvoice:;
+        ExtractObj(tstr,pos,ostr);
+      end;
+    end;
+  end;
+  if (paidsum>0) then begin
+    if (prepaymfound) then begin
+      MatRowGet(IPr,rwnum,IPrw);
+      IPrw.BankCurncy = curncy;
+      IPrw.BankVal = paidsum;
+      IPrw.RecCurncy = curncy;
+      IPrw.RecVal = paidsum;
+      IPrw.Comment = tstr;
+      MatRowPut(IPr,rwnum,IPrw);
+      IPVc_PasteRecVal(IPr,rwnum);
+    end else begin
+      rwnum = MatRowCnt(IPr);
+      ClearRow(IPr,IPrw,1);    
+      if (cufound) then begin 
+        IPrw.CustCode = CUr.Code;
+        MatRowPut(IPr,rwnum,IPrw);
+        if (IPVc_PasteCustCode(IPr,rwnum,error)) then begin
+        end;
+        MatRowGet(IPr,rwnum,IPrw);
+      end;
+      IPrw.BankCurncy = curncy;
+      IPrw.BankVal = paidsum;
+      IPrw.RecCurncy = curncy;
+      IPrw.RecVal = paidsum;
+      IPrw.Comment = tstr;
+      MatRowPut(IPr,rwnum,IPrw);
+      IPVc_PasteRecVal(IPr,rwnum);
+      if (cufound) then begin 
+        RecordAction_raExpandPay2(IPr,rwnum,tstr);
+      end;
+    end;
+  end;
+LAddToIPVc:;
+  return;
+end;
+
+global
+updating procedure SEPAInXML(xml xdata)
+begin
+  string 255 xstr,tstr,tstr2,xstr0,companyIBAN;
+  Integer i;
+  record CYBlock CYBl;
+  LongInt pos;
+  record IPVc IPr;
+  record OPVc OPr;
+  boolean newip,newop;
+  date bankdate;
+  record SEPABankFileBlock SEPABankFileBl;
+  string 5 pm,curncy;
+
+  BlockLoad(SEPABankFileBl);
+  newip = true;
+  newop = true;
+  i = 0;
+  BlockLoad(CYBl);
+  xstr0 = "Document/BkToCstmrAcctRpt";
+  if XmlNodeExists(xdata,xstr0 & "/GrpHdr/MsgId") then begin 
+    companyIBAN = XmlGet(xdata,xstr0 & "/Rpt/Acct/Id/IBAN");
+    curncy = XmlGet(xdata,xstr0 & "/Rpt/Acct/Ccy");
+  end else begin
+    xstr0 = "Document/BkToCstmrStmt";
+    if XmlNodeExists(xdata,xstr0 & "/GrpHdr/MsgId") then begin 
+      companyIBAN = XmlGet(xdata,xstr0 & "/Stmt/Acct/Id/IBAN");
+      curncy = XmlGet(xdata,xstr0 & "/Stmt/Acct/Ccy");
+    end;
+  end;
+  if blank(companyIBAN) then begin 
+    MessageBox(0,USetStr(1500250));
+    goto LSEPAIn;
+  end;
+  pm = FindPMbyIBANCode(companyIBAN);
+
+  if blank(pm) then begin 
+    MessageBox(0,USetStr(1500251));
+    goto LSEPAIn;
+  end;
+  if xstr0 == "Document/BkToCstmrAcctRpt" then begin 
+    xstr = xstr0 & "/Rpt/Ntry" & "[" & i & "]/";
+  end;
+  if xstr0 == "Document/BkToCstmrStmt" then begin 
+    xstr = xstr0 & "/Stmt/Ntry" & "[" & i & "]/";
+  end;
+//while (XmlNodeExists(xdata,xstr & "NtryRef")) begin
+  while (XmlNodeExists(xdata,xstr)) begin
+    if (XmlGet(xdata,xstr & "BkTxCd/Prtry/Cd")=="MK") or (XmlGet(xdata,xstr & "BkTxCd/Domn/Cd")=="PMNT") then begin
+      tstr = XmlGet(xdata,xstr & "BookgDt/Dt");
+      bankdate = SEPA_StringToDate(tstr);
+      tstr = XmlGet(xdata,xstr & "CdtDbtInd");
+      switch tstr begin
+        case "DBIT":  // Tasumine OPVc
+          if (SEPABankFileBl.CreateOPVc) then begin 
+            tstr = XmlGet(xdata,xstr & "BkTxCd/Domn/Fmly/Cd");
+            if (tstr=="ICDT") then begin 
+              tstr = XmlGet(xdata,xstr & "BkTxCd/Domn/Fmly/SubFmlyCd");
+              if (tstr=="DMCT") or (tstr=="ESCT") or (tstr=="BOOK") or (tstr=="OTHR") then begin
+                AddToOPVc(OPr,newop,xdata,xstr,bankdate,SEPABankFileBl.OKOPVc,pm,curncy);
+              end;
+            end;
+          end;
+        case "CRDT":  // Laekumine IPVc
+          if (SEPABankFileBl.CreateIPVc) then begin 
+            AddToIPVc(IPr,newip,xdata,xstr,bankdate,SEPABankFileBl.OKIPVc,pm,curncy);
+          end;
+      end;
+    end;
+    i = i + 1;
+    if xstr0 == "Document/BkToCstmrAcctRpt" then begin 
+      xstr =  xstr0 & "/Rpt/Ntry" & "[" & i & "]/";
+    end;
+    if xstr0 == "Document/BkToCstmrStmt" then begin 
+      xstr =  xstr0 & "/Stmt/Ntry" & "[" & i & "]/";
+    end;
+  end;
+  if (MatRowCnt(IPr)>0) then begin 
+    SEPACreateIP(IPr,SEPABankFileBl.OKIPVc);
+  end;
+  if (MatRowCnt(OPr)>0) then begin 
+    SEPACreateOP(OPr,SEPABankFileBl.OKOPVc);
+  end;
+LSEPAIn:;
+  while (TestEOF==false) begin
+    xstr = ImportField;
+    NextImportLine(true);     
+  end;      
+  return;
+end;
+
+global
+updating procedure SEPAIn()
+begin 
+  xml xdata;
+  
+  xdata = ParseXMLFile(GetImportFileName);
+  SEPAInXML(xdata);
+  return;
+end;  

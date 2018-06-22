@@ -1,0 +1,31 @@
+external procedure YearCheck(var LongInt);
+
+function boolean ExceptDatesDClassYearEFAfter(integer wn,integer rownr,integer changedf)
+  begin  
+  record ExceptDatesVc EDr;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,EDr);
+    DeselectWindow(wn,false);
+    if (EDr.Year>0) then begin
+      YearCheck(EDr.Year);        
+      PutWindowRecord(wn,EDr);
+    end;
+  end;
+
+  ExceptDatesDClassYearEFAfter = true;
+  return;
+end;
+
+global
+function boolean ExceptDatesDClassAfterEditField(integer wn,string fieldname,integer fn, integer rownr,integer changed)
+begin
+  boolean res;
+
+  switch (fieldname) begin
+    case "Year": res = ExceptDatesDClassYearEFAfter(wn,rownr,changed);
+  end;
+
+  ExceptDatesDClassAfterEditField = res;
+  return;
+end;

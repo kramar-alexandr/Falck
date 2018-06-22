@@ -1,0 +1,33 @@
+external procedure BankExpEstoniaSEPA_Domestic_GroupFooter_PaymPayroll();
+external updating procedure BankExpEstoniaSEPA_Domestic_GroupHeader_PaymPayroll(record RcVc,var record BankFileBlock,String);
+
+procedure SetBankCodepage(Integer dosmode,string cp)
+begin
+  string 100 s;
+
+  s = StringSetFromString(89,cp);
+  if (blank(s)) then begin
+    s = "UTF-8";
+  end;    
+  if (SetExportCodepage(s)==false) then begin
+    LogText(0,"Failed to set codepage " & s);
+  end;
+  return;
+end;
+
+global
+updating procedure PaymPayrollXMLEn(record RcVc RepSpec)
+begin
+  record BankFileBlock bfr;
+  record BaseCurBlock BCr;
+
+  BlockLoad(bfr);
+  BlockLoad(BCr);
+
+  SetBankCodepage(RepSpec.ArtMode,RepSpec.f12);
+
+  BankExpEstoniaSEPA_Domestic_GroupHeader_PaymPayroll(RepSpec,bfr,BCr.BaseCur1); 
+  BankExpEstoniaSEPA_Domestic_GroupFooter_PaymPayroll; 
+
+  return;
+end;

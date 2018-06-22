@@ -1,0 +1,7 @@
+global
+function LongInt IRDebtHandleVcRecordRemoveTest(var record IRDebtHandleVc IRDebtHandler,record IRDebtHandleVc IRDebtHandle2r,LongInt long3,LongInt long4)
+begin
+  MessageBox(1500168,"");
+  IRDebtHandleVcRecordRemoveTest = 0; 
+  return;
+end;

@@ -1,0 +1,471 @@
+external function integer CheckObjs(string,string,var string);
+external updating procedure DeleteTransaction(LongInt,Integer);
+external updating procedure SaveTrans(record TRVc);
+external updating procedure InvalidateTR(Integer,LongInt);
+external function boolean ContractExsistsAndActive(LongInt);
+external function boolean PositionExsistsAndActive(string,LongInt,date);
+external updating procedure UpdateCPUnFromCPr(record CalcPayrollVc,boolean);
+external updating procedure UpdateITFMUsedFromCPr(record CalcPayrollVc,boolean);
+external updating procedure UpdateDPDUsedFromCPr(record CalcPayrollVc,boolean);
+external updating procedure UpdateContractFromCPr(record CalcPayrollVc);
+external updating procedure RemoveCPWHVc(record CalcPayrollVc);
+external updating procedure RemoveCPPWVc(record CalcPayrollVc);
+external updating procedure RemoveCPOTVc(record CalcPayrollVc);
+external updating procedure RemoveCPAbsVc(record CalcPayrollVc);
+external function boolean IsOpenTransRow(LongInt,integer);
+external function boolean IsAbsenceRow(LongInt,integer);
+external function LongInt MakeTransFromCalcPayroll(record TRVc,record TRVc,record CalcPayrollVc,boolean,boolean);
+external function boolean GetNextCalcPayrollSerNr(date,var LongInt);
+external updating procedure UpdateCPPPHistFromCPr(record CalcPayrollVc,boolean);
+external updating procedure UpdateCPPWFromCPr(record CalcPayrollVc,integer);
+external updating procedure UpdateCPWHFromCPr(record CalcPayrollVc,integer,var boolean);
+external updating procedure UpdateCPAbsFromCPr(record CalcPayrollVc,integer,var boolean);
+external updating procedure UpdateCPOTFromCPr(record CalcPayrollVc,integer,var boolean);
+external function Boolean SerNrTestCalcPayrollVc(LongInt,date,var boolean);
+external function string 255 CheckTrans(var record TRVc,Integer,Boolean);
+external function boolean PaymTypeExsists(string);
+external procedure SetMarkFlag(integer,var integer);
+external updating procedure UpdateBailiffFromCPr(record CalcPayrollVc,boolean);
+
+global
+function LongInt CalcPayrollVcRecordDefaults(var record CalcPayrollVc CPr,record CalcPayrollVc CP2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  date tmpdate;
+  
+  CPr.SerNr = -1;
+  CPr.CalcDate=CurrentDate;
+  if (SingleUserMode) then begin
+    if (GetNextCalcPayrollSerNr(CPr.CalcDate,CPr.SerNr)) then begin end;
+  end;
+  tmpdate.day=1;
+  tmpdate.month=GetMonth(CPr.CalcDate);
+  tmpdate.year=GetYear(CPr.CalcDate);
+  CPr.StartDate=tmpdate;
+  tmpdate.day=DaysInMonth(GetYear(tmpdate),GetMonth(tmpdate));
+  CPr.EndDate=tmpdate;
+  CPr.PaymDate=tmpdate;
+
+  CalcPayrollVcRecordDefaults = res; 
+  return;
+end;
+
+global
+function LongInt CalcPayrollVcRecordDuplicate(var record CalcPayrollVc CPr,record CalcPayrollVc CP2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  date tmpdate;
+  val tmpval;
+ 
+  CPr.SerNr = -1;
+  CPr.OKFlag = 0;
+  SetMarkFlag(CPr.OKFlag,CPr.OKMark);
+  CPr.PaymFlag = 0;
+  SetMarkFlag(CPr.PaymFlag,CPr.PaymMark);
+  CPr.Invalid = 0;
+  CPr.CalcDate=CurrentDate;
+  if (SingleUserMode) then begin
+    if (GetNextCalcPayrollSerNr(CPr.CalcDate,CPr.SerNr)) then begin end;
+  end;
+  tmpdate.day=1;
+  tmpdate.month=GetMonth(CPr.CalcDate);
+  tmpdate.year=GetYear(CPr.CalcDate);
+  CPr.StartDate=tmpdate;
+  tmpdate.day=DaysInMonth(GetYear(tmpdate),GetMonth(tmpdate));
+  CPr.EndDate=tmpdate;
+  CPr.PaymDate=tmpdate;
+  CalcPayrollVcRecordDuplicate = res; 
+  return;
+end;
+
+global
+updating function LongInt CalcPayrollVcRecordCheck(var record CalcPayrollVc CPr,record CalcPayrollVc CP2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  record CalcPayrollVc CP3r;
+  row CalcPayrollVc CPrw;
+  record ContractVc Contrr;
+  record PositionVc Posr;
+  record TRVc gTRp;
+  record TRVc gTR2p;
+  LongInt updatemode,insertmode,errcode;
+  integer rwcnt,i,j,tmp,vacdays,prfx;
+  string 255 tstr;
+  boolean otflag,absflag,advpaymflag,transf;
+  boolean gentrans;
+  
+  insertmode=1;
+  updatemode=2;
+  res = 0;
+  if (CP2r.Invalid!=0) then begin
+    RecordCheckError(1282,"",0,"");      
+    res = -1; 
+    goto LCalcPayrollVcRecordCheck;
+  end;
+  if (stat!=insertmode) then begin
+    if (CP2r.OKFlag!=0) then begin
+      goto LCalcPayrollVcRecordCheck;
+    end;  
+  end;
+
+  if (stat==updatemode) then begin
+    if (CPr.SerNr<=0)  then begin
+      CPr.SerNr = CP2r.SerNr;
+    end;
+  end;
+  if (CPr.SerNr==-1) then begin
+      if (GetNextCalcPayrollSerNr(CPr.CalcDate,CPr.SerNr)) then begin end;
+  end;
+  if (SerNrTestCalcPayrollVc(CPr.SerNr,CPr.CalcDate,gentrans)==false) then begin
+    RecordCheckError(1557,"",-1,"SerNr");      
+    res = -1; 
+    goto LCalcPayrollVcRecordCheck;
+  end;
+
+  if (stat==insertmode) or (stat==updatemode and CPr.SerNr!=CP2r.SerNr) then begin
+    CP3r.SerNr = CPr.SerNr;
+    if (ReadFirstMain(CP3r,1,true)) then begin
+      RecordCheckError(1547," " & CPr.SerNr,-1,"SerNr");      
+      res = -1; 
+      goto LCalcPayrollVcRecordCheck;
+    end;
+  end;   
+  if (len(CPr.SerNr)<=0 or (CPr.SerNr<=0)) then begin
+    RecordCheckError(1500354,"",-1,"SerNr");      
+    res = -1; 
+    goto LCalcPayrollVcRecordCheck;
+  end;
+
+  if (CPr.ContrSerNr<=0) then begin
+    RecordCheckError(1500318,"",-1,"ContrSerNr");      
+    res = -1; 
+    goto LCalcPayrollVcRecordCheck; 
+  end else begin
+    if (ContractExsistsAndActive(CPr.ContrSerNr)==false) then begin
+      RecordCheckError(1500332," v›i ei ole aktiivne " & CPr.ContrSerNr,-1,"ContrSerNr");      
+      res = -1; 
+      goto LCalcPayrollVcRecordCheck; 
+    end;
+  end;
+  if blank(CPr.CalcDate) then begin
+    RecordCheckError(1500342,"",-1,"CalcDate");      
+    res = -1; 
+    goto LCalcPayrollVcRecordCheck;
+  end;
+  if blank(CPr.PaymDate) then begin
+    RecordCheckError(1500377,"",-1,"PaymDate");      
+    res = -1; 
+    goto LCalcPayrollVcRecordCheck;
+  end;
+  if blank(CPr.StartDate) then begin
+    RecordCheckError(1500321,"",-1,"StartDate");      
+    res = -1; 
+    goto LCalcPayrollVcRecordCheck;
+  end;
+  if blank(CPr.EndDate) then begin
+    RecordCheckError(1500334,"",-1,"EndDate");      
+    res = -1; 
+    goto LCalcPayrollVcRecordCheck;
+  end else begin
+    if (CPr.EndDate<CPr.StartDate) then begin
+      RecordCheckError(1500322,"",-1,"EndDate");      
+      res = -1; 
+      goto LCalcPayrollVcRecordCheck;
+    end;
+  end;
+  if (nonblank(CPr.ObjCode)) then begin
+    errcode = CheckObjs("",CPr.ObjCode,tstr);
+    if (errcode!=0) then begin
+      RecordCheckError(errcode,tstr,-1,"ObjCode");      
+      res = -1; 
+      goto LCalcPayrollVcRecordCheck;
+    end;
+  end;
+  if (CPr.SocTaxTotal<0) then begin
+    RecordCheckError(20825,"",-1,"SocTaxTotal");      
+    res = -1; 
+    goto LCalcPayrollVcRecordCheck;
+  end;
+
+  rwcnt=MatRowCnt(CPr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(CPr,i,CPrw);
+    absflag=IsAbsenceRow(CPr.SerNr,i);
+    if (absflag==false) then begin 
+      if blank(CPrw.PosCode) then begin
+        RecordCheckError(1500307," " & CPrw.PosCode,i,"PosCode");      
+        res = -1; 
+        goto LCalcPayrollVcRecordCheck;
+      end else begin
+        otflag=IsOpenTransRow(CPr.SerNr,i);
+        if (otflag) then begin
+          Posr.Code=CPrw.PosCode;
+          if (ReadFirstMain(Posr,1,true)==false) then begin
+            RecordCheckError(1500324," " & CPrw.PosCode,i,"PosCode");      
+            res = -1; 
+            goto LCalcPayrollVcRecordCheck;
+          end;
+        end else begin
+          if (PositionExsistsAndActive(CPrw.PosCode,CPr.ContrSerNr,CPr.StartDate)==false) then begin
+            RecordCheckError(1500324," v›i ei ole aktiivne antud kuupŠeval " & CPrw.PosCode,i,"PosCode");      
+            res = -1; 
+            goto LCalcPayrollVcRecordCheck; 
+          end;
+          if (PositionExsistsAndActive(CPrw.PosCode,CPr.ContrSerNr,CPr.EndDate)==false) then begin
+            RecordCheckError(1500324," v›i ei ole aktiivne antud kuupŠeval " & CPrw.PosCode,i,"PosCode");      
+            res = -1; 
+            goto LCalcPayrollVcRecordCheck; 
+          end;
+        end;
+      end;
+    end;
+    if blank(CPrw.PaymTypeCode) then begin
+      RecordCheckError(1500316,"",i,"PaymTypeCode");      
+      res = -1; 
+      goto LCalcPayrollVcRecordCheck;
+    end;
+    if (PaymTypeExsists(CPrw.PaymTypeCode)==false) then begin
+      RecordCheckError(1500326," " & CPrw.PaymTypeCode,i,"PaymTypeCode");      
+      res = -1; 
+      goto LCalcPayrollVcRecordCheck;
+    end;
+    if blank(CPrw.Tariff) then begin
+      RecordCheckError(1500353,"",i,"Tariff");      
+      res = -1; 
+      goto LCalcPayrollVcRecordCheck;
+    end;
+    if blank(CPrw.Amount) then begin
+      RecordCheckError(1500365,"",i,"Amount");      
+      res = -1; 
+      goto LCalcPayrollVcRecordCheck;
+    end;
+    if blank(CPrw.NetoSum) then begin
+      RecordCheckError(1500359,"",i,"NetoSum");      
+      res = -1; 
+      goto LCalcPayrollVcRecordCheck;
+    end;
+    if (nonblank(CPrw.ObjCode)) then begin
+      errcode = CheckObjs("",CPrw.ObjCode,tstr);
+      if (errcode!=0) then begin
+        RecordCheckError(errcode,tstr,i,"ObjCode");      
+        res = -1; 
+        goto LCalcPayrollVcRecordCheck;
+      end;
+    end;
+  end;
+
+  transf = false;
+  if (CPr.OKFlag!=0) then begin
+    if (stat==insertmode) then begin transf = true; end;
+    if (stat==updatemode) then begin
+      if (CP2r.OKFlag==0) then begin transf = true; end;
+    end;  
+  end;
+  if ((transf) and (gentrans)) then begin
+    errcode=MakeTransFromCalcPayroll(gTRp,gTR2p,CPr,false,true);
+    tstr = CheckTrans(gTRp,2,true);
+    if (nonblank(tstr)) then begin
+      RecordCheckError(1085,tstr,-1,"SerNr");      
+      res = -1;
+      goto LCalcPayrollVcRecordCheck;
+    end;
+    tstr = CheckTrans(gTR2p,2,true);
+    if (nonblank(tstr)) then begin
+      RecordCheckError(1085,tstr,-1,"SerNr");      
+      res = -1;
+      goto LCalcPayrollVcRecordCheck;
+    end;
+    if (errcode!=0) then begin
+      RecordCheckError(errcode,"",-1,"SerNr");      
+    end else begin
+      prfx = SalaryCalcYc;
+      if ((gTRp.Number>0) and (gTRp.IntYc==prfx)) then begin
+        SaveTrans(gTRp);
+      end;
+      prfx = SalaryPayment2Yc;
+      if ((gTR2p.Number>0) and (gTR2p.IntYc==prfx)) then begin
+        SaveTrans(gTR2p);
+      end;
+    end;
+  end;
+LCalcPayrollVcRecordCheck:;
+  if (res==-1) then begin
+    CPr.OKFlag=0;
+    SetMarkFlag(CPr.OKFlag,CPr.OKMark);
+  end;
+  CalcPayrollVcRecordCheck = res;
+  return;
+end;
+
+global
+function LongInt CalcPayrollVcRecordSave(var record CalcPayrollVc CPr,record CalcPayrollVc CP2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  date tmpdate;
+ 
+  SetMarkFlag(CPr.OKFlag,CPr.OKMark);
+  SetMarkFlag(CPr.PaymFlag,CPr.PaymMark);
+  CalcPayrollVcRecordSave = res; 
+  return;
+end;
+
+global
+updating function LongInt CalcPayrollVcRecordSaveAfter(var record CalcPayrollVc CPr,record CalcPayrollVc CP2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+
+  if (CPr.OKFlag!=0) then begin
+    UpdateCPUnFromCPr(CPr,true);
+    UpdateITFMUsedFromCPr(CPr,true);
+    UpdateDPDUsedFromCPr(CPr,true);
+    UpdateContractFromCPr(CPr);
+    UpdateCPPPHistFromCPr(CPr,false);
+    UpdateBailiffFromCPr(CPr,true);  
+  end;
+  CalcPayrollVcRecordSaveAfter = res;
+  return;
+end;
+
+global
+function LongInt CalcPayrollVcRecordUpdate(var record CalcPayrollVc CPr,record CalcPayrollVc CP2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  date tmpdate;
+
+  SetMarkFlag(CPr.OKFlag,CPr.OKMark);
+  SetMarkFlag(CPr.PaymFlag,CPr.PaymMark);
+  CalcPayrollVcRecordUpdate = res; 
+  return;
+end;
+
+global
+updating function LongInt CalcPayrollVcRecordUpdateAfter(var record CalcPayrollVc CPr,record CalcPayrollVc CP2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+
+  if ((CPr.OKFlag!=0) and (CP2r.OKFlag==0)) then begin
+    UpdateCPUnFromCPr(CPr,true);
+    UpdateITFMUsedFromCPr(CPr,true);
+    UpdateDPDUsedFromCPr(CPr,true);
+    UpdateContractFromCPr(CPr);
+    UpdateCPPPHistFromCPr(CPr,false);
+    UpdateBailiffFromCPr(CPr,true);  
+  end;
+  
+  if ((CPr.Invalid!=0) and (CP2r.Invalid==0)) then begin
+    UpdateCPUnFromCPr(CPr,false);
+    UpdateITFMUsedFromCPr(CPr,false);
+    UpdateDPDUsedFromCPr(CPr,false);
+    UpdateContractFromCPr(CPr);
+    UpdateCPPPHistFromCPr(CPr,true);
+    UpdateBailiffFromCPr(CPr,false);  
+    InvalidateTR(SalaryCalcYc,CPr.SerNr);
+    InvalidateTR(SalaryPayment2Yc,CPr.SerNr);
+  end;
+
+  if ((CPr.OKFlag==0) and (CP2r.OKFlag!=0)) then begin
+    UpdateCPUnFromCPr(CPr,false);
+    UpdateITFMUsedFromCPr(CPr,false);
+    UpdateDPDUsedFromCPr(CPr,false);
+    UpdateContractFromCPr(CPr);
+    UpdateCPPPHistFromCPr(CPr,true);
+    UpdateBailiffFromCPr(CPr,false);  
+    DeleteTransaction(CPr.SerNr,SalaryCalcYc);
+    DeleteTransaction(CPr.SerNr,SalaryPayment2Yc);
+  end;
+  CalcPayrollVcRecordUpdateAfter = res;
+  return;
+end;
+
+global
+updating function LongInt CalcPayrollVcRecordRemoveTest(var record CalcPayrollVc CPr,record CalcPayrollVc CP2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+
+  res = 1;
+  if ((CPr.OKFlag!=0) or (CPr.PaymFlag!=0)) then begin
+    MessageBox(1560,"")
+    res = 0;
+  end;
+  CalcPayrollVcRecordRemoveTest = res; 
+  return;
+end;
+
+global
+updating function LongInt CalcPayrollVcRecordRemoveAfter(var record CalcPayrollVc CPr,record CalcPayrollVc CP2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+
+  if ((CPr.OKFlag==0) and (CPr.PaymFlag==0)) then begin
+    RemoveCPWHVc(CPr);
+    RemoveCPPWVc(CPr);
+    RemoveCPOTVc(CPr);
+    RemoveCPAbsVc(CPr);  
+  end;
+  CalcPayrollVcRecordRemoveAfter = res; 
+  return;
+end;
+
+global
+updating function LongInt CalcPayrollVcRecordInvalidateTest(var record CalcPayrollVc CPr,record CalcPayrollVc CP2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+
+  res = 0;
+  if (CPr.Invalid==0) and (CPr.OKFlag!=0) and (CPr.PaymFlag==0) then begin
+    CPr.Invalid = 1;
+    UpdateContractFromCPr(CPr);
+    RemoveCPWHVc(CPr);
+    RemoveCPPWVc(CPr);
+    RemoveCPOTVc(CPr);
+    RemoveCPAbsVc(CPr);
+    res = 1;
+  end;
+LCalcPayrollVcRecordInvalidateTest:;
+  CalcPayrollVcRecordInvalidateTest = res;  
+  return;
+end;
+
+global
+updating function LongInt CalcPayrollVcRecordImport(var record CalcPayrollVc CPr,record CalcPayrollVc CP2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+  
+  SetMarkFlag(CPr.OKFlag,CPr.OKMark);
+  SetMarkFlag(CPr.PaymFlag,CPr.PaymMark);
+  CalcPayrollVcRecordImport = res; 
+  return;
+end;
+
+global
+updating function LongInt CalcPayrollVcRecordImportAfter(var record CalcPayrollVc CPr,record CalcPayrollVc CP2r,LongInt stat,LongInt long4)
+begin
+  LongInt res,rwcnt,i;
+  row CalcPayrollVc CPrw;
+  boolean checkrowflag;
+  
+  if ((CPr.OKFlag!=0) and (CPr.Invalid==0)) then begin
+    UpdateCPUnFromCPr(CPr,true); //Arvestuse abiregister
+    UpdateITFMUsedFromCPr(CPr,true); //TM vaba miinimumi abiregister
+    UpdateDPDUsedFromCPr(CPr,true); //Tššv›imetuspensionŠri soodustuse abiregister
+    UpdateCPPPHistFromCPr(CPr,false); //Arvestuste/VŠljamaksete ajalugu - testimiseks
+  end;
+  if (CPr.Invalid==0) then begin //k.a. kinnitamata arvestused
+    rwcnt = MatRowCnt(CPr);
+    for (i=0;i<rwcnt;i=i+1) begin
+      checkrowflag=true;
+      UpdateCPOTFromCPr(CPr,i,checkrowflag); //Avatud kannete abiregister
+      if (checkrowflag) then begin
+        UpdateCPAbsFromCPr(CPr,i,checkrowflag); //Puudumiste abiregister
+      end;
+      if (checkrowflag) then begin
+        UpdateCPWHFromCPr(CPr,i,checkrowflag); //Tššajatabeli abiregister
+      end;
+      if (checkrowflag) then begin
+        UpdateCPPWFromCPr(CPr,i); //TŸkitšš abiregister
+      end;
+    end;
+  end;
+  CalcPayrollVcRecordImportAfter=res;
+  return;
+end;

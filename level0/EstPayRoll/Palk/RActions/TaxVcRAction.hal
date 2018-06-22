@@ -1,0 +1,164 @@
+external function integer CheckObjs(string,string,var string);
+external function boolean GetNextTaxNr(var string);
+
+global
+function LongInt TaxVcRecordDefaults(var record TaxVc Taxr,record TaxVc Tax2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  
+  if (SingleUserMode) then begin
+    if (GetNextTaxNr(Taxr.Code)) then begin end;
+  end else begin
+    Taxr.Code = "";
+  end;
+  
+  TaxVcRecordDefaults = res; 
+  return;
+end;
+
+global
+function LongInt TaxVcRecordDuplicate(var record TaxVc Taxr,record TaxVc Tax2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  
+  if (SingleUserMode) then begin
+    if (GetNextTaxNr(Taxr.Code)) then begin end;
+  end else begin
+    Taxr.Code = "";
+  end;
+
+  TaxVcRecordDuplicate = res; 
+  return;
+end;
+
+global
+function LongInt TaxVcRecordCheck(var record TaxVc Taxr,record TaxVc Tax2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  record TaxVc Tax3r;
+  row TaxVc Taxrw;
+  row TaxVc Tax2rw;
+  integer rwcnt,i,j;
+  string 255 tstr;
+  LongInt updatemode,insertmode,errcode;
+  
+  insertmode=1;
+  updatemode=2;
+  res = 0;
+
+  if (blank(Taxr.Code)) then begin
+    if (stat==updatemode) and nonblank(Tax2r.Code) then begin
+      Taxr.Code=Tax2r.Code;
+    end else begin
+      if (GetNextTaxNr(Taxr.Code)) then begin end;
+    end;
+  end;
+  if (stat==insertmode) or (stat==updatemode and Taxr.Code!=Tax2r.Code) then begin
+    Tax3r.Code = Taxr.Code;
+    if (ReadFirstMain(Tax3r,1,true)) then begin
+      RecordCheckError(1547," " & Taxr.Code,-1,"Code");      
+      res = -1; 
+      goto LTaxVcRecordCheck;
+    end;
+  end;   
+  if (len(Taxr.Code)<=0) then begin
+    RecordCheckError(1500312,"",-1,"Code");      
+    res = -1; 
+    goto LTaxVcRecordCheck;
+  end;
+  if (nonblank(Taxr.ObjCode)) then begin
+    errcode = CheckObjs("",Taxr.ObjCode,tstr);
+    if (errcode!=0) then begin
+      RecordCheckError(errcode,tstr,-1,"ObjCode");      
+      res = -1; 
+      goto LTaxVcRecordCheck;
+    end;
+  end;
+
+  rwcnt=MatRowCnt(Taxr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(Taxr,i,Taxrw);
+    if nonblank(Taxrw.Percent) then begin
+      if blank(Taxrw.SDate) then begin
+        RecordCheckError(1500304,"",i,"SDate");      
+        res = -1; 
+        goto LTaxVcRecordCheck;
+      end;
+      if ((Taxrw.ToSum<Taxrw.FromSum) or (Taxrw.ToSum==0)) then begin
+        RecordCheckError(1500313,"",i,"ToSum");      
+        res = -1; 
+        goto LTaxVcRecordCheck;
+      end;
+      if (Taxrw.Percent<0) or (Taxrw.Percent>100) then begin
+        RecordCheckError(1500314,"",i,"Percent");      
+        res = -1; 
+        goto LTaxVcRecordCheck;
+      end;
+
+      for (j=i+1;j<rwcnt;j=j+1) begin
+        MatRowGet(Taxr,j,Tax2rw);
+        if (DateInRange(Tax2rw.SDate,Taxrw.SDate,Taxrw.EDate)) then begin
+          RecordCheckError(1500305,"",j,"SDate");      
+          res = -1; 
+          goto LTaxVcRecordCheck;
+        end;
+        if (DateInRange(Tax2rw.EDate,Taxrw.SDate,Taxrw.EDate)) then begin
+          RecordCheckError(1500305,"",j,"EDate");      
+          res = -1; 
+          goto LTaxVcRecordCheck;
+        end;
+        if (nonblankdate(Taxrw.EDate)) then begin
+          if ((Tax2rw.SDate<Taxrw.SDate) and (Tax2rw.EDate>Taxrw.EDate)) then begin
+            RecordCheckError(1500305,"",j,"SDate");      
+            res = -1; 
+            goto LTaxVcRecordCheck;
+          end;
+        end;
+      end;    
+    end;    
+  end;    
+LTaxVcRecordCheck:;
+  TaxVcRecordCheck = res;
+  return;
+end;
+
+function boolean TaxrInUse(string taxcode)
+begin
+  boolean res;
+  record EmplVc Emplr;  
+  row EmplVc Emplrw;  
+  integer rwcnt,i;
+  
+  ResetLoop(Emplr);
+  Emplr.Code = "";
+  while (LoopMain(Emplr,1,true)) begin  
+    rwcnt=MatRowCnt(Emplr);
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(Emplr,i,Emplrw);
+      if (Emplrw.TaxCode==taxcode) then begin
+        res=true;
+        goto LTaxrInUse;
+      end;
+    end;
+  end;
+
+LTaxrInUse:;
+  TaxrInUse = res; 
+  return;
+end;
+
+global
+function LongInt TaxVcRecordRemoveTest(var record TaxVc Taxr,record TaxVc Tax2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+  boolean testf;
+
+  res = 1;
+  testf = TaxrInUse(Taxr.Code);
+  if (testf) then begin
+    MessageBox(1500315,"")
+    res = 0;
+  end;
+  TaxVcRecordRemoveTest = res; 
+  return;
+end;

@@ -1,0 +1,102 @@
+global
+function Boolean SerNrTestOpenTransVc(LongInt sernr,Date tdp)
+begin
+  Boolean res;
+  record OpenTransSerBlock OTSerr;
+  row OpenTransSerBlock OTSerrw;
+  Integer i,rwcnt;
+
+  if (sernr==-1) then begin
+    res = false;
+    goto L1;
+  end;
+  BlockLoad(OTSerr);
+  rwcnt = MatRowCnt(OTSerr);
+  if (rwcnt==0) then begin
+    res = true;
+    goto L1;
+  end;
+  for (i=0; i<rwcnt ;i=i+1) begin
+    MatRowGet(OTSerr,i,OTSerrw);
+    if ((sernr<OTSerrw.TSerStart) or (sernr>OTSerrw.TSerEnd)) then begin
+      goto L2;
+    end;  
+    if (nonblankdate(OTSerrw.StartDate)) then begin
+      if (tdp<OTSerrw.StartDate) then begin goto L2; end;
+    end;  
+    if (nonblankdate(OTSerrw.EndDate)) then begin
+      if (tdp>OTSerrw.EndDate) then begin goto L2; end;
+    end;  
+    res = true;
+    goto L1;
+L2:;
+  end;
+L1:;
+  SerNrTestOpenTransVc = res;
+  return;
+end;
+
+global
+function boolean OTrInUse(record OpenTransVc OTr)
+begin
+  row OpenTransVc OTrw;
+  boolean res;
+  integer rwcnt,i;
+  
+  res=false;
+  rwcnt=MatRowCnt(OTr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(OTr,i,OTrw);
+    if (OTrw.CalcSerNr>0) then begin
+      res=true;
+    end;
+  end; 
+LOTrInUse:;
+  OTrInUse = res; 
+  return;
+end;
+
+global
+procedure PasteOTrwsFromContrr(record OpenTransVc OTr,var row OpenTransVc OTrw,record ContractVc Contrr,var integer rownr)
+begin  
+  row ContractVc Contrrw;
+  record PositionVc Posr;
+  integer rwcnt,i,rw;
+  
+  rw=rownr;
+  ResetLoop(Posr);
+  Posr.Code="";
+  while (LoopMain(Posr,1,true)) begin  
+    rwcnt=MatRowCnt(Contrr);
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(Contrr,i,Contrrw);
+      if (Contrrw.PosCode==Posr.Code) then begin
+        if (DateInRange(OTr.TransDate,Contrrw.SDate,Contrrw.EDate)) then begin
+          OTrw.ContrSerNr = Contrr.SerNr;
+          OTrw.Firstname = Contrr.Firstname;
+          OTrw.Surname = Contrr.Surname;
+          OTrw.PosCode=Contrrw.PosCode;
+          OTrw.ObjCode=Contrrw.ObjCode;
+          MatRowInsert(OTr,rownr,OTrw);
+          rownr=rownr+1;
+          goto L1;
+        end;
+      end;  
+    end;  
+L1:;    
+  end;
+  if (rownr==rw) then begin
+    OTrw.ContrSerNr = Contrr.SerNr;
+    OTrw.Firstname = Contrr.Firstname;
+    OTrw.Surname = Contrr.Surname;
+    OTrw.PosCode="";
+    OTrw.Tariff=blankval;
+    OTrw.Amount=blankval;
+    OTrw.Sum=blankval;
+    OTrw.ObjCode="";
+    OTrw.CalcSerNr=blankval;
+    MatRowInsert(OTr,rownr,OTrw);
+    rownr=rownr+1;
+  end;
+  return;
+end;

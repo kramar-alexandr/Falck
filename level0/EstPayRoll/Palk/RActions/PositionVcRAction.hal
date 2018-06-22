@@ -1,0 +1,93 @@
+external function boolean GetNextPosNr(var string);
+external function boolean PosrInUse(string);
+
+global
+function LongInt PositionVcRecordDefaults(var record PositionVc Posr,record PositionVc Pos2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  
+  if (SingleUserMode) then begin
+    if (GetNextPosNr(Posr.Code)) then begin end;
+  end else begin
+    Posr.Code = "";
+  end;
+
+  PositionVcRecordDefaults = res; 
+  return;
+end;
+
+global
+function LongInt PositionVcRecordDuplicate(var record PositionVc Posr,record PositionVc Pos2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  
+  if (SingleUserMode) then begin
+    if (GetNextPosNr(Posr.Code)) then begin end;
+  end else begin
+    Posr.Code = "";
+  end;
+  PositionVcRecordDuplicate = res; 
+  return;
+end;
+
+global
+function LongInt PositionVcRecordCheck(var record PositionVc Posr,record PositionVc Pos2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  record PositionVc Pos3r;
+  record ISCOCodeVc ISCOr;
+  LongInt updatemode,insertmode;
+  
+  insertmode=1;
+  updatemode=2;
+  res = 0;
+  if (blank(Posr.Code)) then begin
+    if (stat==updatemode) and nonblank(Pos2r.Code) then begin
+      Posr.Code=Pos2r.Code;
+    end else begin
+      if (GetNextPosNr(Posr.Code)) then begin end;
+    end;
+  end;
+  if (stat==insertmode) or (stat==updatemode and Posr.Code!=Pos2r.Code) then begin
+    Pos3r.Code = Posr.Code;
+    if (ReadFirstMain(Pos3r,1,true)) then begin
+      RecordCheckError(1547," " & Posr.Code,-1,"Code");      
+      res = -1; 
+      goto LPositionVcRecordCheck;
+    end;
+  end;
+  if (len(Posr.Code)<=0) then begin
+    RecordCheckError(1500307,"",-1,"Code");      
+    res = -1; 
+    goto LPositionVcRecordCheck;
+  end;
+
+  if (nonblank(Posr.ISCOCode)) then begin
+    ISCOr.Code = Posr.ISCOCode;
+    if (ReadFirstMain(ISCOr,1,true)==false) then begin
+      RecordCheckError(1500308," " & Posr.ISCOCode,-1,"ISCOCode");      
+      res = -1; 
+      goto LPositionVcRecordCheck;
+    end;
+  end;
+
+LPositionVcRecordCheck:;
+  PositionVcRecordCheck = res;
+  return;
+end;
+
+global
+function LongInt PositionVcRecordRemoveTest(var record PositionVc Posr,record PositionVc Pos2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+  boolean testf;
+
+  res = 1;
+  testf = PosrInUse(Posr.Code);
+  if (testf) then begin
+    MessageBox(1500310,"")
+    res = 0;
+  end;
+  PositionVcRecordRemoveTest = res; 
+  return;
+end;

@@ -1,0 +1,1158 @@
+external procedure GetDaysAndHoursTotal(record WorkedHoursVc,integer,var val,var integer);
+external procedure YearCheck(var LongInt);
+
+global 
+function Boolean WorkedHoursDClassDeleteRowTest(Integer wn,Integer rownr)
+begin
+  record WorkedHoursVc WHr;
+  integer updatemode;
+  boolean res;
+
+  res = true;
+  updatemode = 2;
+  if (WindowState(wn)==updatemode) then begin
+    GetPrevWindowRecord(wn,WHr);
+  end else begin
+    GetWindowRecord(wn,WHr);
+  end;
+  if (WHr.OKFlag!=0) then begin
+    res = false;
+  end;
+
+  WorkedHoursDClassDeleteRowTest = res;
+  return;
+end;
+
+global
+function boolean WorkedHoursDClassActiveEditField(integer wn,string fieldname,integer fn,integer wnst,integer rownr,integer changed)
+begin
+  boolean res;
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  
+  res = true;
+  GetWindowRecord(wn,WHr);
+  if (WHr.OKFlag!=0) then begin
+    res = false;
+  end else begin
+    switch (fieldname) begin
+      case "SerNr": 
+        if (wnst==Rs_update) then begin
+          res = false;
+        end;
+//      case "DaysTotal": res = false;
+//      case "HoursTotal": res = false;
+      case "CalcSerNr": res = false;
+    end;
+    if (rownr>=0) then begin
+      MatRowGet(WHr,rownr,WHrw);
+      if (WHrw.CalcSerNr>0) then begin
+        switch (fieldname) begin
+          case "ContrSerNr": res = false;
+          case "PosCode": res = false;
+          case "WorkHourTypeCode": res = false;
+          case "Coefficient": res = false;
+          case "Firstname": res = false;
+          case "Surname": res = false;
+          case "d1": res = false;
+          case "d2": res = false;
+          case "d3": res = false;
+          case "d4": res = false;
+          case "d5": res = false;
+          case "d6": res = false;
+          case "d7": res = false;
+          case "d8": res = false;
+          case "d9": res = false;
+          case "d10": res = false;
+          case "d11": res = false;
+          case "d12": res = false;
+          case "d13": res = false;
+          case "d14": res = false;
+          case "d15": res = false;
+          case "d16": res = false;
+          case "d17": res = false;
+          case "d18": res = false;
+          case "d19": res = false;
+          case "d20": res = false;
+          case "d21": res = false;
+          case "d22": res = false;
+          case "d23": res = false;
+          case "d24": res = false;
+          case "d25": res = false;
+          case "d26": res = false;
+          case "d27": res = false;
+          case "d28": res = false;
+          case "d29": res = false;
+          case "d30": res = false;
+          case "d31": res = false;
+          case "ObjCode": res = false;
+        end;
+      end;
+    end;
+  end;  
+  WorkedHoursDClassActiveEditField = res;
+  return;
+end;
+
+global
+function boolean WorkedHoursDClassOKFlagButtonAction(integer wn,integer value)
+begin
+  boolean res;
+  record WorkedHoursVc WHr;
+  integer normalmode,updatemode;
+
+  res = true;
+  normalmode = 0;
+  updatemode = 2;
+  if (WindowState(wn)==normalmode) then begin
+    GetWindowRecord(wn,WHr);
+    if (WHr.OKFlag!=0) then begin
+      res = false;
+      if (UserCanAction("UnOKAll",false)) then begin
+        res = true;
+      end;
+    end;
+  end;  
+  if (WindowState(wn)==updatemode) then begin
+    GetPrevWindowRecord(wn,WHr);
+    if (WHr.OKFlag!=0) then begin
+      res = false;
+    end;
+  end;  
+  WorkedHoursDClassOKFlagButtonAction = res;
+  return;
+end;
+
+function boolean WorkedHoursDClassMonthEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  string 10 tmp;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    if (WHr.Month>0) then begin
+      if (len(WHr.Month)>2) then begin 
+        WHr.Month=GetMonth(CurrentDate);
+      end else begin
+        switch (len(WHr.Month)) begin
+          case 1: 
+            tmp="0" & WHr.Month;
+            WHr.Month=StringToInt(tmp);
+          case 2:
+            if (WHr.Month>12) then begin
+              WHr.Month=GetMonth(CurrentDate);
+            end;
+        end;
+      end;
+    end;
+    PutWindowRecord(wn,WHr);
+  end;
+
+  WorkedHoursDClassMonthEFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassYearEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    if (WHr.Year>0) then begin
+      YearCheck(WHr.Year);        
+    end;
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassYearEFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassContrSerNrEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  record ContractVc Contrr;
+  row ContractVc Contrrw;
+  integer rwcnt,i;
+  date whdate;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    whdate.day=01;
+    whdate.month=WHr.Month;
+    whdate.year=WHr.Year;
+    MatRowGet(WHr,rownr,WHrw);
+    Contrr.SerNr = WHrw.ContrSerNr;
+    ClearRow(WHr,WHrw,1);
+    WHrw.ContrSerNr = Contrr.SerNr;
+    if (ReadFirstMain(Contrr,1,true)) then begin
+      WHrw.Firstname = Contrr.Firstname;
+      WHrw.Surname = Contrr.Surname;
+      rwcnt=MatRowCnt(Contrr);
+      for (i=0;i<rwcnt;i=i+1) begin
+        MatRowGet(Contrr,i,Contrrw);
+        if nonblank(Contrrw.PosCode) then begin
+          if (DateInRange(whdate,Contrrw.SDate,Contrrw.EDate)) then begin
+            WHrw.PosCode=Contrrw.PosCode;
+            if nonblank(Contrr.ObjCode) then begin
+              WHrw.ObjCode = Contrr.ObjCode;
+            end;
+            if nonblank(WHrw.ObjCode) then begin
+              if nonblank(Contrrw.ObjCode) then begin
+                WHrw.ObjCode = WHrw.ObjCode & ", " & Contrrw.ObjCode;
+              end;
+            end else begin
+              WHrw.ObjCode = Contrrw.ObjCode;
+            end;
+            goto L1; 
+          end;
+        end;
+      end;
+    end;
+L1:;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassContrSerNrEFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassWorkHourTypeCodeEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  record WorkHourTypeVc WHTr;
+  date whdate;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    whdate.month=WHr.Month;
+    whdate.year=WHr.Year;
+    MatRowGet(WHr,rownr,WHrw);
+    WHTr.Code = WHrw.WorkHourTypeCode;
+    if (ReadFirstMain(WHTr,1,true)) then begin
+      whdate.day=GetDay(WHTr.StartDate);
+      if blank(WHTr.EndDate) then begin
+        if (whdate>=WHTr.StartDate) then begin
+          WHrw.Coefficient = WHTr.Coefficient;
+        end;
+      end else begin
+        if (DateInRange(whdate,WHTr.StartDate,WHTr.EndDate)) then begin
+          WHrw.Coefficient = WHTr.Coefficient;
+        end;
+      end;
+    end;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassWorkHourTypeCodeEFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay1EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d1;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d1=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay1EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay2EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d2;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d2=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay2EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay3EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d3;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d3=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay3EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay4EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d4;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d4=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay4EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay5EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d5;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d5=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay5EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay6EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d6;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d6=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay6EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay7EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d7;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d7=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay7EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay8EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d8;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d8=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay8EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay9EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d9;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d9=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay9EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay10EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d10;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d10=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay10EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay11EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d11;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d11=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay11EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay12EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d12;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d12=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay12EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay13EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d13;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d13=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay13EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay14EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d14;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d14=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay14EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay15EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d15;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d15=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay15EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay16EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d16;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d16=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay16EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay17EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d17;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d17=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay17EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay18EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d18;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d18=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay18EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay19EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d19;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d19=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay19EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay20EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d20;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d20=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay20EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay21EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d21;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d21=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay21EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay22EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d22;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d22=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay22EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay23EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d23;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d23=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay23EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay24EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d24;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d24=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay24EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay25EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d25;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d25=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay25EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay26EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d26;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d26=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay26EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay27EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d27;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d27=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay27EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay28EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d28;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d28=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay28EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay29EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d29;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d29=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay29EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay30EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d30;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d30=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay30EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassDay31EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    tmp=WHrw.d31;
+    if ((tmp<0) or (tmp>24)) then begin
+      WHrw.d31=0;
+      MatRowPut(WHr,rownr,WHrw);
+    end;
+    GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
+    WHrw.DaysTotal=dtot;
+    WHrw.HoursTotal=htot;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassDay31EFAfter = true;
+  return;
+end;
+
+function boolean WorkedHoursDClassHoursTotalEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  val tmp,htot;
+  integer dtot;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,WHr);
+    DeselectWindow(wn,false);
+    MatRowGet(WHr,rownr,WHrw);
+    WHrw.d1=blankval;
+    WHrw.d2=blankval;
+    WHrw.d3=blankval;
+    WHrw.d4=blankval;
+    WHrw.d5=blankval;
+    WHrw.d6=blankval;
+    WHrw.d7=blankval;
+    WHrw.d8=blankval;
+    WHrw.d9=blankval;
+    WHrw.d10=blankval;
+    WHrw.d11=blankval;
+    WHrw.d12=blankval;
+    WHrw.d13=blankval;
+    WHrw.d14=blankval;
+    WHrw.d15=blankval;
+    WHrw.d16=blankval;
+    WHrw.d17=blankval;
+    WHrw.d18=blankval;
+    WHrw.d19=blankval;
+    WHrw.d20=blankval;
+    WHrw.d21=blankval;
+    WHrw.d22=blankval;
+    WHrw.d23=blankval;
+    WHrw.d24=blankval;
+    WHrw.d25=blankval;
+    WHrw.d26=blankval;
+    WHrw.d27=blankval;
+    WHrw.d28=blankval;
+    WHrw.d29=blankval;
+    WHrw.d30=blankval;
+    WHrw.d31=blankval;
+    MatRowPut(WHr,rownr,WHrw);
+    PutWindowRecord(wn,WHr);
+  end;
+  WorkedHoursDClassHoursTotalEFAfter = true;
+  return;
+end;
+
+global
+function boolean WorkedHoursDClassAfterEditField(integer wn,string fieldname,integer fn, integer rownr,integer changed)
+begin
+  boolean res;
+  integer i;
+  
+  switch (fieldname) begin
+    case "Year": res = WorkedHoursDClassYearEFAfter(wn,rownr,changed);
+    case "Month": res = WorkedHoursDClassMonthEFAfter(wn,rownr,changed);
+    case "ContrSerNr": res = WorkedHoursDClassContrSerNrEFAfter(wn,rownr,changed);
+    case "WorkHourTypeCode": res = WorkedHoursDClassWorkHourTypeCodeEFAfter(wn,rownr,changed);
+    case "DaysTotal": res = WorkedHoursDClassHoursTotalEFAfter(wn,rownr,changed);
+    case "HoursTotal": res = WorkedHoursDClassHoursTotalEFAfter(wn,rownr,changed);
+    case "d1": res = WorkedHoursDClassDay1EFAfter(wn,rownr,changed);
+    case "d2": res = WorkedHoursDClassDay2EFAfter(wn,rownr,changed);
+    case "d3": res = WorkedHoursDClassDay3EFAfter(wn,rownr,changed);
+    case "d4": res = WorkedHoursDClassDay4EFAfter(wn,rownr,changed);
+    case "d5": res = WorkedHoursDClassDay5EFAfter(wn,rownr,changed);
+    case "d6": res = WorkedHoursDClassDay6EFAfter(wn,rownr,changed);
+    case "d7": res = WorkedHoursDClassDay7EFAfter(wn,rownr,changed);
+    case "d8": res = WorkedHoursDClassDay8EFAfter(wn,rownr,changed);
+    case "d9": res = WorkedHoursDClassDay9EFAfter(wn,rownr,changed);
+    case "d10": res = WorkedHoursDClassDay10EFAfter(wn,rownr,changed);
+    case "d11": res = WorkedHoursDClassDay11EFAfter(wn,rownr,changed);
+    case "d12": res = WorkedHoursDClassDay12EFAfter(wn,rownr,changed);
+    case "d13": res = WorkedHoursDClassDay13EFAfter(wn,rownr,changed);
+    case "d14": res = WorkedHoursDClassDay14EFAfter(wn,rownr,changed);
+    case "d15": res = WorkedHoursDClassDay15EFAfter(wn,rownr,changed);
+    case "d16": res = WorkedHoursDClassDay16EFAfter(wn,rownr,changed);
+    case "d17": res = WorkedHoursDClassDay17EFAfter(wn,rownr,changed);
+    case "d18": res = WorkedHoursDClassDay18EFAfter(wn,rownr,changed);
+    case "d19": res = WorkedHoursDClassDay19EFAfter(wn,rownr,changed);
+    case "d20": res = WorkedHoursDClassDay20EFAfter(wn,rownr,changed);
+    case "d21": res = WorkedHoursDClassDay21EFAfter(wn,rownr,changed);
+    case "d22": res = WorkedHoursDClassDay22EFAfter(wn,rownr,changed);
+    case "d23": res = WorkedHoursDClassDay23EFAfter(wn,rownr,changed);
+    case "d24": res = WorkedHoursDClassDay24EFAfter(wn,rownr,changed);
+    case "d25": res = WorkedHoursDClassDay25EFAfter(wn,rownr,changed);
+    case "d26": res = WorkedHoursDClassDay26EFAfter(wn,rownr,changed);
+    case "d27": res = WorkedHoursDClassDay27EFAfter(wn,rownr,changed);
+    case "d28": res = WorkedHoursDClassDay28EFAfter(wn,rownr,changed);
+    case "d29": res = WorkedHoursDClassDay29EFAfter(wn,rownr,changed);
+    case "d30": res = WorkedHoursDClassDay30EFAfter(wn,rownr,changed);
+    case "d31": res = WorkedHoursDClassDay31EFAfter(wn,rownr,changed);
+  end;
+  WorkedHoursDClassAfterEditField = res;
+  return;
+end;

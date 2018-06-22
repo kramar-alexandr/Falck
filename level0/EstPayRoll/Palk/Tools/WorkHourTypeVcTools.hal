@@ -1,0 +1,44 @@
+external procedure NextM4Number(string,var string);
+
+global
+function boolean GetNextWorkHourTypeNr(var string posnr)
+begin
+  boolean res;
+  record WorkHourTypeVc WHTr;
+  
+  WHTr.Code = "ZZZZZZZZZZZZZZZZZZZ";
+  if (ReadLastMain(WHTr,1,false)) then begin
+    NextM4Number(WHTr.Code,posnr);
+  end else begin
+    posnr = "1";
+  end;
+  GetNextWorkHourTypeNr = res;
+  return;
+end;
+
+global
+function boolean WHTrInUse(string whtcode)
+begin
+  boolean res;
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  integer rwcnt,i;
+
+//Tššajatabelid
+  ResetLoop(WHr);
+  WHr.SerNr = -1;
+  while (LoopMain(WHr,1,true)) begin  
+    rwcnt=MatRowCnt(WHr);
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(WHr,i,WHrw);
+      if (WHrw.WorkHourTypeCode==whtcode) then begin
+        res=true;
+        goto LWHTrInUse;
+      end;
+    end;
+  end;
+
+LWHTrInUse:;
+  WHTrInUse = res; 
+  return;
+end;

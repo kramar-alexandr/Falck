@@ -1,0 +1,137 @@
+external procedure NextM4Number(string,var string);
+
+global
+function boolean GetNextPaymTypeNr(var string ptnr)
+begin
+  boolean res;
+  record PaymTypeVc PTr;
+  
+  PTr.Code = "ZZZZZZZZZZZZZZZZZZZ";
+  if (ReadLastMain(PTr,1,false)) then begin
+    NextM4Number(PTr.Code,ptnr);
+  end else begin
+    ptnr = "1";
+  end;
+  GetNextPaymTypeNr = res;
+  return;
+end;
+
+global
+function boolean PTrInUse(string ptcode)
+begin
+  boolean res;
+  record  OpenTransVc OTr;
+  record AbsTypeVc ATr;
+  record WorkHourTypeVc WHTr;
+  record PieceWorkTypeVc PWTr;
+  record ContractVc Contrr;  
+  row ContractVc Contrrw;  
+  record AccGroupVc AGr;  
+  row AccGroupVc AGrw;  
+  record CalcPayrollVc CPr;
+  row CalcPayrollVc CPrw;  
+  record PaymPayrollVc PPr;
+  row PaymPayrollVc PPrw;  
+  record SalSettingBlock SalSettingRec;
+  integer rwcnt,i;
+ 
+//avatud kanded
+  OTr.PaymTypeCode = ptcode;
+  if (ReadFirstKey("PaymTypeCode",OTr,1,true)) then begin
+    res=true;
+    goto LPTrInUse;
+  end;
+
+//Puudumise tŸŸbid
+  ATr.PaymTypeCode = ptcode;
+  if (ReadFirstKey("PaymTypeCode",ATr,1,true)) then begin
+    res=true;
+    goto LPTrInUse;
+  end;
+
+//Tšštundide tŸŸbid
+  WHTr.PaymTypeCode = ptcode;
+  if (ReadFirstKey("PaymTypeCode",WHTr,1,true)) then begin
+    res=true;
+    goto LPTrInUse;
+  end;
+
+//TŸkitšš liigid
+  PWTr.PaymTypeCode = ptcode;
+  if (ReadFirstKey("PaymTypeCode",PWTr,1,true)) then begin
+    res=true;
+    goto LPTrInUse;
+  end;
+
+//Tššlepingud
+  ResetLoop(Contrr);
+  Contrr.SerNr = -1;
+  while (LoopMain(Contrr,1,true)) begin  
+    rwcnt=MatRowCnt(Contrr);
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(Contrr,i,Contrrw);
+      if (Contrrw.PaymTypeCode==ptcode) then begin
+        res=true;
+        goto LPTrInUse;
+      end;
+    end;
+  end;
+
+//Konteerimisgruppid
+  ResetLoop(AGr);
+  AGr.Code = "";
+  while (LoopMain(AGr,1,true)) begin  
+    rwcnt=MatRowCnt(AGr);
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(AGr,i,AGrw);
+      if (AGrw.PaymTypeCode==ptcode) then begin
+        res=true;
+        goto LPTrInUse;
+      end;
+    end;
+  end;
+
+//Arvestused
+  ResetLoop(CPr);
+  CPr.SerNr = -1;
+  while (LoopMain(CPr,1,true)) begin  
+    rwcnt=MatRowCnt(CPr);
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(CPr,i,CPrw);
+      if (CPrw.PaymTypeCode==ptcode) then begin
+        res=true;
+        goto LPTrInUse;
+      end;
+    end;
+  end;
+
+//VŠljamaksed
+  ResetLoop(PPr);
+  PPr.SerNr = -1;
+  while (LoopMain(PPr,1,true)) begin  
+    rwcnt=MatRowCnt(PPr);
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(PPr,i,PPrw);
+      if (PPrw.PaymTypeCode==ptcode) then begin
+        res=true;
+        goto LPTrInUse;
+      end;
+    end;
+  end;
+
+//Lausendamine, Palk
+  BlockLoad(SalSettingRec);
+  if (SalSettingRec.AdvPaymTypeCode==ptcode) then begin
+    res=true;
+    goto LPTrInUse;
+  end;
+
+  if (SalSettingRec.DeductAdvPaymTypeCode==ptcode) then begin
+    res=true;
+    goto LPTrInUse;
+  end;
+LPTrInUse:;
+  PTrInUse = res; 
+  return;
+end;
+

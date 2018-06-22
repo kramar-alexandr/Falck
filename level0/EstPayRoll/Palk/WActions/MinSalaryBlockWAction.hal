@@ -1,0 +1,63 @@
+function boolean MinSalaryTClassSDateEFAfter(integer wn,integer rownr,integer changedf)
+  begin  
+  record MinSalaryBlock MSr;
+  row MinSalaryBlock MSrw;
+  date sdate;
+  
+  if (changedf!=0) then begin
+    BlockLoad(MSr);
+    GetWindowRecord(wn,MSr);
+    DeselectWindow(wn,false);
+    MatRowGet(MSr,rownr,MSrw);
+    if NonBlankDate(MSrw.SDate) then begin
+      sdate.day=1;
+      sdate.month=GetMonth(MSrw.SDate);
+      sdate.year=GetYear(MSrw.SDate);
+      MSrw.SDate=sdate;
+      MatRowPut(MSr,rownr,MSrw);
+      PutWindowRecord(wn,MSr);
+    end;
+  end;
+
+  MinSalaryTClassSDateEFAfter = true;
+  return;
+end;
+
+function boolean MinSalaryTClassEDateEFAfter(integer wn,integer rownr,integer changedf)
+  begin  
+  record MinSalaryBlock MSr;
+  row MinSalaryBlock MSrw;
+  date sdate;
+  
+  if (changedf!=0) then begin
+    BlockLoad(MSr);
+    GetWindowRecord(wn,MSr);
+    DeselectWindow(wn,false);
+    MatRowGet(MSr,rownr,MSrw);
+    if NonBlankDate(MSrw.EDate) then begin
+      sdate.day=DaysInMonth(GetYear(MSrw.EDate),GetMonth(MSrw.EDate));;
+      sdate.month=GetMonth(MSrw.EDate);
+      sdate.year=GetYear(MSrw.EDate);
+      MSrw.EDate=sdate;
+      MatRowPut(MSr,rownr,MSrw);
+      PutWindowRecord(wn,MSr);
+    end;
+  end;
+
+  MinSalaryTClassEDateEFAfter = true;
+  return;
+end;
+
+global
+function boolean MinSalaryTClassAfterEditField(integer wn,string fieldname,integer fn, integer rownr,integer changed)
+begin
+  boolean res;
+
+  switch (fieldname) begin
+    case "SDate": res = MinSalaryTClassSDateEFAfter(wn,rownr,changed);
+    case "EDate": res = MinSalaryTClassEDateEFAfter(wn,rownr,changed);
+  end;
+
+  MinSalaryTClassAfterEditField = res;
+  return;
+end;

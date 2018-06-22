@@ -1,0 +1,21 @@
+window MailbowRegWClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h1,h2,v,vs;
+  WindowBegin("Mailbow teenuse aktiveerimine",MailbowRegWClass,CGother,RcType);
+  UseView(RcVc);
+  SetWRect(20,80,450,320);
+  h = 230; h1 = 50; h2 = 270; v = 0; vs = 20;
+  EditField(h,v+=vs,150,"Aadress (Host) *",Normal,f1,false,0);
+  EditField(h,v+=vs,150,"Kasutajatunnus *",Normal,f2,false,0);
+  EditFieldTL(h,v+=vs,150,"Salasõna *",M4Star,Normal,30,f3,false,0);
+  EditField(h,v+=vs,150,"Vaikimisi nimekiri (List)",Normal,f4,false,0);
+  EditField(h,v+=vs,150,"Vastuse konverents (Teadete postkast) *",Normal,f5,false,ConfSClass);
+  v = v + vs;
+  StaticText(h2,v+=vs,"* - kohustuslikud väljad",false);
+  StaticText(h1,v+=vs,"Aktiveerimisel kirjutatakse Mailbow ja Teenuste cache seadistusi üle!",false);
+  v = v + vs * 2;
+  HalPushButton(h1,v,h1+100,25,"SendMailbowActRequest","Aktiveeri");
+  HalPushButton(h2,v,h2+100,25,"CloseMailbowActWindow","Tühista");
+  EndWindow; 
+end;

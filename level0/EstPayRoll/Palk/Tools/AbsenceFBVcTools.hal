@@ -1,0 +1,16 @@
+global
+function boolean GetNextAbsFBSerNr(var LongInt afbsernr)
+begin
+  boolean res;
+  record AbsenceFBVc AFBr;
+  
+  AFBr.SerNr = 99999999999;
+  if (ReadLastMain(AFBr,1,false)) then begin
+    afbsernr = AFBr.SerNr + 1;
+  end else begin
+    afbsernr = 1;
+  end;
+
+  GetNextAbsFBSerNr = res;
+  return;
+end;

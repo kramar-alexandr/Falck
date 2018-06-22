@@ -1,0 +1,2722 @@
+procedure TSERWTEST1_EST()
+begin
+  real h,h1,h2,h3,h4,h5,v;
+    
+  h = 8; v = 60;
+  h1=24; h2=h1+60; h3=h2+60; h4=h3+85; h5=h4+85;
+  if (GuiType==kGuiCocoa) then begin
+    SetWRect(20,80,462,351);
+    Sizeable(-1,-1,0,0);
+    MatrixBegin(h,v,-31,-20,IVSerRowType,99);
+    MatCol(1,h1,"Alates",0,TSerStart,false,0);
+    MatCol(1,h2,"Kuni",0,TSerEnd,false,0);
+    MatCol(1,h3,"KuupŠevast",0,StartDate,false,0);
+    MatCol(1,h4,"KuupŠevani",0,EndDate,false,0);
+    MatCol(1,h5,"Kommentaar",0,TSerCom,false,0);
+  end else begin
+    SetWRect(20,80,532,350);
+    Sizeable(-1,-1,0,0);
+    StaticText(h+h1+2,v-25,"Nr.",false);
+    StaticText(h+h3,v-25,"Kuup.",false);
+    MatrixBegin(h,v,-31,-20,IVSerRowType,99);
+    MatCol(1,h1,"Alates",0,TSerStart,false,0);
+    MatCol(1,h2,"Kuni",0,TSerEnd,false,0);
+    MatCol(1,h3,"Alates",0,StartDate,false,0);
+    MatCol(1,h4,"Kuni",0,EndDate,false,0);
+    MatCol(1,h5,"Kommentaar",0,TSerCom,false,0);
+  end;
+  EndMatrix;
+  DeleteRowTest;
+  //SpecialMenu("Magic Serial Help",' ',1,"MagicSerialHelp");
+  return;
+end;
+
+procedure TSERWTEST_EST()
+begin
+  real h,h1,h2,h3,h4,h5,v;
+    
+  h = 8; v = 60;
+  h1=24; h2=h1+60; h3=h2+60; h4=h3+85; h5=h4+85;
+  if (GuiType==kGuiCocoa) then begin
+    SetWRect(20,80,562,351);
+    Sizeable(-1,-1,0,0);
+    MatrixBegin(h,v,-31,-20,IVSerRowType,99);
+    MatCol(1,h1,"Alates",0,TSerStart,false,0);
+    MatCol(1,h2,"Kuni",0,TSerEnd,false,0);
+    MatCol(1,h3,"KuupŠevast",0,StartDate,false,0);
+    MatCol(1,h4,"KuupŠevani",0,EndDate,false,0);
+    MatCol(1,h5,"Kommentaar",0,TSerCom,false,0);
+    MatCol(1,-100,"Kanne",0,DonotGenTrans,false,SetSClass);
+  end else begin
+    SetWRect(20,80,532,350);
+    Sizeable(-1,-1,0,0);
+    StaticText(h+h1+2,v-25,"Nr.",false);
+    StaticText(h+h3,v-25,"Kuup.",false);
+    MatrixBegin(h,v,-31,-20,IVSerRowType,99);
+    MatCol(1,h1,"Alates",0,TSerStart,false,0);
+    MatCol(1,h2,"Kuni",0,TSerEnd,false,0);
+    MatCol(1,h3,"Alates",0,StartDate,false,0);
+    MatCol(1,h4,"Kuni",0,EndDate,false,0);
+    MatCol(1,h5,"Kommentaar",0,TSerCom,false,0);
+    MatCol(1,-70,"Kanne",0,DonotGenTrans,false,SetSClass);
+  end;
+  EndMatrix;
+  DeleteRowTest;
+  //SpecialMenu("Magic Serial Help",' ',1,"MagicSerialHelp");
+  return;
+end;
+
+//test
+window CPUnpaidDClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h1,v,vs;
+  string 255 label;
+  WindowBegin("Arvestuse abiregister - testimiseks",CPUnpaidDClass,CGview,-);
+  SetWRect(20,80,200,200);
+  UseView(CPUnpaidVc);
+  Sizeable(-1,-1,0,0);
+  EndWindow;
+end;
+
+//test
+window CPUnpaidLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Arvestuse abiregister - testimiseks",CPUnpaidLClass,CGmlist,-);
+  SpawnClass(CPUnpaidDClass);
+  SetWRect(20,80,1350,250);
+  Sizeable(-1,-1,0,0);
+  UseView(CPUnpaidVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"SerNr",SerNr,false,SerNr);
+  RlColKey(70,70,"ContrSerNr",ContrSerNr,false,ContrSerNr);
+  RlColKey(140,140,"CalcSerNr",CalcSerNr,false,CalcSerNr);
+  RlCol(210,210,"CalcRowNr",CalcRowNr,false);
+  RlColKey(280,280,"PaymSerNr",PaymSerNr,false,PaymSerNr);
+  RlCol(350,350,"PaymRowNr",PaymRowNr,false);
+  RlColKey(420,420,"PaymTypeCode",PaymTypeCode,false,PaymTypeCode);
+  RlCol(490,490,"Eesnimi",Firstname,false);
+  RlCol(560,560,"Perenimi",Surname,false);
+  RlCol(630,630,"NetoSum",NetoSum,false);
+  RlCol(700,700,"BrutoSum",BrutoSum,false);
+  RlCol(770,770,"UnemplInsSum",UnemplInsSum,false);
+  RlCol(840,840,"PensionSum",PensionSum,false);
+  RlCol(910,910,"CalcBrutoSum",CalcBrutoSum,false);
+  RlCol(980,980,"IncTaxSum",IncTaxSum,false);
+  RlCol(1050,1050,"IncTaxFreeMinSum",IncTaxFreeMinSum,false);
+  RlCol(1120,1120,"SocTaxSum",SocTaxSum,false);
+  RlCol(1190,1190,"EmplUnemplInsSum",EmplUnemplInsSum,false);
+  RlCol(1260,1260,"DPDiscSum",DPDiscSum,false);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+//test
+window ITFMUsedDClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("",ITFMUsedDClass,CGview,-);
+  SetWRect(20,80,500,500);
+  UseView(ITFMUsedVc);
+  EndWindow;
+end;
+
+//test
+window ITFMUsedLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("TM vaba miinimumi abiregister - testimiseks",ITFMUsedLClass,CGmlist,-);
+  SpawnClass(ITFMUsedDClass);
+  SetWRect(20,80,750,250);
+  Sizeable(-1,-1,0,0);
+  UseView(ITFMUsedVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"SerNr",SerNr,false,SerNr);
+  RlColKey(70,70,"ContrSerNr",ContrSerNr,false,ContrSerNr);
+  RlColKey(140,140,"Year",Year,false,Year);
+  RlColKey(210,210,"Month",Month,false,Month);
+  RlCol(280,280,"ITFMinPerMonth",ITFMinPerMonth,false);
+  RlCol(340,340,"ITFMinUsed",ITFMinUsed,false);
+  RlCol(420,420,"MonthBruto",MonthBruto,false);
+  RlCol(500,500,"CalcIncTax",CalcIncTax,false);
+  RlCol(580,580,"ITFMinPaid",ITFMinPaid,false);
+  RlCol(660,660,"MonthPaid",MonthPaid,false);
+  RlCol(740,740,"CalcIncTaxPaid",CalcIncTaxPaid,false);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+//test
+window DPDUsedDClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("",DPDUsedDClass,CGview,-);
+  SetWRect(20,80,500,500);
+  UseView(DPDUsedVc);
+  EndWindow;
+end;
+
+//test
+window DPDUsedLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Tššv›imetuspensionŠri soodustuse abiregister - testimiseks",DPDUsedLClass,CGmlist,-);
+  SpawnClass(DPDUsedDClass);
+  SetWRect(20,80,750,250);
+  Sizeable(-1,-1,0,0);
+  UseView(DPDUsedVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"SerNr",SerNr,false,SerNr);
+  RlColKey(100,100,"ContrSerNr",ContrSerNr,false,ContrSerNr);
+  RlColKey(200,200,"Year",Year,false,Year);
+  RlColKey(300,300,"Month",Month,false,Month);
+  RlCol(400,400,"DPDPerMonth",DPDPerMonth,false);
+  RlCol(500,500,"DPDUsed",DPDUsed,false);
+  RlCol(600,600,"DPDPaid",DPDPaid,false);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+//test
+window CPWHLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Tššajatabeli abiregister - testimiseks",CPWHLClass,CGmlist,-);
+  SpawnClass(CPWHDClass);
+  SetWRect(20,80,450,250);
+  Sizeable(-1,-1,0,0);
+  UseView(CPWHVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"CalcSerNr",CalcSerNr,false,CalcSerNr);
+  RlCol(100,100,"CalcRowNr",CalcRowNr,false);
+  RlColKey(200,200,"WHSerNr",WHSerNr,false,WHSerNr);
+  RlCol(300,300,"WHRowNr",WHRowNr,false);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+//test
+window CPPWLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("TŸkitšš abiregister - testimiseks",CPPWLClass,CGmlist,-);
+  SpawnClass(CPPWDClass);
+  SetWRect(20,80,450,250);
+  Sizeable(-1,-1,0,0);
+  UseView(CPPWVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"CalcSerNr",CalcSerNr,false,CalcSerNr);
+  RlCol(100,100,"CalcRowNr",CalcRowNr,false);
+  RlColKey(200,200,"PWSerNr",PWSerNr,false,PWSerNr);
+  RlCol(300,300,"PWRowNr",PWRowNr,false);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+//test
+window CPOTLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Avatud kannete abiregister - testimiseks",CPOTLClass,CGmlist,-);
+  SpawnClass(CPOTDClass);
+  SetWRect(20,80,450,250);
+  Sizeable(-1,-1,0,0);
+  UseView(CPOTVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"CalcSerNr",CalcSerNr,false,CalcSerNr);
+  RlCol(100,100,"CalcRowNr",CalcRowNr,false);
+  RlColKey(200,200,"OTSerNr",OTSerNr,false,OTSerNr);
+  RlCol(300,300,"OTRowNr",OTRowNr,false);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+//test
+window CPAbsLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Puudumiste abiregister - testimiseks",CPAbsLClass,CGmlist,-);
+  SpawnClass(CPAbsDClass);
+  SetWRect(20,80,350,250);
+  Sizeable(-1,-1,0,0);
+  UseView(CPAbsVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"CalcSerNr",CalcSerNr,false,CalcSerNr);
+  RlCol(100,100,"CalcRowNr",CalcRowNr,false);
+  RlColKey(200,200,"AbsSerNr",AbsSerNr,false,AbsSerNr);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+//test
+window CPPPHistLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Arvestuste/VŠljamaksete ajalugu - testimiseks",CPPPHistLClass,CGmlist,-);
+  SetWRect(65,80,750,300);
+  Sizeable(-1,-1,0,0);
+  UseView(CPPPHistVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(5,5,"EmplCode",EmplCode,false,EmplCode);
+  RlColKey(80,80,"ContrSerNr",ContrSerNr,false,ContrSerNr);
+  RlColKey(180,180,"TransDate",TransDate,false,TransDate);
+  RlCol(280,280,"TransType",TransType,false);
+  RlCol(380,380,"TransNr",TransNr,false);
+  RlCol(480,480,"RowNr",RowNr,false);
+  RlColKey(580,580,"CalcSerNr",CalcSerNr,false,CalcSerNr);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window EmplDClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h1,v,vs,vm;
+  string 255 label;
+  WindowBegin("Tšštaja",EmplDClass,CGview,-);
+  SetWRect(20,80,540,100);
+//  Sizeable(-1,-1,0,0);
+  UseView(EmplVc);
+  ActiveFieldOnNew("Code");
+  CommunicateButton;
+  v = 46; h = 100; vs = 20; h1=370;
+  Tile(0,160,false,"",Code);
+  EditField(h,vm=v,80,"Kood",Normal,Code,false,0);
+  EditField(h,v+=vs,150,"Eesnimi",Normal,Firstname,false,0);
+  EditField(h,v+=vs,150,"Perenimi",Normal,Surname,false,0);
+  EnterSkip(IDCode);
+  EditField(h1,v=vm,100,"Isikukood",Normal,IDCode,false,0);
+  EnterSkip(ObjCode);
+  EditField(h1,v+=vs,100,"SŸnniaeg",ViewOnly,BirthDate,false,0);
+  EditField(h1,v+=vs,100,"Objekt",Normal,ObjCode,false,ObjSClass);
+  CheckBox(h1,v+=26,0,"Mitteresident",NotResidentFlag);
+  CheckBox(-105,16,0,"Suletud",ClosedFlag);
+  TileButton(1,"Tšštaja andmed");
+  TileButton(2,"Pangakontod");
+  TileButton(3,"Maksud");
+  Tile(1,50,true,"1",Phone);
+  EditField(h,v=16,100,"Telefon",Normal,Phone,false,0);
+  EditField(h1,v,70,"Riik",Normal,CountryCode,false,CountrySClass);
+  EditField(h,v+=vs,150,"E-post",Normal,Mail,false,0);
+  EditField(h1,v,70,"Maksustav riik",Normal,CountryCode1,false,CountrySClass);
+  EditField(h,v+=vs,-50,"Aadress",Normal,Addr1,false,0);
+  EditField(h,v+=vs,-50,"",Normal,Addr2,false,0);
+  EditField(h,v+=vs,-50,"",Normal,Addr3,false,0);
+  Tile(2,50,true,"2",BankCode);
+  h=h+150;
+  EditField(h,v=16,150,"Tšštaja pangakood",Normal,BankCode,false,BankSClass);
+  EditField(h,v+=vs,150,"Tšštaja A/a | IBAN",Normal,BankAccount,false,0);
+  EditField(h,v+=40,150,"Tšštasu saaja nimi",Normal,RecipientName,false,0);
+  EditField(h,v+=vs,150,"Tšštasu saaja pangakood",Normal,RecipientBankCode,false,BankSClass);
+  EditField(h,v+=vs,150,"Tšštasu saaja A/a | IBAN",Normal,RecipientBankAcc,false,0);
+  Tile(3,50,true,"3",Math);
+  MatrixBegin(50,v=40,-40,-25,-,99);
+  MatCol(1,30,"Maksu kood",0,TaxCode,false,TaxSClass);
+  MatCol(1,130,"Nimetus",0,TaxName,false,0);
+  MatCol(1,230,"Alates kp.",0,SDate,false,PasteCurDate);
+  MatCol(1,330,"Kuni kp.",0,EDate,false,PasteCurDate);
+  DeleteRowTest;
+  EndMatrix;
+  CheckBox(50,-25,0,"Arvesta minimaalset sots.maksu summat",SocTaxMinFlag);
+  SpecialMenu("Kogumispensioni liitumispŠring",'',0,"CheckForContributoryContractDsm");
+  SpecialMenu("Koosta tššleping",'l',0,"ContractFromEmplDsm");
+  EndWindow;
+end;
+
+window EmplLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Tšštajad",EmplLClass,CGmlist,-);
+  SpawnClass(EmplDClass);
+  SetWRect(20,80,450,300);
+  Sizeable(-1,-1,0,0);
+  UseView(EmplVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Kood",Code,false,Code);
+  RlColKey(96,96,"Eesnimi",Firstname,false,Firstname);
+  RlColKey(200,200,"Perenimi",Surname,false,Surname);
+  RlColKey(350,350,"Suletud",ClosedMark,false,ClosedFlag);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window EmplSClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Aseta tšštaja",EmplSClass,CGslist,-);
+  SetWRect(20,80,450,300);
+  Sizeable(-1,-1,0,0);
+  UseView(EmplVc);
+  SpawnClass(EmplDClass);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Kood",Code,false,CodeUnclosed);
+  RlColKey(96,96,"Eesnimi",Firstname,false,Firstname);
+  RlColKey(200,200,"Perenimi",Surname,false,SurnameUnclosed);
+  RlColKey(350,350,"Suletud",ClosedMark,false,ClosedFlag);
+  SearchField("Otsi");
+  CommunicateButton;
+  EndWindow;
+end;
+
+window PositionDClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  string 255 label;
+  WindowBegin("Amet",PositionDClass,CGview,-);
+  SetWRect(20,80,470,300);
+  UseView(PositionVc);
+  ActiveFieldOnNew("Code");
+  v = 6; h = 150; vs = 20;
+  EditField(h,v+=vs,80,"Kood",Normal,Code,false,0);
+  EditField(h,v+=vs,150,"Nimetus",Normal,Name,false,0);
+  EditField(h,v+=vs,150,"ISCO kood",Normal,ISCOCode,false,ISCOCodeSClass);
+  EditField(h,v+=vs,150,"ISCO ametinimetus",Normal,ISCOPosition,false,0);
+  EditField(h,v+=vs,150,"ISCO tase",Normal,ISCOLevel,false,0);
+  EndWindow;
+end;
+
+window PositionLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Ametid",PositionLClass,CGmlist,-);
+  SetWRect(20,80,350,250);
+  Sizeable(-1,-1,0,0);
+  UseView(PositionVc);
+  SpawnClass(PositionDClass);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Kood",Code,false,Code);
+  RlColKey(96,96,"Nimetus",Name,false,Name);
+  RlColKey(200,200,"ISCO",ISCOCode,false,ISCOCode);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window PositionSClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Aseta amet",PositionSClass,CGslist,-);
+  SetWRect(20,80,350,250);
+  Sizeable(-1,-1,0,0);
+  UseView(PositionVc);
+  SpawnClass(PositionDClass);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Kood",Code,false,Code);
+  RlColKey(96,96,"Nimetus",Name,false,Name);
+  RlColKey(200,200,"ISCO",ISCOCode,false,ISCOCode);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window AccGroupDClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h1,v,vs;
+  string 255 label;
+  WindowBegin("Konteerimisgrupp",AccGroupDClass,CGview,-);
+  SetWRect(20,80,740,100);
+  Sizeable(-1,-1,0,0);
+  UseView(AccGroupVc);
+  ActiveFieldOnNew("Code");
+  v = 26; h = 150; h1 = 405; vs = 20;
+  EditField(h,v,80,"Kood",Normal,Code,false,0);
+  EditField(h1,v,300,"Nimetus",Normal,Name,false,0);
+  EditField(h1,v+=30,100,"Palga vahekonto (vŠljamakse Deebet konto)",Normal,PaymDebitAccCode,false,AccSClass);
+  MatrixBegin(10,v+=40,-25,-5,-,99);
+  MatCol(1,30,"Tasuliik",0,PaymTypeCode,false,PaymTypeSClass);
+  MatCol(1,130,"Maks",0,TaxCode,false,TaxSClass);
+  EnterSkip(DebitAccCode);
+  MatCol(1,230,"Nimetus",0,Name,false,0);
+  MatCol(1,380,"Deebet konto",0,DebitAccCode,false,AccSClass);
+  MatCol(1,480,"Kreedit konto",0,CreditAccCode,false,AccSClass);
+  MatCol(1,580,"Viitv›la konto",0,AccruedAccCode,false,AccSClass);
+//  MatCol(1,680,"Objekt",0,ObjCode,false,ObjSClass);
+  EndMatrix;
+  EndWindow;
+end;
+
+window AccGroupLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Konteerimisgrupid",AccGroupLClass,CGmlist,-);
+  SpawnClass(AccGroupDClass);
+  SetWRect(20,80,350,250);
+  Sizeable(-1,-1,0,0);
+  UseView(AccGroupVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Kood",Code,false,Code);
+  RlColKey(96,96,"Nimetus",Name,false,Name);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window AccGroupSClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Aseta konteerimisgrupp",AccGroupSClass,CGslist,-);
+  SetWRect(20,80,350,250);
+  Sizeable(-1,-1,0,0);
+  UseView(AccGroupVc);
+  SpawnClass(AccGroupDClass);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Kood",Code,false,Code);
+  RlColKey(96,96,"Nimetus",Name,false,Name);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window ContractDClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h1,v,vs,vm;
+  string 255 label;
+  WindowBegin("Tššleping",ContractDClass,CGview,-);
+  SetWRect(20,80,800,400);
+  Sizeable(-1,-1,0,0);
+  UseView(ContractVc);
+  ActiveFieldOnNew("SerNr");
+  CommunicateButton;
+  v = 26; h = 110; vs = 20; h1=460;
+  EditField(h,v,80,"Number",Normal,SerNr,false,TSerSClass);
+  EnterSkip(EmplCode);
+  EditField(h1,v,150,"Eesnimi",Normal,Firstname,false,0);
+  EditField(h,v+=vs,100,"Tšštaja kood",Normal,EmplCode,false,EmplSClass);
+  EnterSkip(StartDate);
+  EditField(h1,v,150,"Perenimi",Normal,Surname,false,0);
+  EditField(h,v+=vs,100,"Alguskp.",Normal,StartDate,false,PasteCurDate);
+  vm=v;
+  EditField(h,v+=vs,100,"L›ppkp.",Normal,EndDate,false,PasteCurDate);
+  EditField(h,v+=vs,100,"Objekt",Normal,ObjCode,false,ObjSClass);
+  EditField(h1,v=vm,100,"Ametlik lepingunr.",Normal,OfficialContrCode,false,0);
+  EditField(h1,v+=vs,100,"Konteerimisgrupp",Normal,AccGroupCode,false,AccGroupSClass);
+  EditField(h1,v+=vs,100,"Puhkuse puudumise tŸŸp",Normal,VacAbsTypeCode,false,AbsTypeSClass);
+  EditField(h1,v+=vs,80,"PuhkusepŠevi aastas",Normal,VacDaysNorm,false,0);
+  EditField(h1,v+=vs,80,"TM vaba miinimumi arvestuse algus",Normal,ITFStartDate,false,PasteCurDate);
+  CheckBox(h1+90,v,0,"Arvesta tulumaksuvaba miinimumi",IncTaxFreeMinFlag);
+  EditField(h1,v+=vs,80,"Tššv›im.pens. soodustuse arv. algus",Normal,DPDStartDate,false,PasteCurDate);
+  CheckBox(h1+90,v,0,"Tššv›imetuspensionŠr",DisPensFlag);
+  CheckBox(h1+90,v+=vs,0,"Tššv›tuleping",LaborFlag);
+  ButtonFrame(h,v,110,4,"Staatus");
+  RadioButton(h,v,0,0,    "Avatud",Status);
+  RadioButton(h,v+=16,1,0,"Aktiivne",Status);
+  RadioButton(h,v+=16,2,0,"Peatatud",Status);
+  RadioButton(h,v+=16,3,0,"L›petatud",Status);  
+  MatrixBegin(10,v+=55,-50,-15,-,99);
+  Flip(0);
+  MatCol(1,32,"Amet",0,PosCode,false,PositionSClass);
+  MatCol(1,100,"Nimetus",0,PosName,false,0);
+  Flip(1);
+  MatCol(1,-500,"Tasuliik",0,PaymTypeCode,false,PaymTypeSClass);
+  MatCol(1,-400,"Alguskp.",0,SDate,false,PasteCurDate);
+  MatCol(1,-320,"L›ppkp.",0,EDate,false,PasteCurDate);
+  MatCol(1,-240,"Summa",0,Sum,false,0);
+  MatCol(1,-150,"Koef.",0,WorkLoad,false,0);
+  MatCol(1,-90,"Tšštasu koef-ga",0,LoadSum,false,0);
+  Flip(2);
+  MatCol(1,-400,"Konteerimisgrupp",0,AccGroupCode,false,AccGroupSClass); 
+  MatCol(1,-300,"NŠdala tunnid",0,WeekLoad,false,0);
+  MatCol(1,-200,"Objekt",0,ObjCode,false,ObjSClass);
+  MatCol(1,-100,"Viimane arv. kp.",0,LastCalcDate,false,0);
+  EndMatrix;
+  VTab(-35,v,-16,v+vs,ToolFlip,1,"A");
+  VTab(-35,v+=vs,-16,v+vs,ToolFlip,2,"B");
+  EndWindow;
+end;
+
+window ContractLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Tššlepingud",ContractLClass,CGmlist,-);
+  SetWRect(20,80,650,250);
+  SpawnClass(ContractDClass);
+  Sizeable(-1,-1,0,0);
+  UseView(ContractVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Number",SerNr,false,SerNr);
+  RlColKey(96,96,"Tšštaja kood",EmplCode,false,EmplCode);
+  RlColKey(200,200,"Eesnimi",Firstname,false,Firstname);
+  RlColKey(350,350, "Perenimi",Surname,false,Surname);
+  RlColKeyTL2(500,500,"Staatus",M4Set,Status,904,false,Status);
+  SearchField("Otsi");
+  CommunicateButton;
+  EndWindow;
+end;
+
+window ContractSClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Aseta tššleping",ContractSClass,CGslist,-);
+  SetWRect(20,80,650,250);
+  UseView(ContractVc);
+  Sizeable(-1,-1,0,0);
+  SpawnClass(ContractDClass);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Number",SerNr,false,SerNrUnclosed);
+  RlColKey(96,96,"Tšštaja kood",EmplCode,false,EmplCodeUnclosed);
+  RlColKey(200,200,"Eesnimi",Firstname,false,Firstname);
+  RlColKey(350,350, "Perenimi",Surname,false,Surname);
+  RlColKeyTL2(500,500,"Staatus",M4Set,Status,904,false,StatusUnclosed);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window PaymTypeDClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h1,v,vs;
+  string 255 label;
+  WindowBegin("Tasuliik",PaymTypeDClass,CGview,-);
+  SetWRect(20,80,700,600);
+  UseView(PaymTypeVc);
+  ActiveFieldOnNew("Code");
+  Tile(0,50,false,"",Code);
+  TileButton(1,"†ldine");
+  TileButton(2,"Puhkuse arvestus");
+  Tile(1,250,false,"1",Code);
+  v = 6; h = 160; vs = 20; h1=380;
+  EditField(h,v+=vs,150,"Kood",Normal,Code,false,0);
+  EditField(h1,v,-40,"Nimetus",Normal,Name,false,0);
+  EditField(h,v+=vs,150,"TSD aruande reakood",Normal,TSDRowCode,false,TSDRowsSClass);
+//todo  EditField(h,v+=vs,150,"Statistika aruande reakood 1",Normal,StatRowCode1,false,SetSClass);
+//todo  EditField(h,v+=vs,150,"Statistika aruande reakood 2",Normal,StatRowCode2,false,SetSClass);
+//todo  EditField(h,v+=vs,150,"Statistika aruande reakood 3",Normal,StatRowCode3,false,SetSClass);
+  CheckBox(h,v+=30,0,"PŸsitasu",StandingChargeFlag);
+
+  ButtonFrame(h,v+=50,150,4,"Tasuliigi tŸŸp:");
+  RadioButton(h,v,0,0,"Tasu",PaymTypeFlag);
+  RadioButton(h,v+=16,1,0,"Kinnipidamine (bruto)",PaymTypeFlag);
+  RadioButton(h,v+=16,2,0,"Kinnipidamine (neto)",PaymTypeFlag);
+  RadioButton(h,v+=16,3,0,"KohtutŠitur (kinnip.neto)",PaymTypeFlag);
+
+  ButtonFrame(h,v+=50,150,2,"Kuulub vŠljamaksmisele:");
+  RadioButton(h,v,0,0,"Jah",PaymFlag);
+  RadioButton(h,v+=16,1,0,"Ei",PaymFlag);
+
+  CheckBox(h1,v=46,0,"Tulumaksuga maksustatav",IncomeTaxFlag);
+  CheckBox(h1,v+=vs,0,"Tšštaja tšštuskindlustusuga maksustatav",UnemplInsFlag);
+  CheckBox(h1,v+=vs,0,"Kogumispensioniga maksustatav",PensionFlag);
+  CheckBox(h1,v+=vs,0,"Sotsiaalmaksuga maksustatav",SocialTaxFlag);
+  CheckBox(h1,v+=vs,0,"Tššandja tšštuskindlustusuga maksustatav",EmplUnemplInsFlag);
+  CheckBox(h1,v+=vs,0,"Puhkusearvestuse aluseks",VacationFlag);
+  CheckBox(h1,v+=vs,0,"Kogu summa tŠiendav tulumaksu vaba miinimum",BrutoIncTaxFreeMinFlag);
+//todo  CheckBox(h1,v+=vs,0,"Reservi sotsiaalmaks",ReserveSocialTaxFlag);
+//todo  CheckBox(h1,v+=vs,0,"Reservi tšštuskindlustus",ReserveUnemplInsFlag);
+
+  ButtonFrame(h1,v+=60,200,4,"Arvestuse alus:");
+  RadioButton(h1,v,0,0,"Fikseeritud summa",CalcTypeFlag);
+  RadioButton(h1,v+=16,1,0,"Proportsionaalselt tšštatud ajaga",CalcTypeFlag);
+  RadioButton(h1,v+=16,2,0,"Tššajatabel",CalcTypeFlag);
+  RadioButton(h1,v+=16,3,0,"TŸkitšš",CalcTypeFlag);
+  Tile(2,250,false,"2",CalcMethodFlag);
+  v = 6; h = 120;
+  ButtonFrame(h,v+=50,400,6,"Arvestuse meetod:");
+  RadioButton(h,v,0,0,"Ei tasustata",CalcMethodFlag);
+  RadioButton(h,v+=16,1,0,"Keskmine tššpŠeva tasu",CalcMethodFlag);
+  RadioButton(h,v+=16,2,0,"Keskmine kalendripŠeva tasu (v.a. Riiklikud pŸhad)",CalcMethodFlag);
+  RadioButton(h,v+=16,3,0,"Keskmine kalendripŠeva tasu (k›ik pŠevad)",CalcMethodFlag);
+  RadioButton(h,v+=16,4,0,"Palga jŠtkumine",CalcMethodFlag);
+  RadioButton(h,v+=16,5,0,"Minimaalne tasu",CalcMethodFlag);
+  EndWindow;
+end;
+
+window PaymTypeLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Tasuliigid",PaymTypeLClass,CGmlist,-);
+  SpawnClass(PaymTypeDClass);
+  SetWRect(20,80,300,250);
+  Sizeable(-1,-1,0,0);
+  UseView(PaymTypeVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Kood",Code,false,Code);
+  RlColKey(150,150,"Nimetus",Name,false,Name);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window PaymTypeSClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Aseta tasuliik",PaymTypeSClass,CGslist,-);
+  SetWRect(20,80,300,250);
+  Sizeable(-1,-1,0,0);
+  UseView(PaymTypeVc);
+  SpawnClass(PaymTypeDClass);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Kood",Code,false,Code);
+  RlColKey(150,150,"Nimetus",Name,false,Name);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window AbsenceDClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h2,h3,h4,v,vs;
+  string 255 label;
+  WindowBegin("Puudumine",AbsenceDClass,CGview,-);
+  SetWRect(20,80,700,800);
+  UseView(AbsenceVc);
+  ActiveFieldOnNew("SerNr");
+  vs = 20; h = 150; h2 = 400;
+  Tile(0,50,false,"",ContrSerNr);
+  TileButton(1,"Puudumine");
+  TileButton(2,"HaiguspŠevad");
+  TileButton(3,"Puhkuse pŠevad");
+  Tile(1,250,false,"1",ContrSerNr);
+  v = 16;
+  EditField(h,v,80,"Number",Normal,SerNr,false,TSerSClass);
+  EnterSkip(ContrSerNr);
+  EditField(h2,v,80,"Tšštaja kood",ViewOnly,EmplCode,false,0);
+  CheckBox(-100,v,0,"Kinnita",OKFlag);
+  CheckBox(-100,v+=vs,0,"Planeeritud",PlanedFlag);
+  EditField(h,v,80,"Lepingu nr.",Normal,ContrSerNr,false,ContractSClass);
+  EnterSkip(AbsTypeCode);
+  EditField(h2,v,150,"Eesnimi",ViewOnly,Firstname,false,0);
+  EditField(h,v+=vs,100,"Puudumise tŸŸp",Normal,AbsTypeCode,false,AbsTypeSClass);
+  EnterSkip(StartDate);
+  EditField(h2,v,150,"Perenimi",ViewOnly,Surname,false,0);
+  EditField(h,v+=vs,80,"Alguskp.",Normal,StartDate,false,PasteCurDate);
+  EnterSkip(EndDate);
+  EditField(h2,v,80,"TššpŠevi",ViewOnly,WorkDays,true,0);
+  EditField(h,v+=vs,80,"L›ppkp.",Normal,EndDate,false,PasteCurDate);
+  EnterSkip(ObjCode);
+  EditField(h2,v,80,"KalendripŠevi",ViewOnly,CalendarDays,true,0);
+  EditField(h,v+=vs,100,"Objekt",Normal,ObjCode,false,ObjSClass);
+  EnterSkip(Comment1);
+  EditField(h2,v,80,"Arvestuse nr.",ViewOnly,CalcSerNr,false,0);
+  EditField(h,v+=vs,-130,"Kommentaar 1",Normal,Comment1,false,0);
+  EditField(h,v+=vs,-130,"Kommentaar 2",Normal,Comment2,false,0);
+  Tile(2,250,true,"2",Period1);
+  v = 40; h=280; h2=h+65; h3=h2+85; vs=20;
+  EditField(h,v,70,"Eelmine puudumine",Normal,PrevAbsSerNr,false,PrevAbsenceSClass);
+  CheckBox(h+100,v,0,"JŠtkuv",ContinueFlag);
+  EditField(h,v+=20,70,"VŠljamakse kuupŠev:",Normal,AbsPaymDate,false,PasteCurDate);
+  StaticText(h2,v+=70,"alates:",false);
+  StaticText(h3,v,"kuni:",false);
+  EditField(h,v+=5,50,"Tasustamata haiguspŠevi:",Normal,Period1,true,0);
+  EditField(h2,v,70,"",ViewOnly,StartDate1,false,PasteCurDate);
+  EditField(h3,v,70,"",ViewOnly,EndDate1,false,PasteCurDate);
+  EditField(h,v+=vs,50,"Tššandja poolt tasustatud haiguspŠevi:",Normal,Period2,true,0);
+  EditField(h2,v,70,"",ViewOnly,StartDate2,false,PasteCurDate);
+  EditField(h3,v,70,"",ViewOnly,EndDate2,false,PasteCurDate);
+  EditField(h,v+=vs,50,"Haigekassa poolt tasustatud haiguspŠevi:",ViewOnly,Period3,true,0);
+  EditField(h2,v,70,"",ViewOnly,StartDate3,false,PasteCurDate);
+  EditField(h3,v,70,"",ViewOnly,EndDate3,false,PasteCurDate);
+  Tile(3,250,true,"3",Math);
+  MatrixBegin(10,v=40,-35,-35,-,99);
+  MatCol(1,32,"Aasta",0,Year,false,0);
+  EnterSkip(Days);
+  MatCol(1,100,"Alguskp.",0,SDate,false,0);
+  MatCol(1,170,"L›ppkp.",0,EDate,false,0);
+  MatCol(1,240,"PŠevi",0,Days,false,0);
+  EnterSkip(RowComment);
+  MatCol(1,310,"Riilikuid pŸhi",0,HDays,false,0);
+  MatCol(1,380,"Aasta jŠŠk",0,VacDaysToUse,false,0);
+  MatCol(1,450,"Brutosumma",0,BrutoSum,false,0);
+  MatCol(1,520,"Kommentaar",0,RowComment,false,0);
+  DeleteRowTest;
+  EndMatrix;
+  SpecialMenu("Vaata puhkusearvestuse arvutuskŠiku",'P',0,"VacCalcDsm");
+  EndWindow;
+end;
+
+window AbsenceLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Puudumised",AbsenceLClass,CGmlist,-);
+  SpawnClass(AbsenceDClass);
+  SetWRect(20,80,800,300);
+  Sizeable(-1,-1,0,0);
+  UseView(AbsenceVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Number",SerNr,false,SerNr);
+  RlColKey(96,96,"Lepingu nr.",ContrSerNr,false,ContrSerNr);
+  RlCol(200,200,"Eesnimi",Firstname,false);
+  RlColKey(300,300,"Perenimi",Surname,false,Surname);
+  RlColKey(400,400,"Alg.kp.",StartDate,false,StartDate);
+  RlColKey(500,500,"L›ppkp.",EndDate,false,EndDate);
+  RlColKey(600,600,"TŸŸp",AbsTypeCode,false,AbsTypeCode);
+  RlColKey(-60,-60,"Kinnitatud",OKMark,false,OKFlag);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window AbsenceSClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Aseta puudumine",AbsenceSClass,CGslist,-);
+  SetWRect(20,80,800,300);
+  Sizeable(-1,-1,0,0);
+  UseView(AbsenceVc);
+  SpawnClass(AbsenceDClass);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Number",SerNr,false,SerNr);
+  RlColKey(96,96,"Lepingu nr.",ContrSerNr,false,ContrSerNr);
+  RlCol(200,200,"Eesnimi",Firstname,false);
+  RlColKey(300,300,"Perenimi",Surname,false,Surname);
+  RlColKey(400,400,"Alg.kp.",StartDate,false,StartDate);
+  RlColKey(500,500,"L›ppkp.",EndDate,false,EndDate);
+  RlColKey(600,600,"TŸŸp",AbsTypeCode,false,AbsTypeCode);
+  RlColKey(-60,-60,"Kinnitatud",OKMark,false,OKFlag);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window PrevAbsenceSClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Aseta tšštaja eelmine puudumine",PrevAbsenceSClass,CGother,HBlRecType);
+  SetWRect(240,80,600,348);
+  StringList(9,9,-19,-19);
+  EndWindow;
+end;
+
+window AbsTypeDClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  string 255 label;
+  WindowBegin("Puudumise tŸŸp",AbsTypeDClass,CGview,-);
+  SetWRect(20,80,450,100);
+  UseView(AbsTypeVc);
+  ActiveFieldOnNew("Code");
+  v = 6; h = 170; vs = 20;
+  EditField(h,v+=vs,80,"Kood",Normal,Code,false,0);
+  EditField(h,v+=vs,150,"Nimetus",Normal,Name,false,0);
+  EditField(h,v+=vs,150,"Tasuliik",Normal,PaymTypeCode,false,PaymTypeSClass);
+  ButtonFrame(h,v+=60,150,3,"Puudumise liik:");
+  RadioButton(h,v,0,0,"Puhkus",AbsTypeFlag);
+  RadioButton(h,v+=16,1,0,"Haigus",AbsTypeFlag);
+  RadioButton(h,v+=16,2,0,"Muu",AbsTypeFlag);
+  EndWindow;
+end;
+
+window AbsTypeLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Puudumise tŸŸbid",AbsTypeLClass,CGmlist,-);
+  SpawnClass(AbsTypeDClass);
+  SetWRect(20,80,350,250);
+  Sizeable(-1,-1,0,0);
+  UseView(AbsTypeVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Kood",Code,false,Code);
+  RlColKey(130,130,"Nimetus",Name,false,Name);
+  RlColKey(270,270,"Tasuliik",PaymTypeCode,false,PaymTypeCode);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window AbsTypeSClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Aseta puudumise tŸŸp",AbsTypeSClass,CGslist,-);
+  SetWRect(20,80,350,250);
+  Sizeable(-1,-1,0,0);
+  UseView(AbsTypeVc);
+  SpawnClass(AbsTypeDClass);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Kood",Code,false,Code);
+  RlColKey(130,130,"Nimetus",Name,false,Name);
+  RlColKey(270,270,"Tasuliik",PaymTypeCode,false,PaymTypeCode);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window VacBalanceDClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  string 255 label;
+  WindowBegin("Puhkuse saldo",VacBalanceDClass,CGview,-);
+  SetWRect(20,80,800,400);
+  UseView(VacBalanceVc);
+  ActiveFieldOnNew("SerNr");
+  v = 26; h = 100; vs = 20;
+  EditField(h,v,80,"Number",Normal,SerNr,false,0);
+  EnterSkip(ContrSerNr);
+  EditField(h+250,v,150,"Eesnimi",Normal,Firstname,false,0);
+  EditField(h,v+=vs,80,"Tššlepingu nr.",ViewOnly,ContrSerNr,false,ContractSClass);
+  EnterSkip(Math);
+  EditField(h+250,v,150,"Perenimi",Normal,Surname,false,0);
+  CheckBox(-100,v,0,"Kinnita",OKFlag); 
+  MatrixBegin(10,v+=40,-25,-25,-,99);
+  MatCol(1,30,"Aasta",0,Year,false,0);
+  EnterSkip(VacDaysUsed);
+  MatCol(1,80,"Alguskp.",0,SDate,false,PasteCurDate);
+  MatCol(1,150,"L›ppkp.",0,EDate,false,PasteCurDate);
+  MatCol(1,220,"P-pŠevi aastas",0,VacDaysNorm,false,0);
+  MatCol(1,320,"Kasutatud pŠevi",0,VacDaysUsed,false,0);
+  EnterSkip(Year);
+  MatCol(1,420,"Aasta jŠŠk",0,VacDaysToUse,false,0);
+  MatCol(1,520,"AegumistŠhtaeg",0,BestBeforeDate,false,PasteCurDate);
+  MatCol(1,620,"Hetkeseis",0,VacDaysStatus,false,SetSClass);
+  DeleteRowTest;
+  EndMatrix;
+  EndWindow;
+end;
+
+window VacBalanceLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Puhkuse saldod",VacBalanceLClass,CGmlist,-);
+  SpawnClass(VacBalanceDClass);
+  SetWRect(20,80,500,250);
+  Sizeable(-1,-1,0,0);
+  UseView(VacBalanceVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Number",SerNr,false,SerNr);
+  RlColKey(96,96,"Lepingu nr.",ContrSerNr,false,ContrSerNr);
+  RlCol(200,200,"Eesnimi",Firstname,false);
+  RlColKey(300,300,"Perenimi",Surname,false,Surname);
+  RlColKey(-60,-60,"Kinnitatud",OKMark,false,OKFlag);
+  SearchField("Otsi");
+  SpecialMenu("Kinnita",'G',0,"OKVBrLsm");
+  EndWindow;
+end;
+
+window VacBalanceSClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Aseta puhkuse saldo",VacBalanceSClass,CGslist,-);
+  SetWRect(20,80,400,250);
+  Sizeable(-1,-1,0,0);
+  UseView(VacBalanceVc);
+  SpawnClass(VacBalanceDClass);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Number",SerNr,false,SerNr);
+  RlColKey(96,96,"Lepingu nr.",ContrSerNr,false,ContrSerNr);
+  RlCol(200,200,"Eesnimi",Firstname,false);
+  RlColKey(300,300,"Perenimi",Surname,false,Surname);
+  RlColKey(-60,-60,"Kinnitatud",OKMark,false,OKFlag);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window ExceptDatesDClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm;
+  WindowBegin("Riiklikud pŸhad, palk",ExceptDatesDClass,CGview,-);
+  Sizeable(-1,-1,0,0);
+  UseView(ExceptDatesVc);
+  SetWRect(64,80,609,380);
+  h = 70;
+  EditField(h,v=6,50,"Riik",Normal,CountryCode,false,CountrySClass);
+  EditField(200,v,50,"Aasta",Normal,Year,false,0);
+  EditField(400,v,-40,"Kommentaar",Normal,Comment,false,0);
+  CheckBox(h=50,vm=(v+=45),0,"EsmaspŠev",Monday);
+  CheckBox(h,v+=16,0,"TeisipŠev",Tuesday);
+  CheckBox(h,v+=16,0,"KolmapŠev",Wednesday);
+  CheckBox(h,v+=16,0,"NeljapŠev",Thursday);
+  CheckBox(h,v+=16,0,"Reede",Friday);
+  CheckBox(h,v+=16,0,"LaupŠev",Saturday);
+  CheckBox(h,v+=16,0,"PŸhapŠev",Sunday);
+  MatrixBegin(180,v=vm,-30,-20,BHollRowType,300);
+  MatCol(1,30,"KuupŠev",0,FreeDay,false,PasteCurDate);
+  MatCol(1,150,"Eriline pŠev",0,SpecDayCode,false,SpecDaySClass);
+  MatCol(1,300,"Tunnid",0,Hours,false,0);
+  EndMatrix;
+  EndWindow;
+end;
+
+window ExceptDatesLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Riiklikud pŸhad, palk",ExceptDatesLClass,CGmlist,-);
+  SpawnClass(ExceptDatesDClass);
+  SetWRect(64,80,470,400);
+  Sizeable(-1,-1,0,0);
+  UseView(ExceptDatesVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,2,"Riik",CountryCode,false,CountryCode);
+  RlColKey(100,100, "Aasta",Year,false,Year);
+  RlCol(200,200, "Kommentaar",Comment,false);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window OpenTransDClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  string 255 label;
+  WindowBegin("Avatud kanne",OpenTransDClass,CGview,-);
+  SetWRect(20,80,750,500);
+  Sizeable(-1,-1,0,0);
+  UseView(OpenTransVc);
+  ActiveFieldOnNew("SerNr");
+  v = 26; h = 70; vs = 20;
+  EditField(h,v,80,"Number",Normal,SerNr,false,TSerSClass);
+  EditField(h+190,v,100,"KuupŠev",Normal,TransDate,false,PasteCurDate);
+  CheckBox(-100,v,0,"Kinnita",OKFlag);
+  EditField(h,v+=vs,100,"Tasuliik",Normal,PaymTypeCode,false,PaymTypeSClass);
+  EditField(h+190,v,-120,"Kommentaar",Normal,Comment,false,0);
+  CheckBox(-100,v,0,"Arvestatud",CalcFlag);
+  MatrixBegin(10,v+=50,-50,-25,-,99);
+  Flip(0);
+  MatCol(1,30,"Lepingu nr.",0,ContrSerNr,false,ContractSClass);
+  EnterSkip(Tariff);
+  MatCol(1,100,"Ameti kood",0,PosCode,false,PositionSClass);
+  MatCol(1,190,"Eesnimi",0,Firstname,false,0);
+  MatCol(1,290,"Perenimi",0,Surname,false,0);
+  Flip(1);
+  MatCol(1,-240,"Tariif",0,Tariff,false,0);
+  MatCol(1,-160,"Kogus",0,Amount,false,0);
+  MatCol(1,-80,"Summa",0,Sum,false,0);
+  Flip(2);
+  MatCol(1,-180,"Objekt",0,ObjCode,false,ObjSClass);
+  MatCol(1,-90,"Arvestuse nr.",0,CalcSerNr,false,0);
+  DeleteRowTest;
+  EndMatrix;
+  VTab(-35,v,-14,v+vs,ToolFlip,1,"A");
+  VTab(-35,v+=vs,-14,v+vs,ToolFlip,2,"B");
+  EndWindow;
+end;
+
+window OpenTransLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Avatud kanded",OpenTransLClass,CGmlist,-);
+  SpawnClass(OpenTransDClass);
+  SetWRect(20,80,500,250);
+  Sizeable(-1,-1,0,0);
+  UseView(OpenTransVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Number",SerNr,false,SerNr);
+  RlColKey(96,96,"KuupŠev",TransDate,false,TransDate);
+  RlColKey(200,200,"Tasuliik",PaymTypeCode,false,PaymTypeCode);
+  RlColKey(-120,-120,"Kinnitatud",OKMark,false,OKFlag);
+  RlColKey(-60,-60,"Arvestatud",CalcMark,false,CalcFlag);
+  RlCol(-1,-1,"",Invalid,true);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window OpenTransSClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Aseta avatud kanne",OpenTransSClass,CGslist,-);
+  SetWRect(20,80,390,350);
+  Sizeable(-1,-1,0,0);
+  UseView(OpenTransVc);
+  SpawnClass(OpenTransDClass);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Number",SerNr,false,SerNr);
+  RlColKey(96,96,"KuupŠev",TransDate,false,TransDate);
+  RlColKey(200,200,"Tasuliik",PaymTypeCode,false,PaymTypeCode);
+  RlColKey(-120,-120,"Kinnitatud",OKMark,false,OKFlag);
+  RlColKey(-60,-60,"Arvestatud",CalcMark,false,CalcFlag);
+  RlCol(-1,-1,"",Invalid,true);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window PieceWorkDClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  string 255 label;
+  WindowBegin("TŸkitšš",PieceWorkDClass,CGview,-);
+  SetWRect(20,80,850,500);
+  UseView(PieceWorkVc);
+  ActiveFieldOnNew("SerNr");
+  v = 26; h = 70; vs = 20;
+  EditField(h,v,80,"Number",Normal,SerNr,false,TSerSClass);
+  EditField(h+170,v,100,"KuupŠev",Normal,TransDate,false,PasteCurDate);
+  CheckBox(-100,v,0,"Kinnita",OKFlag);
+  EditField(h,v+=vs,80,"TŸkitšš liik",Normal,PieceWorkTypeCode,false,PieceWorkTypeSClass);
+  EditField(h+170,v,-40,"Kommentaar",Normal,Comment,false,0);
+  MatrixBegin(10,v+=40,-25,-25,-,99);
+  MatCol(1,30,"Lepingu nr.",0,ContrSerNr,false,ContractSClass);
+  MatCol(1,100,"Ameti kood",0,PosCode,false,PositionSClass);
+  EnterSkip(Tariff);
+  MatCol(1,170,"Eesnimi",0,Firstname,false,0);
+  MatCol(1,270,"Perenimi",0,Surname,false,0);
+  MatCol(1,370,"Tariif",0,Tariff,false,0);
+  MatCol(1,440,"Kogus",0,Amount,false,0);
+  MatCol(1,510,"Brutosumma",0,BrutoSum,false,0);
+  MatCol(1,580,"Objekt",0,ObjCode,false,ObjSClass);
+  MatCol(1,680,"Arvestuse nr.",0,CalcSerNr,false,0);
+  DeleteRowTest;
+  EndMatrix;
+  EndWindow;
+end;
+
+window PieceWorkLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("TŸkitššd",PieceWorkLClass,CGmlist,-);
+  SpawnClass(PieceWorkDClass);
+  SetWRect(20,80,330,250);
+  Sizeable(-1,-1,0,0);
+  UseView(PieceWorkVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Number",SerNr,false,SerNr);
+  RlColKey(96,96,"KuupŠev",TransDate,false,TransDate);
+  RlColKey(200,200,"TŸkitšš liik",PieceWorkTypeCode,false,PieceWorkTypeCode);
+  RlColKey(-60,-60,"Kinnitatud",OKMark,false,OKFlag);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window PieceWorkSClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Aseta tŸkitšš",PieceWorkSClass,CGslist,-);
+  SetWRect(20,80,330,250);
+  Sizeable(-1,-1,0,0);
+  UseView(PieceWorkVc);
+  SpawnClass(PieceWorkDClass);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Number",SerNr,false,SerNr);
+  RlColKey(96,96,"KuupŠev",TransDate,false,TransDate);
+  RlColKey(200,200,"TŸkitšš liik",PieceWorkTypeCode,false,PieceWorkTypeCode);
+  RlColKey(-60,-60,"Kinnitatud",OKMark,false,OKFlag);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window PieceWorkTypeDClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  string 255 label;
+  WindowBegin("TŸkitšš liik",PieceWorkTypeDClass,CGview,-);
+  SetWRect(20,80,670,500);
+  UseView(PieceWorkTypeVc);
+  ActiveFieldOnNew("Code");
+  v = 26; h = 70; vs = 20;
+  EditField(h,v,80,"Kood",Normal,Code,false,0);
+  EditField(h+190,v,150,"Nimetus",Normal,Name,false,0);
+  EditField(h,v+=vs,100,"Tasuliik",Normal,PaymTypeCode,false,PaymTypeSClass);
+  EditField(h+190,v,-40,"Kommentaar",Normal,Comment,false,0);
+  MatrixBegin(10,v+=40,-25,-25,-,99);
+  MatCol(1,30,"Lepingu nr.",0,ContrSerNr,false,ContractSClass);
+  MatCol(1,100,"Ameti kood",0,PosCode,false,PositionSClass);
+  MatCol(1,170,"Eesnimi",0,Firstname,false,0);
+  MatCol(1,270,"Perenimi",0,Surname,false,0);
+  MatCol(1,370,"Tariif",0,Tariff,false,0);
+  MatCol(1,440,"Alguskp.",0,SDate,false,PasteCurDate);
+  MatCol(1,520,"L›ppkp.",0,EDate,false,PasteCurDate);
+  EndMatrix;
+  EndWindow;
+end;
+
+window PieceWorkTypeLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("TŸkitšš liigid",PieceWorkTypeLClass,CGmlist,-);
+  SpawnClass(PieceWorkTypeDClass);
+  SetWRect(20,80,250,250);
+  Sizeable(-1,-1,0,0);
+  UseView(PieceWorkTypeVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Kood",Code,false,Code);
+  RlColKey(100,100,"Tasuliik",PaymTypeCode,false,PaymTypeCode);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window PieceWorkTypeSClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Aseta tŸkitšš liik",PieceWorkTypeSClass,CGslist,-);
+  SetWRect(20,80,250,250);
+  Sizeable(-1,-1,0,0);
+  UseView(PieceWorkTypeVc);
+  SpawnClass(PieceWorkTypeDClass);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Kood",Code,false,Code);
+  RlColKey(100,100,"Tasuliik",PaymTypeCode,false,PaymTypeCode);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window ISCOCodeDClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  string 255 label;
+  WindowBegin("ISCO kood",ISCOCodeDClass,CGview,-);
+  SetWRect(20,80,470,300);
+  UseView(ISCOCodeVc);
+  ActiveFieldOnNew("Code");
+  v = 6; h = 150; vs = 20;
+  EditField(h,v+=vs,80,"Kood",Normal,Code,false,0);
+  EditField(h,v+=vs,150,"ISCO amet",Normal,ISCOPosition,false,0);
+  EditField(h,v+=vs,150,"ISCO tase",Normal,ISCOLevel,false,0);
+  EndWindow;
+end;
+
+window ISCOCodeLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("ISCO koodid",ISCOCodeLClass,CGmlist,-);
+  SpawnClass(ISCOCodeDClass);
+  SetWRect(20,80,250,250);
+  Sizeable(-1,-1,0,0);
+  UseView(ISCOCodeVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Kood",Code,false,Code);
+  RlColKey(96,96,"ISCO amet",ISCOPosition,false,ISCOPosition);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window ISCOCodeSClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Aseta ISCO kood",ISCOCodeSClass,CGslist,-);
+  SetWRect(20,80,250,250);
+  Sizeable(-1,-1,0,0);
+  UseView(ISCOCodeVc);
+  SpawnClass(ISCOCodeDClass);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Kood",Code,false,Code);
+  RlColKey(96,96,"ISCO amet",ISCOPosition,false,ISCOPosition);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window WorkHourTypeDClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h1,v,vs;
+  string 255 label;
+  WindowBegin("Tšštundide tŸŸp",WorkHourTypeDClass,CGview,-);
+  SetWRect(20,80,600,300);
+  UseView(WorkHourTypeVc);
+  ActiveFieldOnNew("Code");
+  v = 16; h = 100; h1=350; vs = 20;
+  EditField(h,v,80,"Kood",Normal,Code,false,0);
+  EditField(h1,v,150,"Nimetus",Normal,Name,false,0);
+//  EditField(h,v+=vs,80,"Koefitsient",Normal,Coefficient,false,0);
+  EditField(h,v+=vs,100,"Tasuliik",Normal,PaymTypeCode,false,PaymTypeSClass);
+  EditField(h1,v,80,"Alguskp.",Normal,StartDate,false,PasteCurDate);
+  EditField(h1,v+=vs,80,"L›ppkp.",Normal,EndDate,false,PasteCurDate);
+  EndWindow;
+end;
+
+window WorkHourTypeLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Tšštundide tŸŸbid",WorkHourTypeLClass,CGmlist,-);
+  SpawnClass(WorkHourTypeDClass);
+  SetWRect(20,80,650,250);
+  Sizeable(-1,-1,0,0);
+  UseView(WorkHourTypeVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Kood",Code,false,Code);
+  RlColKey(96,96,"Nimetus",Name,false,Name);
+//  RlColKey(200,200,"Koefitsient",Coefficient,false,Coefficient);
+  RlColKey(300,300,"Tasuliik",PaymTypeCode,false,PaymTypeCode);
+  RlColKey(400,400,"Alguskp.",StartDate,false,StartDate);
+  RlColKey(500,500,"L›ppkp.",EndDate,false,EndDate);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window WorkHourTypeSClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Aseta tšštundide tŸŸp",WorkHourTypeSClass,CGslist,-);
+  SetWRect(20,80,650,250);
+  Sizeable(-1,-1,0,0);
+  UseView(WorkHourTypeVc);
+  SpawnClass(WorkHourTypeDClass);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Kood",Code,false,Code);
+  RlColKey(96,96,"Nimetus",Name,false,Name);
+//  RlColKey(200,200,"Koefitsient",Coefficient,false,Coefficient);
+  RlColKey(300,300,"Tasuliik",PaymTypeCode,false,PaymTypeCode);
+  RlColKey(400,400,"Alguskp.",StartDate,false,StartDate);
+  RlColKey(500,500,"L›ppkp.",EndDate,false,EndDate);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window WorkedHoursDClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h1,v,vs,vm;
+  string 255 label;
+  WindowBegin("Tššajatabel",WorkedHoursDClass,CGview,-);
+  SetWRect(20,80,1350,600);
+  UseView(WorkedHoursVc);
+  Sizeable(-1,-1,0,0);
+  ActiveFieldOnNew("SerNr");
+  v = 26; h = 100; h1=350; vs = 20;
+  EditField(h,v,80,"Number",Normal,SerNr,false,TSerSClass);
+  EditField(h1,v,150,"Kommentaar",Normal,Comment,false,0);
+  CheckBox(-100,v,0,"Kinnita",OKFlag);
+  EditField(h,v+=vs,80,"Aasta",Normal,Year,false,0);
+  EditField(h1,v,150,"Kuu",Normal,Month,false,0);
+  MatrixBegin(5,v+=40,-50,-5,-,999);
+  vm=v;
+  Flip(0);
+  MatCol(1,30,"Lepingu nr.",0,ContrSerNr,false,ContractSClass);
+  MatCol(1,90,"Amet",0,PosCode,false,PositionSClass);
+  MatCol(1,150,"Tšštund. tŸŸp",0,WorkHourTypeCode,false,WorkHourTypeSClass);
+  EnterSkip(d1);
+  Flip(1);
+  v=250; vs=35;
+//  MatCol(1,v,"Koefitsient",0,Coefficient,false,0);
+  MatCol(1,v,"Eesnimi",0,Firstname,false,0);
+  MatCol(1,v+=100,"Perenimi",0,Surname,false,0);
+  MatCol(1,v+=170,"PŠevi kokku",0,DaysTotal,false,0);
+  MatCol(1,v+=80,"Tunde kokku",0,HoursTotal,false,0);
+  MatCol(1,v+=80,"1",0,d1,false,0);
+  MatCol(1,v+=vs,"2",0,d2,false,0);
+  MatCol(1,v+=vs,"3",0,d3,false,0);
+  MatCol(1,v+=vs,"4",0,d4,false,0);
+  MatCol(1,v+=vs,"5",0,d5,false,0);
+  MatCol(1,v+=vs,"6",0,d6,false,0);
+  MatCol(1,v+=vs,"7",0,d7,false,0);
+  MatCol(1,v+=vs,"8",0,d8,false,0);
+  MatCol(1,v+=vs,"9",0,d9,false,0);
+  MatCol(1,v+=vs,"10",0,d10,false,0);
+  MatCol(1,v+=vs,"11",0,d11,false,0);
+  MatCol(1,v+=vs,"12",0,d12,false,0);
+  MatCol(1,v+=vs,"13",0,d13,false,0);
+  MatCol(1,v+=vs,"14",0,d14,false,0);
+  MatCol(1,v+=vs,"15",0,d15,false,0);
+  Flip(2);
+  v=250; vs=35;
+  MatCol(1,v,"Objekt",0,ObjCode,false,ObjSClass);
+  MatCol(1,v+=300,"Arvestuse nr.",0,CalcSerNr,false,0);
+  MatCol(1,v+=100,"16",0,d16,false,0);
+  MatCol(1,v+=vs,"17",0,d17,false,0);
+  MatCol(1,v+=vs,"18",0,d18,false,0);
+  MatCol(1,v+=vs,"19",0,d19,false,0);
+  MatCol(1,v+=vs,"20",0,d20,false,0);
+  MatCol(1,v+=vs,"21",0,d21,false,0);
+  MatCol(1,v+=vs,"22",0,d22,false,0);
+  MatCol(1,v+=vs,"23",0,d23,false,0);
+  MatCol(1,v+=vs,"24",0,d24,false,0);
+  MatCol(1,v+=vs,"25",0,d25,false,0);
+  MatCol(1,v+=vs,"26",0,d26,false,0);
+  MatCol(1,v+=vs,"27",0,d27,false,0);
+  MatCol(1,v+=vs,"28",0,d28,false,0);
+  MatCol(1,v+=vs,"29",0,d29,false,0);
+  MatCol(1,v+=vs,"30",0,d30,false,0);
+  MatCol(1,v+=vs,"31",0,d31,false,0);
+  Flip(3);
+  v=250; vs=30;
+  MatCol(1,v,"1",0,d1,false,0);
+  MatCol(1,v+=vs,"2",0,d2,false,0);
+  MatCol(1,v+=vs,"3",0,d3,false,0);
+  MatCol(1,v+=vs,"4",0,d4,false,0);
+  MatCol(1,v+=vs,"5",0,d5,false,0);
+  MatCol(1,v+=vs,"6",0,d6,false,0);
+  MatCol(1,v+=vs,"7",0,d7,false,0);
+  MatCol(1,v+=vs,"8",0,d8,false,0);
+  MatCol(1,v+=vs,"9",0,d9,false,0);
+  MatCol(1,v+=vs,"10",0,d10,false,0);
+  MatCol(1,v+=vs,"11",0,d11,false,0);
+  MatCol(1,v+=vs,"12",0,d12,false,0);
+  MatCol(1,v+=vs,"13",0,d13,false,0);
+  MatCol(1,v+=vs,"14",0,d14,false,0);
+  MatCol(1,v+=vs,"15",0,d15,false,0);
+  MatCol(1,v+=vs,"16",0,d16,false,0);
+  MatCol(1,v+=vs,"17",0,d17,false,0);
+  MatCol(1,v+=vs,"18",0,d18,false,0);
+  MatCol(1,v+=vs,"19",0,d19,false,0);
+  MatCol(1,v+=vs,"20",0,d20,false,0);
+  MatCol(1,v+=vs,"21",0,d21,false,0);
+  MatCol(1,v+=vs,"22",0,d22,false,0);
+  MatCol(1,v+=vs,"23",0,d23,false,0);
+  MatCol(1,v+=vs,"24",0,d24,false,0);
+  MatCol(1,v+=vs,"25",0,d25,false,0);
+  MatCol(1,v+=vs,"26",0,d26,false,0);
+  MatCol(1,v+=vs,"27",0,d27,false,0);
+  MatCol(1,v+=vs,"28",0,d28,false,0);
+  MatCol(1,v+=vs,"29",0,d29,false,0);
+  MatCol(1,v+=vs,"30",0,d30,false,0);
+  MatCol(1,v+=vs,"31",0,d31,false,0);
+  DeleteRowTest;
+  EndMatrix;
+  VTab(-35,v=vm,-16,v+vs,ToolFlip,1,"A");
+  VTab(-35,v+=vs,-16,v+vs,ToolFlip,2,"B");
+  VTab(-35,v+=vs,-16,v+vs,ToolFlip,3,"C");
+  EndWindow;
+end;
+
+window WorkedHoursLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Tššajatabelid",WorkedHoursLClass,CGmlist,-);
+  SpawnClass(WorkedHoursDClass);
+  SetWRect(20,80,300,250);
+  Sizeable(-1,-1,0,0);
+  UseView(WorkedHoursVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Number",SerNr,false,SerNr);
+  RlColKey(96,96,"Aasta",Year,false,Year);
+  RlColKey(200,200,"Kuu",Month,false,Month);
+  RlColKey(-60,-60,"Kinnitatud",OKMark,false,OKFlag);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window WorkedHoursSClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Aseta tššajatabel",WorkedHoursSClass,CGslist,-);
+  SetWRect(20,80,300,250);
+  Sizeable(-1,-1,0,0);
+  UseView(WorkedHoursVc);
+  SpawnClass(WorkedHoursDClass);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Number",SerNr,false,SerNr);
+  RlColKey(96,96,"Aasta",Year,false,Year);
+  RlColKey(200,200,"Kuu",Month,false,Month);
+  RlColKey(-60,-60,"Kinnitatud",OKMark,false,OKFlag);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window CalcPayrollDClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h1,h2,v,vs;
+  string 255 label;
+  WindowBegin("Arvestus",CalcPayrollDClass,CGview,-);
+  SetWRect(20,80,860,400);
+  UseView(CalcPayrollVc);
+  FormName(CPayrollForm);
+  Sizeable(-1,-1,0,0);
+  ActiveFieldOnNew("SerNr");
+  CommunicateButton;
+  v = 26; h = 155; h1= 490; h2= 425; vs = 20;
+  EditField(h,v,80,"Number",Normal,SerNr,false,TSerSClass);
+  EditField(h1,v,80,"KuupŠev",Normal,CalcDate,false,PasteCurDate);
+  EditField(h,v+=vs,80,"Tššlepingu nr.",Normal,ContrSerNr,false,ContractSClass);
+  EnterSkip(StartDate);
+  EditField(h1,v,150,"Eesnimi",Normal,Firstname,false,0);
+  CheckBox(-120,v,0,"Kinnita",OKFlag);
+  EditField(h,v+=vs,80,"Alguskp.",Normal,StartDate,false,PasteCurDate);
+  EnterSkip(EndDate);
+  EditField(h1,v,150,"Perenimi",Normal,Surname,false,0);
+  CheckBox(-120,v,0,"VŠljamakstud",PaymFlag);
+  EditField(h,v+=vs,80,"L›ppkp.",Normal,EndDate,false,PasteCurDate);
+  EditField(h1,v,80,"VŠljamakse kp.",Normal,PaymDate,false,PasteCurDate);
+  EditField(h,v+=vs,100,"Objekt",Normal,ObjCode,false,ObjSClass);
+  EditField(h1,v,-40,"Kommentaar",Normal,Comment,false,0);
+  EnterSkip(Math);
+  MatrixBegin(10,v+=50,-50,-80,-,99);
+  Flip(0);
+  MatCol(1,30,"Amet",0,PosCode,false,PositionSClass);
+  MatCol(1,100,"Ameti nimetus",0,PosName,false,0);
+  MatCol(1,200,"Tasuliik",0,PaymTypeCode,false,PaymTypeSClass);
+  MatCol(1,300,"Tasuliigi nimetus",0,PaymTypeName,false,0);
+  Flip(1);
+  MatCol(1,-300,"Tariif",0,Tariff,true,0);
+  MatCol(1,-180,"Kogus",0,Amount,true,0);
+  MatCol(1,-90,"Brutosumma",0,BrutoSum,true,0);
+  Flip(2);
+  MatCol(1,-300,"Objekt",0,ObjCode,false,ObjSClass);
+  MatCol(1,-180,"Neto",0,NetoSum,true,0);
+  MatCol(1,-90,"Bruto",0,BrutoSum,true,0);
+  Flip(3);
+  MatCol(1,-270,"Sotsiaalmaks",0,SocTaxSum,true,0);
+  MatCol(1,-180,"Tššand. tšštusk.",0,EmplUnemplInsSum,true,0);
+  MatCol(1,-90,"TM vaba min.",0,IncTaxFreeMinSum,true,0);
+  Flip(4);
+  MatCol(1,-180,"Tšštaja tšštusk.",0,UnemplInsSum,true,0);
+  MatCol(1,-90,"Kogumispension",0,PensionSum,true,0);
+  Flip(5);
+  MatCol(1,-270,"TM suurendamine",0,AddTaxSum,true,0);//ts - 2017/11
+  MatCol(1,-180,"TM maks.summa",0,CalcBrutoSum,true,0);//ts - 2017/11
+  MatCol(1,-90,"Tulumaks",0,IncTaxSum,true,0);
+  Flip(6);
+//test  MatCol(1,-300,"DPDiscSum",0,DPDiscSum,false,0); //test
+  MatCol(1,-180,"Alguskp.",0,SDate,false,0);
+  MatCol(1,-90,"L›ppkp.",0,EDate,false,0);
+  DeleteRowTest;
+  EndMatrix;
+  VTab(-35,v,-14,v+vs,ToolFlip,1,"A");
+  VTab(-35,v+=vs,-14,v+vs,ToolFlip,2,"B");
+  VTab(-35,v+=vs,-14,v+vs,ToolFlip,3,"C");
+  VTab(-35,v+=vs,-14,v+vs,ToolFlip,4,"D");
+  VTab(-35,v+=vs,-14,v+vs,ToolFlip,5,"E");
+  VTab(-35,v+=vs,-14,v+vs,ToolFlip,6,"F");
+
+  EditField(h+=20,v=-70,90,"Tulumaks kokku",ViewOnly,IncTaxTotal,true,0);
+  EditField(h,v+=vs,90,"Tšštaja tšštuskindl. kokku",ViewOnly,UnemplInsTotal,true,0);
+  EditField(h,v+=vs,90,"Kogumispension kokku",Normal,PensionTotal,true,0);
+  EditField(h2+=40,v=-70,90,"TM vaba miinimum kokku",ViewOnly,IncTaxFreeMinTotal,true,0);
+  EditField(h2,v+=vs,90,"Tššandja tšštuskindl. kokku",ViewOnly,EmplUnemplInsTotal,true,0);
+  EditField(h2,v+=vs,90,"Sotsiaalmaks kokku",ViewOnly,SocTaxTotal,true,0);
+  EditField(h2=-140,v=-70,90,"Netosumma kokku",ViewOnly,NetoTotal,true,0);
+  EditField(h2=-140,v+=vs,90,"Brutosumma kokku",ViewOnly,BrutoTotal,true,0);
+  EditField(h2=-140,v+=vs,90,"TM suurendamine",ViewOnly,AddTaxSumTotal,true,0);
+  SpecialMenu("Ava finantskanne",'',1,"OpenTRFromCPr");
+  SpecialMenu("TrŸki palgasedel",'l',2,"SalarySlipDsm");
+  EndWindow;
+end;
+
+window CalcPayrollLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Arvestused",CalcPayrollLClass,CGmlist,-);
+  SpawnClass(CalcPayrollDClass);
+  SetWRect(20,80,880,250);
+  Sizeable(-1,-1,0,0);
+  UseView(CalcPayrollVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Number",SerNr,false,SerNr);
+  RlColKey(96,96,"KuupŠev",CalcDate,false,CalcDate);
+  RlColKey(180,180,"Alguskp.",StartDate,false,StartDate);
+  RlColKey(260,260,"L›ppkp.",EndDate,false,EndDate);
+  RlColKey(340,340,"VŠljam. kp.",PaymDate,false,PaymDate);
+  RlColKey(420,420,"Lepingu nr.",ContrSerNr,false,ContrSerNr);
+  RlColKey(500,500,"Eesnimi",Firstname,false,Firstname);
+  RlColKey(580,580,"Perenimi",Surname,false,Surname);
+  RlColKey(-140,-140,"Kinnitatud",OKMark,false,OKFlag);
+  RlColKey(-80,-80,"VŠljamakstud",PaymMark,false,PaymFlag);
+  RlCol(-1,-1,"",Invalid,true);
+  SearchField("Otsi");
+  CommunicateButton;
+  SpecialMenu("Kinnita",'G',0,"OKCPrLsm");
+  EndWindow;
+end;
+
+window CalcPayrollSClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Aseta arvestus",CalcPayrollSClass,CGother,HBlRecType);
+  SetWRect(240,80,600,348);
+  StringList(9,9,-19,-19);
+  EndWindow;
+end;
+
+window PaymPayrollDClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h1,h2,h3,h4,t,v,vm,vs;
+  string 255 label;
+
+  WindowBegin("VŠljamakse",PaymPayrollDClass,CGview,-);
+  SetWRect(20,80,900,400);
+  UseView(PaymPayrollVc);
+  FormName(PPayrollForm);
+  Sizeable(-1,-1,0,0);
+  ActiveFieldOnNew("PaymDate");
+  CommunicateButton;
+  v = 26; h = 100; h1= 350; vs = 20;
+  EditField(h,v,80,"Number",Normal,SerNr,false,TSerSClass);
+  EditField(h1,v,100,"KuupŠev",Normal,PaymDate,false,PasteCurDate);
+  CheckBox(-100,v,0,"Kinnita",OKFlag);
+  EditField(h,v+=vs,80,"Tasumisviis",Normal,PMCode,false,PMSClass);
+  EditField(h1,v,100,"Objekt",Normal,ObjCode,false,ObjSClass);
+  EditField(h1+210,v,120,"Nimi",ViewOnly,Name,false,0);
+  EditField(h,v+=vs,-200,"Kommentaar",Normal,Comment,false,0);
+  EnterSkip(Math);
+  MatrixBegin(10,v+=40,-50,-50,-,99);
+  Flip(0);
+  MatCol(1,30,"Lepingu nr.",0,ContrSerNr,false,ContractSClass);
+  MatCol(1,100,"Arvestuse nr.",0,CalcSerNr,false,CalcPayrollSClass);
+//  MatCol(1,180,"Av. kande nr.",0,OpTransSerNr,false,OpTransSClass);
+  EnterSkip(PaymTypeCode);
+  MatCol(1,180,"Eesnimi",0,Firstname,false,0);
+  MatCol(1,310,"Perenimi",0,Surname,false,0);
+  MatCol(1,460,"Tasuliik",0,PaymTypeCode,false,PaymTypeSClass);
+  EnterSkip(NetoSum);
+  Flip(1);
+  MatCol(1,-230,"Tasuliigi nimetus",0,PaymTypeName,false,0);
+  MatCol(1,-90,"Netosumma",0,NetoSum,false,0);
+  Flip(2);
+  MatCol(1,-230,"Objekt",0,ObjCode,false,ObjSClass);
+  MatCol(1,-160,"KuupŠev",0,PDate,false,PasteCurDate);
+  MatCol(1,-90,"Bruto",0,BrutoSum,false,0);
+  Flip(3);
+  MatCol(1,-270,"Sotsiaalmaks",0,SocTaxSum,true,0);
+  MatCol(1,-180,"Tššand. tšštusk.",0,EmplUnemplInsSum,true,0);
+  MatCol(1,-90,"TM vaba min.",0,IncTaxFreeMinSum,true,0);
+  Flip(4);
+  MatCol(1,-180,"Tšštaja tšštusk.",0,UnemplInsSum,true,0);
+  MatCol(1,-90,"Kogumispension",0,PensionSum,true,0);
+  Flip(5);
+  MatCol(1,-270,"TM suurendamine",0,AddTaxSum,true,0);//ts - 2017/11
+  MatCol(1,-180,"TM maks.summa",0,CalcBrutoSum,true,0);//ts - 2017/11
+  MatCol(1,-90,"Tulumaks",0,IncTaxSum,true,0);
+  DeleteRowTest;
+  EndMatrix;
+  VTab(-35,v,-14,v+vs,ToolFlip,1,"A");
+  VTab(-35,v+=vs,-14,v+vs,ToolFlip,2,"B");
+  VTab(-35,v+=vs,-14,v+vs,ToolFlip,3,"C");
+  VTab(-35,v+=vs,-14,v+vs,ToolFlip,4,"D");
+  VTab(-35,v+=vs,-14,v+vs,ToolFlip,5,"E");
+  EditField(h1=-140,v=-40,90,"VŠljamakstav summa kokku:",Normal,NetoTotal,true,0);
+  SpecialMenu("Ava finantskanne",'',1,"OpenTRFromPPr");
+  EndWindow;
+end;
+
+window PaymPayrollLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("VŠljamaksed",PaymPayrollLClass,CGmlist,-);
+  SpawnClass(PaymPayrollDClass);
+  SetWRect(20,80,630,250);
+  Sizeable(-1,-1,0,0);
+  UseView(PaymPayrollVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Number",SerNr,false,SerNr);
+  RlColKey(80,80,"KuupŠev",PaymDate,false,PaymDate);
+  RlColKey(160,160,"Nimi",Name,false,Name);
+  RlCol(300,300,"Kommentaar",Comment,false);
+  RlCol(-150,-150,"Summa kokku",NetoTotal,true);
+  RlColKey(-60,-60,"Kinnitatud",OKMark,false,OKFlag);
+  RlCol(-1,-1,"",Invalid,true);
+  SearchField("Otsi");
+  CommunicateButton;
+  SpecialMenu("Kinnita",'G',0,"OKPPrLsm");
+  EndWindow;
+end;
+
+window PaymPayrollSClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Aseta vŠljamakse",PaymPayrollSClass,CGslist,-);
+  SetWRect(20,80,630,250);
+  Sizeable(-1,-1,0,0);
+  UseView(PaymPayrollVc);
+  SpawnClass(PaymPayrollDClass);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Number",SerNr,false,SerNr);
+  RlColKey(80,80,"KuupŠev",PaymDate,false,PaymDate);
+  RlColKey(160,160,"Nimi",Name,false,Name);
+  RlCol(300,300,"Kommentaar",Comment,false);
+  RlCol(-150,-150,"Summa kokku",NetoTotal,true);
+  RlColKey(-60,-60,"Kinnitatud",OKMark,false,OKFlag);
+  RlCol(-1,-1,"",Invalid,true);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window TaxDClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h1,h2,v,vs;
+  string 255 label;
+  WindowBegin("Maks",TaxDClass,CGview,-);
+  SetWRect(20,80,480,400);
+  UseView(TaxVc);
+  ActiveFieldOnNew("Code");
+  v = 26; h = 50; vs = 20; h1=200;h2=h+90;
+  Tile(0,90,false,"",Code);
+  EditField(h,v,80,"Kood",Normal,Code,false,0);
+  EditField(h1,v,-30,"Nimetus",Normal,Name,false,0);
+  EditField(h,v+=vs,80,"Objekt",Normal,ObjCode,false,ObjSClass);
+  TileButton(1,"Maksu tŸŸp");
+  TileButton(2,"Summad");
+  Tile(1,100,true,"1",-);
+  ButtonFrame(h2,v=26,150,8,"Maksu tŸŸp");
+  RadioButton(h2,v,0,0,"Tulumaks",TaxType);
+  RadioButton(h2,v+=16,1,0,"Tšštuskindlustus",TaxType);
+  RadioButton(h2,v+=16,2,0,"Kogumispension",TaxType);
+  StaticText(h2,v+=50,"Tššandja maksud:",false);
+  RadioButton(h2,v+=6,5,0,"Sotsiaalmaks",TaxType);  
+  RadioButton(h2,v+=16,6,0,"Tšštuskindlustus",TaxType);  
+  Tile(2,100,true,"2",Math);
+  MatrixBegin(10,6,-25,-25,-,99);
+  MatCol(1,30,"Alguskp.",0,SDate,false,PasteCurDate);
+  MatCol(1,110,"L›ppkp.",0,EDate,false,PasteCurDate);
+  MatCol(1,190,"Alates",0,FromSum,false,0);
+  MatCol(1,270,"Kuni",0,ToSum,false,0);
+  MatCol(1,350,"MŠŠr",0,Percent,false,0);
+  EndMatrix;
+  EndWindow;
+end;
+
+window TaxLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Maksud",TaxLClass,CGmlist,-);
+  SpawnClass(TaxDClass);
+  SetWRect(20,80,350,250);
+  Sizeable(-1,-1,0,0);
+  UseView(TaxVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Kood",Code,false,Code);
+  RlColKey(96,96,"Nimetus",Name,false,Name);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window TaxSClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Aseta maks",TaxSClass,CGslist,-);
+  SetWRect(20,80,350,250);
+  Sizeable(-1,-1,0,0);
+  UseView(TaxVc);
+  SpawnClass(TaxDClass);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Kood",Code,false,Code);
+  RlColKey(96,96,"Nimetus",Name,false,Name);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window SalaryFBDClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  string 255 label;
+  WindowBegin("Algsaldo Ð Tšštasu",SalaryFBDClass,CGview,-);
+  SetWRect(20,80,690,300);
+  Sizeable(-1,-1,0,0);
+  UseView(SalaryFBVc);
+  ActiveFieldOnNew("SerNr");
+  v = 26; h = 80; vs = 20;
+  EditField(h,v,80,"Number",Normal,SerNr,false,0);
+  EditField(h+190,v,250,"Kommentaar",Normal,Comment,false,0);
+  CheckBox(-100,v,0,"Kinnita",OKFlag);
+  MatrixBegin(10,v+=60,-25,-5,-,999);
+  MatCol(1,30,"Lepingu number",0,ContrSerNr,false,ContractSClass);
+  EnterSkip(FBDate);
+  MatCol(1,130,"Eesnimi",0,Firstname,false,0);
+  MatCol(1,280,"Perenimi",0,Surname,false,0);
+  MatCol(1,-200,"KuupŠev",0,FBDate,false,PasteCurDate);
+  MatCol(1,-100,"Brutosumma",0,BrutoSum,false,0);
+  DeleteRowTest;
+  EndMatrix;
+  EndWindow;
+end;
+
+window SalaryFBLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Algsaldod Ð Tšštasu",SalaryFBLClass,CGmlist,-);
+  SpawnClass(SalaryFBDClass);
+  SetWRect(20,80,300,250);
+  Sizeable(-1,-1,0,0);
+  UseView(SalaryFBVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Number",SerNr,false,SerNr);
+  RlCol(96,96,"Kommentaar",Comment,false);
+  RlColKey(-60,-60,"Kinnitatud",OKMark,false,OKFlag);
+  RlCol(-1,-1,"",Invalid,true);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window SalaryFBSClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Aseta algsaldo Ð Tšštasu",SalaryFBSClass,CGslist,-);
+  SetWRect(20,80,300,250);
+  Sizeable(-1,-1,0,0);
+  UseView(SalaryFBVc);
+  SpawnClass(SalaryFBDClass);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Number",SerNr,false,SerNr);
+  RlCol(96,96,"Kommentaar",Comment,false);
+  RlColKey(-60,-60,"Kinnitatud",OKMark,false,OKFlag);
+  RlCol(-1,-1,"",Invalid,true);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window AbsenceFBDClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  string 255 label;
+  WindowBegin("Algsaldo Ð Puudumised",AbsenceFBDClass,CGview,-);
+  SetWRect(20,80,790,300);
+  Sizeable(-1,-1,0,0);
+  UseView(AbsenceFBVc);
+  ActiveFieldOnNew("SerNr");
+  v = 26; h = 80; vs = 20;
+  EditField(h,v,80,"Number",Normal,SerNr,false,0);
+  EditField(h+190,v,250,"Kommentaar",Normal,Comment,false,0);
+  CheckBox(-100,v,0,"Kinnita",OKFlag);
+  MatrixBegin(10,v+=60,-25,-5,-,999);
+  MatCol(1,30,"Lepingu number",0,ContrSerNr,false,ContractSClass);
+  EnterSkip(AbsTypeCode);
+  MatCol(1,130,"Eesnimi",0,Firstname,false,0);
+  MatCol(1,280,"Perenimi",0,Surname,false,0);
+  MatCol(1,430,"Puudumise tŸŸp",0,AbsTypeCode,false,AbsTypeSClass);
+  MatCol(1,530,"Alguskp.",0,SDate,false,PasteCurDate);
+  MatCol(1,630,"L›ppkp.",0,EDate,false,PasteCurDate);
+  DeleteRowTest;
+  EndMatrix;
+  EndWindow;
+end;
+
+window AbsenceFBLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Algsaldod Ð Puudumised",AbsenceFBLClass,CGmlist,-);
+  SpawnClass(AbsenceFBDClass);
+  SetWRect(20,80,300,250);
+  Sizeable(-1,-1,0,0);
+  UseView(AbsenceFBVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Number",SerNr,false,SerNr);
+  RlCol(96,96,"Kommentaar",Comment,false);
+  RlColKey(-60,-60,"Kinnitatud",OKMark,false,OKFlag);
+  RlCol(-1,-1,"",Invalid,true);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window AbsenceFBSClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Aseta algsaldo Ð Puudumised",AbsenceFBSClass,CGslist,-);
+  SetWRect(20,80,300,250);
+  Sizeable(-1,-1,0,0);
+  UseView(AbsenceFBVc);
+  SpawnClass(AbsenceFBDClass);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Number",SerNr,false,SerNr);
+  RlCol(96,96,"Kommentaar",Comment,false);
+  RlColKey(-60,-60,"Kinnitatud",OKMark,false,OKFlag);
+  RlCol(-1,-1,"",Invalid,true);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window VacDaysFBDClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  string 255 label;
+  WindowBegin("Algsaldo Ð Kasutamata puhkusejŠŠk",VacDaysFBDClass,CGview,-);
+  SetWRect(20,80,590,300);
+  Sizeable(-1,-1,0,0);
+  UseView(VacDaysFBVc);
+  ActiveFieldOnNew("SerNr");
+  v = 26; h = 100; vs = 20;
+  EditField(h,v,80,"Number",Normal,SerNr,false,0);
+  EditField(h+200,v,50,"Aasta",Normal,Year,false,0);
+  CheckBox(-100,v,0,"Kinnita",OKFlag);
+  EditField(h,v+=vs,-30,"Kommentaar",Normal,Comment,false,0);
+  MatrixBegin(10,v+=40,-25,-5,-,999);
+  MatCol(1,30,"Lepingu number",0,ContrSerNr,false,ContractSClass);
+  EnterSkip(VacDaysToUse);
+  MatCol(1,130,"Eesnimi",0,Firstname,false,0);
+  MatCol(1,280,"Perenimi",0,Surname,false,0);
+  MatCol(1,-100,"P-pŠevade jŠŠk",0,VacDaysToUse,false,0);
+  DeleteRowTest;
+  EndMatrix;
+  EndWindow;
+end;
+
+window VacDaysFBLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Algsaldod Ð Kasutamata puhkusejŠŠk",VacDaysFBLClass,CGmlist,-);
+  SpawnClass(VacDaysFBDClass);
+  SetWRect(20,80,500,250);
+  Sizeable(-1,-1,0,0);
+  UseView(VacDaysFBVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Number",SerNr,false,SerNr);
+  RlColKey(96,96,"Aasta",Year,false,Year);
+  RlCol(170,170,"Kommentaar",Comment,false);
+  RlColKey(-60,-60,"Kinnitatud",OKMark,false,OKFlag);
+  RlCol(-1,-1,"",Invalid,true);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window VacDaysFBSClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Aseta algsaldo Ð Kasutamata puhkusejŠŠk",VacDaysFBSClass,CGslist,-);
+  SetWRect(20,80,500,250);
+  Sizeable(-1,-1,0,0);
+  UseView(VacDaysFBVc);
+  SpawnClass(VacDaysFBDClass);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Number",SerNr,false,SerNr);
+  RlColKey(96,96,"Aasta",Year,false,Year);
+  RlCol(170,170,"Kommentaar",Comment,false);
+  RlColKey(-60,-60,"Kinnitatud",OKMark,false,OKFlag);
+  RlCol(-1,-1,"",Invalid,true);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window PayTypeSClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Aseta vana palgamooduli tasuliik",PayTypeSClass,CGslist,PayTypeView);
+  SetWRect(65,80,300,300);
+  SpawnClass(PayTypeDClass);
+  Sizeable(-1,-1,0,0);
+  UseView(PayTypeVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(5,5,"Kood",Code,false,Code);
+  RlColKey(80,80,"Nimetus",Name,false,Name);
+  RlColKey(-50,-50,"Suletud",Closed,false,Closed);
+  RlCol(-1,-1,"",Invalid,true);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window BailiffDClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h1,h2,h3,v,vs;
+  WindowBegin("KohtutŠiturite kinnipidamised",BailiffDClass,CGview,-);
+  SetWRect(64,80,600,400);
+  UseView(BailiffVc);
+  ActiveFieldOnNew("ContrSerNr");
+  h=60; h1=190; h2 = 300; h3 = 410; vs = 20;
+  Tile(0,70,false,"",ContrSerNr);
+  EditField(h+20,v=26,80,"Lepingu nr.",Normal,ContrSerNr,false,ContractSClass);
+  EditField(h1+70,v,150,"Eesnimi",ViewOnly,Firstname,false,0);
+  EditField(h1+70,v+=vs,150,"Perenimi",ViewOnly,Surname,false,0);
+  CheckBox(-80,v,0,"Kinnita",OKFlag);
+  TileButton(1,"KohtutŠiturid");
+  TileButton(2,"Palk");
+  Tile(1,200,false,"",PaymTypeCode1);
+  StaticText(h,v=26,"KT tasuliik",false);
+  StaticText(h1-10,v,"KT summa kokku",false);
+  StaticText(h2-10,v,"KT-le arvest. summa",false);
+  StaticText(h3+20,v,"KT jŠŠk",false);
+  EditField(h,v+=vs,100,"",Normal,PaymTypeCode1,false,PaymTypeSClass);
+  EditField(h1,v,80,"",Normal,BSum1,true,0);
+  EnterSkip(PaymTypeCode2);
+  EditField(h2,v,80,"",ViewOnly,BPaidSum1,true,0);
+  EditField(h3,v,80,"",ViewOnly,BUnpaidSum1,true,0);
+  EditField(h,v+=vs,100,"",Normal,PaymTypeCode2,false,PaymTypeSClass);
+  EditField(h1,v,80,"",Normal,BSum2,true,0);
+  EnterSkip(PaymTypeCode3);
+  EditField(h2,v,80,"",ViewOnly,BPaidSum2,true,0);
+  EditField(h3,v,80,"",ViewOnly,BUnpaidSum2,true,0);
+  EditField(h,v+=vs,100,"",Normal,PaymTypeCode3,false,PaymTypeSClass);
+  EditField(h1,v,80,"",Normal,BSum3,true,0);
+  EnterSkip(PaymTypeCode4);
+  EditField(h2,v,80,"",ViewOnly,BPaidSum3,true,0);
+  EditField(h3,v,80,"",ViewOnly,BUnpaidSum3,true,0);
+  EditField(h,v+=vs,100,"",Normal,PaymTypeCode4,false,PaymTypeSClass);
+  EditField(h1,v,80,"",Normal,BSum4,true,0);
+  EnterSkip(PaymTypeCode5);
+  EditField(h2,v,80,"",ViewOnly,BPaidSum4,true,0);
+  EditField(h3,v,80,"",ViewOnly,BUnpaidSum4,true,0);
+  EditField(h,v+=vs,100,"",Normal,PaymTypeCode5,false,PaymTypeSClass);
+  EditField(h1,v,80,"",Normal,BSum5,true,0);
+  EnterSkip(PaymTypeCode6);
+  EditField(h2,v,80,"",ViewOnly,BPaidSum5,true,0);
+  EditField(h3,v,80,"",ViewOnly,BUnpaidSum5,true,0);
+  EditField(h,v+=vs,100,"",Normal,PaymTypeCode6,false,PaymTypeSClass);
+  EditField(h1,v,80,"",Normal,BSum6,true,0);
+  EnterSkip(PaymTypeCode7);
+  EditField(h2,v,80,"",ViewOnly,BPaidSum6,true,0);
+  EditField(h3,v,80,"",ViewOnly,BUnpaidSum6,true,0);
+  EditField(h,v+=vs,100,"",Normal,PaymTypeCode7,false,PaymTypeSClass);
+  EditField(h1,v,80,"",Normal,BSum7,true,0);
+  EnterSkip(PaymTypeCode8);
+  EditField(h2,v,80,"",ViewOnly,BPaidSum7,true,0);
+  EditField(h3,v,80,"",ViewOnly,BUnpaidSum7,true,0);
+  EditField(h,v+=vs,100,"",Normal,PaymTypeCode8,false,PaymTypeSClass);
+  EditField(h1,v,80,"",Normal,BSum8,true,0);
+  EnterSkip(PaymTypeCode9);
+  EditField(h2,v,80,"",ViewOnly,BPaidSum8,true,0);
+  EditField(h3,v,80,"",ViewOnly,BUnpaidSum8,true,0);
+  EditField(h,v+=vs,100,"",Normal,PaymTypeCode9,false,PaymTypeSClass);
+  EditField(h1,v,80,"",Normal,BSum9,true,0);
+  EnterSkip(PaymTypeCode10);
+  EditField(h2,v,80,"",ViewOnly,BPaidSum9,true,0);
+  EditField(h3,v,80,"",ViewOnly,BUnpaidSum9,true,0);
+  EditField(h,v+=vs,100,"",Normal,PaymTypeCode10,false,PaymTypeSClass);
+  EditField(h1,v,80,"",Normal,BSum10,true,0);
+  EnterSkip(Math);
+  EditField(h2,v,80,"",ViewOnly,BPaidSum10,true,0);
+  EditField(h3,v,80,"",ViewOnly,BUnpaidSum10,true,0);
+  Tile(2,200,false,"",Math);
+  MatrixBegin(h+20,v=26,-120,-20,-,99);
+  MatCol(1,0,"Alguskp.",0,SDate,false,PasteCurDate);
+  MatCol(1,100,"L›ppkp.",0,EDate,false,PasteCurDate);
+  MatCol(1,200,"Neto",0,NetoSum,false,0);
+  EndMatrix;
+  EndWindow;
+end;
+
+window BailiffLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("KohtutŠiturite kinnipidamised",BailiffLClass,CGmlist,-);
+  SpawnClass(BailiffDClass);
+  SetWRect(20,80,400,250);
+  Sizeable(-1,-1,0,0);
+  UseView(BailiffVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Lepingu nr.",ContrSerNr,false,ContrSerNr);
+  RlCol(96,96,"Eesnimi",Firstname,false);
+  RlColKey(200,200,"Perenimi",Surname,false,Surname);
+  RlColKey(-60,-60,"Kinnitatud",OKMark,false,OKFlag);
+  SearchField("Otsi");
+  SpecialMenu("Kinnita",'G',0,"OKVBrLsm");
+  EndWindow;
+end;
+
+window SalSettingTClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h1,v,vs;
+  WindowBegin("Lausendamine, palk",SalSettingTClass,CGSbl,-);
+  SetWRect(64,80,700,400);
+  SetBlid(SalSettingBlock);
+  h=190; h1=500; vs = 20;
+  Tile(0,30,false,"",VacAbsTypeCode);
+  TileButton(1,"Seaded");
+  TileButton(2,"HaiguspŠevad");
+  Tile(1,300,false,"",VacAbsTypeCode);
+  EditField(h,v=26,100,"Puhkuse puudumise tŸŸp",Normal,VacAbsTypeCode,false,AbsTypeSClass);
+  EditField(h,v+=vs,100,"Íppepuhkuse puudumise tŸŸp",Normal,StudyAbsTypeCode,false,AbsTypeSClass);
+  EditField(h,v+=vs,100,"Lapsepuhkuse puudumise tŸŸp",Normal,ChildAbsTypeCode,false,AbsTypeSClass);
+  EditField(h,v+=vs,100,"Avansi tasuliik",Normal,AdvPaymTypeCode,false,PaymTypeSClass);
+  EditField(h,v+=vs,100,"Avansi kinnipidamise tasuliik",Normal,DeductAdvPaymTypeCode,false,PaymTypeSClass);
+
+  EditField(h1,v=26,70,"Konteerimisgrupp vaikimisi",Normal,AccGroupCode,false,AccGroupSClass);
+  EditField(h1,v+=vs,70,"PuhkusepŠevi aastas",Normal,VacDaysNorm,false,0);
+  EditField(h1,v+=vs,70,"Normtunde pŠevas",Normal,WorkDaysNorm,false,0);  
+  EditField(h1,v+=vs,70,"Arvestuste kanded alates",Normal,CalcTransDate,false,PasteCurDate);
+  EditField(h1,v+=vs,70,"VŠljamaksete kanded alates",Normal,PaymTransDate,false,PasteCurDate);
+  Tile(2,300,false,"",IllAbsTypeCode);
+  EditField(h=300,v=26,100,"Haiguse puudumise tŸŸp",Normal,IllAbsTypeCode,false,AbsTypeSClass);
+  EditField(h,v+=vs,50,"Tasustamata haiguspŠevi:",Normal,DaysNotPaid,true,0);
+  EditField(h,v+=vs,50,"Tššandja poolt tasustatud haiguspŠevi:",Normal,DaysPaid,true,0);
+  EditField(h,v+=vs,50,"Protsent %",Normal,Percent,true,0);
+  EndWindow;
+end;
+
+window ContractSerTClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Numbriseeriad - Tššlepingud",ContractSerTClass,CGHbl,HBlRecType);
+  SetBlid(ContractSerBlock);
+  TSERWTEST1_EST;
+  EndWindow;
+end;
+
+window CalcPayrollSerTClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Numbriseeriad - Arvestused",CalcPayrollSerTClass,CGHbl,HBlRecType);
+  SetBlid(CalcPayrollSerBlock);
+  TSERWTEST_EST;
+  EndWindow;
+end;
+
+window PaymPayrollSerTClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Numbriseeriad - VŠljamaksed",PaymPayrollSerTClass,CGHbl,HBlRecType);
+  SetBlid(PaymPayrollSerBlock);
+  TSERWTEST_EST;
+  EndWindow;
+end;
+
+window OpenTransSerTClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Numbriseeriad - Avatud kanded",OpenTransSerTClass,CGHbl,HBlRecType);
+  SetBlid(OpenTransSerBlock);
+  TSERWTEST1_EST;
+  EndWindow;
+end;
+
+window AbsenceSerTClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Numbriseeriad - Puudumised",AbsenceSerTClass,CGHbl,HBlRecType);
+  SetBlid(AbsenceSerBlock);
+  TSERWTEST1_EST;
+  EndWindow;
+end;
+
+window PieceWorkSerTClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Numbriseeriad - TŸkitššd",PieceWorkSerTClass,CGHbl,HBlRecType);
+  SetBlid(PieceWorkSerBlock);
+  TSERWTEST1_EST;
+  EndWindow;
+end;
+
+window WorkedHoursSerTClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Numbriseeriad - Tššajatabelid",WorkedHoursSerTClass,CGHbl,HBlRecType);
+  SetBlid(WorkedHoursSerBlock);
+  TSERWTEST1_EST;
+  EndWindow;
+end;
+
+window IncTaxFreeMinTClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v;
+  WindowBegin("Tulumaksuvaba miinimumi summa",IncTaxFreeMinTClass,CGHbl,HBlRecType);
+  SetBlid(IncTaxFreeMinBlock);
+  h = 8; v = 60;
+  SetWRect(20,80,550,300);
+  Sizeable(-1,-1,0,0);
+  MatrixBegin(h,v,-31,-20,-,99);
+  MatCol(1,30,"Alguskp.",0,SDate,false,PasteCurDate);
+  MatCol(1,110,"L›ppkp.",0,EDate,false,PasteCurDate);
+  MatCol(1,190,"TMV min. summa kuus",0,IncTaxFMPerMonth,false,0);
+  MatCol(1,330,"Kommentaar",0,Comment,false,0);
+  EndMatrix;
+  DeleteRowTest;
+  EndWindow;
+end;
+
+window MinSalaryTClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v;
+  WindowBegin("Minimaalne tšštasu",MinSalaryTClass,CGHbl,HBlRecType);
+  SetBlid(MinSalaryBlock);
+  h = 8; v = 60;
+  SetWRect(20,80,400,300);
+  Sizeable(-1,-1,0,0);
+  MatrixBegin(h,v,-31,-20,-,99);
+  MatCol(1,30,"Alguskp.",0,SDate,false,PasteCurDate);
+  MatCol(1,110,"L›ppkp.",0,EDate,false,PasteCurDate);
+  MatCol(1,190,"Minimaalne tšštasu kuus",0,MinSalaryPerMonth,false,0);
+  EndMatrix;
+  DeleteRowTest;
+  EndWindow;
+end;
+
+window OldPRPayTypesTClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  WindowBegin("Konverteerimine, Tasuliigid",OldPRPayTypesTClass,CGHbl,HBlRecType);
+  SetBlid(OldPRPayTypesBlock);
+  h = 8; v = 20; vs = 20;
+  SetWRect(20,80,300,300);
+  Sizeable(-1,-1,0,0);
+  StaticText(20,v,"Vali Ctrl-Enteriga tasuliigid",false);
+  StaticText(20,v+=vs,"vanast palgamoodulist, mis lŠhevad",false);
+  StaticText(20,v+=vs,"uue palgamooduli tšštasu algsaldodesse.",false);
+  MatrixBegin(h,v+=40,-31,-20,-,99);
+  MatCol(1,30,"Tasuliik",0,PayType,false,PayTypeSClass);
+  EndMatrix;
+  DeleteRowTest;
+  EndWindow;
+end;
+
+window MinSocTaxTClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v;
+  WindowBegin("Minimaalne sots.maksu summa",MinSocTaxTClass,CGHbl,HBlRecType);
+  SetBlid(MinSocTaxBlock);
+  h = 8; v = 60;
+  SetWRect(20,80,450,300);
+  Sizeable(-1,-1,0,0);
+  MatrixBegin(h,v,-31,-20,-,99);
+  MatCol(1,30,"Alguskp.",0,SDate,false,PasteCurDate);
+  MatCol(1,110,"L›ppkp.",0,EDate,false,PasteCurDate);
+  MatCol(1,190,"Minimaalne sots.maksu summa kuus",0,MinSocTaxPerMonth,false,0);
+  EndMatrix;
+  DeleteRowTest;
+  EndWindow;
+end;
+
+window CreateCalcPayrollVClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+  WindowBegin("MŠŠra palgaarvestuse kaartide koostamine",CreateCalcPayrollVClass,CGMnt,RcType);
+  SetWRect(20,80,500,280);
+  v = 20; vs = 20; h = 190;
+  EditFieldTL(h,v,150,"Periood*",M4UStr,Normal,21,Period2Str,false,PerSClass);
+  EditFieldTL(h,v+=vs,100,"Tšštaja",M4Str,Normal,50,f1,false,EmplSClass); 
+  EditFieldTL(h,v+=vs,100,"Tššleping",M4Str,Normal,50,f2,false,ContractSClass);
+  EditFieldTL(h,v+=vs,100,"Tššlepingu objekt",M4Str,Normal,50,ObjStr,false,ObjSClass);
+  EditFieldTL(h,v+=vs,100,"Tasuliik",M4Str,Normal,60,f3,false,PaymTypeSClass);
+  EditFieldTL(h,v+=vs,100,"VŠljamakse kuupŠev*",M4Date,Normal,0,d1,false,PasteCurDate);
+  vs=16;
+  ButtonFrame(h,v+=40,110,6,"Andmete allikad");
+  CheckBox(h,v,0,"Avatud kanded",flags[0]);
+  CheckBox(h,v+=vs,0,"Haigused",flags[1]);
+  CheckBox(h,v+=vs,0,"TŸkitššd",flags[2]);
+  CheckBox(h,v+=vs,0,"Tššajatabelid",flags[3]);
+  CheckBox(h,v+=vs,0,"PŸsitasud",flags[4]);
+//  CheckBox(h,v+=vs,0,"Avansid",flags[5]);
+  EndWindow;
+end;
+
+window CreatePaymPayrollVClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+  WindowBegin("MŠŠra palgavŠljamakse kaartide koostamine",CreatePaymPayrollVClass,CGMnt,RcType);
+  SetWRect(20,80,500,280);
+  v = 20; vs = 20; h = 230;
+  EditFieldTL(h,v,150,"Arvestuse kuupŠev perioodis",M4UStr,Normal,21,Period2Str,false,PerSClass);
+  EditFieldTL(h,v+=vs,100,"Tšštaja",M4Str,Normal,50,f1,false,EmplSClass); 
+  EditFieldTL(h,v+=vs,100,"Tššleping",M4Str,Normal,50,f2,false,ContractSClass);
+  EditFieldTL(h,v+=vs,100,"Tasumisviis*",M4Str,Normal,10,f3,false,PMSClass);
+  EditFieldTL(h,v+=vs,100,"VŠljamakse kuupŠev",M4Date,Normal,0,d1,false,PasteCurDate);
+  CheckBox(h,v+=30,0,"KoondvŠljamakse",flags[0]);
+  EndWindow;
+end;
+
+window CreateVacCalcPayrollVClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+  WindowBegin("MŠŠra puhkusearvestuse kaartide koostamine",CreateVacCalcPayrollVClass,CGMnt,RcType);
+  SetWRect(20,80,500,310);
+  v = 20; vs = 20; h = 190;
+  EditFieldTL(h,v,150,"Periood",M4UStr,Normal,21,Period2Str,false,PerSClass);
+  EditFieldTL(h,v+=vs,100,"Tšštaja",M4Str,Normal,50,f1,false,EmplSClass); 
+  EditFieldTL(h,v+=vs,100,"Tššleping",M4Str,Normal,50,f2,false,ContractSClass);
+  EditFieldTL(h,v+=vs,100,"VŠljamakse kuupŠev",M4Date,Normal,0,d1,false,PasteCurDate);
+//cust - begin: ts 2018/05
+  ButtonFrame(h=150,v+=40,180,2,"6 kuu arvestus l›ppeb:"); 
+  RadioButton(h,v,0,0,"Puhkusele eelnev kuu",flags[0]);
+  RadioButton(h,v+=16,1,0,"Puhkusele Ÿle-eelnev kuu",flags[0]);
+//cust - end
+  //CheckBox(h,v+=30,0,"€ra arvesta TM vaba miinimumi",flags[0]);
+  EndWindow;
+end;
+
+window ConvertOldPayrollDataVClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h1,h2,v,vm,vs;
+  WindowBegin("MŠŠra vana palgamooduli pŸsiandmete konverteerimine",ConvertOldPayrollDataVClass,CGMnt,RcType);
+  SetWRect(20,80,600,280);
+  v=20; vs=20; h=70; h1=250; h2=400;
+  StaticText(20,v,"I. Antud hoolduse kŠvitamisel: ",false);
+  StaticText(50,v+=vs,"1. tŸhistatakse uue palgamooduli jŠrgmised registrid:",false);
+  StaticText(h,v+=vs,"- Tšštajad",false);
+  StaticText(h1,v,"- Tššlepingud",false);
+  StaticText(h2,v,"- Tasuliigid",false);
+  StaticText(h,v+=vs,"- Puudumised",false);
+  StaticText(h1,v,"- Puudumise tŸŸbid",false);
+  StaticText(h2,v,"- Puhkuse saldod",false);
+  StaticText(h,v+=vs,"- Lausendamine, palk",false);
+  StaticText(h1,v,"- Avatud kanded",false);
+  StaticText(h2,v,"- TŸkitššd",false);
+  StaticText(h,v+=vs,"- Tššajatabelid",false);
+  StaticText(h1,v,"- Arvestused",false);
+  StaticText(h2,v,"- VŠljamaksed",false);
+  StaticText(h,v+=vs,"- Maksud",false);
+  StaticText(h1,v,"- Algsaldod, Tšštasu",false);
+  StaticText(h2,v,"- Algsaldod, Puudumised",false);
+  StaticText(h,v+=vs,"- Algsaldod, PuhkusejŠŠk",false);
+  StaticText(50,v+=30,"2. kopeeritakse vanast palgamoodulist jŠrgmised registrid:",false);
+  StaticText(h,v+=vs,"- Tšštajad",false);
+  StaticText(h1,v,"- Tššlepingud",false);
+  StaticText(h,v+=vs,"- Tasuliigid",false);
+  StaticText(h1,v,"- Kinnipidamised (maksud)",false);
+  StaticText(h,v+=vs,"- Puudumiste tŸŸbid",false);
+  StaticText(50,v+=30,"3. tŠidetakse vana palgamooduli andmete alusel jŠrgmised registrid:",false);
+  StaticText(70,v+=vs,"- Algsaldod, Tšštasu",false);
+  StaticText(70,v+=vs,"- Algsaldod, Puudumised",false);
+  StaticText(70,v+=vs,"- Algsaldod, PuhkusejŠŠk",false);
+  StaticText(20,v+=30,"II. Kontrolli, et on tŠidetud seadistus 'Konverteerimine, Tasuliigid'",false);
+  StaticText(20,v+=30,"III. Sisesta konventeerimiseks kohustuslikud andmed:",false);
+  EditFieldTL(h1+70,v+=10,70,"Tššlepingu konteerimisgrupp",M4Str,Normal,50,f1,false,AccGroupSClass); 
+  EditFieldTL(h1+70,v+=vs,70,"TM miinimumi arvestuse algus",M4Date,Normal,0,d1,false,PasteCurDate);
+  EditFieldTL(h1+70,v+=vs,70,"PuhkusejŠŠgi aasta",M4Str,Normal,50,f2,false,0); 
+  EndWindow;
+end;
+
+window OkCalcPayrollVClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+  WindowBegin("Kinnita palgaarvestuse kaardid",OkCalcPayrollVClass,CGMnt,RcType);
+  SetWRect(20,80,400,280);
+  v = 20; vs = 20; h = 130;
+  EditFieldTL(h,v,150,"Periood",M4UStr,Normal,21,Period2Str,false,PerSClass);
+  EditFieldTL(h,v+=vs,150,"Arvestuse nr.",M4Str,Normal,50,f1,false,0); 
+  EndWindow;
+end;
+
+window OkPaymPayrollVClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+  WindowBegin("Kinnita vŠljamakse kaardid",OkPaymPayrollVClass,CGMnt,RcType);
+  SetWRect(20,80,400,280);
+  v = 20; vs = 20; h = 130;
+  EditFieldTL(h,v,150,"Periood",M4UStr,Normal,21,Period2Str,false,PerSClass);
+  EditFieldTL(h,v+=vs,150,"VŠljamakse nr.",M4Str,Normal,50,f1,false,0); 
+  EndWindow;
+end;
+
+window CreateVacBalanceVClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v;
+  WindowBegin("MŠŠra puhkuse saldode koostamine",CreateVacBalanceVClass,CGMnt,RcType);
+  SetWRect(20,80,400,280);
+  v = 20; h = 150;
+  EditFieldTL(h,v,120,"Aasta",M4Int,Normal,4,flags[1],false,0);
+  EndWindow;
+end;
+
+window UpdateHistoryRegistersVClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+  WindowBegin("Uuenda abiregistrite andmed - uus",UpdateHistoryRegistersVClass,CGMnt,RcType);
+  SetWRect(20,80,350,280);
+  v = 20; vs = 16; h = 40;
+  CheckBox(h,v,0,"Arvestuse abiregister",flags[0]);
+  CheckBox(h,v+=vs,0,"Arvestuste/VŠljamaksete ajalugu",flags[1]);
+  CheckBox(h,v+=vs,0,"Avatud kannete abiregister",flags[2]);
+  CheckBox(h,v+=vs,0,"Puudumiste abiregister",flags[3]);
+  CheckBox(h,v+=vs,0,"TM vaba miinimumi abiregister",flags[4]);
+  CheckBox(h,v+=vs,0,"Tššv›imetuspensionŠri soodustuse abiregister",flags[7]);
+  CheckBox(h,v+=vs,0,"Tššajatabeli abiregister",flags[5]);
+  CheckBox(h,v+=vs,0,"TŸkitšš abiregister",flags[6]);
+  EndWindow;
+end;
+
+window CreateWorkedHoursVClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+  WindowBegin("MŠŠra tššajatabelite koostamine",CreateWorkedHoursVClass,CGMnt,RcType);
+  SetWRect(20,80,400,300);
+  v = 20; vs = 20; h = 170;
+  EditFieldTL(h,v,70,"Aasta",M4Int,Normal,4,flags[1],false,0);
+  EditFieldTL(h,v+=vs,70,"Kuu",M4Int,Normal,2,flags[2],false,0);
+  EditFieldTL(h,v+=vs,70,"Tššleping",M4Str,Normal,50,f1,false,ContractSClass);
+  EditFieldTL(h,v+=vs,70,"Tšštunde pŠevas",M4Val,Normal,50,vals0,false,0);
+  EditFieldTL(h,v+=vs,100,"Tššajatabeli tasuliik",M4Str,Normal,60,f2,false,PaymTypeSClass);
+  EndWindow;
+end;
+
+window CalcPayrollToMailVClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+  WindowBegin("MŠŠra e-mailide koostamine palgaarvestustest",CalcPayrollToMailVClass,CGMnt,RcType);
+  SetWRect(64,80,400,280);
+  v = 20; vs = 20; h = 110;
+  PeriodField(h,v,"Periood");
+  EditFieldTL(h,v+=vs,100,"Tšštaja",M4Str,Normal,50,f1,false,EmplSClass); 
+  EditFieldTL(h,v+=vs,100,"Tššleping",M4Str,Normal,50,f2,false,ContractSClass);
+  EditFieldTL(h,v+=vs,100,"Arvestuse nr.",M4Str,Normal,50,f3,false,0); 
+  CheckBox(h,v+=20,0,"K.a. kinnitamata arvestused",flags[1]);
+  CheckBox(h,v+=16,0,"Saada e-mailid automaatselt",flags[2]);
+  EndWindow;
+end;
+
+window AbsencesRClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+  WindowBegin("MŠŠra puudumised",AbsencesRClass,CGRcW,RcType);
+  SetWRect(20,80,400,280);
+  v = 20; vs = 20; h = 130;
+  PeriodField(h,v,"Periood");
+  EditFieldTL(h,v+=vs,100,"Puudumise tŸŸp",M4Str,Normal,50,f4,false,AbsTypeSClass); 
+  EditFieldTL(h,v+=vs,100,"Tšštaja",M4Str,Normal,50,f1,false,EmplSClass); 
+  EditFieldTL(h,v+=vs,100,"Tššleping",M4Str,Normal,50,f2,false,ContractSClass);
+  EditFieldTL(h,v+=vs,100,"Objekt",M4Code,Normal,50,ObjStr,false,ObjSClass);
+  vs=16;
+  ButtonFrame(h,v+=50,110,4,"Puudumise liik");
+  RadioButton(h,v,0,0,"€ra arvesta",flags[0]);
+  RadioButton(h,v+=vs,1,0,"Puhkus",flags[0]);
+  RadioButton(h,v+=vs,2,0,"Haigus",flags[0]);
+  RadioButton(h,v+=vs,3,0,"Muu",flags[0]);
+  CheckBox(h,v+=40,0,"K.a. suletud tšštajad",flags[1]);
+  CheckBox(h,v+=vs,0,"K.a. mitteaktiivsed lepingud",flags[2]);
+  EndWindow;
+end;
+
+window CalcPayrollRClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+  WindowBegin("MŠŠra palgaleht",CalcPayrollRClass,CGRcW,RcType);
+  SetWRect(20,80,420,300);
+  v = 20; vs = 20; h = 110;
+  PeriodField(h,v,"Periood");
+  EditFieldTL(h,v+=vs,100,"Tšštaja",M4Str,Normal,50,f1,false,EmplSClass); 
+  EditFieldTL(h,v+=vs,100,"Tššleping",M4Str,Normal,50,f2,false,ContractSClass);
+  EditFieldTL(h,v+=vs,100,"Arvestuse nr.",M4Str,Normal,50,f3,false,0); 
+  vs=16;
+  CheckBox(h-10,v+=20,0,"K.a. peatatud ja l›petatud tššlepingud",flags[1]);
+  CheckBox(h-10,v+=20,0,"Kuva ainult vŠljamaksmata arvestuskaardid",flags[2]);
+  ButtonFrame(h,v+=50,190,2,"MŠŠra");
+  RadioButton(h,v,0,0,"Arvestuse kuupŠeva alusel",flags[0]);
+  RadioButton(h,v+=vs,1,0,"VŠljamakse kuupŠeva alusel",flags[0]);
+  ButtonFrame(h,v+=50,210,4,"Esitus");
+  RadioButton(h,v,0,0,"Kokkuv›te",ArtMode);
+  RadioButton(h,v+=vs,1,0,"Detailne",ArtMode);
+  StaticText(h+17,v+=30,"(tasuliikide detailseks vaatamiseks",false);
+  StaticText(h+17,v+=vs," vali meedia Fail v›i Excel)",false);
+  EndWindow;
+end;
+
+window SalarySlipRClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+  WindowBegin("MŠŠra palgasedel",SalarySlipRClass,CGRcW,RcType);
+  SetWRect(20,80,400,280);
+  v = 20; vs = 20; h = 120;
+  PeriodField(h,v,"Periood");
+  EditFieldTL(h,v+=vs,100,"Tšštaja",M4Str,Normal,50,f1,false,EmplSClass); 
+  EditFieldTL(h,v+=vs,100,"Tššleping",M4Str,Normal,50,f2,false,ContractSClass);
+  EditFieldTL(h,v+=vs,100,"Objekt",M4Code,Normal,50,ObjStr,false,ObjSClass);
+  EndWindow;
+end;
+
+window TSDRClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+  WindowBegin("MŠŠra TSD vorm",TSDRClass,CGRcW,RcType);
+  SetWRect(20,80,430,280);
+  v = 20; vs = 20; h = 160;
+  EditFieldTL(h,v,70,"Aasta",M4Int,Normal,4,flags[1],false,0);
+  EditFieldTL(h,v+=vs,70,"Kuu",M4Int,Normal,2,flags[2],false,0);
+  StaticText(h-130,v+=60,"NB! Aruandes kuvatavate ja Maksuameti poolt arvutatavate summadel",false);
+  StaticText(h-130,v+=15,"v›ib esineda Ÿmardamisest tulenevaid vŠikesi erinevusi.",false);
+  EndWindow;
+end;
+
+window EmplHistRClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+  WindowBegin("MŠŠra tšštaja ajalugu",EmplHistRClass,CGRcW,RcType);
+  SetWRect(20,80,400,280);
+  v = 20; vs = 20; h = 130;
+  PeriodField(h,v,"Periood");
+  EditFieldTL(h,v+=vs,100,"Tšštaja",M4Str,Normal,50,f1,false,EmplSClass); 
+  EditFieldTL(h,v+=vs,100,"Tššleping",M4Str,Normal,50,f2,false,ContractSClass);
+  EditFieldTL(h,v+=vs,100,"Konteerimisgrupp",M4Str,Normal,50,f3,false,AccGroupSClass);
+  CheckBox(h,v+=40,0,"K.a. suletud tšštajad",flags[1]);
+  CheckBox(h,v+=vs,0,"K.a. mitteaktiivsed lepingud",flags[2]);
+  EndWindow;
+end;
+
+window VacBalanceRClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+  WindowBegin("MŠŠra puhkuse saldo hetkeseis",VacBalanceRClass,CGRcW,RcType);
+  SetWRect(20,80,400,280);
+  v = 20; vs = 20; h = 150;
+  EditFieldTL(h,v,100,"KuupŠev",M4Date,Normal,0,d1,false,PasteCurDate);
+  EditFieldTL(h,v+=vs,100,"Tšštaja",M4Str,Normal,50,f1,false,EmplSClass); 
+  EditFieldTL(h,v+=vs,100,"Tššleping",M4Str,Normal,50,f2,false,ContractSClass);
+  EditFieldTL(h,v+=vs,100,"Konteerimisgrupp",M4Str,Normal,50,f3,false,AccGroupSClass);
+  EndWindow;
+end;
+
+window VacBalToUseRClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+  WindowBegin("MŠŠra puhkusereserv",VacBalToUseRClass,CGRcW,RcType);
+  SetWRect(20,80,400,280);
+  v = 20; vs = 20; h = 150;
+  EditFieldTL(h,v,100,"KuupŠev",M4Date,Normal,0,d1,false,PasteCurDate);
+  EditFieldTL(h,v+=vs,100,"Tšštaja",M4Str,Normal,50,f1,false,EmplSClass); 
+  EditFieldTL(h,v+=vs,100,"Tššleping",M4Str,Normal,50,f2,false,ContractSClass);
+  EditFieldTL(h,v+=vs,100,"Konteerimisgrupp",M4Str,Normal,50,f3,false,AccGroupSClass);
+  EndWindow;
+end;
+
+window PaymPayrollRClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+  WindowBegin("MŠŠra palga vŠljamaksed", PaymPayrollRClass,CGRcW,RcType);
+  SetWRect(20,80,400,280);
+  v = 20; vs = 20; h = 130;
+  PeriodField(h,v,"Periood");
+  EditFieldTL(h,v+=vs,100,"VŠljamakse nr.",M4Str,Normal,50,f1,false,PaymPayrollSClass); 
+  EditFieldTL(h,v+=vs,100,"Tšštaja",M4Str,Normal,50,f2,false,EmplSClass); 
+  EditFieldTL(h,v+=vs,100,"Tššleping",M4Str,Normal,50,f3,false,ContractSClass);
+  EditFieldTL(h,v+=vs,100,"Tasumisviis",M4Str,Normal,10,f4,false,PMSClass);
+  EditFieldTL(h,v+=vs,100,"Konteerimisgrupp",M4Str,Normal,50,f5,false,AccGroupSClass);
+  EndWindow;
+end;
+
+window WorkedHoursRClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+  WindowBegin("MŠŠra tššajatabelid",WorkedHoursRClass,CGRcW,RcType);
+  SetWRect(20,80,420,300);
+  v = 20; vs = 20; h = 130; vs=16;
+  EditFieldTL(h,v,100,"Aasta",M4Int,Normal,4,flags[1],false,0);
+  EditFieldTL(h,v+=vs,100,"Kuu",M4Int,Normal,2,flags[2],false,0);
+  EditFieldTL(h,v+=vs,100,"Tšštaja",M4Str,Normal,50,f1,false,EmplSClass); 
+  EditFieldTL(h,v+=vs,100,"Tššleping",M4Str,Normal,50,f2,false,ContractSClass);
+  EditFieldTL(h,v+=vs,100,"Tššajatabeli nr.",M4Str,Normal,50,f3,false,0); 
+  ButtonFrame(h,v+=50,210,4,"Esitus");
+  RadioButton(h,v,0,0,"Kokkuv›te",ArtMode);
+  RadioButton(h,v+=vs,1,0,"Detailne",ArtMode);
+  StaticText(h+17,v+=30,"(kuupŠevade detailseks vaatamiseks",false);
+  StaticText(h+17,v+=vs," vali meedia Fail v›i Excel)",false);
+  EndWindow;
+end;
+
+window VacCalcRClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+  WindowBegin("Puhkusearvestuse arvutuskŠik",VacCalcRClass,CGRcW,RcType);
+  SetWRect(20,80,400,280);
+  v = 26; vs = 20; h = 180;
+  EditFieldTL(h,v,70,"Puhkuse puudumise nr.",M4Str,Normal,50,f1,false,0); 
+  EditFieldTL(h,v+=vs,100,"VŠljamakse kuupŠev",M4Date,Normal,0,d1,false,PasteCurDate);
+//cust - begin: ts 2018/05
+  ButtonFrame(h=100,v+=40,180,2,"6 kuu arvestus l›ppeb:"); 
+  RadioButton(h,v,0,0,"Puhkusele eelnev kuu",flags[0]);
+  RadioButton(h,v+=16,1,0,"Puhkusele Ÿle-eelnev kuu",flags[0]);
+//cust - end
+  EndWindow;
+end;
+
+window TSDEClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs,h2,h3;
+  WindowBegin("MŠŠra 2015 TSD eksport maksuametile",TSDEClass,CGEcW,RcType);
+  SetWRect(20,80,900,560);
+  v = 20; vs = 20; h = 130; h2 = 320; h3 = 440; 
+  EditFieldTL(h,v,20,"Kuu",M4Int,Normal,0,flags[2],true,0);
+  EditFieldTL(h+70,v,36,"Aasta",M4Int,Normal,0,flags[1],true,0);
+  EditFieldTL(h,v+=vs,120,"Paranduse veakood",M4Code,Normal,30,f2,false,TSDErrorSClass);
+  EditFieldTL(h,v+=vs,-20,"Paranduse p›hjus",M4Str,Normal,255,f1,false,0);
+  ButtonFrame(h2,20,80,2,"Laadimise viis");
+  RadioButton(h2,20,0,0,"Uus",ArtMode);
+  RadioButton(h2,36,1,0,"Parandus",ArtMode);
+  CheckBox(h3,20,0,"Lisa 1",flags[4]);
+  CheckBox(h3,36,0,"Lisa 2",flags[5]);
+  CheckBox(h,v+=vs,0,"Sisesta arvutatavad vŠŠrtused",flags[6]);
+  EndWindow;
+end;
+
+window PayRollDataEClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h1,h2,v,vm,vs;
+  WindowBegin("MŠŠra palgamooduli andmete eksport",PayRollDataEClass,CGEcW,RcType);
+  SetWRect(20,80,700,400);
+  v=20; vs=20; vm=20; h=30; h1=210; h2=430;
+
+  CheckBox(h,v,0,"Tšštajad",flags[0]);
+  CheckBox(h,v+=vs,0,"Tššlepingud",flags[3]);
+  CheckBox(h,v+=vs,0,"Arvestused",flags[16]);
+  CheckBox(h,v+=vs,0,"VŠljamaksed",flags[17]);
+  CheckBox(h,v+=vs,0,"Avatud kanded",flags[10]);
+  CheckBox(h,v+=vs,0,"Puudumised",flags[5]);
+  CheckBox(h,v+=vs,0,"TŸkitššd",flags[11]);
+  CheckBox(h,v+=vs,0,"Tššajatabelid",flags[15]);
+  CheckBox(h,v+=vs,0,"Puhkuse saldod",flags[7]);
+  CheckBox(h,v+=vs,0,"Maksud",flags[18]);
+  CheckBox(h,v+=vs,0,"Tasuliigid",flags[4]);
+  CheckBox(h,v+=vs,0,"Konteerimisgrupid",flags[2]);
+
+  CheckBox(h1,v=vm,0,"Lausendamine, palk",flags[8]);
+  CheckBox(h1,v+=vs,0,"Ametid",flags[1]);
+  CheckBox(h1,v+=vs,0,"ISCO koodid",flags[13]);
+  CheckBox(h1,v+=vs,0,"Puudumise tŸŸbid",flags[6]);
+  CheckBox(h1,v+=vs,0,"TŸkitšš liigid",flags[12]);
+  CheckBox(h1,v+=vs,0,"Tšštundide tŸŸbid",flags[14]);
+  CheckBox(h1,v+=vs,0,"Riiklikud pŸhad, palk",flags[9]);
+  CheckBox(h1,v+=vs,0,"TSD paranduse veakoodid",AccSpec);
+  CheckBox(h1,v+=vs,0,"Kehtivad TSD reakoodid",CorrM);
+  CheckBox(h1,v+=vs,0,"Minimaalne sots.maksu summa",TSep);
+  CheckBox(h1,v+=vs,0,"Tulumaksuvaba miinimumi summa",flags[29]);
+  CheckBox(h1,v+=vs,0,"Minimaalne tšštasu",UsedOnly);
+
+  CheckBox(h2,v=vm,0,"Algsaldod Ð Tšštasu",flags[19]);
+  CheckBox(h2,v+=vs,0,"Algsaldod Ð Puudumised",flags[20]);
+  CheckBox(h2,v+=vs,0,"Algsaldod Ð Kasutamata puhkusejŠŠk",flags[21]);
+
+  CheckBox(h2,v+=vs,0,"Numbriseeriad - Tššlepingud",flags[22]);
+  CheckBox(h2,v+=vs,0,"Numbriseeriad - Arvestused",flags[23]);
+  CheckBox(h2,v+=vs,0,"Numbriseeriad - VŠljamaksed",flags[24]);
+  CheckBox(h2,v+=vs,0,"Numbriseeriad - Avatud kanded",flags[25]);
+  CheckBox(h2,v+=vs,0,"Numbriseeriad - Puudumised",flags[26]);
+  CheckBox(h2,v+=vs,0,"Numbriseeriad - TŸkitššd",flags[27]);
+  CheckBox(h2,v+=vs,0,"Numbriseeriad - Tššajatabelid",flags[28]);
+  CheckBox(h2,v+=vs,0,"Konverteerimine, Tasuliigid",SimVerf);
+  EndWindow;
+end;
+
+window PaymPayrollXMLEClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real v,vs,vm,h,h1,h2,h3;
+  WindowBegin("MŠŠra vŠljamaksete eksport XML faili",PaymPayrollXMLEClass,CGEcW,RcType);
+  SetWRect(20,80,420,320);
+  h = 200; vs = 16; h2 = 220; h3 = 70;
+  PeriodField(h,v=6,"VŠljamakse kuupŠev perioodis");
+  EditFieldTL(h,v+=20,150,"VŠljamakse number",M4UStr,Normal,30,f1,false,0);
+  EditFieldTL(h,v+=20,150,"Tasumisviis",M4UStr,Normal,5,FirstAcc,false,PMSClass);
+  EditFieldTL(h,v+=20,150,"Selgitus",M4Str,Normal,150,f2,false,0);
+  EditFieldTL(h,v+=20,150,"MŠrgistik",M4StrSet,Normal,89,f12,false,StrSetSClass);
+  ButtonFrame(h3,vm=(v+=45),120,3,"Teenustasud");
+  RadioButton(h3,v,0,0,"Tasume meie",flags[4]);
+  RadioButton(h3,v+=vs,1,0,"Tasub tšštaja",flags[4]);
+  RadioButton(h3,v+=vs,2,0,"Jagatud",flags[4]);
+  CheckBox(h3,v+=30,0,"Tasu vŠljamakse kuupŠeval",flags[0]);
+//  CheckBox(h3,v+=vs,0,"VŠlismaksekorraldus",flags[2]);
+//  CheckBox(h3,v+=vs,0,"†ks maksekorraldus tšštaja kohta",flags[5]);
+  ButtonFrame(h2,v=vm,150,2,"Hetkeseis");
+  RadioButton(h2,v,0,0,"Ainult eksportimata",OnlyUnprntd);
+  RadioButton(h2,v+=vs,1,0,"K›ik",OnlyUnprntd);
+  EndWindow;
+end;
+
+window TSDErrorTClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("TSD paranduse veakoodid",TSDErrorTClass,CGHbl,HBlRecType);
+  SetBlid(TSDErrorBlock);
+  SetWRect(20,80,700,298);
+  Sizeable(-1,-1,0,0);
+  MatrixBegin(4,27,-21,-20,TSDErrorRowType,99);
+  MatCol(1,24,"Kood",0,Code,false,0);
+  MatCol(1,150,"Nimetus",0,Spec,false,0);
+  EndMatrix;
+  EndWindow;
+end;
+
+window TSDErrorSClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Aseta TSD paranduse veakood",TSDErrorSClass,CGother,HBlRecType);
+  SetWRect(240,80,865,298);
+  StringList(9,9,600,209);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window TSDRowsTClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Kehtivad TSD reakoodid",TSDRowsTClass,CGHbl,HBlRecType);
+  SetBlid(TSDRowsBlock);
+  SetWRect(20,80,270,298);
+  Sizeable(-1,-1,0,0);
+  MatrixBegin(4,27,-21,-20,TSDErrorRowType,99);
+  MatCol(1,24,"TSD reakood",0,Code,false,0);
+  MatCol(1,120,"Maksuvaba tulu liik",0,Spec,false,0);
+  EndMatrix;
+  EndWindow;
+end;
+
+window TSDRowsSClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Aseta kehtiv TSD reakood",TSDRowsSClass,CGother,HBlRecType);
+  SetWRect(240,80,465,298);
+  StringList(9,9,200,209);
+  SearchField("Otsi");
+  EndWindow;
+end;
+
+window CPayrollRClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  WindowBegin("MŠŠra arvestuse dokument",CPayrollRClass,CGRcW,RcType);
+  SetWRect(20,80,400,170);
+  EditFieldTL(120,v=10,150,"Nr.",M4Str,Normal,30 ,f1,false,0);
+  h = 120; vs = 16;
+  ButtonFrame(h,v+=45,150,2,"Hetkeseis");
+  RadioButton(h,v,0,0,"Ainult kinnitatud",flags[0]);
+  RadioButton(h,v+=vs,1,0,"K›ik",flags[0]);
+  EndWindow;
+end;
+
+window PPayrollRClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  WindowBegin("MŠŠra vŠljamakse dokument",PPayrollRClass,CGRcW,RcType);
+  SetWRect(20,80,400,170);
+  EditFieldTL(120,v=10,150,"Nr.",M4Str,Normal,30 ,f1,false,0);
+  h = 120; vs = 16;
+  ButtonFrame(h,v+=45,150,2,"Hetkeseis");
+  RadioButton(h,v,0,0,"Ainult kinnitatud",flags[0]);
+  RadioButton(h,v+=vs,1,0,"K›ik",flags[0]);
+  EndWindow;
+end;
+
+//tmp  Kogumispensioni liitumispŠring
+window ServiceCacheDClass:2
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h2,v,vs;
+  WindowBegin("Teenuse cache",ServiceCacheDClass,CGview,-);
+  SetWRect(20,80,440,200);
+  h = 80; v = 6; h2 = 250; vs=20;
+  UseView(ServiceCacheVc);
+  EditField(h,v ,120,"Kood",Normal,Code,false,0);
+  EditField(h,v+=vs ,120,"Host",Normal,ServiceHost,false,0);
+  EditField(h2,v ,80,"Port",Normal,ServicePort,false,0);
+  EditField(h,v+=vs ,-20,"Funktsioon",Normal,FuncName,false,0);//Bk
+  EditField(h,v+=vs ,80,"Partner",Normal,Partner,false,0);
+  EditField(h2,v ,80,"Http port",Normal,ServiceHTTPPort,false,0);
+//  EditField(h2,v ,80,"ValidUntilDate",Normal,ValidUntilDate,false,0);
+  EndWindow;
+end;
+
+//ts - 2017/11
+window ProgTaxDClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h2,h3,h4,v,vs;
+  string 255 label;
+  WindowBegin("Tšštaja TMV miinimumi summa",ProgTaxDClass,CGview,-);
+  SetWRect(20,80,400,300);
+  UseView(ProgTaxVc);
+  ActiveFieldOnNew("SerNr");
+  v = 6; vs = 20; h = 80; h2 = 250;
+  EditField(h,v,80,"Number",Normal,SerNr,false,TSerSClass);
+  EnterSkip(ContrSerNr);
+  EditField(h2,v,80,"Tšštaja kood",ViewOnly,EmplCode,false,0);
+  EditField(h,v+=vs,80,"Lepingu nr.",Normal,ContrSerNr,false,ContractSClass);
+  EnterSkip(Math);
+  EditField(h2,v,-20,"Eesnimi",ViewOnly,Firstname,false,0);
+  EditField(h2,v+=vs,-20,"Perenimi",ViewOnly,Surname,false,0);
+  MatrixBegin(10,v+=40,-35,-35,-,99);
+  MatCol(1,32,"AlguskuupŠev",0,SDate,false,PasteCurDate);
+  MatCol(1,124,"L›pukuupŠev",0,EDate,false,PasteCurDate);
+  MatCol(1,216,"Summa",0,Sum,true,0);
+  DeleteRowTest;
+  EndMatrix;
+  EndWindow;
+end;
+
+window ProgTaxLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Tšštaja TMV miinimumi summa",ProgTaxLClass,CGmlist,-);
+  SpawnClass(ProgTaxDClass);
+  SetWRect(20,80,500,300);
+  Sizeable(-1,-1,0,0);
+  UseView(ProgTaxVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Number",SerNr,false,SerNr);
+  RlColKey(96,96,"Lepingu nr.",ContrSerNr,false,ContrSerNr);
+  RlCol(188,188,"Eesnimi",Firstname,false);
+  RlCol(318,318,"Perenimi",Surname,false);
+  SearchField("Otsi");
+  EndWindow;
+end;

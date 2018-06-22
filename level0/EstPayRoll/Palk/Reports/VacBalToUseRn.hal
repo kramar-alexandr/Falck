@@ -1,0 +1,238 @@
+external function integer CountVacDaysNorm(LongInt,integer,date,date);
+external function boolean GetRightPeriod(var date,var date,date,date);
+external function boolean GetBackXMonthsPeriod(var date,var date,integer);
+external function val GetCPSumForPeriod(LongInt,date,date);
+external function val GetSalaryFBSumForPeriod(LongInt,date,date);
+external function LongInt GetAbsenceDays(LongInt,string,date,date,var LongInt,var LongInt);
+external function LongInt GetCalendarDays(date,date);
+external function val GetAbsenceFBDaysForPeriod(LongInt,string,date,date,var integer,var integer);
+external function LongInt GetExceptDays(date,var date);
+external function roundmode GetSalaryRoundMode(string);
+
+global
+procedure DblContractVc(string dblstr,string l,integer currepwn)
+begin
+  record ContractVc Contrr;
+  integer wn;
+
+  if (nonblank(dblstr)) then begin
+    Contrr.SerNr = FirstInRange(dblstr,12);
+    if (ReadFirstMain(Contrr,1,true)) then begin
+      wn = OpenWindow("ContractDClass",1,0,"","",Contrr);
+    end;
+  end;
+  return;
+end;
+
+global
+procedure DblVacBalanceVc(string dblstr,string l,integer currepwn)
+begin
+  record VacBalanceVc VBr;
+  integer wn;
+
+  if (nonblank(dblstr)) then begin
+    VBr.SerNr = FirstInRange(dblstr,12);
+    if (ReadFirstMain(VBr,1,true)) then begin
+      wn = OpenWindow("VacBalanceDClass",1,0,"","",VBr);
+    end;
+  end;
+  return;
+end;
+
+global
+procedure VacBalToUseRn(record RcVc RepSpec)
+begin
+  record EmplVc Emplr;
+  record ContractVc Contrr;
+  record VacBalanceVc VBr;
+  row VacBalanceVc VBrw;
+  string 20 frempl,toempl;
+  LongInt frcontr,tocontr;
+  boolean TrHs, TrHs1,TrHs2,testf,printempl;
+  integer rw,toyear,vacdaysnorm,vacdaystouse,vacdaysused,tmpint;
+  val sumtot,sumperday;
+  LongInt absworkdays,abscaldays,caldays,abscalnoexcdays,vbnr,absfbdays;
+  string 255 tstr;
+  integer rwcnt,i;
+  date sd,ed,todate,sdate,edate;
+  
+  rw = 1;
+  StartReportJob(USetStr(1500482));
+  frempl = FirstInRange(RepSpec.f1,20);
+  toempl = LastInRange(RepSpec.f1,20);
+  frcontr = FirstInRange(RepSpec.f2,20);
+  tocontr = LastInRange(RepSpec.f2,20);
+  
+  if (blank(frempl) and blank(toempl)) then begin
+    tstr = "";
+  end else begin
+    tstr = USetStr(1500385) & ": ";
+    tstr = tstr & frempl;
+    if (frempl<>toempl) then begin
+    tstr = tstr & " : " & toempl;
+    end;
+  end;
+  Header(rw,tstr,1);
+  rw = rw + 1;
+  
+  if ((frcontr == -1) and (tocontr == -1)) then begin
+    tstr = USetStr(1500386);
+  end else begin
+    tstr = USetStr(1500414) & ": ";
+    tstr = tstr & frcontr;
+    if (frcontr<>tocontr) then begin
+      tstr = tstr & " : " & tocontr;
+    end;
+  end;
+  Header(rw,tstr,1);
+  rw = rw + 1;
+
+  if (nonblank(RepSpec.f3)) then begin
+    tstr = USetStr(1500444) & ": ";
+    tstr = tstr & RepSpec.f3;
+    Header(rw,tstr,1);
+    rw = rw + 1; 
+  end;
+
+  todate=RepSpec.d1;
+  if blank(todate) then begin
+    todate=CurrentDate;
+  end;
+  tstr = USetStr(1500460) & " " & todate;
+  Header(rw,tstr,1);
+  rw = rw + 1; 
+  EndHeader;
+  
+  SetRepCol(2,50);
+  SetRepCol(3,150);
+  SetRepCol(4,250);
+  SetRepCol(5,350);
+
+  StartFormat(15);
+  OutString(3,0,USetStr(1500472),false);
+  OutString(4,0,USetStr(1500469),false);
+  OutString(5,0,USetStr(1500470),false);
+  OutString(1,0,USetStr(1500471),true);
+  EndFormat;
+  Gray_Divider(0,1);
+
+  toyear=GetYear(todate);
+  TrHs = true;
+  ResetLoop(Emplr);
+  Emplr.Code = frempl;
+  while (LoopMain(Emplr,1,TrHs)) begin
+    if (TrHs) then begin
+      if (nonblank(toempl)) then begin
+        if (Emplr.Code>toempl) then begin
+          TrHs = false;
+        end;
+      end;
+      if (TrHs) then begin
+        printempl=true;
+        testf=true;
+        if (Emplr.ClosedFlag!=0) then begin
+          testf = false;
+        end;
+        if (testf) then begin
+          TrHs1=true;
+          ResetLoop(Contrr);
+          Contrr.EmplCode = Emplr.Code;
+          while (LoopKey("EmplCode",Contrr,1,TrHs1)) begin
+            if (Contrr.EmplCode!=Emplr.Code) then begin
+              TrHs1 = false;
+            end;
+            if (TrHs1) then begin
+              testf=true;
+              if ((frcontr>0)) then begin
+                if ((Contrr.SerNr<frcontr) or (Contrr.SerNr>tocontr)) then begin
+                  testf = false;
+                end;
+              end;
+              if (Contrr.Status!=1) then begin
+                testf = false;
+              end; 
+              if (nonblank(RepSpec.f3)) then begin
+                if (Contrr.AccGroupCode!=RepSpec.f3) then begin
+                  testf = false;
+                end;
+              end; 
+              if (testf) then begin
+                if (printempl) then begin
+                  StartFormat(15);
+                  EndFormat;
+                  Gray_Divider(0,1);
+                  StartFormat(15);
+                  OutString(0,"DblEmplVc",Emplr.Code,false);
+                  OutString(70,0,Emplr.Firstname & " " & Emplr.Surname,false);
+                  EndFormat;
+                  printempl=false;
+                end;
+                vacdaystouse=0;
+                vacdaysused=0;
+                sumtot=0;
+                vbnr=-1;
+                TrHs2=true;
+                ResetLoop(VBr);
+                VBr.OKFlag=1;
+                VBr.ContrSerNr=Contrr.SerNr;
+                while (LoopKey("OKFlag",VBr,2,TrHs2)) begin
+                  if (VBr.OKFlag!=1) then begin
+                    TrHs2=false;  
+                  end;
+                  if (VBr.ContrSerNr!=Contrr.SerNr) then begin
+                    TrHs2=false;  
+                  end;
+                  if (TrHs2) then begin
+                    vbnr=VBr.SerNr;
+                    rwcnt=MatRowCnt(VBr);
+                    for (i=0;i<rwcnt;i=i+1) begin
+                      MatRowGet(VBr,i,VBrw);  
+                      if (VBrw.Year<toyear) then begin
+                        if (VBrw.VacDaysStatus==1) then begin
+                          vacdaystouse=vacdaystouse+VBrw.VacDaysToUse;
+                        end;
+                      end else begin
+                        vacdaysused=vacdaysused+VBrw.VacDaysUsed;
+                      end;
+                    end;
+                  end;
+                end;      
+                vacdaystouse=vacdaystouse-vacdaysused;
+                sd.day=1;
+                sd.month=1;
+                sd.year=toyear;
+                ed=todate;
+                if (GetRightPeriod(sd,ed,Contrr.StartDate,Contrr.EndDate)) then begin
+                  vacdaystouse=vacdaystouse+CountVacDaysNorm(Contrr.SerNr,toyear,sd,ed);
+                  sdate=sd;
+                  edate=ed;
+                  if (GetBackXMonthsPeriod(sdate,edate,6)) then begin
+                    if (GetRightPeriod(sdate,edate,Contrr.StartDate,Contrr.EndDate)) then begin
+                      sumtot=GetCPSumForPeriod(Contrr.SerNr,sdate,edate);
+                      sumtot=sumtot+GetSalaryFBSumForPeriod(Contrr.SerNr,sdate,edate);
+                      abscaldays=GetAbsenceDays(Contrr.SerNr,"",sdate,edate,absworkdays,abscalnoexcdays);                    
+                      absfbdays=GetAbsenceFBDaysForPeriod(Contrr.SerNr,"",sdate,edate,tmpint,tmpint);
+                      caldays=((GetCalendarDays(sdate,edate))-(GetExceptDays(sdate,edate))-abscalnoexcdays-absfbdays);
+                      sumperday=round((sumtot/caldays),GetSalaryRoundMode("2"));
+                    end;
+                  end;
+                end;
+                StartFormat(15);
+                OutString(0,0,USetStr(1500414) & ": " ,false);
+                OutString(2,"DblContractVc",Contrr.SerNr,false);
+                OutString(3,"DblVacBalanceVc",vbnr,false);
+                OutString(4,0,vacdaystouse,false);
+                OutString(5,0,sumperday,false);
+                OutString(1,0,(vacdaystouse*sumperday),true);
+                Endformat;
+              end;
+            end;
+          end;
+        end;
+      end;
+    end;
+  end;
+  EndJob;
+LVacBalToUseRn:;
+  return;
+end;

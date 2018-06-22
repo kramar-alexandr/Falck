@@ -1,0 +1,33 @@
+window MailbowTClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  WindowBegin("Mailbow seadistused",MailbowTClass,CGSbl,-);
+  SetBlid(MailbowBlock);
+  SetWRect(20,80,440,290);
+  vs = 20; h = 180;
+  EditField(h,v=6,150,"Kasutajatunnus",Normal,dbUser,false,0);
+  EditFieldTL(h,v+=vs,150,"Salasõna",M4Star,Normal,30,dbPasswd,false,0);
+  EditField(h,v+=vs,150,"Vastuse konverents",Normal,dbConf,false,ConfSClass);
+  EditField(h,v+=vs, 150,"Vaikimisi nimekiri",Normal,Title,false,0);
+  EditField(h,v+=vs, 150,"Paketi suurus",Normal,PackageSize,false,0);
+  EndWindow;
+end;
+
+window MailbowFieldsTClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Mailbow päringu väljad",MailbowFieldsTClass,CGHbl,HBlRecType);
+  SetBlid(MailbowFieldsBlock);
+  SetWRect(20,80,640,690);
+  Sizeable(-1,-1,0,0);
+  MatrixBegin(5,27,-21,-20,-,99);
+  MatCol(1,24,"Mailbow väli",0,FieldName,false,0);
+  //MatCol(1,150,"Kontakti väli (täpne kood)",0,dbField,false,0);
+  MatColTL(1,150,"Kontakti väli",0,M4StrSet,Normal,1669,dbField,false,StrSetSClass);
+  MatCol(1,291,"Tüüp",0,Type,false,SetSClass);
+  MatCol(1,420,"Objekti/Klassifikaatori tüüp",0,Param,false,0);
+  EndMatrix;
+  EndWindow;
+end;
+  

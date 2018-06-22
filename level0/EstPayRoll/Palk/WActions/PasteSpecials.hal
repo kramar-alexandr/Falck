@@ -1,0 +1,172 @@
+external procedure M4PadString(string,Integer,string,Boolean,var string);
+external function boolean PrevIllAbsSerNrOK(LongInt,LongInt,String);
+external procedure GetTSDRowsArray(var array string,var Integer);
+
+global
+procedure PaymPayrollVc_CalcPayrollSClass(Integer wn,Integer mwn,var array string cpunpaid,var Integer acnt)
+begin
+  record CPUnpaidVc CPUnr;
+  record CPUnpaidVc CPUn2r;
+  record PaymPayrollVc PPr;
+  row PaymPayrollVc PPrw;
+  Integer rn,rwcnt;
+  LongInt contrsernr,calcsernr;
+  string 255 tstr;
+  val neto;
+  boolean found,TrHs;
+  
+  GetWindowRecord(mwn,PPr);
+  rn = WindowActiveRow(mwn);
+  rwcnt = MatRowCnt(PPr);
+  if (rn<=rwcnt) and (rn>=0) then begin
+    MatRowGet(PPr,rn,PPrw);
+    contrsernr = PPrw.ContrSerNr;
+    found = true;
+    ResetLoop(CPUnr);
+    CPUnr.ContrSerNr = contrsernr;
+    while (LoopKey("ContrSerNr",CPUnr,1,found)) begin
+      if (CPUnr.ContrSerNr!=contrsernr) then begin found = false; end;
+      if (found) then begin
+        if ((CPUnr.NetoSum>0) or (CPUnr.SocTaxSum>0)) then begin
+          if (calcsernr!=CPUnr.CalcSerNr) then begin
+            calcsernr=CPUnr.CalcSerNr;
+            tstr="Arvestuse nr.:     ";
+            tstr=tstr & calcsernr;
+            TrHs=true;
+            neto=0;
+            ResetLoop(CPUn2r);
+            CPUn2r.ContrSerNr = contrsernr;
+            CPUn2r.CalcSerNr = calcsernr;
+            while (LoopKey("ContrSerNr",CPUn2r,2,TrHs)) begin
+              if (CPUn2r.ContrSerNr!=contrsernr) then begin TrHs = false; end;
+              if (CPUn2r.CalcSerNr!=calcsernr) then begin TrHs = false; end;
+              if (TrHs) then begin
+                neto=neto+CPUn2r.NetoSum;
+              end;
+            end;
+            M4PadString(tstr,40," ",false,tstr);
+            tstr = tstr & neto;
+            if (nonblank(tstr)) then begin
+              cpunpaid[acnt] = tstr;
+              acnt = acnt + 1;
+            end;
+          end;
+        end;
+      end;
+    end;
+  end;
+  return;
+end;
+
+global
+function Boolean CalcPayrollSClassOnOpenWindow(Integer wn)
+begin
+  integer mwn;
+  array string 100 cpunpaid;
+  integer acnt,i;
+  
+  mwn = MotherWindow(wn);
+  switch (GetWindowFileName(mwn)) begin
+    case "PaymPayrollVc": PaymPayrollVc_CalcPayrollSClass(wn,mwn,cpunpaid,acnt);
+  end;
+  for (i=0;i<acnt;i=i+1) begin
+    SetListString(wn,len(cpunpaid[i]),cpunpaid[i],false);
+  end;      
+  CalcPayrollSClassOnOpenWindow = false;
+  return;
+end;
+
+global
+procedure AbsenceVc_PrevAbsenceSClass(Integer wn,Integer mwn,var array string illabs,var Integer acnt)
+begin
+  record AbsenceVc Absr;
+  record AbsenceVc Abs2r;
+  string 255 tstr;
+  boolean found;
+  
+  GetWindowRecord(mwn,Absr);
+  found = true;
+  ResetLoop(Abs2r);
+  Abs2r.EmplCode = Absr.EmplCode;
+  while (LoopKey("EmplCode",Abs2r,1,found)) begin
+    if (Abs2r.EmplCode!=Absr.EmplCode) then begin found = false; end;
+    if (found) then begin
+      if (PrevIllAbsSerNrOK(Abs2r.SerNr,Absr.SerNr,Abs2r.EmplCode)) then begin
+        tstr="Puudumise nr.:     ";
+        tstr=tstr & Abs2r.SerNr;
+        M4PadString(tstr,40," ",false,tstr);
+        tstr = tstr & Abs2r.StartDate & " : " & Abs2r.EndDate;
+        if (nonblank(tstr)) then begin
+          illabs[acnt] = tstr;
+          acnt = acnt + 1;
+        end;
+      end;
+    end;
+  end;
+  return;
+end;
+
+global
+function Boolean PrevAbsenceSClassOnOpenWindow(integer wn)
+begin
+  integer mwn;
+  array string 100 illabs;
+  integer acnt,i;
+  
+  mwn = MotherWindow(wn);
+  switch (GetWindowFileName(mwn)) begin
+    case "AbsenceVc": AbsenceVc_PrevAbsenceSClass(wn,mwn,illabs,acnt);
+  end;
+  for (i=0;i<acnt;i=i+1) begin
+    SetListString(wn,len(illabs[i]),illabs[i],false);
+  end;      
+  PrevAbsenceSClassOnOpenWindow = false;
+  return;
+end;
+
+global
+procedure TSDErrorSClassArrayOnOpen(var array string astr,var integer acnt)
+begin
+  record TSDErrorBlock TSDEr;
+  row TSDErrorBlock TSDErw;
+  Integer i,rwcnt;
+  
+  BlockLoad(TSDEr);
+  rwcnt = MatRowCnt(TSDEr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(TSDEr,i,TSDErw);
+    astr[acnt] = TSDErw.Code & "               ";
+    astr[acnt] = Left(astr[acnt],15);
+    astr[acnt] = astr[acnt] & TSDErw.Spec;
+    acnt = acnt + 1;
+  end;
+  return;
+end;
+
+global
+function Boolean TSDErrorSClassOnOpenWindow(integer wn)
+begin
+  array string 255 astr;
+  integer i,acnt;
+  
+  TSDErrorSClassArrayOnOpen(astr,acnt);
+  for (i=0;i<acnt;i=i+1) begin
+    SetListString(wn,len(astr[i]),astr[i],false);    
+  end;
+  TSDErrorSClassOnOpenWindow=false;
+  return;
+end;
+
+global
+function Boolean TSDRowsSClassOnOpenWindow(integer wn)
+begin
+  array string 255 astr;
+  integer i,acnt;
+  
+  GetTSDRowsArray(astr,acnt);
+  for (i=0;i<acnt;i=i+1) begin
+    SetListString(wn,len(astr[i]),astr[i],false);    
+  end;
+  TSDRowsSClassOnOpenWindow=false;
+  return;
+end;

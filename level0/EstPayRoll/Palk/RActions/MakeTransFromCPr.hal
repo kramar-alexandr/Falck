@@ -1,0 +1,320 @@
+external function boolean TransInFiscal(Date);
+external function boolean GetAccName(string,Var string,integer);
+external procedure AddEuroTrRow(record TRVc,string,string,string,string,val,val,val,boolean,boolean,var val,boolean,string,string,string);
+external procedure ExtractObj(string,var integer,var string);
+external function string 20 GetContrAccGroupCode(LongInt,string,string,date,var string);
+external function boolean GetAccGroupPaymAccCode(string,string,var string,var string,var string);
+external function boolean GetAccGroupTaxAccCode(string,date,string,integer,var string,var string,var string);
+external function integer GetPaymTypeFlag(string);
+external procedure GetPaymTypeData(string,var integer,var integer,var integer,var integer,var integer,var integer,var string,var integer,var integer);
+
+function boolean EqualObjectStrings(string objstr1, string objstr2)
+begin
+  string 255 str1,str2;
+  Integer pos1,pos2,objcnt1,objcnt2;
+  boolean res;
+  res=false;
+  pos1=0;
+  objcnt1=0;
+  objcnt2=0;
+  ExtractObj(objstr1,pos1,str1);
+  while (nonblank(str1)) begin
+    objcnt1=objcnt1+1;
+    pos2=0;
+    ExtractObj(objstr2,pos2,str2);
+    while (nonblank(str2)) begin
+      if (SetInSet(str2,str1)) then begin
+        objcnt2=objcnt2+1;
+      end;
+      ExtractObj(objstr2,pos2,str2);
+    end;
+    ExtractObj(objstr1,pos1,str1);
+  end;
+  if (trim(objstr1)==trim(objstr2)) then begin
+    res=true;
+  end;
+  if ((objcnt1>0) and (objcnt1==objcnt2)) then begin
+    res=true;
+  end;
+  EqualObjectStrings=res;
+  return;
+end;
+
+procedure PutToArrayAndGroupIt(var array string account,var array string objects,var array val sum,var integer cnt,string acccode,string objstr,val cpsum,boolean groupit)
+begin
+  record AccVc Accr;
+  integer i;
+  boolean found;
+  string 255 objlist;
+
+  objlist=objstr;
+  Accr.AccNumber=acccode;
+  if (ReadFirstMain(Accr,1,true)) then begin 
+    if nonblank(objlist) then begin
+      objlist=objlist & "," & Accr.Objects;
+    end else begin
+      objlist=Accr.Objects;
+    end;
+  end;  
+
+  found = false;
+  for (i=0;i<cnt;i=i+1) begin
+    if ((groupit) and (account[i]==acccode) and (EqualObjectStrings(objlist,objects[i]))) then begin
+      sum[i]=sum[i]+cpsum;
+      i=cnt;
+      found = true;
+    end;
+  end;
+  if (found==false) then begin
+    account[cnt]=acccode;
+    objects[cnt]=objlist;
+    sum[cnt]=cpsum;
+    cnt=cnt+1;
+  end;
+  return;
+end;
+
+global
+function boolean MakeArrayArrangement(var array string TRrwacc,var array string TRrwobj,var array string TR2rwacc,var array string TR2rwobj,var array val TRrwdsum,var array val TRrwcsum,var array val TR2rwdsum,var array val TR2rwcsum,string debitacc,string creditacc,string accruedacc,string objcode,val sum,var integer cnt,var integer cnt2,boolean groupit)
+begin
+  boolean res;
+  string 60 tstr;
+  res=true;
+  if blank(accruedacc) or (trim(accruedacc)=="") then begin 
+    if (nonblank(debitacc) and (GetAccName(debitacc,tstr,60)==false)) then begin
+      res=false;
+      goto LMakeArrayArrangement;
+    end;
+    PutToArrayAndGroupIt(TRrwacc,TRrwobj,TRrwdsum,cnt,debitacc,objcode,sum,groupit);
+
+    if (nonblank(creditacc) and (GetAccName(creditacc,tstr,60)==false)) then begin
+      res=false;
+      goto LMakeArrayArrangement;
+    end;
+    PutToArrayAndGroupIt(TRrwacc,TRrwobj,TRrwcsum,cnt,creditacc,objcode,sum,groupit);
+  end else begin //koondkanded          
+    if (nonblank(debitacc) and (GetAccName(debitacc,tstr,60)==false)) then begin
+      res=false;
+      goto LMakeArrayArrangement;
+    end;
+    PutToArrayAndGroupIt(TRrwacc,TRrwobj,TRrwdsum,cnt,debitacc,objcode,sum,groupit);
+
+    if (nonblank(accruedacc) and (GetAccName(accruedacc,tstr,60)==false)) then begin
+      res=false;
+      goto LMakeArrayArrangement;
+    end;
+    PutToArrayAndGroupIt(TRrwacc,TRrwobj,TRrwcsum,cnt,accruedacc,objcode,sum,groupit);
+
+    if (nonblank(accruedacc) and (GetAccName(accruedacc,tstr,60)==false)) then begin
+      res=false;
+      goto LMakeArrayArrangement;
+    end;
+    PutToArrayAndGroupIt(TR2rwacc,TR2rwobj,TR2rwdsum,cnt2,accruedacc,objcode,sum,groupit);
+
+    if (nonblank(creditacc) and (GetAccName(creditacc,tstr,60)==false)) then begin
+      res=false;
+     goto LMakeArrayArrangement;
+    end;
+   PutToArrayAndGroupIt(TR2rwacc,TR2rwobj,TR2rwcsum,cnt2,creditacc,objcode,sum,groupit);
+  end;
+LMakeArrayArrangement:;
+  MakeArrayArrangement=res;
+  return;
+end;
+
+global
+function LongInt MakeTransFromCalcPayroll(record TRVc gTRp,record TRVc gTR2p,record CalcPayrollVc CPr,boolean rpt,boolean type)
+begin
+  LongInt res;
+  row CalcPayrollVc CPrw;
+  record TRVc lTRr;
+  record AccGroupVc AGr;
+  record SalSettingBlock SalSettingRec;
+  record BaseERVc BaseERr;
+  boolean dc,cc;
+  integer i,rwcnt,cnt,cnt2;
+  string 20 emplcode;
+  val frrate,to1,to2,br1,br2;
+  val sum,sumtot,sum2tot;
+  string 255 ftxt,tstr,debitacc,creditacc,accruedacc,objcode,accgroup,tmpstr;
+  array string 64 TRrwacc,TRrwobj,TR2rwacc,TR2rwobj;
+  array val TRrwdsum,TRrwcsum,TR2rwdsum,TR2rwcsum;
+  integer unemplinsflag,pensionflag,inctaxflag,soctaxflag,emplunemplinsflag,tmpint,paymtypeflag;
+
+  res = 0;
+  if ((CPr.OKFlag!=0) and (CPr.Invalid==0)) then begin
+    BlockLoad(SalSettingRec);
+    BaseERr.Date = CPr.CalcDate;
+    ResetLoop(BaseERr);
+    if (ReadLastMain(BaseERr,1,false)) then begin
+      br1 = BaseERr.Rate1;
+      br2 = BaseERr.Rate2;
+    end;
+    RecordNew(gTRp);
+    if (rpt == false) then begin
+      if (nonblank(SalSettingRec.CalcTransDate) and (CPr.CalcDate<SalSettingRec.CalcTransDate)) then begin
+        MessageBox(1500434,"");
+      end;
+    end;
+    if (true) then begin
+      gTRp.IntYc=SalaryCalcYc; 
+      gTRp.Number=CPr.SerNr;
+      gTRp.RefStr="";
+    end;
+    if (rpt==false) then begin
+      lTRr.IntYc=gTRp.IntYc;
+      lTRr.Number = gTRp.Number;
+      if (ReadFirstMain(lTRr,2,true)) then begin
+        res = 1032;
+        goto LMakeTransFromCalcPayroll;
+      end;
+    end;
+  
+    gTRp.RegDate=CurrentDate;
+    gTRp.RegTime = CurrentTime;
+    gTRp.TransDate=CPr.CalcDate;
+    if (TransInFiscal(gTRp.TransDate)==false) then begin
+      res=1075;
+      goto LMakeTransFromCalcPayroll;
+    end;
+    ftxt=CPr.Firstname & " " & CPr.Surname & ",  Lepingu nr.: " & CPr.ContrSerNr;
+    gTRp.Comment=ftxt;
+    dc=true;
+    cc=false;
+    sumtot = 0;
+    sum2tot = 0;
+    cnt=0;
+    cnt2=0;
+
+    rwcnt = MatRowCnt(CPr);
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(CPr,i,CPrw);
+      accgroup="";
+      debitacc="";
+      creditacc="";
+      accruedacc="";
+      if nonblank(CPrw.ObjCode) then begin
+        objcode=CPrw.ObjCode;
+      end else begin
+        objcode=CPr.ObjCode;
+      end;
+      //arvestuse rea konteerimisgrupp
+      accgroup=GetContrAccGroupCode(CPr.ContrSerNr,CPrw.PosCode,CPrw.PaymTypeCode,CPr.CalcDate,emplcode);
+      if (accgroup=="") then begin
+        accgroup= SalSettingRec.AccGroupCode;
+      end;
+      GetPaymTypeData(CPrw.PaymTypeCode,tmpint,unemplinsflag,pensionflag,inctaxflag,soctaxflag,emplunemplinsflag,tmpstr,tmpint,tmpint);
+      if (GetAccGroupPaymAccCode(accgroup,CPrw.PaymTypeCode,debitacc,creditacc,accruedacc)) then begin
+        sum=0;
+        paymtypeflag=GetPaymTypeFlag(CPrw.PaymTypeCode);
+        if ((paymtypeflag==2) or (paymtypeflag==3)) then begin //kinnipidamine neto v›i KohtutŠitur (kinnip.neto)
+          sum=CPrw.NetoSum;
+        end;
+        if ((paymtypeflag==1 or paymtypeflag==7)) then begin //kinnipidamine bruto v›i tasu
+          sum=CPrw.BrutoSum;
+        end;
+        //tasuliigid
+        if (MakeArrayArrangement(TRrwacc,TRrwobj,TR2rwacc,TR2rwobj,TRrwdsum,TRrwcsum,TR2rwdsum,TR2rwcsum,debitacc,creditacc,accruedacc,objcode,sum,cnt,cnt2,true)==false) then begin
+          res=1500433;
+          goto LMakeTransFromCalcPayroll;
+        end;
+      end;
+      debitacc="";
+      creditacc="";
+      accruedacc="";
+      //sotsiaalmaks 
+      if ((soctaxflag==1) and (GetAccGroupTaxAccCode(emplcode,CPr.PaymDate,accgroup,5,debitacc,creditacc,accruedacc))) then begin
+        if (MakeArrayArrangement(TRrwacc,TRrwobj,TR2rwacc,TR2rwobj,TRrwdsum,TRrwcsum,TR2rwdsum,TR2rwcsum,debitacc,creditacc,accruedacc,objcode,CPrw.SocTaxSum,cnt,cnt2,false)==false) then begin
+          res=1500433;
+          goto LMakeTransFromCalcPayroll;
+        end;
+      end;
+      debitacc="";
+      creditacc="";
+      accruedacc="";
+      //tššandja tšštuskindl.  
+      if ((emplunemplinsflag==1) and (GetAccGroupTaxAccCode(emplcode,CPr.PaymDate,accgroup,6,debitacc,creditacc,accruedacc))) then begin
+        if (MakeArrayArrangement(TRrwacc,TRrwobj,TR2rwacc,TR2rwobj,TRrwdsum,TRrwcsum,TR2rwdsum,TR2rwcsum,debitacc,creditacc,accruedacc,objcode,CPrw.EmplUnemplInsSum,cnt,cnt2,false)==false) then begin
+          res=1500433;
+          goto LMakeTransFromCalcPayroll;
+        end;
+      end;
+      //tulumaks 
+      if ((inctaxflag==1) and (GetAccGroupTaxAccCode(emplcode,CPr.PaymDate,accgroup,0,debitacc,creditacc,accruedacc))) then begin
+        if (MakeArrayArrangement(TRrwacc,TRrwobj,TR2rwacc,TR2rwobj,TRrwdsum,TRrwcsum,TR2rwdsum,TR2rwcsum,debitacc,creditacc,accruedacc,objcode,CPrw.IncTaxSum,cnt,cnt2,false)==false) then begin
+          res=1500433;
+          goto LMakeTransFromCalcPayroll;
+        end;
+      end;
+      //tšštuskindlustus 
+      if ((unemplinsflag==1) and (GetAccGroupTaxAccCode(emplcode,CPr.PaymDate,accgroup,1,debitacc,creditacc,accruedacc))) then begin
+        if (MakeArrayArrangement(TRrwacc,TRrwobj,TR2rwacc,TR2rwobj,TRrwdsum,TRrwcsum,TR2rwdsum,TR2rwcsum,debitacc,creditacc,accruedacc,objcode,CPrw.UnemplInsSum,cnt,cnt2,false)==false) then begin
+          res=1500433;
+          goto LMakeTransFromCalcPayroll;
+        end;
+      end;
+      //kogumispension 
+      if ((pensionflag==1) and (GetAccGroupTaxAccCode(emplcode,CPr.PaymDate,accgroup,2,debitacc,creditacc,accruedacc))) then begin
+        if (MakeArrayArrangement(TRrwacc,TRrwobj,TR2rwacc,TR2rwobj,TRrwdsum,TRrwcsum,TR2rwdsum,TR2rwcsum,debitacc,creditacc,accruedacc,objcode,CPrw.PensionSum,cnt,cnt2,false)==false) then begin
+          res=1500433;
+          goto LMakeTransFromCalcPayroll;
+        end;
+      end;
+    end;
+    //kande read
+    for (i=0;i<cnt;i=i+1) begin
+      if (GetAccName(TRrwacc[i],tstr,60)==false) then begin
+        res=1500433;
+        goto LMakeTransFromCalcPayroll;
+      end;
+
+      if (TRrwdsum[i]!=0) then begin
+        AddEuroTrRow(gTRp,TRrwacc[i],TRrwobj[i],"",tstr,TRrwdsum[i],br1,br2,false,dc,sumtot,false,"","","");
+      end;
+      if (TRrwcsum[i]!=0) then begin
+        AddEuroTrRow(gTRp,TRrwacc[i],TRrwobj[i],"",tstr,TRrwcsum[i],br1,br2,false,cc,sumtot,false,"","","");
+      end;
+    end;
+    if (cnt2>0) then begin
+      RecordNew(gTR2p);
+      if (true) then begin
+        gTR2p.IntYc=SalaryPayment2Yc; 
+        gTR2p.Number=CPr.SerNr;
+        gTR2p.RefStr="";
+      end;
+      if (rpt==false) then begin
+        lTRr.IntYc=gTR2p.IntYc;
+        lTRr.Number = gTR2p.Number;
+        if (ReadFirstMain(lTRr,2,true)) then begin
+          res = 1032;
+          goto LMakeTransFromCalcPayroll;
+        end;
+      end;
+      gTR2p.RegDate=CurrentDate;
+      gTRp.RegTime = CurrentTime;
+      gTR2p.TransDate=CPr.PaymDate;
+      if (TransInFiscal(gTR2p.TransDate)==false) then begin
+        res=1075;
+        goto LMakeTransFromCalcPayroll;
+      end;
+    end;
+    ftxt=CPr.Firstname & " " & CPr.Surname & ",  Lepingu nr.: " & CPr.ContrSerNr;
+    gTR2p.Comment=ftxt;
+    
+    for (i=0;i<cnt2;i=i+1) begin
+      if (GetAccName(TR2rwacc[i],tstr,60)==false) then begin
+        res=1500433;
+        goto LMakeTransFromCalcPayroll;
+      end;
+      if (TR2rwdsum[i]!=0) then begin
+        AddEuroTrRow(gTR2p,TR2rwacc[i],TR2rwobj[i],"",tstr,TR2rwdsum[i],br1,br2,false,dc,sum2tot,false,"","","");
+      end;
+      if (TR2rwcsum[i]!=0) then begin
+        AddEuroTrRow(gTR2p,TR2rwacc[i],TR2rwobj[i],"",tstr,TR2rwcsum[i],br1,br2,false,cc,sum2tot,false,"","","");
+      end;
+    end;
+  end;
+LMakeTransFromCalcPayroll:;
+  MakeTransFromCalcPayroll=res;
+  return;
+end;

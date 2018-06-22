@@ -1,0 +1,57 @@
+global
+function boolean PieceWorkTypeDClassActiveEditField(integer wn,string fieldname,integer fn,integer wnst,integer rownr,integer changed)
+begin
+  boolean res;
+  
+  res = true;
+  if (wnst==Rs_update) then begin
+    switch (fieldname) begin
+      case "Code": res = false;
+    end;
+  end;
+  PieceWorkTypeDClassActiveEditField = res;
+  return;
+end;
+
+function boolean PieceWorkTypeDClassContrSerNrEFAfter(integer wn,integer rownr,integer changedf)
+  begin  
+  record PieceWorkTypeVc PWTr;
+  row PieceWorkTypeVc PWTrw;
+  record ContractVc Contrr;
+  row ContractVc Contrrw;
+  record PositionVc Posr;
+
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,PWTr);
+    DeselectWindow(wn,false);
+    MatRowGet(PWTr,rownr,PWTrw);
+    Contrr.SerNr = PWTrw.ContrSerNr;
+    ClearRow(PWTr,PWTrw,1);
+    PWTrw.ContrSerNr = Contrr.SerNr; 
+    if (ReadFirstMain(Contrr,1,true)) then begin
+      PWTrw.Firstname = Contrr.Firstname;
+      PWTrw.Surname = Contrr.Surname;
+      MatRowGet(Contrr,0,Contrrw);
+      PWTrw.PosCode = Contrrw.PosCode;
+      PWTrw.SDate = CurrentDate;
+    end;
+    MatRowPut(PWTr,rownr,PWTrw);
+    PutWindowRecord(wn,PWTr);
+  end;
+
+  PieceWorkTypeDClassContrSerNrEFAfter = true;
+  return;
+end;
+
+global
+function boolean PieceWorkTypeDClassAfterEditField(integer wn,string fieldname,integer fn, integer rownr,integer changed)
+begin
+  boolean res;
+
+  switch (fieldname) begin
+    case "ContrSerNr": res = PieceWorkTypeDClassContrSerNrEFAfter(wn,rownr,changed);
+  end;
+
+  PieceWorkTypeDClassAfterEditField = res;
+  return;
+end;

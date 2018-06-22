@@ -1,0 +1,427 @@
+external procedure PastePPrwsFromCPr(record PaymPayrollVc,var row PaymPayrollVc,record CalcPayrollVc,var integer);
+external procedure PPrSumUp(var record PaymPayrollVc);
+external function boolean CalcPayrollExsistsAndNotPaid(LongInt);
+external procedure PastePPrTaxes(record PaymPayrollVc,integer);
+external function integer GetPaymTypeFlag(string);
+external function string 255 GetPaymTypeName(string);
+external function boolean OneEmplOnPaymPayroll(record PaymPayrollVc,var string);
+
+global 
+function Boolean PaymPayrollDClassDeleteRowTest(Integer wn,Integer rownr)
+begin
+  record PaymPayrollVc PPr;
+  integer updatemode;
+  boolean res;
+
+  res = true;
+  updatemode = 2;
+  if (WindowState(wn)==updatemode) then begin
+    GetPrevWindowRecord(wn,PPr);
+  end else begin
+    GetWindowRecord(wn,PPr);
+  end;
+  if (PPr.OKFlag!=0) then begin
+    res = false;
+  end;
+  PaymPayrollDClassDeleteRowTest = res;
+  return;
+end;
+
+global
+updating function boolean PaymPayrollDClassOnOverStrike(integer wn,integer rownr)
+begin
+  record PaymPayrollVc PPr;
+  boolean res;
+  string 120 name;
+  
+  res = true;
+  GetWindowRecord(wn,PPr);
+  PPrSumUp(PPr);
+  if (OneEmplOnPaymPayroll(PPr,name)) then begin
+    PPr.Name = name;
+  end else begin
+    PPr.Name = "";
+  end;
+  PutWindowRecord(wn,PPr);
+  PaymPayrollDClassOnOverStrike = true;
+  return;
+end;
+
+global
+function boolean PaymPayrollDClassActiveEditField(integer wn,string fieldname,integer fn,integer wnst,integer rownr,integer changed)
+begin
+  boolean res;
+  record PaymPayrollVc PPr;
+  row PaymPayrollVc PPrw;
+  integer rwcnt,i;
+  LongInt contrnr;
+  
+  res = true;
+  GetWindowRecord(wn,PPr);
+  if (PPr.OKFlag!=0) then begin
+    res = false;
+  end else begin
+    switch (fieldname) begin
+      case "CalcSerNr": 
+        if (rownr>=0) then begin
+          MatRowGet(PPr,rownr,PPrw);
+          if (PPrw.OpTransSerNr>0) then begin
+            res = false;
+          end; 
+        end;
+      case "OpTransSerNr": 
+        if (rownr>=0) then begin
+          MatRowGet(PPr,rownr,PPrw);
+          if (PPrw.CalcSerNr>0) then begin
+            res = false;
+          end; 
+        end;
+       case "PaymTypeCode": 
+        if (rownr>=0) then begin
+          MatRowGet(PPr,rownr,PPrw);
+          if ((PPrw.CalcSerNr>0) or (PPrw.OpTransSerNr>0)) then begin
+            res = false;
+          end; 
+        end;
+      case "NetoSum": res = false; MessageBox(1500549,"");
+      case "UnemplInsSum": res = false;
+      case "PensionSum": res = false;
+      case "IncTaxSum": res = false;
+      case "IncTaxFreeMinSum": res = false;
+      case "DPDiscSum": res = false;
+      case "SocTaxSum": res = false;
+      case "EmplUnemplInsSum": res = false;
+      case "CalcNetoSum": res = false;
+      case "NotPaidNetoSum": res = false;
+      case "NetoTotal":  res = false;
+/*
+        rwcnt=MatRowCnt(PPr);
+        if (rwcnt>0) then begin
+          MatRowGet(PPr,0,PPrw);
+          contrnr=PPrw.ContrSerNr;
+          for (i=0;i<rwcnt;i=i+1) begin
+            MatRowGet(PPr,i,PPrw);
+            if ((PPrw.ContrSerNr>0) and (PPrw.ContrSerNr!=contrnr)) then begin
+              MessageBox(1500352,"");
+              res = false;
+              goto L1;
+            end;
+          end;
+        end else begin
+          res = false;
+        end;
+*/
+      case "SerNr": 
+        if (wnst==Rs_update) then begin
+          res = false;
+        end;
+    end;
+  end;  
+L1:;
+  PaymPayrollDClassActiveEditField = res;
+  return;
+end;
+
+global
+function boolean PaymPayrollDClassOKFlagButtonAction(integer wn,integer value)
+begin
+  boolean res;
+  record PaymPayrollVc PPr;
+  integer normalmode,updatemode;
+
+  res = true;
+  normalmode = 0;
+  updatemode = 2;
+  if (WindowState(wn)==normalmode) then begin
+    GetWindowRecord(wn,PPr);
+    if (PPr.OKFlag!=0) then begin
+      res = false;
+      if (UserCanAction("UnOKAll",false)) then begin
+        res = true;
+      end;
+    end;
+  end;  
+  if (WindowState(wn)==updatemode) then begin
+    GetPrevWindowRecord(wn,PPr);
+    if (PPr.OKFlag!=0) then begin
+      res = false;
+    end;
+  end;  
+  PaymPayrollDClassOKFlagButtonAction = res;
+  return;
+end;
+
+function boolean PaymPayrollDClassContrSerNrEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record PaymPayrollVc PPr;
+  row PaymPayrollVc PPrw;
+  record ContractVc Contrr;
+  LongInt tmp;
+  string 120 name;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,PPr);
+    DeselectWindow(wn,false);
+    MatRowGet(PPr,rownr,PPrw);
+    tmp = PPrw.ContrSerNr;
+    ClearRow(PPr,PPrw,1);
+    PPrw.ContrSerNr = tmp;
+    PPrw.PDate = PPr.PaymDate;
+    Contrr.SerNr = PPrw.ContrSerNr;
+    if (ReadFirstMain(Contrr,1,true)) then begin
+      PPrw.Firstname = Contrr.Firstname;
+      PPrw.Surname = Contrr.Surname;
+    end;
+    MatRowPut(PPr,rownr,PPrw);
+    PPrSumUp(PPr);
+    if (OneEmplOnPaymPayroll(PPr,name)) then begin
+      PPr.Name = name;
+    end else begin
+      PPr.Name = "";
+    end;
+    PutWindowRecord(wn,PPr);
+  end;
+  PaymPayrollDClassContrSerNrEFAfter = true;
+  return;
+end;
+
+function boolean PaymPayrollDClassCalcSerNrEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record PaymPayrollVc PPr;
+  row PaymPayrollVc PPrw;
+  record CalcPayrollVc CPr;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,PPr);
+    DeselectWindow(wn,false);
+    MatRowGet(PPr,rownr,PPrw);
+    CPr.SerNr = PPrw.CalcSerNr;
+    if (ReadFirstMain(CPr,1,true)) then begin
+      if (CPr.ContrSerNr!=PPrw.ContrSerNr) then begin
+        MessageBox(1500374,PPrw.CalcSerNr);
+        PPrw.CalcSerNr=blankval;
+        goto LPaymPayrollDClassCalcSerNrEFAfter;
+      end;
+      MatRowDelete(PPr,rownr);
+      PastePPrwsFromCPr(PPr,PPrw,CPr,rownr);
+    end else begin
+      PPrw.PaymTypeCode="";
+      PPrw.PaymTypeName="";
+      PPrw.ObjCode="";
+      PPrw.NetoSum=blankval;
+      PPrw.BrutoSum=blankval;
+      PPrw.UnemplInsSum=blankval;
+      PPrw.PensionSum=blankval;
+      PPrw.CalcBrutoSum=blankval;
+      PPrw.AddTaxSum=blankval;
+      PPrw.IncTaxSum=blankval;
+      PPrw.IncTaxFreeMinSum=blankval;
+      PPrw.DPDiscSum=blankval;
+      PPrw.SocTaxSum=blankval;
+      PPrw.EmplUnemplInsSum=blankval;
+      PPrw.CalcNetoSum=blankval;
+      PPrw.NotPaidNetoSum=blankval;
+      MatRowPut(PPr,rownr,PPrw);
+    end;      
+    PPrSumUp(PPr);
+    PutWindowRecord(wn,PPr);
+  end;
+LPaymPayrollDClassCalcSerNrEFAfter:;
+  PaymPayrollDClassCalcSerNrEFAfter = true;
+  return;
+end;
+
+function boolean PaymPayrollDClassPaymTypeCodeEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record PaymPayrollVc PPr;
+  row PaymPayrollVc PPrw;
+
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,PPr);
+    DeselectWindow(wn,false);
+    MatRowGet(PPr,rownr,PPrw);
+    PPrw.PaymTypeName=GetPaymTypeName(PPrw.PaymTypeCode);
+    MatRowPut(PPr,rownr,PPrw);
+    PutWindowRecord(wn,PPr);
+  end;
+  PaymPayrollDClassPaymTypeCodeEFAfter = true;
+  return;
+end;
+
+function boolean PaymPayrollDClassBrutoSumEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record PaymPayrollVc PPr;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,PPr);
+    DeselectWindow(wn,false);
+    PastePPrTaxes(PPr,rownr);
+    PPrSumUp(PPr);
+    PutWindowRecord(wn,PPr);
+  end;
+  PaymPayrollDClassBrutoSumEFAfter = true;
+  return;
+end;
+
+function boolean PaymPayrollDClassPDateEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record PaymPayrollVc PPr;
+  row PaymPayrollVc PPrw;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,PPr);
+    DeselectWindow(wn,false);
+    MatRowGet(PPr,rownr,PPrw);
+//NB
+//    if (PPrw.PaymTypeCode==GetAdvPaymTypeCode) then begin
+//      PastePPrTaxes(PPr,rownr);
+//      PPrSumUp(PPr);
+//      PutWindowRecord(wn,PPr);
+//    end;
+
+  end;
+  PaymPayrollDClassPDateEFAfter = true;
+  return;
+end;
+
+function boolean PaymPayrollDClassNetoTotalEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record PaymPayrollVc PPr;
+  row PaymPayrollVc PPrw;
+  val notpaidnetotot,netototnew,deductsum;
+  integer rwcnt,i,paymtypeflag;
+
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,PPr);
+    DeselectWindow(wn,false);
+  
+    deductsum=0;
+    rwcnt=MatRowCnt(PPr);
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(PPr,i,PPrw);
+      paymtypeflag=GetPaymTypeFlag(PPrw.PaymTypeCode);
+      if ((paymtypeflag==1) or (paymtypeflag==2) or (paymtypeflag==3)) then begin //kinnipidamine k.a. KohtutŠitur (kinnip.neto)
+        deductsum=deductsum+PPrw.NotPaidNetoSum;
+      end;
+      notpaidnetotot=notpaidnetotot+PPrw.NotPaidNetoSum;
+    end;
+
+    netototnew=PPr.NetoTotal;
+    if (netototnew<0) then begin
+      MessageBox(1500382,notpaidnetotot);
+      netototnew=notpaidnetotot;
+      for (i=0;i<rwcnt;i=i+1) begin
+        PPrw.NetoSum=PPrw.NotPaidNetoSum;
+        MatRowPut(PPr,i,PPrw);
+      end;
+      PPr.NetoTotal=notpaidnetotot;
+    end else begin
+      if (netototnew>notpaidnetotot) then begin
+        MessageBox(1500372,notpaidnetotot);
+        netototnew=notpaidnetotot;
+        for (i=0;i<rwcnt;i=i+1) begin
+          PPrw.NetoSum=PPrw.NotPaidNetoSum;
+          MatRowPut(PPr,i,PPrw);
+        end;
+        PPr.NetoTotal=notpaidnetotot;
+      end;
+    end; 
+    if (netototnew<=notpaidnetotot) then begin
+      netototnew=netototnew-deductsum;
+      for (i=0;i<rwcnt;i=i+1) begin
+        MatRowGet(PPr,i,PPrw);
+        paymtypeflag=GetPaymTypeFlag(PPrw.PaymTypeCode);
+        if (paymtypeflag==7) then begin //tasu
+          if (PPrw.NotPaidNetoSum<=netototnew) then begin
+            PPrw.NetoSum=PPrw.NotPaidNetoSum;
+            netototnew=netototnew-PPrw.NetoSum;
+          end else begin
+            PPrw.NetoSum=netototnew;
+            netototnew=netototnew-PPrw.NetoSum;
+          end;  
+        end;  
+        MatRowPut(PPr,i,PPrw);
+        PastePPrTaxes(PPr,i);
+      end;
+      PPrSumUp(PPr);
+    end;
+    PutWindowRecord(wn,PPr);
+  end;
+  PaymPayrollDClassNetoTotalEFAfter = true;
+  return;
+end;
+
+global
+function boolean PaymPayrollDClassAfterEditField(integer wn,string fieldname,integer fn, integer rownr,integer changed)
+begin
+  boolean res;
+
+  switch (fieldname) begin
+    case "ContrSerNr": res = PaymPayrollDClassContrSerNrEFAfter(wn,rownr,changed);
+    case "CalcSerNr": res = PaymPayrollDClassCalcSerNrEFAfter(wn,rownr,changed);
+//  case "OpTransSerNr": res = PaymPayrollDClassOpTransSerNrEFAfter(wn,rownr,changed);
+    case "PaymTypeCode": res = PaymPayrollDClassPaymTypeCodeEFAfter(wn,rownr,changed);
+//  case "NetoSum": res = PaymPayrollDClassNetoSumEFAfter(wn,rownr,changed);
+    case "BrutoSum": res = PaymPayrollDClassBrutoSumEFAfter(wn,rownr,changed);
+    case "PDate": res = PaymPayrollDClassPDateEFAfter(wn,rownr,changed);
+//  case "NetoTotal": res = PaymPayrollDClassNetoTotalEFAfter(wn,rownr,changed);
+  end;
+  PaymPayrollDClassAfterEditField = res;
+  return;
+end;
+
+global
+function Boolean PaymPayrollDClassOpenRecord(Integer wn,string fieldname,Integer fn,Integer rownr)
+begin
+  Boolean res;
+  record PaymPayrollVc PPr;
+  row PaymPayrollVc PPrw;
+  record CalcPayrollVc CPr;
+  record ContractVc Contrr;
+  record ObjVc Objr;
+  record PaymTypeVc PTr;
+  Integer nwn;
+
+  GetWindowRecord(wn,PPr);  
+  DeselectWindow(wn,false);
+  if (rownr>=0) then begin
+    MatRowGet(PPr,rownr,PPrw);
+  end;
+  switch (fieldname) begin
+    case "ObjCode":
+      if nonblank(PPr.ObjCode) then begin
+        Objr.Code = PPr.ObjCode;
+        if (ReadFirstMain(Objr,1,true)) then begin
+          nwn = OpenWindow("ObjDClass",1,0,"","",Objr);    
+          res = true;
+        end;
+      end;
+    case "ContrSerNr":
+      if (PPrw.ContrSerNr>0) then begin
+        Contrr.SerNr = PPrw.ContrSerNr;
+        if (ReadFirstMain(Contrr,1,true)) then begin
+          nwn = OpenWindow("ContractDClass",1,0,"","",Contrr);    
+          res = true;
+        end;
+      end;
+    case "CalcSerNr":
+      if (PPrw.CalcSerNr>0) then begin
+        CPr.SerNr = PPrw.CalcSerNr;
+        if (ReadFirstMain(CPr,1,true)) then begin
+          nwn = OpenWindow("CalcPayrollDClass",1,0,"","",CPr);    
+          res = true;
+        end;
+      end;
+    case "PaymTypeCode":
+      if nonblank(PPrw.PaymTypeCode) then begin
+        PTr.Code = PPrw.PaymTypeCode;
+        if (ReadFirstMain(PTr,1,true)) then begin
+          nwn = OpenWindow("PaymTypeDClass",1,0,"","",PTr);    
+          res = true;
+        end;
+      end;
+  end;
+  PaymPayrollDClassOpenRecord = res;
+  return;
+end;
+

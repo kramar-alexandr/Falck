@@ -1,0 +1,124 @@
+external procedure InitIdleTasksIR();
+external procedure InitIdleTasksTsekk();
+
+global
+procedure InitSysRunEstIdleTasksRemote(record EInvQueryIntrvlBlock ESb)
+begin
+  record ServiceCacheVc SCr;
+  area a;
+  LongInt res;
+  Boolean testf;
+    
+  if (ServerMode or SingleUserMode) then begin
+    SCr.Code = "SendEstEInvoice";
+    if (ReadFirstMain(SCr,1,true)==true) then begin
+      res = ESb.EInvReq;
+      if ((res <= 0) or (res > 14400)) then begin res = 400; end;
+      if (TaskExists("SendEstEInvoice")) then begin
+        if (RemoveTask("SendEstEInvoice")) then begin
+        end;
+      end;
+      NewPeriodicTask2("SendEstEInvoice","Send E-Invoices","SendEstEInvoiceIdleTask","",res,"");
+      res = ESb.EInvStatReq;
+      if ((res <= 0) or (res > 14400)) then begin res = 600; end;
+      //ts - 2018/04, always remove the task and reschedule according to Partner
+      if (TaskExists("SentEstEInvoiceStatus")) then begin
+        if (RemoveTask("SentEstEInvoiceStatus")) then begin
+        end;
+      end;
+      if (SCr.Partner == "EARVEKESKUS") then begin //ts - 2018/04, this periodic task should be listed only in case of exists Service Cache for Omniva
+        NewPeriodicTask2("SentEstEInvoiceStatus","Read E-Invoice status","SentEstEInvoiceStatusIdleTask","",res,"");      
+      end;
+      testf = true;
+    end;
+//Bk - start
+    SCr.Code = "GetEstEInvoice";
+    if (ReadFirstMain(SCr,1,true)==true) then begin
+      res = ESb.GetInvReq;
+      if ((res <= 0) or (res > 14400)) then begin res = 400; end;
+      if (TaskExists("GetEstEInvoice")) then begin
+        if (RemoveTask("GetEstEInvoice")) then begin
+        end;
+      end;
+      NewPeriodicTask2("GetEstEInvoice","Get E-Invoices","GetEstEInvoiceIdleTask","",res,"");
+      testf = true;
+      res = ESb.GetInvPdfReq;
+      if ((res <= 0) or (res > 14400)) then begin res = 400; end;
+      if (TaskExists("GetEstEInvoicePdf")) then begin
+        if (RemoveTask("GetEstEInvoicePdf")) then begin
+        end;
+      end;
+      NewPeriodicTask2("GetEstEInvoicePdf","Get E-Invoices pdf","GetEstEInvoicePdfIdleTask","",res,"");
+//Bk - end
+    end;
+    SCr.Code = "ReceiveEstEInvoice";
+    if (ReadFirstMain(SCr,1,true)==true) then begin
+      res = ESb.SupInvReq;
+      if ((res <= 0) or (res > 14400)) then begin res = 400; end;
+      if (TaskExists("ReceiveEstEInvoice")) then begin
+        if (RemoveTask("ReceiveEstEInvoice")) then begin
+        end;
+      end;
+      NewPeriodicTask2("ReceiveEstEInvoice","Receive supplier E-Invoices","ReceiveEstEInvoiceIdleTask","",res,"");
+      testf = true;
+      res = ESb.SupInvPdfReq;
+      if ((res <= 0) or (res > 14400)) then begin res = 400; end;
+      if (TaskExists("ReceiveEstEInvoicePdf")) then begin
+        if (RemoveTask("ReceiveEstEInvoicePdf")) then begin
+        end;
+      end;
+      NewPeriodicTask2("ReceiveEstEInvoicePdf","Receive supplier E-Invoices pdf","ReceiveEstEInvoicePdfIdleTask","",res,"");
+      testf = true;
+      res = res*1.5;
+      if (TaskExists("SendEstSupEInvoiceStatus")) then begin
+        if (RemoveTask("SendEstSupEInvoiceStatus")) then begin
+        end;
+      end;
+      NewPeriodicTask2("SendEstSupEInvoiceStatus","Send E-Invoice status","SendEstSupEInvoiceIdleTask","",res,"");
+      testf = true;
+    end;
+//ts - 2018/04, added control for usage of any e-service in order to activate send e-service statistic or not
+    if (testf == false) then begin
+      SCr.Code = "SENDESTADRLOOKUP";
+      if (ReadFirstMain(SCr,1,true)==true) then begin testf = true; goto LFoundEService; end;
+      SCr.Code = "SENDESTCCLOOKUP";
+      if (ReadFirstMain(SCr,1,true)==true) then begin testf = true; goto LFoundEService; end;
+      SCr.Code = "SENDESTCURRATELOOKUP";
+      if (ReadFirstMain(SCr,1,true)==true) then begin testf = true; goto LFoundEService; end;
+      SCr.Code = "FINDCREDITSCORE";
+      if (ReadFirstMain(SCr,1,true)==true) then begin testf = true; goto LFoundEService; end;
+      SCr.Code = "SENDDEBTINFO";
+      if (ReadFirstMain(SCr,1,true)==true) then begin testf = true; goto LFoundEService; end;
+      SCr.Code = "ACCESSWEBLINK";
+      if (ReadFirstMain(SCr,1,true)==true) then begin testf = true; goto LFoundEService; end;
+      SCr.Code = "MAILBOW";
+      if (ReadFirstMain(SCr,1,true)==true) then begin testf = true; goto LFoundEService; end;
+      SCr.Code = "RECEIVETSEKKEINVOICE";
+      if (ReadFirstMain(SCr,1,true)==true) then begin testf = true; goto LFoundEService; end;
+    end;
+LFoundEService:;
+    if (TaskExists("CheckEstEInvoiceStatus")) then begin
+      if (RemoveTask("CheckEstEInvoiceStatus")) then begin
+      end;
+    end;
+    if (testf) then begin
+      res = ESb.StatusCheckReq;
+      if ((res <= 0) or (res > 14400)) then begin res = 14400; end;
+      NewPeriodicTask2("CheckEstEInvoiceStatus","Check E-Invoice status","SendEstEServiceUsageIdleTask","",res,"");
+    end;
+    InitIdleTasksIR; //cust KB 30.01.2018 Tuuli, please review and combine this file where required. //ok. ts - 2018/04
+    InitIdleTasksTsekk; //cust KB 30.01.2018 Tuuli, please review and combine this file where required. //ok. ts - 2018/04
+  end;
+
+  return;
+end;
+
+global
+procedure InitSysRunEstIdleTasks()
+begin
+  record EInvQueryIntrvlBlock ESb;
+  
+  BlockLoad(ESb);
+  InitSysRunEstIdleTasksRemote(ESb);
+  return;
+end;

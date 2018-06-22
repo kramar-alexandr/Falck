@@ -1,0 +1,94 @@
+external function boolean GetNextAbsTypeNr(var string);
+external function boolean ATrInUse(string);
+external function boolean PaymTypeExsists(string);
+
+global
+function LongInt AbsTypeVcRecordDefaults(var record AbsTypeVc ATr,record AbsTypeVc AT2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  
+  if (SingleUserMode) then begin
+    if (GetNextAbsTypeNr(ATr.Code)) then begin end;
+  end else begin
+    ATr.Code = "";
+  end;
+  ATr.AbsTypeFlag=2;
+  
+  AbsTypeVcRecordDefaults = res; 
+  return;
+end;
+
+global
+function LongInt AbsTypeVcRecordDuplicate(var record AbsTypeVc ATr,record AbsTypeVc AT2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+ 
+  if (SingleUserMode) then begin
+    if (GetNextAbsTypeNr(ATr.Code)) then begin end;
+  end else begin
+    ATr.Code = "";
+  end;
+
+  AbsTypeVcRecordDuplicate = res; 
+  return;
+end;
+
+global
+function LongInt AbsTypeVcRecordCheck(var record AbsTypeVc ATr,record AbsTypeVc AT2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  record AbsTypeVc AT3r;
+  LongInt updatemode,insertmode;
+  
+  insertmode=1;
+  updatemode=2;
+  res = 0;
+  if (blank(ATr.Code)) then begin
+    if (stat==updatemode) and nonblank(AT2r.Code) then begin
+      ATr.Code=AT2r.Code;
+    end else begin
+      if (GetNextAbsTypeNr(ATr.Code)) then begin end;
+    end;
+  end;
+  if (stat==insertmode) or (stat==updatemode and ATr.Code!=AT2r.Code) then begin
+    AT3r.Code = ATr.Code;
+    if (ReadFirstMain(AT3r,1,true)) then begin
+      RecordCheckError(1547," " & ATr.Code,-1,"Code");      
+      res = -1; 
+      goto LAbsTypeVcRecordCheck;
+    end;
+  end;
+
+  if (len(ATr.Code)<=0) then begin
+    RecordCheckError(1500340,"",-1,"Code");      
+    res = -1; 
+    goto LAbsTypeVcRecordCheck;
+  end;
+
+  if nonblank(ATr.PaymTypeCode) then begin
+    if (PaymTypeExsists(ATr.PaymTypeCode)==false) then begin
+      RecordCheckError(1500326," " & ATr.PaymTypeCode,-1,"PaymTypeCode");      
+      res = -1; 
+      goto LAbsTypeVcRecordCheck;
+    end;
+  end;
+LAbsTypeVcRecordCheck:;
+  AbsTypeVcRecordCheck = res;
+  return;
+end;
+
+
+global
+function LongInt AbsTypeVcRecordRemoveTest(var record AbsTypeVc ATr,record AbsTypeVc AT2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+  boolean testf;
+
+  testf = ATrInUse(ATr.Code);
+  if (testf) then begin
+    MessageBox(1500341,"")
+    res = 0;
+  end;
+  AbsTypeVcRecordRemoveTest = res; 
+  return;
+end;

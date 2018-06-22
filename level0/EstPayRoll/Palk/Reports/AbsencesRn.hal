@@ -1,0 +1,241 @@
+external function boolean GetRightPeriod(var date,var date,date,date);
+external function LongInt GetCalendarDays(date,date);
+external function LongInt GetWorkingDays(date,date);
+
+global
+procedure DblAbsenceVc(string dblstr,string l,integer currepwn)
+begin
+  record AbsenceVc Absr;
+  integer wn;
+
+  if (nonblank(dblstr)) then begin
+    Absr.SerNr = FirstInRange(dblstr,12);
+    if (ReadFirstMain(Absr,1,true)) then begin
+      wn = OpenWindow("AbsenceDClass",1,0,"","",Absr);
+    end;
+  end;
+  return;
+end;
+
+global
+procedure AbsencesRn(record RcVc RepSpec)
+begin
+  record CalcPayrollVc CPr;
+  row CalcPayrollVc CPrw;
+  record EmplVc Emplr;
+  record ContractVc Contrr;
+  row ContractVc Contrrw;
+  record AbsenceVc Absr;
+  record AbsTypeVc ATr;
+  string 20 frempl,toempl,tstr,tstr1;
+  string 200 emplname,absperiod;
+  LongInt frcontr,tocontr,caldays,workdays;
+  integer rwcnt,i,rw;
+  boolean TrHs, TrHs1,TrHs2,testf,testf1;
+  
+  rw = 1;
+  StartReportJob(USetStr(1500383));
+  frempl = FirstInRange(RepSpec.f1,20);
+  toempl = LastInRange(RepSpec.f1,20);
+  frcontr = FirstInRange(RepSpec.f2,20);
+  tocontr = LastInRange(RepSpec.f2,20);
+
+  tstr = USetStr(5261);
+  tstr = tstr & RepSpec.sStartDate & " : " & RepSpec.sEndDate;
+  Header(rw,tstr,1);
+  rw = rw + 1;
+  
+  if (blank(frempl) and blank(toempl)) then begin
+    tstr = USetStr(1500486);
+  end else begin
+    tstr = USetStr(1500385) & ": ";
+    tstr = tstr & frempl;
+    if (frempl<>toempl) then begin
+    tstr = tstr & " : " & toempl;
+    end;
+  end;
+  Header(rw,tstr,1);
+  rw = rw + 1;
+  
+  if ((frcontr == -1) and (tocontr == -1)) then begin
+    tstr = USetStr(1500386);
+  end else begin
+    tstr = USetStr(1500414) & ": ";
+    tstr = tstr & frcontr;
+    if (frcontr<>tocontr) then begin
+    tstr = tstr & " : " & tocontr;
+    end;
+  end;
+  Header(rw,tstr,1);
+  rw = rw + 1;
+
+  if (nonblank(RepSpec.f4)) then begin
+    tstr = USetStr(1500388) & ": ";
+    tstr = tstr & RepSpec.f4;
+    Header(rw,tstr,1);
+    rw = rw + 1; 
+  end;
+
+  if (RepSpec.flags[0]>0) then begin
+    tstr = USetStr(1500389);
+    switch (RepSpec.flags[0]) begin
+      case 1:
+        tstr1 = USetStr(1500392);
+      case 2:
+        tstr1 = USetStr(1500393);
+      case 3:
+        tstr1 = USetStr(1500394);
+    end;
+    tstr = tstr & tstr1;
+    Header(rw,tstr,1);
+    rw = rw + 1; 
+  end;
+
+  if (nonblank(RepSpec.ObjStr)) then begin
+    tstr = USetStr(2317);
+    tstr = tstr & RepSpec.ObjStr;
+    Header(rw,tstr,1);
+    rw = rw + 1; 
+  end;
+
+  if (RepSpec.flags[1]!=0) then begin
+    tstr = USetStr(1500390);
+    Header(rw,tstr,1);
+    rw = rw + 1; 
+  end;
+
+  if (RepSpec.flags[2]!=0) then begin
+    tstr = USetStr(1500391);
+    Header(rw,tstr,1);
+    rw = rw + 1; 
+  end;
+  EndHeader;
+
+  SetRepCol(2,50);
+  SetRepCol(3,100);
+  SetRepCol(4,150);
+  SetRepCol(5,220);
+  SetRepCol(6,270);
+  SetRepCol(7,350);
+  SetRepCol(8,390);
+
+  StartFormat(15);
+  OutString(0,0,USetStr(1500397),false);
+  OutString(2,0,USetStr(1500385),false);
+  OutString(3,0,USetStr(1500384),false);
+  OutString(4,0,USetStr(1500395),false);
+  OutString(5,0,USetStr(1500396),false);
+  OutString(6,0,USetStr(1500401),false);
+  OutString(7,0,USetStr(1500399),true);
+  OutString(8,0,USetStr(1500398),true);
+  OutString(1,0,USetStr(1500400),true);
+  EndFormat;
+  Gray_Divider(0,1);
+  StartFormat(15);
+  EndFormat;
+
+  ResetLoop(Emplr);
+  TrHs = true;
+  Emplr.Code = frempl;
+  while (LoopMain(Emplr,1,TrHs)) begin
+    if (TrHs) then begin
+      if (nonblank(toempl)) then begin
+        if (Emplr.Code>toempl) then begin
+          TrHs = false;
+        end;
+      end;
+      if (TrHs) then begin
+        testf=true;
+        if (RepSpec.flags[1]==0) then begin
+          if (Emplr.ClosedFlag!=0) then begin
+            testf = false;
+          end;
+        end;  
+        if (testf) then begin
+          TrHs1=true;
+          ResetLoop(Contrr);
+          Contrr.EmplCode = Emplr.Code;
+          while (LoopKey("EmplCode",Contrr,1,TrHs1)) begin
+            if (Contrr.EmplCode!=Emplr.Code) then begin
+              TrHs1 = false;
+            end;
+            if (TrHs1) then begin
+              testf=true;
+              if ((frcontr>0)) then begin
+                if ((Contrr.SerNr<frcontr) or (Contrr.SerNr>tocontr)) then begin
+                  testf = false;
+                end;
+              end;
+              if (RepSpec.flags[2]==0) then begin
+                if (Contrr.Status!=1) then begin
+                  testf = false;
+                end;
+              end;
+              if (testf) then begin
+                TrHs2=true;
+                ResetLoop(Absr);
+                Absr.ContrSerNr=Contrr.SerNr;
+                Absr.OKFlag=1;
+                while (LoopKey("ContrSerNr",Absr,2,TrHs2)) begin
+                  if (Absr.ContrSerNr!=Contrr.SerNr) then begin
+                    TrHs2=false;
+                  end;
+                  if (Absr.OKFlag!=1) then begin
+                    TrHs2=false;
+                  end;
+                  if (TrHs2) then begin
+                  testf1=true;  
+                    testf1=GetRightPeriod(Absr.StartDate,Absr.EndDate,RepSpec.sStartDate,RepSpec.sEndDate);
+                    if (nonblank(RepSpec.f4)) then begin
+                      if (Absr.AbsTypeCode!=RepSpec.f4) then begin
+                        testf1=false;
+                      end;
+                    end;
+                    if (testf1) then begin
+                      if (RepSpec.flags[0]>0) then begin
+                        ATr.Code = Absr.AbsTypeCode;
+                        if (ReadFirstMain(ATr,1,true)) then begin
+                          if ((RepSpec.flags[0]-1)!=ATr.AbsTypeFlag) then begin
+                            testf1=false; 
+                          end;
+                        end;  
+                      end;
+                      if (nonblank(RepSpec.ObjStr)) then begin
+                        if (SetInSet(RepSpec.ObjStr,Absr.ObjCode)==false) then begin
+                          testf1=false;
+                        end;
+                      end; 
+                      if (testf1) then begin
+                        StartFormat(15);
+                        OutLongInt(0,"DblAbsenceVc",Absr.SerNr,false);
+                        OutString(2,0,Absr.EmplCode,false);
+                        OutString(3,0,Absr.ContrSerNr,false);
+                        emplname=Absr.Firstname & " " & Absr.Surname;
+                        OutString(4,0,emplname,false);
+                        OutString(5,0,Absr.ObjCode,false);
+                        OutString(6,0,Absr.AbsTypeCode,false);
+                        caldays=GetCalendarDays(Absr.StartDate,Absr.EndDate);
+                        workdays=GetWorkingDays(Absr.StartDate,Absr.EndDate);
+                        OutString(7,0,caldays,true);
+                        OutString(8,0,workdays,true);
+                        absperiod=Absr.StartDate & " : " & Absr.EndDate;
+                        OutString(1,0,absperiod,true);
+                        EndFormat;
+                      end;
+                    end;
+                  end;
+                end;
+              end;
+            end;  
+          end;
+        end;
+      end;
+    end;
+  end;
+  StartFormat(15);
+  EndFormat;
+  Gray_Divider(0,1);
+  EndJob;
+LAbsencesRn:;
+  return;
+end;

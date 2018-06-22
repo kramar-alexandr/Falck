@@ -1,0 +1,35 @@
+global
+procedure CPayrollForm(record RcVc RepSpec)
+begin
+  record CalcPayrollVc CPr;
+  Boolean TrHs,tmpf;
+  LongInt afr,ato;
+
+  if (blank(RepSpec.f1)) then begin
+    goto LCPayrollForm;
+  end;
+  afr = FirstInRange(RepSpec.f1,10);
+  ato = LastInRange(RepSpec.f1,10);
+  CPr.SerNr = afr;
+  TrHs = true;
+  while (LoopMain(CPr,1,TrHs)) begin
+    if (TrHs) then begin
+      if (ato!=-1) then begin
+        if (CPr.SerNr>ato) then begin
+          TrHs = false;
+        end;
+      end;     
+    end;
+    if (TrHs) then begin
+      tmpf = true;
+      if (RepSpec.flags[0]==0) then begin
+        if (CPr.OKFlag==0) then begin tmpf = false; end;
+      end;
+      if (tmpf) then begin 
+        tmpf = PrintDocument(CPr,"CPayrollForm",false);
+      end;
+    end;
+  end;
+LCPayrollForm:;
+  return;
+end;

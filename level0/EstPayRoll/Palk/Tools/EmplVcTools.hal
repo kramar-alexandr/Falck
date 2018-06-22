@@ -1,0 +1,115 @@
+external procedure NextM4Number(string,var string);
+external procedure Alltrim(string,var string);
+
+global
+procedure PasteTaxInEmpl(var record EmplVc Emplr,date regdate)
+begin
+  integer rwcnt,i,rwnr;
+  record TaxVc Taxr;
+  row TaxVc Taxrw;
+  row EmplVc Emplrw;
+
+  rwnr=0;
+  ResetLoop(Taxr);
+  Taxr.Code = "";
+  while (LoopMain(Taxr,1,true)) begin  
+    if nonblank(Taxr.Code) then begin
+      rwcnt=MatRowCnt(Taxr);
+      for (i=0;i<rwcnt;i=i+1) begin
+        MatRowGet(Taxr,i,Taxrw);
+        if nonblank(Taxrw.Percent) then begin
+          if (DateInRange(regdate,Taxrw.SDate,Taxrw.EDate)) then begin
+            Emplrw.TaxCode=Taxr.Code;
+            Emplrw.TaxName=Taxr.Name;
+            Emplrw.SDate=regdate;
+            Emplrw.EDate=Taxrw.EDate;
+            MatRowPut(Emplr,rwnr,Emplrw);
+            rwnr=rwnr+1;
+          end;
+        end;
+      end;    
+    end;
+  end;
+  return;
+end;
+
+global
+function boolean GetNextEmplNr(var string emplnr)
+begin
+  record SRBlock SRRec;
+  record EmplVc Empr;
+  boolean res;
+
+  BlockLoad(SRRec);
+  NextM4Number(SRRec.LastGuestCode,emplnr);
+  if (nonblank(emplnr)) then begin
+    Empr.Code = emplnr;
+    if (ReadFirstMain(Empr,1,true)==false) then begin
+      SRRec.LastGuestCode = emplnr;
+    end else begin
+      if (CountRecords("EmplVc")==0) then begin 
+        emplnr = "1";
+        goto LGetNextEmpNr;
+      end;    
+      Empr.Code = "种种种种种种种种种种";
+      if (ReadLastMain(Empr,1,false)) then begin
+        NextM4Number(Empr.Code,emplnr);
+      end else begin
+        emplnr = "1";
+      end;
+    end;
+  end;
+LGetNextEmpNr:;
+  GetNextEmplNr = res;
+  return;
+end;
+
+global
+function boolean EmplrInUse(string emplcode,var boolean closedcontr)
+begin
+  boolean res;
+  record ContractVc Contrr;  
+
+  closedcontr=false;
+  res=false;
+  Contrr.EmplCode = emplcode;
+  if (ReadFirstKey("EmplCode",Contrr,1,true)) then begin
+    res=true;
+    if (Contrr.Status>1) then begin
+      closedcontr=true;
+    end;
+  end;
+  
+  EmplrInUse = res; 
+  return;
+end;
+
+global
+function date GetBDateFromIDCode(string idcode)
+begin
+  date res;
+  string 4 day,month,year;
+  string 2 str;
+  string 20 id;
+  
+  Alltrim(idcode,id);
+  year=mid(id,1,2);
+  month=mid(id,3,2);
+  day=mid(id,5,2);
+    
+  str=mid(id,0,1);
+  switch (str) begin
+    case "1": year="18" & year;
+    case "2": year="18" & year;
+    case "3": year="19" & year;
+    case "4": year="19" & year;
+    case "5": year="20" & year;
+    case "6": year="20" & year;
+  end;
+
+  res.day=StringToInt(day);
+  res.month=StringToInt(month);
+  res.year=StringToInt(year);
+  GetBDateFromIDCode = res;
+  return;
+end;

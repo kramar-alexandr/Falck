@@ -1,0 +1,183 @@
+external function integer CountVacDaysNorm(LongInt,integer,date,date);
+external procedure YearCheck(var LongInt);
+external procedure GetFullYear(integer,var date,var date);
+
+global
+function Boolean VacBalanceDClassSwitchRow(Integer wn,Integer rownr)
+begin
+  record VacBalanceVc VBr;
+  row VacBalanceVc VBrw;
+  integer rwcnt;
+  Boolean res;
+ 
+//clear trash rows
+  res = true;
+  GetWindowRecord(wn,VBr);
+  rwcnt = MatRowCnt(VBr);
+  if ((rownr<rwcnt) and (rownr>=0)) then begin
+    MatRowGet(VBr,rwcnt,VBrw);
+    if ((VBrw.Year<=0) and blank(VBrw.SDate) and blank(VBrw.EDate)) then begin
+      MatRowDelete(VBr,rwcnt);
+      PutWindowRecord(wn,VBr);
+    end; 
+  end;
+  
+  VacBalanceDClassSwitchRow = true;
+  return;
+end;
+
+global 
+function Boolean VacBalanceDClassDeleteRowTest(Integer wn,Integer rownr)
+begin
+  record VacBalanceVc VBr;
+  integer updatemode;
+  boolean res;
+
+  res = true;
+  updatemode = 2;
+  if (WindowState(wn)==updatemode) then begin
+    GetPrevWindowRecord(wn,VBr);
+  end else begin
+    GetWindowRecord(wn,VBr);
+  end;
+  if (VBr.OKFlag!=0) then begin
+    res = false;
+  end;
+
+  VacBalanceDClassDeleteRowTest = res;
+  return;
+end;
+
+global
+function boolean VacBalanceDClassActiveEditField(integer wn,string fieldname,integer fn,integer wnst,integer rownr,integer changed)
+begin
+  boolean res;
+  record VacBalanceVc VBr;
+  
+  res = true;
+  GetWindowRecord(wn,VBr);
+  if (VBr.OKFlag!=0) then begin
+    res = false;
+  end else begin
+    switch (fieldname) begin
+      case "SerNr": 
+        if (wnst==Rs_update) then begin
+          res = false;
+        end;
+      case "VacDaysNorm": res = false;
+      case "VacDaysToUse": res = false;
+    end;
+  end;  
+  VacBalanceDClassActiveEditField = res;
+  return;
+end;
+
+global
+function boolean VacBalanceDClassOKFlagButtonAction(integer wn,integer value)
+begin
+  boolean res;
+  record VacBalanceVc VBr;
+  integer normalmode,updatemode;
+  
+  res = true;
+  normalmode = 0;
+  updatemode = 2;
+  if (WindowState(wn)==normalmode) then begin
+    GetWindowRecord(wn,VBr);
+    if (VBr.OKFlag!=0) then begin
+      res = false;
+      if (UserCanAction("UnOKAll",false)) then begin
+        res = true;
+      end;
+    end;
+  end;  
+  if (WindowState(wn)==updatemode) then begin
+    GetPrevWindowRecord(wn,VBr);
+    if (VBr.OKFlag!=0) then begin
+      res = false;
+    end;
+  end;  
+  VacBalanceDClassOKFlagButtonAction = res;
+  return;
+end;
+
+function boolean VacBalanceDClassYearEFAfter(integer wn,integer rownr,integer changedf)
+  begin  
+  record VacBalanceVc VBr;
+  row VacBalanceVc VBrw;
+  date sd,ed;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,VBr);
+    DeselectWindow(wn,false);
+    MatRowGet(VBr,rownr,VBrw);
+    if (VBrw.Year>0) then begin
+      YearCheck(VBrw.Year);        
+      GetFullYear(VBrw.Year,sd,ed);
+      VBrw.SDate = sd;
+      VBrw.EDate = ed;
+      VBrw.VacDaysNorm=CountVacDaysNorm(VBr.ContrSerNr,VBrw.Year,VBrw.SDate,VBrw.EDate);
+      VBrw.VacDaysToUse=VBrw.VacDaysNorm-VBrw.VacDaysUsed;
+      VBrw.BestBeforeDate=AddYear(ed,1);
+      VBrw.VacDaysStatus=1;
+    end;
+    MatRowPut(VBr,rownr,VBrw);
+    PutWindowRecord(wn,VBr);
+  end;
+  VacBalanceDClassYearEFAfter = true;
+  return;
+end;
+
+function boolean VacBalanceDClassVacDaysNormEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record VacBalanceVc VBr;
+  row VacBalanceVc VBrw;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,VBr);
+    DeselectWindow(wn,false);
+    MatRowGet(VBr,rownr,VBrw);
+    VBrw.VacDaysToUse=VBrw.VacDaysNorm-VBrw.VacDaysUsed;
+    MatRowPut(VBr,rownr,VBrw);
+    PutWindowRecord(wn,VBr);
+  end;
+
+  VacBalanceDClassVacDaysNormEFAfter = true;
+  return;
+end;
+
+function boolean VacBalanceDClassSDateEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record VacBalanceVc VBr;
+  row VacBalanceVc VBrw;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,VBr);
+    DeselectWindow(wn,false);
+    MatRowGet(VBr,rownr,VBrw);
+    VBrw.VacDaysNorm=CountVacDaysNorm(VBr.ContrSerNr,VBrw.Year,VBrw.SDate,VBrw.EDate);
+    VBrw.VacDaysToUse=VBrw.VacDaysNorm-VBrw.VacDaysUsed;
+    MatRowPut(VBr,rownr,VBrw);
+    PutWindowRecord(wn,VBr);
+  end;
+
+  VacBalanceDClassSDateEFAfter = true;
+  return;
+end;
+
+global
+function boolean VacBalanceDClassAfterEditField(integer wn,string fieldname,integer fn, integer rownr,integer changed)
+begin
+  boolean res;
+
+  switch (fieldname) begin
+    case "Year": res = VacBalanceDClassYearEFAfter(wn,rownr,changed);
+    case "SDate": res = VacBalanceDClassSDateEFAfter(wn,rownr,changed);
+    case "EDate": res = VacBalanceDClassSDateEFAfter(wn,rownr,changed);
+    case "VacDaysNorm": res = VacBalanceDClassVacDaysNormEFAfter(wn,rownr,changed);
+    case "VacDaysUsed": res = VacBalanceDClassVacDaysNormEFAfter(wn,rownr,changed);
+  end;
+  
+  VacBalanceDClassAfterEditField = res;
+  return;
+end;

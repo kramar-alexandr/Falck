@@ -1,0 +1,63 @@
+function boolean MinSocTaxTClassSDateEFAfter(integer wn,integer rownr,integer changedf)
+  begin  
+  record MinSocTaxBlock MSTr;
+  row MinSocTaxBlock MSTrw;
+  date sdate;
+  
+  if (changedf!=0) then begin
+    BlockLoad(MSTr);
+    GetWindowRecord(wn,MSTr);
+    DeselectWindow(wn,false);
+    MatRowGet(MSTr,rownr,MSTrw);
+    if NonBlankDate(MSTrw.SDate) then begin
+      sdate.day=1;
+      sdate.month=GetMonth(MSTrw.SDate);
+      sdate.year=GetYear(MSTrw.SDate);
+      MSTrw.SDate=sdate;
+      MatRowPut(MSTr,rownr,MSTrw);
+      PutWindowRecord(wn,MSTr);
+    end;
+  end;
+
+  MinSocTaxTClassSDateEFAfter = true;
+  return;
+end;
+
+function boolean MinSocTaxTClassEDateEFAfter(integer wn,integer rownr,integer changedf)
+  begin  
+  record MinSocTaxBlock MSTr;
+  row MinSocTaxBlock MSTrw;
+  date sdate;
+  
+  if (changedf!=0) then begin
+    BlockLoad(MSTr);
+    GetWindowRecord(wn,MSTr);
+    DeselectWindow(wn,false);
+    MatRowGet(MSTr,rownr,MSTrw);
+    if NonBlankDate(MSTrw.EDate) then begin
+      sdate.day=DaysInMonth(GetYear(MSTrw.EDate),GetMonth(MSTrw.EDate));;
+      sdate.month=GetMonth(MSTrw.EDate);
+      sdate.year=GetYear(MSTrw.EDate);
+      MSTrw.EDate=sdate;
+      MatRowPut(MSTr,rownr,MSTrw);
+      PutWindowRecord(wn,MSTr);
+    end;
+  end;
+
+  MinSocTaxTClassEDateEFAfter = true;
+  return;
+end;
+
+global
+function boolean MinSocTaxTClassAfterEditField(integer wn,string fieldname,integer fn, integer rownr,integer changed)
+begin
+  boolean res;
+
+  switch (fieldname) begin
+    case "SDate": res = MinSocTaxTClassSDateEFAfter(wn,rownr,changed);
+    case "EDate": res = MinSocTaxTClassEDateEFAfter(wn,rownr,changed);
+  end;
+
+  MinSocTaxTClassAfterEditField = res;
+  return;
+end;

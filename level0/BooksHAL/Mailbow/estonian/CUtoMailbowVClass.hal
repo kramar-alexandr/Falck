@@ -1,0 +1,21 @@
+window CUtoMailbowVClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  WindowBegin("Kontaktide andmed Mailbowsse",CUtoMailbowVClass,CGMnt,RcType);
+  SetWRect(64,80,442,350);
+  h = 150; v = 6; vs = 20;
+  EditFieldTL(h,v, 80,"Kliendiklass", M4UStr,Normal,5,f1,false,CCatSClass);
+  EditFieldTL(h,v+=vs, 80,"Kliendi klassifikaator", M4UStr,Normal,30,f2,false,CClassSClass);
+  EditFieldTL(h,v+=vs, 150,"Nimekiri",M4Str,Normal,60,f4,false,0);
+  ButtonFrame(h,v+=40,173,3,"Toiming:");
+  RadioButton(h,v,0,0,"Asenda olemasolev nimekiri",flags[0]);
+  RadioButton(h,v+=16,1,0,"Lisa nimekirja",flags[0]);
+  RadioButton(h,v+=16,2,0,"Eemalda nimekirjast",flags[0]);
+  EditFieldTL(h,v+=32,150,"Teema",M4Str,Normal,60,f5,false,0);
+  ButtonFrame(h,v+=40,163,3,"Toiming:");
+  RadioButton(h,v,0,0,"Asenda olemasolev teema",flags[1]);
+  RadioButton(h,v+=16,1,0,"Lisa teema",flags[1]);
+  RadioButton(h,v+=16,2,0,"Eemalda teema",flags[1]);
+  EndWindow;
+end;

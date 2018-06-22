@@ -1,0 +1,151 @@
+external procedure ExpBackupString(string);
+
+global
+procedure PayRollDataEn(record RcVc RepSpec)
+begin
+  string 255 comment;
+
+  comment=USetStr(1500440);
+  ExpBackupString(comment);
+//Tšštajad
+  if (RepSpec.flags[0]!=0) then begin
+    RegisterExport("EmplVc");
+  end;
+//Ametid
+  if (RepSpec.flags[1]!=0) then begin
+    RegisterExport("PositionVc");
+  end;
+//Konteerimisgrupid
+  if (RepSpec.flags[2]!=0) then begin
+    RegisterExport("AccGroupVc");
+  end;
+//Tššlepingud
+  if (RepSpec.flags[3]!=0) then begin
+    RegisterExport("ContractVc");
+  end;
+//Tasuliigid
+  if (RepSpec.flags[4]!=0) then begin
+    RegisterExport("PaymTypeVc");
+  end;
+//Puudumised
+  if (RepSpec.flags[5]!=0) then begin
+    RegisterExport("AbsenceVc");
+  end;
+//Puudumise tŸŸbid
+  if (RepSpec.flags[6]!=0) then begin
+    RegisterExport("AbsTypeVc");
+  end;
+//Puhkuse saldod
+  if (RepSpec.flags[7]!=0) then begin
+    RegisterExport("VacBalanceVc");
+  end;
+//Lausendamine, palk
+  if (RepSpec.flags[8]!=0) then begin
+    BlockExport("SalSettingBlock");
+  end;
+//Riiklikud pŸhad, palk
+  if (RepSpec.flags[9]!=0) then begin
+    RegisterExport("ExceptDatesVc");
+  end;
+//Avatud kanded
+  if (RepSpec.flags[10]!=0) then begin
+    RegisterExport("OpenTransVc");
+  end;
+//TŸkitššd
+  if (RepSpec.flags[11]!=0) then begin
+    RegisterExport("PieceWorkVc");
+  end;
+//TŸkitšš liigid
+  if (RepSpec.flags[12]!=0) then begin
+    RegisterExport("PieceWorkTypeVc");
+  end;
+//ISCO koodid
+  if (RepSpec.flags[13]!=0) then begin
+    RegisterExport("ISCOCodeVc");
+  end;
+//Tšštundide tŸŸbid
+  if (RepSpec.flags[14]!=0) then begin
+    RegisterExport("WorkHourTypeVc");
+  end;
+//Tššajatabelid
+  if (RepSpec.flags[15]!=0) then begin
+    RegisterExport("WorkedHoursVc");
+  end;
+//Arvestused
+  if (RepSpec.flags[16]!=0) then begin
+    RegisterExport("CalcPayrollVc");
+  end;
+//VŠljamaksed
+  if (RepSpec.flags[17]!=0) then begin
+    RegisterExport("PaymPayrollVc");
+  end;
+//Maksud
+  if (RepSpec.flags[18]!=0) then begin
+    RegisterExport("TaxVc");
+  end;
+//Algsaldod Ð Tšštasu
+  if (RepSpec.flags[19]!=0) then begin
+    RegisterExport("SalaryFBVc");
+  end;
+//Algsaldod Ð Puudumised
+  if (RepSpec.flags[20]!=0) then begin
+    RegisterExport("AbsenceFBVc");
+  end;
+//Algsaldod Ð Kasutamata puhkusejŠŠk
+  if (RepSpec.flags[21]!=0) then begin
+    RegisterExport("VacDaysFBVc");
+  end;
+//Numbriseeriad - Tššlepingud  
+  if (RepSpec.flags[22]!=0) then begin
+    BlockExport("ContractSerBlock");
+  end;
+//Numbriseeriad - Arvestused
+  if (RepSpec.flags[23]!=0) then begin
+    BlockExport("CalcPayrollSerBlock");
+  end;
+//Numbriseeriad - VŠljamaksed
+  if (RepSpec.flags[24]!=0) then begin
+    BlockExport("PaymPayrollSerBlock");
+  end;
+//Numbriseeriad - Avatud kanded
+  if (RepSpec.flags[25]!=0) then begin
+    BlockExport("OpenTransSerBlock");
+  end;
+//Numbriseeriad - Puudumised
+  if (RepSpec.flags[26]!=0) then begin
+    BlockExport("AbsenceSerBlock");
+  end;
+//Numbriseeriad - TŸkitššd
+  if (RepSpec.flags[27]!=0) then begin
+    BlockExport("PieceWorkSerBlock");
+  end;
+//Numbriseeriad - Tššajatabelid
+  if (RepSpec.flags[28]!=0) then begin
+    BlockExport("WorkedHoursSerBlock");
+  end;
+//Tulumaksuvaba miinimumi summa
+  if (RepSpec.flags[29]!=0) then begin
+    BlockExport("IncTaxFreeMinBlock");
+  end;
+//Minimaalne tšštasu
+  if (RepSpec.UsedOnly!=0) then begin
+    BlockExport("MinSalaryBlock");
+  end;
+//Konverteerimine, Tasuliigid
+  if (RepSpec.SimVerf!=0) then begin
+    BlockExport("OldPRPayTypesBlock");
+  end;
+//Minimaalne sots.maksu summa
+  if (RepSpec.TSep!=0) then begin
+    BlockExport("MinSocTaxBlock");
+  end;
+//TSD paranduse veakoodid
+  if (RepSpec.AccSpec!=0) then begin
+    BlockExport("TSDErrorBlock");
+  end;
+//Kehtivad TSD reakoodid
+  if (RepSpec.CorrM!=0) then begin
+    BlockExport("TSDRowsBlock");
+  end;
+  return;
+end;

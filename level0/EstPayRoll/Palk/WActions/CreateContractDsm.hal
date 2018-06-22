@@ -1,0 +1,39 @@
+updating procedure CreateContractFromEmpl(var record EmplVc Emplp,var record ContractVc Contrp)
+begin
+  LongInt newnr;
+  record SRBlock SRRec;
+      
+  RecordNew(Contrp);
+  Contrp.EmplCode=Emplp.Code;
+  Contrp.Firstname=Emplp.Firstname;
+  Contrp.Surname=Emplp.Surname;
+  Contrp.ObjCode = Emplp.ObjCode;
+  Contrp.StartDate=CurrentDate;
+  Contrp.SerNr = NextSerNr("ContractVc",Contrp.StartDate,-1,false,"");
+  if (RecordInsert(Contrp,false)) then begin 
+    CreateRecordLink(Contrp,CurrentCompany,Emplp,CurrentCompany);  
+    CreateRecordLink(Emplp,CurrentCompany,Contrp,CurrentCompany);  
+  end;
+LCreateContractFromEmpl:;  
+  return;
+end;
+
+global
+updating procedure ContractFromEmplDsm()
+begin
+  record EmplVc Emplr;
+  record ContractVc Contrr;
+  integer wn,nwn;
+  
+  wn = CurWindow;
+  if (WindowState(wn)==0) then begin
+    GetWindowRecord(wn,Emplr);
+    CreateContractFromEmpl(Emplr,Contrr);
+    nwn = OpenWindow("ContractDClass",1,0,"","",Contrr);
+    UpdateBrowses("EmplVc");
+  end else begin
+    Beep;
+  end;
+LContractFromEmplDsm:;  
+  return;
+end;

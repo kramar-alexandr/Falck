@@ -1,0 +1,42 @@
+function boolean ProgTaxDClassContrSerNrEFAfter(integer wn,integer rownr,integer changedf)
+  begin  
+  record ProgTaxVc ProgTaxr;
+  record EmplVc Emplr;
+  record ContractVc Contr;
+  row ContractVc Contrrw;
+  integer rwcnt;
+  string 20 vacabstype;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,ProgTaxr);
+    DeselectWindow(wn,false);
+    ProgTaxr.EmplCode = "";
+    ProgTaxr.Firstname = "";
+    ProgTaxr.Surname = "";
+
+    Contr.SerNr = ProgTaxr.ContrSerNr;
+    if (ReadFirstMain(Contr,1,true)) then begin
+      Emplr.Code = Contr.EmplCode;
+      if (ReadFirstMain(Emplr,1,true)) then begin
+        ProgTaxr.EmplCode = Emplr.Code;
+        ProgTaxr.Firstname = Emplr.Firstname;
+        ProgTaxr.Surname = Emplr.Surname;
+      end;
+    end;  
+    PutWindowRecord(wn,ProgTaxr);
+  end;
+  ProgTaxDClassContrSerNrEFAfter = true;
+  return;
+end;
+
+global
+function boolean ProgTaxDClassAfterEditField(integer wn,string fieldname,integer fn, integer rownr,integer changed)
+begin
+  boolean res;
+
+  switch (fieldname) begin
+    case "ContrSerNr": res = ProgTaxDClassContrSerNrEFAfter(wn,rownr,changed);
+  end;
+  ProgTaxDClassAfterEditField = res;
+  return;
+end;

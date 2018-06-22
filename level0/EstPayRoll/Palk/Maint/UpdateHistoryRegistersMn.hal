@@ -1,0 +1,353 @@
+external updating procedure UpdateCPUnFromPPr(record PaymPayrollVc,boolean);
+external updating procedure UpdateITFMUsedFromPPr(record PaymPayrollVc,boolean);
+external updating procedure UpdateDPDUsedFromPPr(record PaymPayrollVc,boolean);
+external updating procedure UpdateCPPPHistFromPPr(record PaymPayrollVc,boolean);
+external updating procedure UpdateCPUnFromCPr(record CalcPayrollVc,boolean);
+external updating procedure UpdateITFMUsedFromCPr(record CalcPayrollVc,boolean);
+external updating procedure UpdateDPDUsedFromCPr(record CalcPayrollVc,boolean);
+external updating procedure UpdateCPPPHistFromCPr(record CalcPayrollVc,boolean);
+external updating procedure InsertCPAbsVc(LongInt,integer,LongInt);
+external updating procedure InsertCPOTVc(LongInt,integer,LongInt,integer);
+external updating procedure InsertCPWHVc(LongInt,integer,LongInt,integer);
+external updating procedure InsertCPPWVc(LongInt,integer,LongInt,integer);
+external function boolean IsAbsPaymType(string);
+external function boolean IsWHPaymType(string);
+external function boolean IsPWPaymType(string);
+external function boolean CalcPayrollExsists(LongInt);
+
+global
+updating procedure UpdateCPOTFromCPr(record CalcPayrollVc CPr,integer cprownr,var boolean checkrowflag)
+begin
+  record OpenTransVc OTr;
+  row OpenTransVc OTrw;
+  row CalcPayrollVc CPrw;
+  integer rwcnt,j;
+  boolean TrHs,testf;
+
+  testf=true;
+  TrHs=true;
+  MatRowGet(CPr,cprownr,CPrw);
+  ResetLoop(OTr);
+  OTr.PaymTypeCode=CPrw.PaymTypeCode;
+  while (LoopKey("PaymTypeCode",OTr,1,TrHs)) begin
+    if (OTr.PaymTypeCode!=CPrw.PaymTypeCode) then begin
+      TrHs=false;
+    end;
+    if (TrHs) then begin 
+      if (OTr.OKFlag!=1) then begin
+        testf=false;
+      end;
+      if (OTr.CalcFlag!=1) then begin
+        testf=false;
+      end;
+      if (OTr.TransDate>CPr.EndDate) then begin
+        testf=false;
+      end;
+      if (testf) then begin
+        rwcnt=MatRowCnt(OTr);
+        for (j=0;j<rwcnt;j=j+1) begin
+          MatRowGet(OTr,j,OTrw);
+          if (OTrw.CalcSerNr>0) then begin
+            if (OTrw.CalcSerNr==CPr.SerNr) then begin
+              InsertCPOTVc(CPr.SerNr,cprownr,OTr.SerNr,j);
+              checkrowflag=false;
+              TrHs=false;
+            end;   
+          end;
+        end;
+      end;
+    end;  
+  end; 
+  return;
+end;
+
+global
+updating procedure UpdateCPAbsFromCPr(record CalcPayrollVc CPr,integer cprownr,var boolean checkrowflag)
+begin
+  record AbsenceVc Absr;
+  row CalcPayrollVc CPrw;
+  boolean TrHs;
+
+  MatRowGet(CPr,cprownr,CPrw);
+  if (IsAbsPaymType(CPrw.PaymTypeCode)) then begin
+    TrHs=true;
+    ResetLoop(Absr);
+    Absr.AbsTypeCode=CPrw.PaymTypeCode;
+    Absr.ContrSerNr=CPr.ContrSerNr;
+    Absr.OKFlag=1;
+    while (LoopKey("AbsTypeCode",Absr,3,TrHs)) begin
+      if (Absr.AbsTypeCode!=CPrw.PaymTypeCode) then begin
+        TrHs=false;
+      end;
+      if (Absr.ContrSerNr!=CPr.ContrSerNr) then begin
+        TrHs=false;
+      end;
+      if (Absr.OKFlag!=1) then begin
+        TrHs=false;
+      end;
+      if (TrHs) then begin
+        if (Absr.CalcSerNr>0) then begin
+          if (Absr.CalcSerNr==CPr.SerNr) then begin
+            InsertCPAbsVc(CPr.SerNr,cprownr,Absr.SerNr);
+            checkrowflag=false;
+            TrHs=false;
+          end;
+        end;
+      end;
+    end;  
+  end; 
+  return;
+end;
+
+global
+updating procedure UpdateCPWHFromCPr(record CalcPayrollVc CPr,integer cprownr,var boolean checkrowflag)
+begin
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;
+  row CalcPayrollVc CPrw;
+  integer rwcnt,j;
+  boolean TrHs,testf;
+
+  MatRowGet(CPr,cprownr,CPrw);
+  if (IsWHPaymType(CPrw.PaymTypeCode)) then begin
+    testf=true;
+    TrHs=true;
+    ResetLoop(WHr);
+    WHr.OKFlag=1;
+    while (LoopKey("OKFlag",WHr,1,TrHs)) begin
+      if (WHr.OKFlag!=1) then begin
+        TrHs=false;
+      end;
+      if (TrHs) then begin 
+        if (WHr.Year>GetYear(CPr.CalcDate)) then begin
+          testf=false;
+        end else begin
+          if (WHr.Year==GetYear(CPr.CalcDate)) and (WHr.Month>GetMonth(CPr.CalcDate)) then begin
+            testf=false;
+          end;
+        end;
+        if (testf) then begin 
+          rwcnt=MatRowCnt(WHr);
+          for (j=0;j<rwcnt;j=j+1) begin
+            MatRowGet(WHr,j,WHrw);
+            if (WHrw.CalcSerNr>0) then begin
+              if (WHrw.CalcSerNr==CPr.SerNr) then begin
+                InsertCPWHVc(CPr.SerNr,cprownr,WHr.SerNr,j);
+                checkrowflag=false;
+                TrHs=false;
+              end;
+            end;   
+          end;
+        end;
+      end;
+    end;  
+  end;
+  return;
+end;
+
+global
+updating procedure UpdateCPPWFromCPr(record CalcPayrollVc CPr,integer cprownr)
+begin
+  record PieceWorkVc PWr;
+  row PieceWorkVc PWrw;
+  record PieceWorkTypeVc PWTr;
+  row CalcPayrollVc CPrw;
+  integer rwcnt,j;
+  boolean TrHs,TrHs1;
+         
+  MatRowGet(CPr,cprownr,CPrw);
+  if (IsPWPaymType(CPrw.PaymTypeCode)) then begin
+    TrHs=true;
+    ResetLoop(PWTr);
+    PWTr.PaymTypeCode=CPrw.PaymTypeCode;
+    while (LoopKey("PaymTypeCode",PWTr,1,TrHs)) begin
+      if (PWTr.PaymTypeCode!=CPrw.PaymTypeCode) then begin
+        TrHs=false;
+      end;
+      if (TrHs) then begin 
+        TrHs1=true;
+        ResetLoop(PWr);
+        PWr.OKFlag=1;
+        PWr.PieceWorkTypeCode=PWTr.Code;
+        while (LoopKey("OKFlag",PWr,2,TrHs1)) begin
+          if (PWr.OKFlag!=1) then begin
+            TrHs1=false;
+          end;
+          if (PWr.PieceWorkTypeCode!=PWTr.Code) then begin
+            TrHs1=false;
+          end;
+          if (TrHs1) then begin 
+            rwcnt=MatRowCnt(PWr);
+            for (j=0;j<rwcnt;j=j+1) begin
+              MatRowGet(PWr,j,PWrw);
+              if (PWrw.CalcSerNr>0) then begin
+                if (PWrw.CalcSerNr==CPr.SerNr) then begin
+                  InsertCPPWVc(CPr.SerNr,cprownr,PWr.SerNr,j);
+                  TrHs1=false;
+                  TrHs=false;
+                end;
+              end;
+            end;   
+          end;
+        end;
+      end;
+    end;  
+  end;
+  return;
+end;
+
+global
+updating procedure UpdateHistoryRegistersMn(record RcVc RepSpec)
+begin
+  record CPUnpaidVc CPUr;
+  record CPPPHistVc CPPPHistr;
+  record CPOTVc CPOTr;
+  record CPAbsVc CPAbsr;
+  record ITFMUsedVc ITFMUr;
+  record DPDUsedVc DPDUr;
+  record CPWHVc CPWHr;
+  record CPPWVc CPPWr;
+  record CalcPayrollVc CPr;
+  record PaymPayrollVc PPr;
+  integer rwcnt,i,rwcnt1,j;
+  boolean TrHs,TrHs1,testf,checkrowflag;
+
+//tŸhistamine
+  if (RepSpec.flags[0]!=0) then begin //Arvestuse abiregister
+    ResetLoop(CPUr);
+    CPUr.SerNr=-1;
+    while (LoopMain(CPUr,1,true)) begin
+      RecordDelete(CPUr);
+      StepBack(CPUr);
+    end;
+  end;
+  if (RepSpec.flags[1]!=0) then begin //Arvestuste/VŠljamaksete ajalugu - testimiseks
+    ResetLoop(CPPPHistr);
+    CPPPHistr.EmplCode="";
+    while (LoopMain(CPPPHistr,1,true)) begin
+      RecordDelete(CPPPHistr);
+      StepBack(CPPPHistr);
+    end;
+  end;
+  if (RepSpec.flags[2]!=0) then begin //Avatud kannete abiregister
+    ResetLoop(CPOTr);
+    CPOTr.CalcSerNr=-1;
+    while (LoopMain(CPOTr,1,true)) begin
+      RecordDelete(CPOTr);
+      StepBack(CPOTr);
+    end;
+  end;  
+  if (RepSpec.flags[3]!=0) then begin //Puudumiste abiregister
+    ResetLoop(CPAbsr);
+    CPAbsr.CalcSerNr=-1;
+    while (LoopMain(CPAbsr,1,true)) begin
+      RecordDelete(CPAbsr);
+      StepBack(CPAbsr);
+    end;
+  end;
+  if (RepSpec.flags[4]!=0) then begin //TM vaba miinimumi abiregister
+    ResetLoop(ITFMUr);
+    ITFMUr.SerNr=-1;
+    while (LoopMain(ITFMUr,1,true)) begin
+      RecordDelete(ITFMUr);
+      StepBack(ITFMUr);
+    end;
+  end;
+  if (RepSpec.flags[7]!=0) then begin //Tššv›imetuspensionŠri abiregister
+    ResetLoop(DPDUr);
+    DPDUr.SerNr=-1;
+    while (LoopMain(DPDUr,1,true)) begin
+      RecordDelete(DPDUr);
+      StepBack(DPDUr);
+    end;
+  end;
+  if (RepSpec.flags[5]!=0) then begin //Tššajatabeli abiregister
+    ResetLoop(CPWHr);
+    CPWHr.CalcSerNr=-1;
+    while (LoopMain(CPWHr,1,true)) begin
+      RecordDelete(CPWHr);
+      StepBack(CPWHr);
+    end;
+  end;
+  if (RepSpec.flags[6]!=0) then begin //TŸkitšš abiregister
+    ResetLoop(CPPWr);
+    CPPWr.CalcSerNr=-1;
+    while (LoopMain(CPPWr,1,true)) begin
+      RecordDelete(CPPWr);
+      StepBack(CPPWr);
+    end;
+  end;
+
+//register Arvestused
+  ResetLoop(CPr);
+  CPr.SerNr=-1;
+  while (LoopMain(CPr,1,true)) begin
+    if ((CPr.OKFlag!=0) and (CPr.Invalid==0)) then begin //ainult kinnitatud arvestused
+      //Arvestuse abiregister
+      if (RepSpec.flags[0]!=0) then begin
+        UpdateCPUnFromCPr(CPr,true);
+      end;
+      //Arvestuste/VŠljamaksete ajalugu - testimiseks
+      if (RepSpec.flags[1]!=0) then begin 
+        UpdateCPPPHistFromCPr(CPr,false);
+      end; 
+      //TM vaba miinimumi abiregister
+      if (RepSpec.flags[4]!=0) then begin
+        UpdateITFMUsedFromCPr(CPr,true);
+      end;
+      //Tššv›imetuspensionŠri soodustuse abiregister
+      if (RepSpec.flags[7]!=0) then begin
+        UpdateDPDUsedFromCPr(CPr,true);
+      end;
+    end;
+    if (CPr.Invalid==0) then begin //k.a. kinnitamata arvestused
+      rwcnt = MatRowCnt(CPr);
+      for (i=0;i<rwcnt;i=i+1) begin
+        checkrowflag=true;
+        //Avatud kannete abiregister
+        if (RepSpec.flags[2]!=0) then begin
+          UpdateCPOTFromCPr(CPr,i,checkrowflag);
+        end; 
+        //Puudumiste abiregister
+        if ((checkrowflag) and (RepSpec.flags[3]!=0)) then begin
+          UpdateCPAbsFromCPr(CPr,i,checkrowflag);
+        end;
+        //Tššajatabeli abiregister
+        if ((checkrowflag) and (RepSpec.flags[5]!=0)) then begin
+          UpdateCPWHFromCPr(CPr,i,checkrowflag);
+        end;
+        //TŸkitšš abiregister
+        if ((checkrowflag) and (RepSpec.flags[6]!=0)) then begin
+          UpdateCPPWFromCPr(CPr,i);
+        end;
+      end;
+    end;
+  end;
+
+//register VŠljamaksed
+  ResetLoop(PPr);
+  PPr.SerNr=-1;
+  while (LoopMain(PPr,1,true)) begin
+    if ((PPr.OKFlag!=0) and (PPr.Invalid==0)) then begin
+      //Arvestuse abiregister - testimiseks
+      if (RepSpec.flags[0]!=0) then begin 
+        UpdateCPUnFromPPr(PPr,false); 
+      end;
+      //Arvestuste/VŠljamaksete ajalugu - testimiseks
+      if (RepSpec.flags[1]!=0) then begin 
+        UpdateCPPPHistFromPPr(PPr,false);
+      end; 
+      //TM vaba miinimumi abiregister
+      if (RepSpec.flags[4]!=0) then begin
+        UpdateITFMUsedFromPPr(PPr,true);
+      end;
+      //Tššv›imetuspensionŠri soodustuse abiregister
+      if (RepSpec.flags[7]!=0) then begin
+        UpdateDPDUsedFromPPr(PPr,true);
+      end;
+    end;
+  end;
+
+LUpdateHistoryRegistersMn:;
+  return;
+end;

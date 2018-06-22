@@ -1,0 +1,63 @@
+function boolean IncTaxFreeMinTClassSDateEFAfter(integer wn,integer rownr,integer changedf)
+  begin  
+  record IncTaxFreeMinBlock ITFMr;
+  row IncTaxFreeMinBlock ITFMrw;
+  date sdate;
+  
+  if (changedf!=0) then begin
+    BlockLoad(ITFMr);
+    GetWindowRecord(wn,ITFMr);
+    DeselectWindow(wn,false);
+    MatRowGet(ITFMr,rownr,ITFMrw);
+    if NonBlankDate(ITFMrw.SDate) then begin
+      sdate.day=1;
+      sdate.month=GetMonth(ITFMrw.SDate);
+      sdate.year=GetYear(ITFMrw.SDate);
+      ITFMrw.SDate=sdate;
+      MatRowPut(ITFMr,rownr,ITFMrw);
+      PutWindowRecord(wn,ITFMr);
+    end;
+  end;
+
+  IncTaxFreeMinTClassSDateEFAfter = true;
+  return;
+end;
+
+function boolean IncTaxFreeMinTClassEDateEFAfter(integer wn,integer rownr,integer changedf)
+  begin  
+  record IncTaxFreeMinBlock ITFMr;
+  row IncTaxFreeMinBlock ITFMrw;
+  date sdate;
+  
+  if (changedf!=0) then begin
+    BlockLoad(ITFMr);
+    GetWindowRecord(wn,ITFMr);
+    DeselectWindow(wn,false);
+    MatRowGet(ITFMr,rownr,ITFMrw);
+    if NonBlankDate(ITFMrw.EDate) then begin
+      sdate.day=DaysInMonth(GetYear(ITFMrw.EDate),GetMonth(ITFMrw.EDate));;
+      sdate.month=GetMonth(ITFMrw.EDate);
+      sdate.year=GetYear(ITFMrw.EDate);
+      ITFMrw.EDate=sdate;
+      MatRowPut(ITFMr,rownr,ITFMrw);
+      PutWindowRecord(wn,ITFMr);
+    end;
+  end;
+
+  IncTaxFreeMinTClassEDateEFAfter = true;
+  return;
+end;
+
+global
+function boolean IncTaxFreeMinTClassAfterEditField(integer wn,string fieldname,integer fn, integer rownr,integer changed)
+begin
+  boolean res;
+
+  switch (fieldname) begin
+    case "SDate": res = IncTaxFreeMinTClassSDateEFAfter(wn,rownr,changed);
+    case "EDate": res = IncTaxFreeMinTClassEDateEFAfter(wn,rownr,changed);
+  end;
+
+  IncTaxFreeMinTClassAfterEditField = res;
+  return;
+end;

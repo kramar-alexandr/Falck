@@ -1,0 +1,22 @@
+//KB 05.09.2017 new maintenance
+external function boolean IRServiceActivated(string);
+external procedure FillAllEMTAKCodesFromIR(var longint, var string);
+
+global
+procedure FillEmtakToCUMn()
+begin
+  integer wn;
+  longint count;
+  string 255 errDescr;
+  count = 0;
+  if (IRServiceActivated("IRSENDESTADRLOOKUP")) then begin
+    FillAllEMTAKCodesFromIR(count,errDescr);
+    MessageBox(0, USetStr(1500014) & " :" & count &". " & errDescr);
+    wn = CurWindow;
+    CloseWindow(wn); 
+  end else begin
+    MessageBox(1500008,"");
+    MessageBox(1500166,"");
+  end;
+  return;
+end;

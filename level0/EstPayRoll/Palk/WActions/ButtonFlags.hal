@@ -1,0 +1,15 @@
+global
+procedure VacBalanceLClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
+begin
+  duplOK = false;
+  newOK = false;
+  return;
+end;
+
+global
+procedure VacBalanceDClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
+begin
+  duplOK = false;
+  newOK = false;
+ return;
+end;

@@ -1,0 +1,119 @@
+external procedure SendFunctionVersion(string,string,var Area);
+external procedure SendTextParameter(string,var Area);
+external procedure SendEOLParameter(var Area);
+external procedure ReadTXServiceReply(var record TXServiceReplyVc,var Area,Boolean);
+external procedure ReadTokenReply(var Area,Boolean);
+
+//new functions, Krediidiskoor KB 28.11.2017
+global
+function boolean SendRegisterRequestRemote(area requestArea)
+begin
+  record ServiceCacheVc SCr;
+  boolean res,found;
+  
+  res = false;
+  SCr.Code = "REGFORESTEINVOICE";
+  found = ReadFirstMain(SCr,1,true);
+  if(found) then begin
+    res = true;
+    SendAsyncWebRequest(SCr.ServiceHost,SCr.ServicePort,-1,false,"POST","/HTSCreateIRAccountRequest.hal","text/xml; charset=""utf-8""","",requestArea,"HTSRegNewAccReply",20);
+  end;
+  SendRegisterRequestRemote = res;
+  return;
+end;
+
+global
+updating procedure HTSRegNewAccReply(Area a_reply,Area replyheader,Boolean timedout)
+begin
+  record TXServiceReplyVc TXSrvReplyr;
+  record EInvoiceBlock EIb;
+  string 255 rerrordesc,rtypestr;
+  LongInt rerror,TXSerNr;
+  integer res;
+
+  BlockLoad(EIb);
+  EIb.ServiceMessage = "";
+
+  res = 0;
+  if ((timedout) or (GetAreaLength(a_reply)<=0)) then begin
+    res = -1;
+  end else begin
+    ReadTXServiceReply(TXSrvReplyr,a_reply,true);
+    TXSerNr = TXSrvReplyr.SerNr;
+    if (TXSerNr < 0) then begin
+      res = -1;
+      goto LHTSRegNewAccReply;
+    end;
+    rerror = TXSrvReplyr.ErrorCode;
+    rerrordesc = TXSrvReplyr.ErrorDescription;
+    rtypestr = TXSrvReplyr.MsgID;
+    if (rerror<0) then begin
+      res = -1;
+    end;
+  end;
+LHTSRegNewAccReply:;
+  if (res == 0) then begin
+    EIb.ServiceMessage = USetStr(1500018) & " " & CurrentTime;
+  end else begin
+    EIb.ServiceMessage = rerrordesc & " " & CurrentTime;
+  end;
+  BlockStore(EIb);
+  return;
+end;
+
+global
+function boolean SendTokenRequestToServer(area requestArea)
+begin
+  record ServiceCacheVc SCr;
+  boolean res,found;
+  
+  res = false;
+  SCr.Code = "REGFORESTEINVOICE";
+  found = ReadFirstMain(SCr,1,true);
+  if(found) then begin
+    res = true;
+    SendAsyncWebRequest(SCr.ServiceHost,SCr.ServicePort,-1,false,"POST","/HTSRequestNewTokenFromIR.hal","text/xml; charset=""utf-8""","",requestArea,"HTSReqNewTokenReply",20);
+  end;
+  SendTokenRequestToServer = res;
+  return;
+end;
+
+global
+procedure HTSReqNewTokenReply(area a_reply,area replyheader,boolean timedout)
+begin
+  record TXServiceReplyVc TXSrvReplyr;
+  string 255 rerrordesc,rtypestr;
+  longint rerror,TXSerNr;
+
+  ReadTXServiceReply(TXSrvReplyr,a_reply,true);
+  TXSerNr = TXSrvReplyr.SerNr;
+  if (TXSerNr < 0) then begin
+    goto LHTSReqNewTokenReply;
+  end;
+  rerror = TXSrvReplyr.ErrorCode;
+  rerrordesc = TXSrvReplyr.ErrorDescription;
+  rtypestr = TXSrvReplyr.MsgID;
+  
+  ReadTokenReply(a_reply,true);
+LHTSReqNewTokenReply:;
+  return;
+end;
+
+
+global
+procedure RequestNewTokenFromIR()
+begin
+  record CYBlock CYb;
+  record EInvoiceBlock EIb;
+  area a_req;
+
+  BlockLoad(CYb);
+  BlockLoad(EIb);
+  SendFunctionVersion("88.0","",a_req);
+  SendTextParameter(CYb.OrgNr,a_req);
+  SendTextParameter(CYb.VATNr,a_req);
+  SendTextParameter(EIb.TestFlag,a_req);
+  SendEOLParameter(a_req);
+  SendTokenRequestToServer(a_req);
+  return;
+end;

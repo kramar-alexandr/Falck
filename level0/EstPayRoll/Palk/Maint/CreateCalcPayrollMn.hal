@@ -1,0 +1,369 @@
+external procedure PasteCPrwFromContrrw(record CalcPayrollVc,var row CalcPayrollVc,record ContractVc,row ContractVc,var integer,integer,integer,integer,boolean,var boolean);
+external procedure CPrSumUp(var record CalcPayrollVc);
+external updating procedure PasteCPrTaxes(record CalcPayrollVc,integer,integer,integer,integer,integer,var val,Boolean);
+external function boolean GetRightPeriod(var date,var date,date,date);
+external function string 20 GetIllAbsTypeCode(var integer,var integer,var val);
+external updating procedure InsertCPAbsVc(LongInt,integer,LongInt);
+external function boolean GetBackXMonthsPeriod(var date,var date,integer);
+external updating procedure InsertCPOTVc(LongInt,integer,LongInt,integer);
+external function val GetCPSumForPeriod(LongInt,date,date);
+external function LongInt GetAbsenceDays(LongInt,string,date,date,var LongInt,var LongInt);
+external function LongInt GetCalendarDays(date,date);
+external function val GetAbsenceFBDaysForPeriod(LongInt,string,date,date,var integer,var integer);
+external function val GetSalaryFBSumForPeriod(LongInt,date,date);
+external function boolean GetNextCalcPayrollSerNr(date,var LongInt);
+external function string 255 GetPaymTypeName(string);
+external procedure SetMarkFlag(integer,var integer);
+external function string 20 GetDeductAdvPaymTypeCode();
+external function integer GetPaymTypeFlag(string);
+external function roundmode GetSalaryRoundMode(string);
+
+updating procedure PasteCPrwFromOTrw(record CalcPayrollVc CPr,var row CalcPayrollVc CPrw,record OpenTransVc OTr,integer otrownr,var integer cprwnr,var boolean saveflag)
+begin  
+  record OpenTransVc oldOTr;  
+  row OpenTransVc OTrw;
+  record PositionVc Posr;
+  boolean testf;
+  integer rwcnt,i;
+  
+  RecordCopy(oldOTr,OTr);    
+  MatRowGet(OTr,otrownr,OTrw);
+  CPrw.PosCode=OTrw.PosCode;
+  Posr.Code = CPrw.PosCode;
+  if (ReadFirstMain(Posr,1,true)) then begin
+    CPrw.PosName = Posr.Name;
+  end;
+  CPrw.PaymTypeCode=OTr.PaymTypeCode;
+  CPrw.PaymTypeName=OTr.Comment;
+  CPrw.SDate=CPr.StartDate;
+  CPrw.EDate=CPr.EndDate;
+  CPrw.Tariff=OTrw.Tariff;
+  CPrw.Amount=OTrw.Amount;
+  CPrw.BrutoSum=(CPrw.Tariff*CPrw.Amount);
+  CPrw.NetoSum=0;
+  CPrw.ObjCode=OTrw.ObjCode;
+  MatRowInsert(CPr,cprwnr,CPrw);
+  saveflag=true;
+  OTrw.CalcSerNr=CPr.SerNr;
+  MatRowPut(OTr,otrownr,OTrw);
+  testf=true;
+  rwcnt=MatRowCnt(OTr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(OTr,i,OTrw);
+    if (OTrw.CalcSerNr<=0) then begin
+      testf=false;
+    end;
+  end;
+  if (testf) then begin
+    OTr.CalcFlag=1;
+    SetMarkFlag(OTr.CalcFlag,OTr.CalcMark);
+  end;
+  RecordUpdate(oldOTr,OTr,false);
+  InsertCPOTVc(CPr.SerNr,cprwnr,OTr.SerNr,otrownr);
+  cprwnr=cprwnr+1;
+  return;
+end;
+
+updating procedure PasteOpenTrans(record RcVc RepSpec,record CalcPayrollVc CPr,var row CalcPayrollVc CPrw,var integer cprwnr,var boolean saveflag,var integer deductflag)
+begin  
+  record OpenTransVc OTr;  
+  row OpenTransVc OTrw;
+  boolean TrHs,testf;
+  integer rwcnt,i,paymtypeflag;
+  string 20 deductadvptcode;
+  
+  if (RepSpec.flags[0]!=0) then begin 
+    TrHs = true;
+    ResetLoop(OTr);
+    if (nonblank(RepSpec.f3)) then begin
+      OTr.PaymTypeCode = RepSpec.f3;
+    end else begin
+      OTr.PaymTypeCode = "";
+    end;  
+    while (LoopKey("PaymTypeCode",OTr,1,TrHs)) begin
+      if (nonblank(RepSpec.f3)) then begin
+        if (OTr.PaymTypeCode!=RepSpec.f3) then begin
+          TrHs = false; 
+        end;
+      end;  
+      if (TrHs) then begin
+        testf = true;
+        if (OTr.CalcFlag!=0) then begin
+          testf = false;
+        end;
+        if (OTr.OKFlag!=1) then begin
+          testf = false;
+        end;
+        if (OTr.TransDate>CPr.EndDate) then begin
+          testf = false;
+        end;
+        if (OTr.Invalid!=0) then begin
+          testf = false;
+        end;
+        if (testf) then begin
+          rwcnt=MatRowCnt(OTr);
+          for (i=0;i<rwcnt;i=i+1) begin
+            MatRowGet(OTr,i,OTrw);
+            if ((OTrw.ContrSerNr==CPr.ContrSerNr) and (OTrw.CalcSerNr<=0)) then begin
+              paymtypeflag = GetPaymTypeFlag(OTr.PaymTypeCode);
+              deductadvptcode = GetDeductAdvPaymTypeCode;
+              if (deductflag==0) then begin //pane k›ik tasuliigid avatud kande kaardilt
+                PasteCPrwFromOTrw(CPr,CPrw,OTr,i,cprwnr,saveflag);
+              end;
+              if ((deductflag==1) or (deductflag==2)) then begin //pane ainult avansi kinnip.tasuliik ja tasu
+                if ((OTr.PaymTypeCode==deductadvptcode) or (paymtypeflag==7)) then begin 
+                  PasteCPrwFromOTrw(CPr,CPrw,OTr,i,cprwnr,saveflag);
+                  deductflag = 2; //avansi kinnip.tasuliik v›i tasu on pandud
+                end;
+              end;
+              if (deductflag==3) then begin //pane k›ik tasuliigid avatud kande kaardilt (kinnipidamised) v.a. avansi kinnip.tasuliiki ja tasu
+                if ((OTr.PaymTypeCode!=deductadvptcode) and (paymtypeflag!=7)) then begin 
+                  PasteCPrwFromOTrw(CPr,CPrw,OTr,i,cprwnr,saveflag);
+                end;
+              end;
+            end;
+          end;
+        end;
+      end;
+    end;
+  end;
+  return;
+end;
+
+updating procedure PasteIllCPrwFromAbsr(record CalcPayrollVc CPr,var row CalcPayrollVc CPrw,record AbsenceVc Absr,date contrsdate,date contredate,string paymtypecode,var integer cprwnr,var boolean saveflag,val perc)
+begin  
+  record AbsenceVc oldAbsr;  
+  boolean testf;
+  integer rwcnt,i,months,tmpint;
+  date sdate,edate;
+  val sumtot;
+  LongInt caldays,absworkdays,abscaldays,abscalnoexcdays;
+  
+  RecordCopy(oldAbsr,Absr);    
+  CPrw.PosCode="";
+  CPrw.PaymTypeCode=paymtypecode;
+  CPrw.PaymTypeName=GetPaymTypeName(paymtypecode);
+  CPrw.SDate=CPr.StartDate;
+  CPrw.EDate=CPr.EndDate;
+  CPrw.ObjCode=Absr.ObjCode;
+
+  edate=Absr.StartDate;
+  months=6;
+  if (GetBackXMonthsPeriod(sdate,edate,months)) then begin
+    if (GetRightPeriod(sdate,edate,contrsdate,contredate)) then begin
+      sumtot=GetCPSumForPeriod(Absr.ContrSerNr,sdate,edate);
+      sumtot=sumtot+GetSalaryFBSumForPeriod(Absr.ContrSerNr,sdate,edate);
+      abscaldays=GetAbsenceDays(Absr.ContrSerNr,"",sdate,edate,absworkdays,abscalnoexcdays);
+      abscaldays=abscaldays+GetAbsenceFBDaysForPeriod(Absr.ContrSerNr,"",sdate,edate,tmpint,tmpint);
+      caldays=(GetCalendarDays(sdate,edate)-abscaldays);
+      CPrw.Tariff=(sumtot/caldays)*perc/100;
+      CPrw.Tariff=round(CPrw.Tariff,GetSalaryRoundMode("2"));//ts - 2018/03, to fix rounding
+      CPrw.Amount=Absr.Period2;
+      CPrw.BrutoSum=(CPrw.Tariff*CPrw.Amount);
+      CPrw.NetoSum=0;
+    end;
+  end;
+  MatRowInsert(CPr,cprwnr,CPrw);
+  saveflag=true;
+  Absr.CalcSerNr=CPr.SerNr;
+  RecordUpdate(oldAbsr,Absr,false);
+  InsertCPAbsVc(CPr.SerNr,cprwnr,Absr.SerNr);
+  cprwnr=cprwnr+1;
+  return;
+end;
+
+global
+updating procedure CreateCalcPayrollMn(record RcVc RepSpec)
+begin
+  record CalcPayrollVc CPr;
+  row CalcPayrollVc CPrw;
+  record EmplVc Emplr;
+  record ContractVc Contrr;
+  row ContractVc Contrrw;
+  record OpenTransVc OTr;
+  row OpenTransVc OTrw;
+  record AbsenceVc Absr;
+  record AbsTypeVc ATr;
+  string 20 frempl,toempl,illabstype,paymtypecode;
+  LongInt frcontr,tocontr;
+  boolean TrHs,TrHs1,TrHs2,testf,testf1,saveflag,otflag;
+  integer rwcnt,i,cprwnr,tmp,paymtypeflag,deductflag;
+  val tmpval,tmpval2,perc;
+   
+  frempl = FirstInRange(RepSpec.f1,20);
+  toempl = LastInRange(RepSpec.f1,20);
+  frcontr = FirstInRange(RepSpec.f2,20);
+  tocontr = LastInRange(RepSpec.f2,20);
+  deductflag = 0;
+  otflag = false;
+  ResetLoop(Emplr);
+  TrHs = true;
+  Emplr.Code = frempl;
+  while (LoopMain(Emplr,1,TrHs)) begin
+    if (TrHs) then begin
+      if (nonblank(toempl)) then begin
+        if (Emplr.Code>toempl) then begin
+          TrHs = false;
+        end;
+      end;
+      if (TrHs) then begin
+        testf=true;
+        if (Emplr.ClosedFlag!=0) then begin
+          testf = false;
+        end;
+        if (testf) then begin
+          TrHs1=true;
+          ResetLoop(Contrr);
+          Contrr.EmplCode = Emplr.Code;
+          while (LoopKey("EmplCode",Contrr,1,TrHs1)) begin
+            if (Contrr.EmplCode!=Emplr.Code) then begin
+              TrHs1 = false;
+            end;
+            if (TrHs1) then begin
+              tmpval=0; tmpval2=0;//cust, TS 2015/11
+              testf=true;
+              if ((frcontr>0)) then begin
+                if ((Contrr.SerNr<frcontr) or (Contrr.SerNr>tocontr)) then begin
+                  testf = false;
+                end;
+              end;
+              if (Contrr.Status!=1) then begin
+                testf = false;
+              end;
+              if (nonblank(RepSpec.ObjStr)) then begin
+                if (SetInSet(RepSpec.ObjStr,Contrr.ObjCode)==false) then begin
+                  testf=false;
+                end;
+              end; 
+              if (testf) then begin
+                //Avatud kanded, Haigused, Tššajatabelid, TŸkitššd, PŸsitasud
+                if ((RepSpec.flags[0]!=0) or (RepSpec.flags[1]!=0) or (RepSpec.flags[2]!=0) or (RepSpec.flags[3]!=0) or (RepSpec.flags[4]!=0)) then begin 
+                  saveflag=false;
+                  cprwnr=0;
+                  RecordNew(CPr);
+                  CPr.SerNr=-1;
+                  CPr.ContrSerNr=Contrr.SerNr;
+                  CPr.CalcDate=RepSpec.sEndDate;
+                  if (GetNextCalcPayrollSerNr(CPr.CalcDate,CPr.SerNr)) then begin end;
+                  CPr.StartDate=RepSpec.sStartDate;
+                  CPr.EndDate=RepSpec.sEndDate;
+                  CPr.PaymDate=RepSpec.d1;
+                  CPr.Firstname = Contrr.Firstname;
+                  CPr.Surname = Contrr.Surname;
+                  CPr.ObjCode = Contrr.ObjCode;
+                  testf1=GetRightPeriod(CPr.StartDate,CPr.EndDate,Contrr.StartDate,Contrr.EndDate);
+                  if (testf1) then begin
+                    deductflag = 0;//Bk fix, ts 2018/05
+                    //PŸsitasud, Tššajatabelid, TŸkitššd
+                    if ((RepSpec.flags[0]!=0) and (RepSpec.flags[4]==0)) then begin //kui avat.kanded on mŠŠratud, aga PŸsitasud mitte
+                      otflag = true; //peab lepingult KohtutŠiturit kontrollima
+                    end;
+                    if ((RepSpec.flags[2]!=0) or (RepSpec.flags[3]!=0) or (RepSpec.flags[4]!=0) or (otflag)) then begin 
+                      rwcnt=MatRowCnt(Contrr);
+                      for (i=0;i<rwcnt;i=i+1) begin
+                        testf1=true;
+                        MatRowGet(Contrr,i,Contrrw);
+                        if (nonblank(RepSpec.f3)) then begin
+                          if (Contrrw.PaymTypeCode!=RepSpec.f3) then begin
+                            testf1 = false; 
+                          end;
+                        end;  
+                        if (blank(Contrrw.PosCode)) then begin
+                          testf1 = false; 
+                        end;
+                        if (testf1) then begin
+                          paymtypeflag=GetPaymTypeFlag(Contrrw.PaymTypeCode);
+                          if (otflag==false) then begin
+                            if ((paymtypeflag==1) or (paymtypeflag==2) or (paymtypeflag==3)) then begin //Tasuliigi tŸŸp: Kinnipidamine (bruto, neto v›i KohtutŠitur (kinnip.neto)
+                              deductflag = 1; //pane ainult avansi kinnipidamine ja tasu avatud kandelt alati enne teisi kinnipidamisi lepingult
+                              PasteOpenTrans(RepSpec,CPr,CPrw,cprwnr,saveflag,deductflag); 
+                            end;
+                            PasteCPrwFromContrrw(CPr,CPrw,Contrr,Contrrw,cprwnr,RepSpec.flags[2],RepSpec.flags[3],RepSpec.flags[4],true,saveflag);
+                          end else begin
+                            if (paymtypeflag==3) then begin //KohtutŠitur (kinnip.neto)
+                              deductflag = 1; //pane ainult avansi kinnipidamine ja tasu avatud kandelt alati enne KohtutŠiteri kinnipidamisi lepingult
+                              PasteOpenTrans(RepSpec,CPr,CPrw,cprwnr,saveflag,deductflag); 
+                              PasteCPrwFromContrrw(CPr,CPrw,Contrr,Contrrw,cprwnr,0,0,1,true,saveflag);
+                            end;
+                          end;                                         
+                        end;
+                      end;
+                    end;  
+                    //Avatud kanded
+                    if (deductflag==1) then begin deductflag = 0; end; //avansi kinnip.tasuliik ja tasu ei olnud pandud arvestusele, pane nŸŸd k›ik avatud kande tasuliigid
+                    if (deductflag==2) then begin deductflag = 3; end; //avansi kinnip.tasuliik v›i tasu oli pandud arvestusele, pane nŸŸd k›ik ŸlejŠŠnud avatud kande tasuliigid (kinnipidamised) v.a. avansi kinnip.tasuliiki ja tasu
+                    PasteOpenTrans(RepSpec,CPr,CPrw,cprwnr,saveflag,deductflag);
+
+                    //Haigused
+                    if (RepSpec.flags[1]!=0) then begin 
+                      illabstype = GetIllAbsTypeCode(tmp,tmp,perc);
+                      TrHs2=true;
+                      ResetLoop(Absr);
+                      Absr.AbsTypeCode=illabstype;
+                      Absr.ContrSerNr=Contrr.SerNr;
+                      Absr.OKFlag=1;
+                      SetMarkFlag(Absr.OKFlag,Absr.OKMark);
+                      Absr.AbsPaymDate=CPr.StartDate;
+                      while (LoopKey("AbsTypeCode",Absr,4,TrHs2)) begin
+                        if (Absr.AbsTypeCode!=illabstype) then begin
+                          TrHs2=false;
+                        end;
+                        if (Absr.ContrSerNr!=Contrr.SerNr) then begin
+                          TrHs2=false;
+                        end;
+                        if (Absr.OKFlag!=1) then begin
+                          TrHs2=false;
+                        end;
+                        if (TrHs2) then begin
+                          testf1=true;
+                          if (Absr.AbsPaymDate>CPr.EndDate) then begin
+                            testf1=false;
+                          end;
+                          if (testf1) then begin
+                            ATr.Code = Absr.AbsTypeCode;
+                            if (ReadFirstMain(ATr,1,true)) then begin
+                              paymtypecode=ATr.PaymTypeCode;
+                              if blank(paymtypecode) then begin
+                                testf1=false; 
+                              end else begin
+                                if (nonblank(RepSpec.f3)) then begin
+                                  if (paymtypecode!=RepSpec.f3) then begin
+                                    testf1=false; 
+                                  end;
+                                end;
+                              end;
+                              if (ATr.AbsTypeFlag!=1) then begin
+                                testf1=false; 
+                              end;
+                              if (testf1) then begin
+                                if ((Absr.CalcSerNr<=0) and (Absr.Period2>0)) then begin
+                                  PasteIllCPrwFromAbsr(CPr,CPrw,Absr,Contrr.StartDate,Contrr.EndDate,paymtypecode,cprwnr,saveflag,perc);
+                                end;
+                              end;
+                            end;
+                          end;
+                        end;
+                      end;
+                    end;
+                    //Avansid
+                    if (RepSpec.flags[5]!=0) then begin 
+//ToDo                                        
+                    end;
+                    PasteCPrTaxes(CPr,1,RepSpec.flags[2],RepSpec.flags[3],RepSpec.flags[4],0,tmpval2,false);
+                    PasteCPrTaxes(CPr,0,0,0,0,0,tmpval,true);
+                    CPrSumUp(CPr);
+                    if (saveflag) then begin
+                      if (RecordInsert(CPr,true)) then begin end; 
+                    end; 
+                  end;
+                end;
+              end;
+            end;  
+          end;
+        end;
+      end;
+    end;
+  end;
+LCreateCalcPayrollMn:;
+  return;
+end;

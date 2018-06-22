@@ -1,0 +1,43 @@
+external procedure NextM4Number(string,var string);
+
+global
+function boolean GetNextPosNr(var string posnr)
+begin
+  boolean res;
+  record PositionVc Posr;
+  
+  Posr.Code = "ZZZZZZZZZZZZZZZZZZZ";
+  if (ReadLastMain(Posr,1,false)) then begin
+    NextM4Number(Posr.Code,posnr);
+  end else begin
+    posnr = "1";
+  end;
+  GetNextPosNr = res;
+  return;
+end;
+
+global
+function boolean PosrInUse(string poscode)
+begin
+  boolean res;
+  record ContractVc Contrr;  
+  row ContractVc Contrrw;  
+  integer rwcnt,i;
+  
+  ResetLoop(Contrr);
+  Contrr.SerNr = -1;
+  while (LoopMain(Contrr,1,true)) begin  
+    rwcnt=MatRowCnt(Contrr);
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(Contrr,i,Contrrw);
+      if (Contrrw.PosCode==poscode) then begin
+        res=true;
+        goto LPosrInUse;
+      end;
+    end;
+  end;
+
+LPosrInUse:;
+  PosrInUse = res; 
+  return;
+end;

@@ -1,0 +1,35 @@
+global
+updating function LongInt MinSalaryBlockCheck(var record MinSalaryBlock MSr,record MinSalaryBlock MS2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  Integer i,rwcnt;
+  row MinSalaryBlock MSrw;
+  row MinSalaryBlock MS2rw;
+  
+  res = 0;
+  rwcnt = MatRowCnt(MSr);
+  for (i=0; i<rwcnt;i=i+1) begin
+    MatRowGet(MSr,i,MSrw);
+    if blank(MSrw.SDate) then begin
+      RecordCheckError(1500321,"",i,"SDate");      
+      res = -1; 
+      goto LMinSalaryBlockCheck;
+    end;
+    if (nonblank(MSrw.EDate)) then begin
+      if (MSrw.EDate<MSrw.SDate) then begin
+        RecordCheckError(1500322,"",i,"EDate");      
+        res = -1; 
+        goto LMinSalaryBlockCheck;
+      end;
+    end;
+    if blank(MSrw.MinSalaryPerMonth) then begin
+      RecordCheckError(1500376,"",i,"MinSalaryPerMonth");      
+      res = -1; 
+      goto LMinSalaryBlockCheck;
+    end;
+  end;  
+
+LMinSalaryBlockCheck:;  
+  MinSalaryBlockCheck = res;
+  return;
+end;

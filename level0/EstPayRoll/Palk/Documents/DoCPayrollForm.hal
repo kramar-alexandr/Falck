@@ -1,0 +1,127 @@
+external procedure PrintValue(string,val,Integer,record LangNrVc,record SysFormatBlock,Boolean);
+external procedure GetLangNr(string,var record LangNrVc);
+external procedure CommonDocumentFields(record RcVc);
+external function Integer NumberofDocumentPages(string,Integer);
+external function Boolean Getformcode(Integer,Integer,string,string,string,LongInt,LongInt,string,string,Integer,string,var string);
+external function val GetEmplTaxPercent(string,date,integer,val,var string,var string,var string);
+
+procedure PrintCPayroll(record RcVc RepSpec,record CalcPayrollVc CPr,string formcode)
+begin
+  record LangNrVc LangNrr;
+  record SysFormatBlock SysFormatRec;
+  record DocVc Docr;
+  record ContractVc Contrr;
+  row CalcPayrollVc CPrw;
+  string 255 tstr,tmpstr;
+  Integer i,rwcnt;
+  val percent;
+  string 30 idcode;
+  
+  GetLangNr("",LangNrr);
+  BlockLoad(SysFormatRec);  
+  CommonDocumentFields(RepSpec);    
+  NumberofDocumentPages(formcode,MatRowCnt(CPr));
+  Docr.Code = formcode;
+  if (ReadFirstMain(Docr,1,true)) then begin
+  end;
+  Contrr.SerNr=CPr.ContrSerNr;
+  if (ReadFirstMain(Contrr,1,true)) then begin
+    percent=GetEmplTaxPercent(Contrr.EmplCode,CPr.PaymDate,2,CPr.BrutoTotal,tmpstr,tmpstr,idcode);//kogumispension
+  end;
+  OUTFORMFIELD("F_CP_SERNR",CPr.SerNr);
+  OUTFORMFIELD("F_CP_CALCDATE",CPr.CalcDate);
+  OUTFORMFIELD("F_CP_CONTRSERNR",CPr.ContrSerNr);
+  OUTFORMFIELD("F_CP_EMPLNAME",CPr.Firstname & " " & CPr.Surname);
+  OUTFORMFIELD("F_CP_IDCODE",idcode);
+  OUTFORMFIELD("F_CP_PENSION",percent);
+  OUTFORMFIELD("F_CP_STARTDATE",CPr.StartDate);
+  OUTFORMFIELD("F_CP_ENDDATE",CPr.EndDate);
+  OUTFORMFIELD("F_CP_PAYMDATE",CPr.PaymDate);
+  OUTFORMFIELD("F_CP_OBJCODE",CPr.ObjCode);
+  OUTFORMFIELD("F_CP_COMMENT",CPr.Comment);
+  PrintValue("F_CP_INCTAXTOTAL",CPr.IncTaxTotal,M4Val,LangNrr,SysFormatRec,false);    
+  PrintValue("F_CP_UNEMPLINSTOTAL",CPr.UnemplInsTotal,M4Val,LangNrr,SysFormatRec,false);    
+  PrintValue("F_CP_PENSIONTOTAL",CPr.PensionTotal,M4Val,LangNrr,SysFormatRec,false);    
+  PrintValue("F_CP_INCTAXFREEMINTOTAL",CPr.IncTaxFreeMinTotal,M4Val,LangNrr,SysFormatRec,false);   
+  PrintValue("F_CP_ADDTAXSUMTOTAL",CPr.AddTaxSumTotal,M4Val,LangNrr,SysFormatRec,false);//ts, 2018/01     
+  PrintValue("F_CP_EMPLUNEMPLINSTOTAL",CPr.EmplUnemplInsTotal,M4Val,LangNrr,SysFormatRec,false);    
+  PrintValue("F_CP_SOXTAXTOTAL",CPr.SocTaxTotal,M4Val,LangNrr,SysFormatRec,false);    
+  PrintValue("F_CP_NETOTOTAL",CPr.NetoTotal,M4Val,LangNrr,SysFormatRec,false);    
+  PrintValue("F_CP_BRUTOTOTAL",CPr.BrutoTotal,M4Val,LangNrr,SysFormatRec,false);    
+
+  rwcnt = MatRowCnt(CPr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(CPr,i,CPrw);
+    OUTFORMFIELD("F_CP_POSCODE",CPrw.PosCode);
+    OUTFORMFIELD("F_CP_POSNAME",CPrw.PosName);
+    OUTFORMFIELD("F_CP_PAYMTYPECODE",CPrw.PaymTypeCode);
+    OUTFORMFIELD("F_CP_PAYMTYPENAME",CPrw.PaymTypeName);
+    OUTFORMFIELD("F_CP_OBJCODE",CPrw.ObjCode);
+    OUTFORMFIELD("F_CP_SDATE",CPrw.SDate);
+    OUTFORMFIELD("F_CP_EDATE",CPrw.EDate);
+    PrintValue("F_CP_TARIFF",CPrw.Tariff,M4Val,LangNrr,SysFormatRec,false);    
+    PrintValue("F_CP_AMOUNT",CPrw.Amount,M4Val,LangNrr,SysFormatRec,false);    
+    PrintValue("F_CP_BRUTOSUM",CPrw.BrutoSum,M4Val,LangNrr,SysFormatRec,false);    
+    PrintValue("F_CP_NETOSUM",CPrw.NetoSum,M4Val,LangNrr,SysFormatRec,false);    
+    PrintValue("F_CP_UNEMPLINSSUM",CPrw.UnemplInsSum,M4Val,LangNrr,SysFormatRec,false);    
+    PrintValue("F_CP_PENSIONSUM",CPrw.PensionSum,M4Val,LangNrr,SysFormatRec,false);    
+    PrintValue("F_CP_INCTAXSUM",CPrw.IncTaxSum,M4Val,LangNrr,SysFormatRec,false);    
+    PrintValue("F_CP_SOCTAXSUM",CPrw.SocTaxSum,M4Val,LangNrr,SysFormatRec,false);    
+    PrintValue("F_CP_EMPLUNEMPLINSSUM",CPrw.EmplUnemplInsSum,M4Val,LangNrr,SysFormatRec,false);    
+    PrintValue("F_CP_INCTAXFREEMIN",CPrw.IncTaxFreeMinSum,M4Val,LangNrr,SysFormatRec,false);
+    PrintValue("F_CP_ADDTAXSUM",CPrw.AddTaxSum,M4Val,LangNrr,SysFormatRec,false);//ts, 2018/01 
+    EndFormRow;
+  end;  
+  return;
+end;
+
+global
+procedure DoCPayrollForm(record RcVc RepSpec,record CalcPayrollVc CPr)
+begin
+  record FormDefVc FDr;
+  row FormDefVc FDrw;
+  Boolean printf;
+  Integer intdocnr;
+  string 30 formcode,langcode;
+  Integer i,rwcnt;
+    
+  FDr.repname = RepSpec.repname;
+  FDr.shortname = RepSpec.shortname;
+  if (ReadFirstMain(FDr,1,true)==false) then begin
+    MessageBox(1624, " " & USetStr(1623));
+    goto LDoCPayrollForm;
+  end;
+  rwcnt = MatRowCnt(FDr);
+  langcode = "";
+  intdocnr = 1;
+  printf = true;
+  while (printf) begin  
+    formcode = "";
+    for (i=rwcnt-1;i>=0;i=i-1) begin
+      MatRowGet(FDr,i,FDrw);
+      if (Getformcode(i,FDrw.intdocnr,FDrw.FPCode,FDrw.UserGroup,FDrw.LangCode,FDrw.SerNr,CPr.SerNr,FDrw.PrintGroupCode,
+                      langcode,intdocnr,"CalcPayrollVc",formcode)) then
+      begin
+        goto LBREAKCPayroll;
+      end;
+    end;
+LBREAKCPayroll:;
+    if (nonblank(formcode)) then begin
+      if (OpenForm(formcode)) then begin
+        PrintCPayroll(RepSpec,CPr,formcode);
+        CloseForm;
+      end else begin
+        printf = false;
+        MessageBox(1546,formcode);
+      end;
+    end else begin
+      printf = false;
+      if (intdocnr==1) then begin
+        MessageBox(1624, " " & USetStr(1623));
+      end;
+    end;
+    intdocnr = intdocnr + 1;
+  end;
+LDoCPayrollForm:;  
+  return;
+end;

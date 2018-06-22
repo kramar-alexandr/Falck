@@ -1,0 +1,79 @@
+global
+function Boolean SerNrTestPieceWorkVc(LongInt sernr,Date tdp)
+begin
+  Boolean res;
+  record PieceWorkSerBlock PWSerr;
+  row PieceWorkSerBlock PWSerrw;
+  Integer i,rwcnt;
+
+  if (sernr==-1) then begin
+    res = false;
+    goto L1;
+  end;
+  BlockLoad(PWSerr);
+  rwcnt = MatRowCnt(PWSerr);
+  if (rwcnt==0) then begin
+    res = true;
+    goto L1;
+  end;
+  for (i=0; i<rwcnt ;i=i+1) begin
+    MatRowGet(PWSerr,i,PWSerrw);
+    if ((sernr<PWSerrw.TSerStart) or (sernr>PWSerrw.TSerEnd)) then begin
+      goto L2;
+    end;  
+    if (nonblankdate(PWSerrw.StartDate)) then begin
+      if (tdp<PWSerrw.StartDate) then begin goto L2; end;
+    end;  
+    if (nonblankdate(PWSerrw.EndDate)) then begin
+      if (tdp>PWSerrw.EndDate) then begin goto L2; end;
+    end;  
+    res = true;
+    goto L1;
+L2:;
+  end;
+L1:;
+  SerNrTestPieceWorkVc = res;
+  return;
+end;
+
+global
+function val GetPieceWorkTypeTariff(string pwtcode,string poscode,LongInt contrsernr,date transdate)
+begin
+  val res;
+  record PieceWorkTypeVc PWTr;
+  row PieceWorkTypeVc PWTrw;
+  integer rwcnt,i;
+
+  res=0;
+  PWTr.Code = pwtcode;
+  if (ReadFirstMain(PWTr,1,true)) then begin
+    rwcnt=MatRowCnt(PWTr);
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(PWTr,i,PWTrw);
+      if ((PWTrw.ContrSerNr==contrsernr) and (PWTrw.PosCode==poscode)) then begin
+        if (DateInRange(transdate,PWTrw.SDate,PWTrw.EDate)) then begin
+          res=PWTrw.Tariff;
+        end;
+      end;
+    end;
+  end;
+  GetPieceWorkTypeTariff = res; 
+  return;
+end;
+
+global
+procedure PastePosCodeAndPWTTariff(record PieceWorkVc PWr)
+begin
+  row PieceWorkVc PWrw;
+  integer rwcnt,i;
+
+  rwcnt=MatRowCnt(PWr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(PWr,i,PWrw);
+    if ((PWrw.ContrSerNr>0) and nonblank(PWrw.PosCode)) then begin
+      PWrw.Tariff=GetPieceWorkTypeTariff(PWr.PieceWorkTypeCode,PWrw.PosCode,PWrw.ContrSerNr,PWr.TransDate);
+      MatRowPut(PWr,i,PWrw);
+    end;
+  end;
+  return;
+end;

@@ -1,0 +1,92 @@
+external function boolean IsTsekkActivated();
+
+window TsekkTermsWClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  WindowBegin("Tsekk.ee teenuse aktiveerimine",TsekkTermsWClass,CGother,RcType);
+  DynamicWindow;
+  UseView(RcVc);
+  SetWRect(20,80,350,350);
+  h = 25; v = 25; vs = 20;
+  StaticText(h,v,"tsekk.ee digiteerib teie kviitungid ja edastab",false);
+  StaticText(h,v+=vs,"nad majandustarkvarasse",false);
+  v = v + vs;
+  StaticText(h,v+=vs,"Tsekk.ee ligipääsuks luuakse konto andmetega: ",false);
+  v = v + vs;
+  StaticText(h,v,"E-mail",false);
+  EditField(h+100,v-15,150,"",Normal,f1,false,0);
+  v = v + vs;
+  StaticText(h,v,"Ettevõte reg. nr.",false);
+  EditField(h+100,v-15,150,"",ViewOnly,f2,false,0);
+  v = v + vs;
+  StaticText(h,v,"Nimi ja perenimi",false);
+  EditField(h+100,v-15,150,"",Normal,f3,false,0);
+  v = v + 2 * vs;
+  StaticText(h,v,"NB! Kui Teil on tsekk.ee konto olemas, siis",false);
+  StaticText(h,v+=vs,"palun aktiveerige teenus vastavalt juhendile!",false);
+  v = -30;
+  HalPushButton(h,v,h+100,-25,"CloseActiveWindowTsekk","Jäta");
+  HalPushButton(h+185,v,h+285,-25,"SendActivReqTsekk","Aktiveeri");
+  EndWindow; 
+end;
+
+window TsekkSetTClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h2,v,vs;
+  WindowBegin("tsekk.ee teenuse seadistused",TsekkSetTClass,CGSbl,-);
+  SetWRect(20,80,600,350);
+  SetBlid(TsekkSetBlock);
+  vs = 20; h = 180; v = 20; h2 = 300;
+  StaticText(h,v+10,"Hoidke oma 'login token' turvaliselt!",false);
+  EditField(h,v+=vs,300,"tsekk.ee login token",Normal,AccessToken,false,0);
+  EditField(h,v+=vs,150,"Konto email",Normal,AccountEmail,false,0);
+  EditField(h,v+=vs,150,"Nimi ja perenimi",Normal,AccountUserName,false,0);
+  StaticText(h-60,v+=vs*2,"Kui Teil on tsekk.ee konto olemas, sisestage andmed siia,",false);
+  StaticText(h-60,v+=vs,"salvestage ning de-aktiveerige ja aktiveerige teenust uuesti.",false);
+  StaticText(h-60,v+=vs,"NB! Teil on siis vaja oma konto 'login token' teada.",false);
+  EditField(h,v+=vs,60,"Viimase päringu kuupäev",Normal,LastSuccessReqDate,false,0);
+  EditField(h2,v,60,"aeg",Normal,LastSuccessReqTime,false,0);
+  EndWindow; 
+end;
+
+window TsekkCloseServiceWClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v;
+  WindowBegin("Teenuse sulgemine",TsekkCloseServiceWClass,CGother,RcType);
+  UseView(RcVc);
+  SetWRect(20,160,330,280);
+  h = 25; v = -50;
+  StaticText(h,45,"Kas olete kindel, et tahate seda teenust sulgeda?",false);
+  HalPushButton(h     ,v,h+100,-25,"CloseActiveWindowTsekk","Ei");
+  HalPushButton(-h-100,v,-h   ,-25,"SendDeActivReqTsekk","Jah");
+  EndWindow; 
+end;
+
+window SelectVEIVTClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v;
+  WindowBegin("Tarnija e-arved kulutuseks",SelectVEIVTClass,CGHbl,0);
+  SetBlid(SelectVEIVBlock);
+  SetWRect(60,80,600,300);
+  Sizeable(-1,-1,0,0);
+  ToolBar;
+  HalPushButton(h=100,v=3,h+90,v+10,"ExpFromVEIVLAltsm","Koosta");
+  HalPushButton(h=210,v=3,h+90,v+10,"RemSelectVEIVBlocksm","Tühista");
+  EndToolBar;
+  h = 40; v = 27;
+  MatrixBegin(h,v,-31,-20,-,99);
+  MatColTL(1,25,"Ser. Nr",0,M4Long,Normal,0,VEIVSerNr,false,VEIVSClass);
+  MatColTL(1,125,"Kuupäev",0,M4Date,ViewOnly,0,VEIVDate,false,0);
+  MatColTL(1,225,"Tarnija",0,M4Str,ViewOnly,0,VEIVVendor,false,0);
+  MatColTL(1,-75,"Kokku summa",0,M4Val,ViewOnly,0,VEIVTotVal,false,0);
+  InsertRowTest;
+  DeleteRowTest;
+  //SpecialMenu("Koosta kulutus valitud e-arvetest",' ',1,"ExpFromVEIVLAltsm");
+  //SpecialMenu("Tühista akent",' ',2,"RemSelectVEIVBlocksm");
+  EndMatrix;
+  EndWindow;
+end;

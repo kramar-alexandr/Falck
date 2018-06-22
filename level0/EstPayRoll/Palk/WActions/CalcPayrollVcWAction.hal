@@ -1,0 +1,458 @@
+external procedure PasteCPrwFromContrrw(record CalcPayrollVc,var row CalcPayrollVc,record ContractVc,row ContractVc,var integer,integer,integer,integer,boolean,var boolean);
+external procedure CPrSumUp(var record CalcPayrollVc);
+external updating procedure PasteCPrTaxes(record CalcPayrollVc,integer,integer,integer,integer,integer,var val,Boolean);
+external function boolean GetRightPeriod(var date,var date,date,date);
+external updating procedure RemoveRowCPWHVc(LongInt,integer);
+external updating procedure RemoveRowCPPWVc(LongInt,integer);
+external updating procedure RemoveRowCPOTVc(LongInt,integer);
+external updating procedure RemoveRowCPAbsVc(LongInt,integer);
+external updating procedure RemoveCPWHVc(record CalcPayrollVc);
+external updating procedure RemoveCPPWVc(record CalcPayrollVc);
+external updating procedure RemoveCPOTVc(record CalcPayrollVc);
+external updating procedure RemoveCPAbsVc(record CalcPayrollVc);
+external updating procedure UpdateCPUnFromCPr(record CalcPayrollVc,boolean);
+external updating procedure UpdateITFMUsedFromCPr(record CalcPayrollVc,boolean);
+external updating procedure UpdateCPPPHistFromCPr(record CalcPayrollVc,boolean);
+external function string 255 GetPaymTypeName(string);
+
+global 
+function Boolean CalcPayrollDClassDeleteRowTest(Integer wn,Integer rownr)
+begin
+  record CalcPayrollVc CPr;
+  integer updatemode;
+  boolean res;
+
+  res = true;
+  updatemode = 2;
+  if (WindowState(wn)==updatemode) then begin
+    GetPrevWindowRecord(wn,CPr);
+  end else begin
+    GetWindowRecord(wn,CPr);
+  end;
+  if (CPr.OKFlag!=0) then begin
+    res = false;
+  end;
+  CalcPayrollDClassDeleteRowTest = res;
+  return;
+end;
+
+global
+updating function boolean CalcPayrollDClassOnOverStrike(integer wn,integer rownr)
+begin
+  record CalcPayrollVc CPr;
+  record CalcPayrollVc oldCPr;
+  row CalcPayrollVc CPrw;
+  Integer i,rwcnt;
+  boolean res;
+  val tmpval;
+
+  res = true;
+  GetWindowRecord(wn,CPr);
+  RecordCopy(oldCPr,CPr);    
+  rwcnt=MatRowCnt(CPr);
+/*
+  CPr.BrutoTotal = 0;
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(CPr,i,CPrw);
+    CPr.BrutoTotal = CPr.BrutoTotal + CPrw.BrutoSum;
+  end;
+  PasteCPrTaxes(CPr,0,0,0,0,0,tmpval,false);
+*/
+  PasteCPrTaxes(CPr,0,0,0,0,0,tmpval,true);
+  CPrSumUp(CPr);
+  PutWindowRecord(wn,CPr);
+  RemoveRowCPWHVc(CPr.SerNr,rownr);
+  RemoveRowCPPWVc(CPr.SerNr,rownr);
+  RemoveRowCPOTVc(CPr.SerNr,rownr);
+  RemoveRowCPAbsVc(CPr.SerNr,rownr);
+  RecordUpdate(oldCPr,CPr,false);
+  CalcPayrollDClassOnOverStrike = true;
+  return;
+end;
+
+global
+function boolean CalcPayrollDClassActiveEditField(integer wn,string fieldname,integer fn,integer wnst,integer rownr,integer changed)
+begin
+  boolean res;
+  record CalcPayrollVc CPr;
+  
+  res = true;
+  GetWindowRecord(wn,CPr);
+  if (CPr.OKFlag!=0) then begin
+    res = false;
+  end else begin
+    switch (fieldname) begin
+      case "NetoSum": res = false;
+      case "BrutoSum": res = false;
+      case "UnemplInsSum": res = false;
+      case "PensionSum": res = false;
+      case "IncTaxSum": res = false;
+      case "IncTaxFreeMinSum": res = false;
+      case "DPDiscSum": res = false;
+      case "SocTaxSum": res = false;
+      case "EmplUnemplInsSum": res = false;
+      case "SDate": res = false;
+      case "EDate": res = false;
+      case "SerNr": 
+        if (wnst==Rs_update) then begin
+          res = false;
+        end;
+    end;
+  end;  
+  CalcPayrollDClassActiveEditField = res;
+  return;
+end;
+
+global
+updating function boolean CalcPayrollDClassOKFlagButtonAction(integer wn,integer value)
+begin
+  boolean res;
+  record CalcPayrollVc CPr;
+  integer normalmode,updatemode;
+
+  res = true;
+  normalmode = 0;
+  updatemode = 2;
+  if (WindowState(wn)==normalmode) then begin
+    GetWindowRecord(wn,CPr);
+    if (CPr.OKFlag!=0) then begin //kinnituse maha v›tmine
+      res = false;
+      if (UserCanAction("UnOKAll",false) and (CPr.PaymFlag==0)) then begin
+        res = true;
+      end;
+    end;
+  end;  
+  if (WindowState(wn)==updatemode) then begin
+    GetPrevWindowRecord(wn,CPr);
+    if (CPr.OKFlag!=0) then begin
+      res = false;
+    end;
+  end;
+
+  CalcPayrollDClassOKFlagButtonAction = res;
+  return;
+end;
+
+global
+updating function boolean CalcPayrollDClassPaymFlagButtonAction(integer wn,integer value)
+begin
+  boolean res;
+
+    res = false;
+  CalcPayrollDClassPaymFlagButtonAction = res;
+  return;
+end;
+
+updating function boolean CalcPayrollDClassContrSerNrEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record CalcPayrollVc CPr;
+  row CalcPayrollVc CPrw;
+  record ContractVc Contrr;
+  record PaymTypeVc PTr;
+  row ContractVc Contrrw;
+  integer rwcnt,rwcnt1,j,i;
+  boolean testf,tmp;
+  date tmpdate;
+  val tmpval;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,CPr);
+    DeselectWindow(wn,false);
+    RemoveCPWHVc(CPr);
+    RemoveCPPWVc(CPr);
+    RemoveCPOTVc(CPr);
+    RemoveCPAbsVc(CPr);
+    
+    rwcnt1=MatRowCnt(CPr);
+    for (j=0;j<rwcnt1;j=j+1) begin
+      MatRowDelete(CPr,j);
+      j = j - 1;
+      rwcnt1 = MatRowCnt(CPr);
+    end;
+
+    j=0;
+    Contrr.SerNr = CPr.ContrSerNr;
+    if (ReadFirstMain(Contrr,1,true)) then begin
+      testf=GetRightPeriod(CPr.StartDate,CPr.EndDate,Contrr.StartDate,Contrr.EndDate);
+      if (testf) then begin
+        CPr.Firstname = Contrr.Firstname;
+        CPr.Surname = Contrr.Surname;
+        CPr.ObjCode = Contrr.ObjCode;
+        rwcnt=MatRowCnt(Contrr);
+        for (i=0;i<rwcnt;i=i+1) begin
+          MatRowGet(Contrr,i,Contrrw);
+          if nonblank(Contrrw.PosCode) then begin
+            PasteCPrwFromContrrw(CPr,CPrw,Contrr,Contrrw,j,0,0,1,false,tmp);
+          end;
+        end;
+//        PasteCPrTaxes(CPr,1,1,1,1,0); //hoolduse funktsionaalsus
+        PasteCPrTaxes(CPr,0,0,0,0,0,tmpval,true);
+      end;
+    end;
+    CPrSumUp(CPr);
+    PutWindowRecord(wn,CPr);
+  end;
+  CalcPayrollDClassContrSerNrEFAfter = true;
+  return;
+end;
+
+updating function boolean CalcPayrollDClassPosCodeEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record CalcPayrollVc CPr;
+  row CalcPayrollVc CPrw;
+  record ContractVc Contrr;
+  row ContractVc Contrrw;
+  integer rwcnt,j,i;
+  boolean testf;
+  val tmpval;
+
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,CPr);
+    DeselectWindow(wn,false);
+    MatRowGet(CPr,rownr,CPrw);
+    j=rownr;
+    Contrr.SerNr = CPr.ContrSerNr;
+    if (ReadFirstMain(Contrr,1,true)) then begin
+      rwcnt=MatRowCnt(Contrr);
+      for (i=0;i<rwcnt;i=i+1) begin
+        MatRowGet(Contrr,i,Contrrw);
+        if (CPrw.PosCode==Contrrw.PosCode) then begin
+          testf=GetRightPeriod(CPr.StartDate,CPr.EndDate,Contrrw.SDate,Contrrw.EDate);
+          if (testf) then begin
+            CPrw.PosCode=Contrrw.PosCode;
+            CPrw.PosName=Contrrw.PosName;
+            CPrw.PaymTypeCode=Contrrw.PaymTypeCode;
+            CPrw.PaymTypeName =GetPaymTypeName(CPrw.PaymTypeCode);
+            CPrw.SDate=CPr.StartDate;
+            CPrw.EDate=CPr.EndDate;
+            CPrw.Tariff=Contrrw.LoadSum;
+            CPrw.Amount=1;
+            CPrw.BrutoSum=Contrrw.LoadSum;
+            CPrw.NetoSum=0;
+            CPrw.ObjCode=Contrrw.ObjCode;
+            MatRowPut(CPr,j,CPrw);
+            j=j+1;
+          end; 
+        end;
+      end;
+      PasteCPrTaxes(CPr,0,0,0,0,0,tmpval,true);
+    end;
+    CPrSumUp(CPr);
+    PutWindowRecord(wn,CPr);
+  end;
+  CalcPayrollDClassPosCodeEFAfter = true;
+  return;
+end;
+
+updating function boolean CalcPayrollDClassPaymTypeCodeEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record CalcPayrollVc CPr;
+  row CalcPayrollVc CPrw;
+  val tmpval;
+
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,CPr);
+    DeselectWindow(wn,false);
+    MatRowGet(CPr,rownr,CPrw);
+    CPrw.PaymTypeName=GetPaymTypeName(CPrw.PaymTypeCode);
+    CPrw.SDate=CPr.StartDate;
+    CPrw.EDate=CPr.EndDate;
+    CPrw.Amount=1;
+    MatRowPut(CPr,rownr,CPrw);
+    //PasteCPrTaxes(CPr,0,0,0,0,0,tmpval,false);
+    PasteCPrTaxes(CPr,0,0,0,0,0,tmpval,true);
+    CPrSumUp(CPr);
+    PutWindowRecord(wn,CPr);
+  end;
+
+  CalcPayrollDClassPaymTypeCodeEFAfter = true;
+  return;
+end;
+
+updating function boolean CalcPayrollDClassTariffEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record CalcPayrollVc CPr;
+  row CalcPayrollVc CPrw;
+  val tmpval;
+
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,CPr);
+    DeselectWindow(wn,false);
+    MatRowGet(CPr,rownr,CPrw);
+/*
+    CPr.BrutoTotal = CPr.BrutoTotal - CPrw.BrutoSum + CPrw.Tariff*CPrw.Amount;
+    PasteCPrTaxes(CPr,0,0,0,0,0,tmpval,false);
+*/
+    CPrw.BrutoSum = CPrw.Tariff*CPrw.Amount;
+    MatRowPut(CPr,rownr,CPrw);
+    PasteCPrTaxes(CPr,0,0,0,0,0,tmpval,true);
+    CPrSumUp(CPr);
+    PutWindowRecord(wn,CPr);
+  end;
+  CalcPayrollDClassTariffEFAfter = true;
+  return;
+end;
+
+updating function boolean CalcPayrollDClassCalcDateEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record CalcPayrollVc CPr;
+  date tmpdate;
+  boolean res;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,CPr);
+    DeselectWindow(wn,false);
+    tmpdate.day=1;
+    tmpdate.month=GetMonth(CPr.CalcDate);
+    tmpdate.year=GetYear(CPr.CalcDate);
+    CPr.StartDate=tmpdate;
+    tmpdate.day=DaysInMonth(GetYear(tmpdate),GetMonth(tmpdate));
+    CPr.EndDate=tmpdate;
+    CPr.PaymDate=tmpdate;
+    PutWindowRecord(wn,CPr);
+    res = CalcPayrollDClassContrSerNrEFAfter(wn,rownr,changedf);
+  end;
+  CalcPayrollDClassCalcDateEFAfter = true;
+  return;
+end;
+
+updating function boolean CalcPayrollDClassStartDateEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record CalcPayrollVc CPr;
+  date tmpdate;
+  boolean res;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,CPr);
+    DeselectWindow(wn,false);
+    tmpdate.day=1;
+    tmpdate.month=GetMonth(CPr.StartDate);
+    tmpdate.year=GetYear(CPr.StartDate);
+    tmpdate.day=DaysInMonth(GetYear(tmpdate),GetMonth(tmpdate));
+    CPr.EndDate=tmpdate;
+    CPr.PaymDate=tmpdate;
+    CPr.CalcDate=tmpdate;
+    PutWindowRecord(wn,CPr);
+    res = CalcPayrollDClassContrSerNrEFAfter(wn,rownr,changedf);
+  end;
+  CalcPayrollDClassStartDateEFAfter = true;
+  return;
+end;
+
+updating function boolean CalcPayrollDClassEndDateEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record CalcPayrollVc CPr;
+  date tmpdate;
+  boolean res;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,CPr);
+    DeselectWindow(wn,false);
+    CPr.PaymDate=CPr.EndDate;
+    if (CPr.EndDate<CPr.StartDate) then begin
+      tmpdate.month=GetMonth(CPr.StartDate);
+      tmpdate.year=GetYear(CPr.StartDate);
+      tmpdate.day=DaysInMonth(GetYear(tmpdate),GetMonth(tmpdate));
+      CPr.EndDate=tmpdate;
+      CPr.PaymDate=CPr.EndDate;
+    end;
+    PutWindowRecord(wn,CPr);
+    res = CalcPayrollDClassContrSerNrEFAfter(wn,rownr,changedf);
+  end;
+  CalcPayrollDClassEndDateEFAfter = true;
+  return;
+end;
+
+updating function boolean CalcPayrollDClassPaymDateEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record CalcPayrollVc CPr;
+  date tmpdate;
+  boolean res;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,CPr);
+    DeselectWindow(wn,false);
+    if (CPr.PaymDate<CPr.StartDate) then begin
+      CPr.PaymDate=CPr.EndDate;
+      PutWindowRecord(wn,CPr);
+    end;
+    res = CalcPayrollDClassContrSerNrEFAfter(wn,rownr,changedf);
+  end;
+  CalcPayrollDClassPaymDateEFAfter = true;
+  return;
+end;
+
+global
+updating function boolean CalcPayrollDClassAfterEditField(integer wn,string fieldname,integer fn, integer rownr,integer changed)
+begin
+  boolean res;
+
+  switch (fieldname) begin
+    case "ContrSerNr": res = CalcPayrollDClassContrSerNrEFAfter(wn,rownr,changed);
+    case "CalcDate": res = CalcPayrollDClassCalcDateEFAfter(wn,rownr,changed);
+    case "PaymDate": res = CalcPayrollDClassPaymDateEFAfter(wn,rownr,changed);
+    case "StartDate": res = CalcPayrollDClassStartDateEFAfter(wn,rownr,changed);
+    case "EndDate": res = CalcPayrollDClassEndDateEFAfter(wn,rownr,changed);
+    case "PosCode": res = CalcPayrollDClassPosCodeEFAfter(wn,rownr,changed);
+    case "PaymTypeCode": res = CalcPayrollDClassPaymTypeCodeEFAfter(wn,rownr,changed);
+    case "Tariff": res = CalcPayrollDClassTariffEFAfter(wn,rownr,changed);
+    case "Amount": res = CalcPayrollDClassTariffEFAfter(wn,rownr,changed);
+  end;
+  CalcPayrollDClassAfterEditField = res;
+  return;
+end;
+
+global
+function Boolean CalcPayrollDClassOpenRecord(Integer wn,string fieldname,Integer fn,Integer rownr)
+begin
+  Boolean res;
+  record CalcPayrollVc CPr;
+  row CalcPayrollVc CPrw;
+  record ContractVc Contrr;
+  record PositionVc Posr;
+  record ObjVc Objr;
+  record PaymTypeVc PTr;
+  Integer nwn;
+
+  GetWindowRecord(wn,CPr);  
+  DeselectWindow(wn,false);
+  if (rownr>=0) then begin
+    MatRowGet(CPr,rownr,CPrw);
+  end;
+  switch (fieldname) begin
+    case "ContrSerNr":
+      if (CPr.ContrSerNr>0) then begin
+        Contrr.SerNr = CPr.ContrSerNr;
+        if (ReadFirstMain(Contrr,1,true)) then begin
+          nwn = OpenWindow("ContractDClass",1,0,"","",Contrr);    
+          res = true;
+        end;
+      end;
+    case "ObjCode":
+      if nonblank(CPr.ObjCode) then begin
+        Objr.Code = CPr.ObjCode;
+        if (ReadFirstMain(Objr,1,true)) then begin
+          nwn = OpenWindow("ObjDClass",1,0,"","",Objr);    
+          res = true;
+        end;
+      end;
+    case "PosCode":
+      if nonblank(CPrw.PosCode) then begin
+        Posr.Code = CPrw.PosCode;
+        if (ReadFirstMain(Posr,1,true)) then begin
+          nwn = OpenWindow("PositionDClass",1,0,"","",Posr);    
+          res = true;
+        end;
+      end;
+    case "PaymTypeCode":
+      if nonblank(CPrw.PaymTypeCode) then begin
+        PTr.Code = CPrw.PaymTypeCode;
+        if (ReadFirstMain(PTr,1,true)) then begin
+          nwn = OpenWindow("PaymTypeDClass",1,0,"","",PTr);    
+          res = true;
+        end;
+      end;
+  end;
+  CalcPayrollDClassOpenRecord = res;
+  return;
+end;

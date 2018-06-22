@@ -1,0 +1,21 @@
+external function LongInt DateDiff(Date,Date);
+
+global
+function boolean CurRatesAreOld(string curncyCode, var date updDate)
+begin
+  boolean res;
+  record ERVc ERr;
+  integer maxDaysOld;
+
+  res = false;
+  maxDaysOld = 3;
+  ERr.CurncyCode = curncyCode;
+  if (ReadLastMain(ERr,1,true)) then begin
+    updDate = ERr.Date;
+  end;
+  if (DateDiff(CurrentDate,updDate) > maxDaysOld AND blankdate(updDate) == false) then begin
+    res = true;
+  end;
+  CurRatesAreOld = res;
+  return;
+end;

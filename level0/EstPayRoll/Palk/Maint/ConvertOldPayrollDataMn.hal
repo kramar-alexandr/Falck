@@ -1,0 +1,747 @@
+external updating procedure DeleteTransaction(LongInt,Integer);
+external function roundmode SetRoundModeD(Integer);
+external function boolean GetNextAbsFBSerNr(var LongInt);
+external function boolean GetNextSalFBSerNr(var LongInt);
+external function boolean GetNextVacDaysFBSerNr(var LongInt);
+external procedure SetMarkFlag(integer,var integer);
+
+global
+updating procedure DeletePayrollDataMn()
+begin   
+  record EmplVc Emplr;
+  record ContractVc Contrr;
+  record PaymTypeVc PTr;
+  record AbsenceVc Absr;
+  record AbsTypeVc ATr;
+  record VacBalanceVc VBr;
+  record SalSettingBlock SSBr;
+  record OpenTransVc OTr;
+  record PieceWorkVc PWr;
+  record WorkedHoursVc WHr;
+  record CalcPayrollVc CPr;
+  record PaymPayrollVc PPr;
+  record TaxVc Taxr;
+  record SalaryFBVc SFBr;
+  record AbsenceFBVc AFBr;
+  record VacDaysFBVc VDFBr;
+  record CPUnpaidVc CPUr;
+  record ITFMUsedVc ITFMUr;
+  record DPDUsedVc DPDUr;
+  record CPWHVc CPWHr;
+  record CPPWVc CPPWr;
+  record CPOTVc CPOTr;
+  record CPAbsVc CPAbsr;
+  record MinSalaryBlock MSr;
+  record OldPRPayTypesBlock OPPTr;
+  record CPPPHistVc CPPPHistr;
+  record MinSocTaxBlock MSTr;
+  integer rwcnt,i;
+  
+//Tšštajad
+  ResetLoop(Emplr);
+  Emplr.Code="";
+  while (LoopMain(Emplr,1,true)) begin
+    RecordDelete(Emplr);
+    StepBack(Emplr);
+  end;
+
+//Lepingud
+  ResetLoop(Contrr);
+  Contrr.SerNr=-1;
+  while (LoopMain(Contrr,1,true)) begin
+    RecordDelete(Contrr);
+    StepBack(Contrr);
+  end;
+
+//Tasuliigid
+  ResetLoop(PTr);
+  PTr.Code="";
+  while (LoopMain(PTr,1,true)) begin
+    RecordDelete(PTr);
+    StepBack(PTr);
+  end;
+
+//Puudumised
+  ResetLoop(Absr);
+  Absr.SerNr=-1;
+  while (LoopMain(Absr,1,true)) begin
+    RecordDelete(Absr);
+    StepBack(Absr);
+  end;
+
+//Puudumise tŸŸbid
+  ResetLoop(ATr);
+  ATr.Code="";
+  while (LoopMain(ATr,1,true)) begin
+    RecordDelete(ATr);
+    StepBack(ATr);
+  end;
+
+//Puhkuse saldod
+  ResetLoop(VBr);
+  VBr.SerNr=-1;
+  while (LoopMain(VBr,1,true)) begin
+    RecordDelete(VBr);
+    StepBack(VBr);
+  end;
+
+//Lausendamine, Palk
+  BlockLoad(SSBr);
+  SSBr.VacDaysNorm=1;
+  SSBr.WorkDaysNorm=blankval;
+  SSBr.VacAbsTypeCode="";
+  SSBr.IllAbsTypeCode="";
+  SSBr.StudyAbsTypeCode="";
+  SSBr.ChildAbsTypeCode="";
+  SSBr.AdvPaymTypeCode="";
+  SSBr.CalcTransDate="";
+  SSBr.PaymTransDate="";
+  SSBr.AccGroupCode="";
+  SSBr.DaysPaid=blankval;
+  SSBr.DaysNotPaid=blankval;
+  SSBr.Percent=blankval;
+  BlockStore(SSBr);
+
+//Avatud kanded
+  ResetLoop(OTr);
+  OTr.SerNr=-1;
+  while (LoopMain(OTr,1,true)) begin
+    RecordDelete(OTr);
+    StepBack(OTr);
+  end;
+
+//TŸkitššd
+  ResetLoop(PWr);
+  PWr.SerNr=-1;
+  while (LoopMain(PWr,1,true)) begin
+    RecordDelete(PWr);
+    StepBack(PWr);
+  end;
+
+//Tššajatabelid
+  ResetLoop(WHr);
+  WHr.SerNr=-1;
+  while (LoopMain(WHr,1,true)) begin
+    RecordDelete(WHr);
+    StepBack(WHr);
+  end;
+
+//Arvestused
+  ResetLoop(CPr);
+  CPr.SerNr=-1;
+  while (LoopMain(CPr,1,true)) begin
+    DeleteTransaction(CPr.SerNr,SalaryCalcYc);
+    DeleteTransaction(CPr.SerNr,SalaryPayment2Yc);
+    RecordDelete(CPr);
+    StepBack(CPr);
+  end;
+
+//VŠlamaksed
+  ResetLoop(PPr);
+  PPr.SerNr=-1;
+  while (LoopMain(PPr,1,true)) begin
+    DeleteTransaction(PPr.SerNr,SalaryPaymentYc);
+    RecordDelete(PPr);
+    StepBack(PPr);
+  end;
+
+//Maksud
+  ResetLoop(Taxr);
+  Taxr.Code="";
+  while (LoopMain(Taxr,1,true)) begin
+    RecordDelete(Taxr);
+    StepBack(Taxr);
+  end;
+
+//Algsaldod - Tšštasu
+  ResetLoop(SFBr);
+  SFBr.SerNr=-1;
+  while (LoopMain(SFBr,1,true)) begin
+    RecordDelete(SFBr);
+    StepBack(SFBr);
+  end;
+
+//Algsaldod - Puudumised
+  ResetLoop(AFBr);
+  AFBr.SerNr=-1;
+  while (LoopMain(AFBr,1,true)) begin
+    RecordDelete(AFBr);
+    StepBack(AFBr);
+  end;
+
+//Algsaldod - PuhkusejŠŠk
+  ResetLoop(VDFBr);
+  VDFBr.SerNr=-1;
+  while (LoopMain(VDFBr,1,true)) begin
+    RecordDelete(VDFBr);
+    StepBack(VDFBr);
+  end;
+
+//Arvestuse abiregister - testimiseks
+  ResetLoop(CPUr);
+  CPUr.SerNr=-1;
+  while (LoopMain(CPUr,1,true)) begin
+    RecordDelete(CPUr);
+    StepBack(CPUr);
+  end;
+
+//TM vaba miinimumi abiregister - testimiseks
+  ResetLoop(ITFMUr);
+  ITFMUr.SerNr=-1;
+  while (LoopMain(ITFMUr,1,true)) begin
+    RecordDelete(ITFMUr);
+    StepBack(ITFMUr);
+  end;
+
+//Tššv›imetuspensionŠri abiregister - testimiseks
+  ResetLoop(DPDUr);
+  DPDUr.SerNr=-1;
+  while (LoopMain(DPDUr,1,true)) begin
+    RecordDelete(DPDUr);
+    StepBack(DPDUr);
+  end;
+
+//Tššajatabeli abiregister - testimiseks
+  ResetLoop(CPWHr);
+  CPWHr.CalcSerNr=-1;
+  while (LoopMain(CPWHr,1,true)) begin
+    RecordDelete(CPWHr);
+    StepBack(CPWHr);
+  end;
+
+//TŸkitšš abiregister - testimiseks
+  ResetLoop(CPPWr);
+  CPPWr.CalcSerNr=-1;
+  while (LoopMain(CPPWr,1,true)) begin
+    RecordDelete(CPPWr);
+    StepBack(CPPWr);
+  end;
+
+//Avatud kannete abiregister - testimiseks
+  ResetLoop(CPOTr);
+  CPOTr.CalcSerNr=-1;
+  while (LoopMain(CPOTr,1,true)) begin
+    RecordDelete(CPOTr);
+    StepBack(CPOTr);
+  end;
+
+//Puudumiste abiregister - testimiseks
+  ResetLoop(CPAbsr);
+  CPAbsr.CalcSerNr=-1;
+  while (LoopMain(CPAbsr,1,true)) begin
+    RecordDelete(CPAbsr);
+    StepBack(CPAbsr);
+  end;
+
+//Minimaalne tšštasu
+  BlockLoad(MSr);
+  rwcnt = MatRowCnt(MSr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowDelete(MSr,i);
+    i = i - 1;
+    rwcnt = MatRowCnt(MSr);
+  end;
+  BlockStore(MSr);
+
+//Konverteerimine, Tasuliigid
+  BlockLoad(OPPTr);
+  rwcnt = MatRowCnt(OPPTr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowDelete(OPPTr,i);
+    i = i - 1;
+    rwcnt = MatRowCnt(OPPTr);
+  end;
+  BlockStore(OPPTr);
+
+//Arvestuste/VŠljamaksete ajalugu - testimiseks
+  ResetLoop(CPPPHistr);
+  CPPPHistr.EmplCode="";
+  while (LoopMain(CPPPHistr,1,true)) begin
+    RecordDelete(CPPPHistr);
+    StepBack(CPPPHistr);
+  end;
+
+//Minimaalne sots.maksu summa
+  BlockLoad(MSTr);
+  rwcnt = MatRowCnt(MSTr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowDelete(MSTr,i);
+    i = i - 1;
+    rwcnt = MatRowCnt(MSTr);
+  end;
+  BlockStore(MSTr);
+
+  return;
+end;
+
+procedure PutToArray(var array LongInt contrcode,var array integer year,var array integer month,var array val sum,var integer cnt,LongInt ccode,integer yyyy,integer mm,val rwsum)
+begin
+  integer i;
+  boolean found;
+
+  found = false;
+  for (i=0;i<cnt;i=i+1) begin
+    if ((contrcode[i]==ccode) and (year[i]==yyyy) and (month[i]==mm)) then begin
+      sum[i]=sum[i]+rwsum;
+      i=cnt;
+      found = true;
+    end;
+  end;
+  if (found==false) then begin
+    contrcode[cnt]=ccode;
+    year[cnt]=yyyy;
+    month[cnt]=mm;
+    sum[cnt]=rwsum;
+    cnt=cnt+1;
+  end;
+  return;
+end;
+
+global
+updating procedure ConvertOldPayrollDataMn(record RcVc RepSpec)
+begin   
+  record EmplVc Emplr;
+  row EmplVc Emplrw;
+  record EmployeeVc oldEmplr;
+  row EmployeeVc oldEmplrw;
+  record TaxVc Taxr;
+  record DeductionVc Deductr;
+  record PaymTypeVc PTr;
+  record PayTypeVc oldPTr;
+  record AbsTypeVc ATr;
+  record MissedDaysTypeVc MDTr;
+  record ContractVc Contrr;
+  row ContractVc Contrrw;
+  record EmplContractVc oldContrr;
+  row EmplContractVc oldContrrw;
+  record AccGroupVc AGr;
+  record MissedDaysVc MDr;
+  record AbsenceFBVc AFBr;
+  row AbsenceFBVc AFBrw;
+  record VacDaysFBVc VDFBr;
+  row VacDaysFBVc VDFBrw;
+  record SalaryFBVc SFBr;
+  row SalaryFBVc SFBrw;
+  record OldPRPayTypesBlock oldPTBr;
+  row OldPRPayTypesBlock oldPTBrw;
+  record SalaryCalcVc SCr;
+  row SalaryCalcVc SCrw;
+  boolean testf,TrHs,PayTypeOk;
+  integer i,j,k,rwcnt,ptrwcnt,cnt,yyyy,tmpint;
+  LongInt contrsernr;
+  string 20 oldcontrnr,controfficnr,tmpstr;
+  val tmpval;
+  date tmpdate,tmpdate1,tmpdate2;
+  array LongInt contrcode;
+  array integer year,month;
+  array val sum;
+
+  if (blank(RepSpec.f1)) then begin
+    MessageBox(1500345,"");
+    goto LConvertOldPayrollDataMn;
+  end;
+  if (blankdate(RepSpec.d1)) then begin
+    MessageBox(1500342,"");
+    goto LConvertOldPayrollDataMn;
+  end;  
+  
+  yyyy=StringToVal(RepSpec.f2,M4Val);
+  if blank(RepSpec.f2) or (yyyy==0) then begin
+    MessageBox(1500337,"");
+    goto LConvertOldPayrollDataMn;
+  end else begin
+    if (len(yyyy)!=4) then begin 
+      MessageBox(1500435,"");
+      goto LConvertOldPayrollDataMn;    
+    end;
+  end;
+
+  BlockLoad(oldPTBr);
+  ptrwcnt=MatRowCnt(oldPTBr);
+  if (ptrwcnt==0) then begin
+    PayTypeOk=false;
+    MessageBox(1500436,"");
+  end else begin
+    PayTypeOk=true;
+  end;
+
+  DeletePayrollDataMn;
+     
+//Tasuliigid->Tasuliigid
+  ResetLoop(oldPTr);
+  oldPTr.Code="";
+  while (LoopMain(oldPTr,1,true)) begin
+    testf=true;
+    if (oldPTr.Closed!=0) then begin
+      testf=false;
+    end;
+    if (oldPTr.Invalid!=0) then begin
+      testf=false;
+    end;
+    if (testf) then begin
+      RecordNew(PTr);
+      PTr.Code=oldPTr.Code;
+      PTr.Name=oldPTr.Name;
+      PTr.TSDRowCode="01";
+      PTr.StandingChargeFlag=0;
+      PTr.PaymTypeFlag=0;
+      PTr.PaymFlag=0;
+      PTr.IncomeTaxFlag=1;
+      PTr.UnemplInsFlag=1;
+      PTr.PensionFlag=1;
+      PTr.SocialTaxFlag=1;
+      PTr.EmplUnemplInsFlag=1;
+      if (RecordInsert(PTr,false)) then begin end;
+    end;
+  end;
+
+//Puudumise tŸŸbid->Puudumise tŸŸbid
+  ResetLoop(MDTr);
+  MDTr.Code="";
+  while (LoopMain(MDTr,1,true)) begin
+    testf=true;
+    if (MDTr.Invalid!=0) then begin
+      testf=false;
+    end;
+    if (testf) then begin
+      RecordNew(ATr);
+      ATr.Code=MDTr.Code;
+      ATr.Name=MDTr.Name;
+      ATr.AbsTypeFlag=2;
+      if (RecordInsert(ATr,false)) then begin end;
+    end;
+  end;
+
+//Kinnipidamised->Maksud
+  ResetLoop(Deductr);
+  Deductr.Code="";
+  while (LoopMain(Deductr,1,true)) begin
+    testf=true;
+    if (Deductr.Closed!=0) then begin
+      testf=false;
+    end;
+    if (Deductr.Type>2) then begin
+      testf=false;
+    end;
+    if (Deductr.Invalid!=0) then begin
+      testf=false;
+    end;
+    if (testf) then begin
+      RecordNew(Taxr);
+      Taxr.Code=Deductr.Code;
+      Taxr.Name=Deductr.Name;
+      Taxr.TaxType=Deductr.Type;
+      if (RecordInsert(Taxr,false)) then begin end;
+    end;
+  end;
+
+//Tšštajad->Tšštajad
+  ResetLoop(oldEmplr);
+  oldEmplr.Code="";
+  while (LoopMain(oldEmplr,1,true)) begin
+    testf=true;
+    if (oldEmplr.Invalid!=0) then begin
+      testf=false;
+    end;
+    if (testf) then begin
+      RecordNew(Emplr);
+      Emplr.Code=oldEmplr.Code;
+      Emplr.Firstname=oldEmplr.FirstName;
+      Emplr.Surname=oldEmplr.LastName;
+      Emplr.IDCode=oldEmplr.IDCode;
+      Emplr.BirthDate=oldEmplr.Birthday;
+      Emplr.ObjCode=oldEmplr.Objects;
+      Emplr.ClosedFlag=oldEmplr.Closed;
+      SetMarkFlag(Emplr.ClosedFlag,Emplr.ClosedMark);
+      Emplr.Addr1=oldEmplr.Addr1;
+      Emplr.Addr2=oldEmplr.Addr2;
+      Emplr.Addr3=oldEmplr.Addr3 & " " & oldEmplr.Addr4;
+      Emplr.Phone=oldEmplr.Phone;
+      Emplr.Mail=oldEmplr.Email;
+      Emplr.BankCode=oldEmplr.BankCode;
+      Emplr.BankAccount=oldEmplr.BankAcc;
+      Emplr.RecipientName=oldEmplr.RecName;
+      Emplr.RecipientBankCode=oldEmplr.RecBankCode;
+      Emplr.RecipientBankAcc=oldEmplr.RecBankAcc;
+      k=0;
+      rwcnt=MatRowCnt(Emplr);
+      for (i=0;i<rwcnt;i=i+1) begin
+        MatRowDelete(Emplr,i);
+         i = i - 1;
+         rwcnt = MatRowCnt(Emplr);
+      end;
+      rwcnt=MatRowCnt(oldEmplr);
+      for (i=0;i<rwcnt;i=i+1) begin
+        MatRowGet(oldEmplr,i,oldEmplrw);    
+        if nonblank(oldEmplrw.DeductCode) then begin
+          Taxr.Code = oldEmplrw.DeductCode;
+          if (ReadFirstMain(Taxr,1,true)) then begin 
+            ClearRow(Emplr,Emplrw,1);
+            Emplrw.TaxCode=Taxr.Code;
+            Emplrw.TaxName=Taxr.Name;
+            Emplrw.SDate=oldEmplrw.StartDate;
+            Emplrw.EDate=oldEmplrw.EndDate;
+            MatRowInsert(Emplr,k,Emplrw);
+            k=k+1;
+          end;
+        end;
+      end;
+      if (RecordInsert(Emplr,false)) then begin end;
+    end;
+  end;
+
+//Tššlepingud->Tššlepingud
+  ResetLoop(oldContrr);
+  oldContrr.Code="";
+  while (LoopMain(oldContrr,1,true)) begin
+    testf=true;
+    Emplr.Code = oldContrr.Employee;
+    if (ReadFirstMain(Emplr,1,true)==false) then begin 
+      testf=false;
+    end;
+    if (oldContrr.Invalid!=0) then begin
+      testf=false;
+    end;
+    if (testf) then begin
+      RecordNew(Contrr);
+      Contrr.StartDate=oldContrr.StartDate;
+      Contrr.EndDate=oldContrr.EndDate;
+      Contrr.SerNr = NextSerNr("ContractVc",Contrr.StartDate,-1,false,"");
+      Contrr.OfficialContrCode=oldContrr.Code;
+      Contrr.EmplCode=oldContrr.Employee;
+      Contrr.Firstname=oldContrr.FirstName;
+      Contrr.Surname=oldContrr.LastName;
+      Contrr.VacDaysNorm=oldContrr.VacDays;
+      if (oldContrr.Closed!=0) then begin
+        Contrr.Status=3;
+      end else begin
+        Contrr.Status=0;
+      end;
+      Contrr.IncTaxFreeMinFlag=1;
+      Contrr.ITFStartDate=RepSpec.d1;
+      Contrr.AccGroupCode=RepSpec.f1;
+      k=0;
+      rwcnt=MatRowCnt(oldContrr);
+      for (i=0;i<rwcnt;i=i+1) begin
+        MatRowGet(oldContrr,i,oldContrrw);    
+        ClearRow(Contrr,Contrrw,1);
+        if nonblank(oldContrrw.PayType) then begin
+          PTr.Code = oldContrrw.PayType;
+          if (ReadFirstMain(PTr,1,true)) then begin 
+            Contrrw.PaymTypeCode=PTr.Code;
+            Contrrw.SDate=oldContrrw.ptStartDate;
+            Contrrw.EDate=oldContrrw.ptEndDate;
+            Contrrw.Sum=oldContrrw.Amount;
+            Contrrw.WorkLoad=1;
+            Contrrw.LoadSum=oldContrrw.Amount;
+            AGr.Code = RepSpec.f1;
+            if (ReadFirstMain(AGr,1,true)==false) then begin
+              RecordNew(AGr);
+              AGr.Code=RepSpec.f1;
+              if (RecordInsert(AGr,false)) then begin end;
+            end;
+            Contrrw.WeekLoad=8;
+            Contrrw.ObjCode=oldContrrw.Objects;
+            MatRowInsert(Contrr,k,Contrrw);
+            k=k+1;
+          end;
+        end;
+      end;
+      if (RecordInsert(Contrr,false)) then begin end;
+    end;
+  end;
+  
+//Puudumised->Algsaldod, Puudumised
+  RecordNew(AFBr);
+  if (GetNextAbsFBSerNr(AFBr.SerNr)) then begin end;
+  k=0;
+  ResetLoop(MDr);
+  MDr.Employee="";
+  while (LoopKey("Employee",MDr,1,true)) begin
+    contrsernr=0;
+    testf=true;
+    if (MDr.OKFlag==0) then begin
+      testf=false;
+    end;
+    if (MDr.Invalid!=0) then begin
+      testf=false;
+    end;
+    if (testf) then begin
+      Contrr.Status=0;
+      Contrr.EmplCode= MDr.Employee;
+      if (ReadFirstKey("Status",Contrr,2,true)) then begin
+        contrsernr=Contrr.SerNr;
+      end else begin
+        Contrr.EmplCode= MDr.Employee;
+        if (ReadFirstKey("EmplCode",Contrr,1,true)) then begin
+          contrsernr=Contrr.SerNr;
+        end;
+      end;
+      if (contrsernr>0) then begin
+        ClearRow(AFBr,AFBrw,1);
+        AFBrw.ContrSerNr=contrsernr;
+        AFBrw.Firstname=Contrr.Firstname;
+        AFBrw.Surname=Contrr.Surname;
+        AFBrw.AbsTypeCode= MDr.Type;
+        AFBrw.SDate=MDr.StartDate;
+        AFBrw.EDate=MDr.EndDate;
+        MatRowInsert(AFBr,k,AFBrw);
+        k=k+1;
+      end;
+      if (k==999) then begin
+        if (RecordInsert(AFBr,false)) then begin end;
+        RecordNew(AFBr);
+        if (GetNextAbsFBSerNr(AFBr.SerNr)) then begin end;
+        k=0;
+      end;
+    end;
+  end;
+  if ((k>0) and (k<999)) then begin
+    if (RecordInsert(AFBr,false)) then begin end;
+  end;
+  
+//Leping (PuhkusepŠevi saada)->Algsaldod, PuhkusejŠŠk
+  RecordNew(VDFBr);
+  if (GetNextVacDaysFBSerNr(VDFBr.SerNr)) then begin end;
+  VDFBr.Year=RepSpec.f2;
+  k=0;
+  ResetLoop(oldContrr);
+  oldContrr.Employee="";
+  while (LoopKey("Employee",oldContrr,1,true)) begin
+    contrsernr=0;
+    testf=true;
+    if (oldContrr.Invalid!=0) then begin
+      testf=false;
+    end;
+    if (testf) then begin
+      Contrr.OfficialContrCode= oldContrr.Employee;
+      if (ReadFirstKey("OfficialContrCode",Contrr,1,true)) then begin
+        contrsernr=Contrr.SerNr;
+      end;
+      if (contrsernr>0) then begin
+        ClearRow(VDFBr,VDFBrw,1);
+        VDFBrw.ContrSerNr=contrsernr;
+        VDFBrw.Firstname=Contrr.Firstname;
+        VDFBrw.Surname=Contrr.Surname;
+        VDFBrw.VacDaysToUse= round(oldContrr.RealVacDays,SetRoundModeD(0));
+        MatRowInsert(VDFBr,k,VDFBrw);
+        k=k+1;
+      end;
+      if (k==999) then begin
+        if (RecordInsert(VDFBr,false)) then begin end;
+        RecordNew(VDFBr);
+        if (GetNextVacDaysFBSerNr(VDFBr.SerNr)) then begin end;
+        VDFBr.Year=RepSpec.f2;
+        k=0;
+      end;
+    end;
+  end;
+  if ((k>0) and (k<999)) then begin
+    if (RecordInsert(VDFBr,false)) then begin end;
+  end;
+
+//Arvestused->Algsaldod, Tšštasu
+  if (PayTypeOk) then begin
+    cnt=0;
+    ResetLoop(SCr);
+    SCr.SerNr=-1;
+    while (LoopMain(SCr,1,true)) begin
+      testf=true;
+      if (SCr.Invalid!=0) then begin
+        testf=false;
+      end;
+      if (SCr.OKFlag!=1) then begin
+        testf=false;
+      end;
+      if (testf) then begin
+        rwcnt=MatRowCnt(SCr);
+        for (i=0;i<rwcnt;i=i+1) begin
+          MatRowGet(SCr,i,SCrw);    
+          for (j=0;j<ptrwcnt;j=j+1) begin
+            MatRowGet(oldPTBr,j,oldPTBrw);    
+            if (SCrw.PayType==oldPTBrw.PayType) then begin
+              PutToArray(contrcode,year,month,sum,cnt,SCr.EmplContract,SCr.CalcYear,SCr.CalcMonth,SCrw.RowSum);
+            end;
+          end;  
+        end;   
+      end;
+    end;
+   //array sorting by contract code
+    for (j=0;j<cnt-1;j=j+1) begin
+      for (i=j+1;i<cnt;i=i+1) begin
+        if (contrcode[j]>contrcode[i]) then begin
+          tmpstr=contrcode[i];
+          contrcode[i]=contrcode[j];
+          contrcode[j]=tmpstr;
+          tmpint=year[i];
+          year[i]=year[j];
+          year[j]=tmpint;
+          tmpint=month[i];
+          month[i]=month[j];
+          month[j]=tmpint;
+          tmpval=sum[i];
+          sum[i]=sum[j];
+          sum[j]=tmpval;
+        end;
+      end;
+    end;
+   //array sorting by date in contract code's blocks
+    for (j=0;j<cnt-1;j=j+1) begin
+      for (i=j+1;i<cnt;i=i+1) begin
+        if (contrcode[j]==contrcode[i]) then begin
+          tmpdate1.day=DaysInMonth(year[j],month[j]);
+          tmpdate1.month=month[j];
+          tmpdate1.year=year[j];
+          tmpdate2.day=DaysInMonth(year[i],month[i]);
+          tmpdate2.month=month[i];
+          tmpdate2.year=year[i];
+          if (tmpdate1>tmpdate2) then begin
+            tmpstr=contrcode[i];
+            contrcode[i]=contrcode[j];
+            contrcode[j]=tmpstr;
+            tmpint=year[i];
+            year[i]=year[j];
+            year[j]=tmpint;
+            tmpint=month[i];
+            month[i]=month[j];
+            month[j]=tmpint;
+            tmpval=sum[i];
+            sum[i]=sum[j];
+            sum[j]=tmpval;
+          end;
+        end;
+      end;
+    end;
+ 
+    RecordNew(SFBr);
+    if (GetNextSalFBSerNr(SFBr.SerNr)) then begin end;
+    k=0;
+    for (j=0;j<cnt;j=j+1) begin
+      Contrr.OfficialContrCode=contrcode[j];
+      if (ReadFirstKey("OfficialContrCode",Contrr,1,true)) then begin
+        ClearRow(SFBr,SFBrw,1);
+        SFBrw.ContrSerNr=Contrr.SerNr;
+        SFBrw.Firstname=Contrr.Firstname;
+        SFBrw.Surname=Contrr.Surname;
+        tmpdate.day=DaysInMonth(year[j],month[j]);
+        tmpdate.month=month[j];
+        tmpdate.year=year[j];
+        SFBrw.FBDate=tmpdate;
+        SFBrw.BrutoSum=sum[j];
+        MatRowInsert(SFBr,k,SFBrw);
+        k=k+1;
+      end;
+      if (k==999) then begin
+        if (RecordInsert(SFBr,false)) then begin end;
+        RecordNew(SFBr);
+        if (GetNextSalFBSerNr(SFBr.SerNr)) then begin end;
+        k=0;
+      end;
+    end;
+  end;
+  if ((k>0) and (k<999)) then begin
+    if (RecordInsert(SFBr,false)) then begin end;
+  end;
+LConvertOldPayrollDataMn:;
+  return;
+end;

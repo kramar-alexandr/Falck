@@ -1,0 +1,282 @@
+external procedure SetMarkFlag(integer,var integer);
+external function boolean PaymTypeExsists(string);
+
+global
+function LongInt BailiffVcRecordDefaults(var record BailiffVc Bailr,record BailiffVc Bail2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  
+  BailiffVcRecordDefaults = res; 
+  return;
+end;
+
+global
+function LongInt BailiffVcRecordDuplicate(var record BailiffVc Bailr,record BailiffVc Bail2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+ 
+  Bailr.OKFlag=0;
+  SetMarkFlag(Bailr.OKFlag,Bailr.OKMark);
+  Bailr.ContrSerNr = -1;
+  Bailr.Firstname = "";
+  Bailr.Surname = "";
+  BailiffVcRecordDuplicate = res; 
+  return;
+end;
+
+global
+function LongInt BailiffVcRecordCheck(var record BailiffVc Bailr,record BailiffVc Bail2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  row BailiffVc Bailrw;
+  record BailiffVc Bail3r;
+  integer rwcnt,i;
+  LongInt updatemode,insertmode;
+  boolean checkflag,blankrwflag;
+  
+  res = 0;
+  checkflag = false;
+  blankrwflag = false;
+  insertmode = 1;
+  updatemode = 2;
+
+  if (stat!=insertmode) then begin
+    if (Bail2r.OKFlag!=0) then begin
+      goto LBailiffVcRecordCheck;
+    end;
+  end;
+  
+  if (Bailr.ContrSerNr<=0)  then begin
+    RecordCheckError(1500318,"",-1,"ContrSerNr");      
+    res = -1; 
+    goto LBailiffVcRecordCheck;
+  end;
+  
+  if (stat==insertmode) or (stat==updatemode and Bailr.ContrSerNr!=Bail2r.ContrSerNr) then begin
+    Bail3r.ContrSerNr = Bailr.ContrSerNr;
+    if (ReadFirstMain(Bail3r,1,true)) then begin
+      RecordCheckError(1547," " & Bailr.ContrSerNr,-1,"ContrSerNr");      
+      res = -1; 
+      goto LBailiffVcRecordCheck;
+    end;
+  end;   
+
+  if blank(Bailr.PaymTypeCode1) then begin
+    blankrwflag = true;
+  end;
+  if nonblank(Bailr.PaymTypeCode2) then begin
+    if (blankrwflag) then begin
+      RecordCheckError(1006,"",-1,"PaymTypeCode1");      
+      res = -1; 
+      goto LBailiffVcRecordCheck;
+    end;
+  end else begin
+    blankrwflag = true;
+  end;
+  if nonblank(Bailr.PaymTypeCode3) then begin
+    if (blankrwflag) then begin
+      RecordCheckError(1006,"",-1,"PaymTypeCode2");      
+      res = -1; 
+      goto LBailiffVcRecordCheck;
+    end;
+  end else begin
+    blankrwflag = true;
+  end;
+  if nonblank(Bailr.PaymTypeCode4) then begin
+    if (blankrwflag) then begin
+      RecordCheckError(1006,"",-1,"PaymTypeCode3");      
+      res = -1; 
+      goto LBailiffVcRecordCheck;
+    end;
+  end else begin
+    blankrwflag = true;
+  end;
+  if nonblank(Bailr.PaymTypeCode5) then begin
+    if (blankrwflag) then begin
+      RecordCheckError(1006,"",-1,"PaymTypeCode4");      
+      res = -1; 
+      goto LBailiffVcRecordCheck;
+    end;
+  end else begin
+    blankrwflag = true;
+  end;
+  if nonblank(Bailr.PaymTypeCode6) then begin
+    if (blankrwflag) then begin
+      RecordCheckError(1006,"",-1,"PaymTypeCode5");      
+      res = -1; 
+      goto LBailiffVcRecordCheck;
+    end;
+  end else begin
+    blankrwflag = true;
+  end;
+  if nonblank(Bailr.PaymTypeCode7) then begin
+    if (blankrwflag) then begin
+      RecordCheckError(1006,"",-1,"PaymTypeCode6");      
+      res = -1; 
+      goto LBailiffVcRecordCheck;
+    end;
+  end else begin
+    blankrwflag = true;
+  end;
+  if nonblank(Bailr.PaymTypeCode8) then begin
+    if (blankrwflag) then begin
+      RecordCheckError(1006,"",-1,"PaymTypeCode7");      
+      res = -1; 
+      goto LBailiffVcRecordCheck;
+    end;
+  end else begin
+    blankrwflag = true;
+  end;
+  if nonblank(Bailr.PaymTypeCode9) then begin
+    if (blankrwflag) then begin
+      RecordCheckError(1006,"",-1,"PaymTypeCode8");      
+      res = -1; 
+      goto LBailiffVcRecordCheck;
+    end;
+  end else begin
+    blankrwflag = true;
+  end;
+  if nonblank(Bailr.PaymTypeCode10) then begin
+    if (blankrwflag) then begin
+      RecordCheckError(1006,"",-1,"PaymTypeCode9");      
+      res = -1; 
+      goto LBailiffVcRecordCheck;
+    end;
+  end else begin
+    blankrwflag = true;
+  end;
+
+  if (nonblank(Bailr.PaymTypeCode1) and (PaymTypeExsists(Bailr.PaymTypeCode1)==false)) then begin
+    RecordCheckError(1500326," " & Bailr.PaymTypeCode1,-1,"PaymTypeCode1");      
+    res = -1; 
+    goto LBailiffVcRecordCheck;
+  end;
+  if (nonblank(Bailr.PaymTypeCode2) and (PaymTypeExsists(Bailr.PaymTypeCode2)==false)) then begin
+    RecordCheckError(1500326," " & Bailr.PaymTypeCode2,-1,"PaymTypeCode2");      
+    res = -1; 
+    goto LBailiffVcRecordCheck;
+  end;
+  if (nonblank(Bailr.PaymTypeCode3) and (PaymTypeExsists(Bailr.PaymTypeCode3)==false)) then begin
+    RecordCheckError(1500326," " & Bailr.PaymTypeCode3,-1,"PaymTypeCode3");      
+    res = -1; 
+    goto LBailiffVcRecordCheck;
+  end;
+  if (nonblank(Bailr.PaymTypeCode4) and (PaymTypeExsists(Bailr.PaymTypeCode4)==false)) then begin
+    RecordCheckError(1500326," " & Bailr.PaymTypeCode4,-1,"PaymTypeCode4");      
+    res = -1; 
+    goto LBailiffVcRecordCheck;
+  end;
+  if (nonblank(Bailr.PaymTypeCode5) and (PaymTypeExsists(Bailr.PaymTypeCode5)==false)) then begin
+    RecordCheckError(1500326," " & Bailr.PaymTypeCode5,-1,"PaymTypeCode5");      
+    res = -1; 
+    goto LBailiffVcRecordCheck;
+  end;
+  if (nonblank(Bailr.PaymTypeCode6) and (PaymTypeExsists(Bailr.PaymTypeCode6)==false)) then begin
+    RecordCheckError(1500326," " & Bailr.PaymTypeCode6,-1,"PaymTypeCode6");      
+    res = -1; 
+    goto LBailiffVcRecordCheck;
+  end;
+  if (nonblank(Bailr.PaymTypeCode7) and (PaymTypeExsists(Bailr.PaymTypeCode7)==false)) then begin
+    RecordCheckError(1500326," " & Bailr.PaymTypeCode7,-1,"PaymTypeCode7");      
+    res = -1; 
+    goto LBailiffVcRecordCheck;
+  end;
+  if (nonblank(Bailr.PaymTypeCode8) and (PaymTypeExsists(Bailr.PaymTypeCode8)==false)) then begin
+    RecordCheckError(1500326," " & Bailr.PaymTypeCode8,-1,"PaymTypeCode8");      
+    res = -1; 
+    goto LBailiffVcRecordCheck;
+  end;
+  if (nonblank(Bailr.PaymTypeCode9) and (PaymTypeExsists(Bailr.PaymTypeCode9)==false)) then begin
+    RecordCheckError(1500326," " & Bailr.PaymTypeCode9,-1,"PaymTypeCode9");      
+    res = -1; 
+    goto LBailiffVcRecordCheck;
+  end;
+  if (nonblank(Bailr.PaymTypeCode10) and (PaymTypeExsists(Bailr.PaymTypeCode10)==false)) then begin
+    RecordCheckError(1500326," " & Bailr.PaymTypeCode10,-1,"PaymTypeCode10");      
+    res = -1; 
+    goto LBailiffVcRecordCheck;
+  end;
+  
+  if nonblank(Bailr.PaymTypeCode1) then begin
+    checkflag = true;
+  end;
+  if (checkflag) then begin
+    rwcnt=MatRowCnt(Bailr);
+    if (rwcnt==0) then begin
+      RecordCheckError(1500507,"",-1,"Math");      
+      res = -1; 
+      goto LBailiffVcRecordCheck;
+    end;
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(Bailr,i,Bailrw);
+      if blank(Bailrw.SDate) then begin
+        RecordCheckError(1500321,"",i,"SDate");      
+        res = -1; 
+        goto LBailiffVcRecordCheck;
+      end;
+      if nonblank(Bailrw.EDate) then begin
+        if (Bailrw.EDate<Bailrw.SDate) then begin
+          RecordCheckError(1500322,"",i,"EDate");      
+          res = -1; 
+          goto LBailiffVcRecordCheck;
+        end;
+      end;
+      if (Bailrw.NetoSum<0) then begin
+        RecordCheckError(1500506,"",i,"NetoSum");      
+        res = -1; 
+        goto LBailiffVcRecordCheck;
+      end;
+    end;
+  end;  
+LBailiffVcRecordCheck:;
+  if (res==-1) then begin
+    Bailr.OKFlag=0;
+    SetMarkFlag(Bailr.OKFlag,Bailr.OKMark);
+  end;
+  BailiffVcRecordCheck = res;
+  return;
+end;
+
+global
+function LongInt BailiffVcRecordSave(var record BailiffVc Bailr,record BailiffVc Bail2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+ 
+  SetMarkFlag(Bailr.OKFlag,Bailr.OKMark);
+  BailiffVcRecordSave = res; 
+  return;
+end;
+
+global
+function LongInt BailiffVcRecordUpdate(var record BailiffVc Bailr,record BailiffVc Bail2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+ 
+  SetMarkFlag(Bailr.OKFlag,Bailr.OKMark);
+  BailiffVcRecordUpdate = res; 
+  return;
+end;
+
+global
+function LongInt BailiffVcRecordRemoveTest(var record BailiffVc Bailr,record BailiffVc Bail2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+
+  res = 1;
+  if (Bailr.OKFlag!=0) then begin
+    MessageBox(1560,"")
+    res = 0;
+  end;
+  BailiffVcRecordRemoveTest = res; 
+  return;
+end;
+
+global
+updating function LongInt BailiffVcRecordImport(var record BailiffVc Bailr,record BailiffVc Bail2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+ 
+  SetMarkFlag(Bailr.OKFlag,Bailr.OKMark);
+  BailiffVcRecordImport = res; 
+  return;
+end;

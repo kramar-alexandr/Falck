@@ -1,0 +1,436 @@
+external procedure DoPrintTSD_part1(boolean,integer,integer,var integer);
+external procedure DoPrintTSD_part2(boolean,record EmplVc,val,var integer);
+external procedure DoPrintTSD_part3(boolean,string,val,val,val,val,val,val,val,val,val,val,val,string);
+external procedure DoPrintTSD_part4(boolean,val,val,val,val,val,val,val,val,val,val,val,val);
+external procedure DoExportTSD_part1(boolean,record EmplVc);
+external procedure DoExportTSD_part2(boolean,record EmplVc,val,string,integer,val,val,val,val,val,val,val,val,val,val,val,val,val,string,integer,integer);
+external procedure ExportPlainXml(string,Integer);
+external procedure PaymPayrollVcEmplSumsTotal(integer,integer,var val,var val,var val,var val,var val,var val,var array string,var integer,array string,integer);
+external procedure PaymPayrollVcEmplSums(string,LongInt,integer,integer,var vector val,var vector val,array string,integer,var boolean);
+external procedure GetTSDRowsArray(var array string,var Integer);
+external function val GetMinSocTax(date);
+external function val GetMinSocTaxPaymSum(date,val,string);
+external function string 255 GetTSDRowSpec(string);
+external function val GetEmplTaxPercent(string,date,integer,val,var string,var string,var string);
+external function boolean EmplSocTaxMin(string);
+external function roundmode GetSalaryRoundMode(string);
+external function val CalcIncTax(val);
+external function val GetIncTaxFreeMin(LongInt,date);
+
+global
+procedure TSDAddRn(record RcVc RepSpec)
+begin
+  record EmplVc Emplr;
+  record ContractVc Contrr;
+  row ContractVc Contrrw;
+  vector val tsdrwsum;
+  vector val tsdrwsumtot;
+  array string 20 tsdrwcode;
+  string 255 tstr,emplcode,tmpstr,tsdrowspec;
+  integer year,month,inctaxfreeminflag,dispensflag,rw,i,j,tsdrwcnt,rwcnt,calcvalue;
+  boolean TrHs,TrHs1,testf,printemplflag,tsdadd1,repflag;
+  val s1030,s1060,s1070,s1090,s1100,s1110,s1120,s1130,s1140,s1160,s1170,s2150,s2160,coef,inctaxperc,minsoctax,minsoctaxpaymsum;
+  val stot1030,stot1060,stot1070,stot1090,stot1100,stot1110,stot1120,stot1130,stot1140,stot1160,stot1170,stot2150,stotSUPP,checksum,minsum,diff,roundup;
+  date transdate;
+  LongInt ContractNr;
+  
+  if (RepSpec.JobDf==1) then begin 
+    repflag=true; //Report
+  end else begin
+    repflag=false; //Export
+  end; 
+
+  if (RepSpec.Custf==1) then begin 
+    tsdadd1=true; //Lisa 1
+  end else begin
+    tsdadd1=false; //Lisa 2
+  end; 
+  
+  year=RepSpec.flags[1];
+  month=RepSpec.flags[2];
+  rw = 1;
+  
+  if (repflag) then begin
+    DoPrintTSD_part1(tsdadd1,year,month,rw);
+  end;
+  calcvalue=RepSpec.flags[6];
+  
+  //Lisa
+  rw = 0;
+  transdate.day=01;
+  transdate.month=month;
+  transdate.year=year;
+  
+  GetTSDRowsArray(tsdrwcode,tsdrwcnt);
+  TrHs=true;
+  ResetLoop(Emplr);
+  Emplr.ClosedFlag=0;
+  while (LoopKey("ClosedFlag",Emplr,1,TrHs)) begin
+    if (Emplr.ClosedFlag!=0) then begin TrHs=false; end;
+    if (TrHs) then begin
+      testf=true;
+      printemplflag=false;
+      if (tsdadd1) then begin
+        if (Emplr.NotResidentFlag!=0) then begin testf=false; end;
+      end else begin
+        if (Emplr.NotResidentFlag==0) then begin testf=false; end;
+      end;  
+      if (testf) then begin
+        coef=blankval;
+        inctaxperc=0;
+        TrHs1=true;
+        emplcode=Emplr.Code;
+        ResetLoop(Contrr);
+        Contrr.EmplCode=emplcode;
+        while (LoopKey("EmplCode",Contrr,1,TrHs1)) begin
+          if (Contrr.EmplCode!=emplcode) then begin TrHs1=false; end;
+          if (TrHs1) then begin
+            if (Contrr.IncTaxFreeMinFlag==1) then begin
+              inctaxfreeminflag=1;
+            end else begin
+              inctaxfreeminflag=0;
+            end;
+            if (Contrr.DisPensFlag!=0) then begin
+              dispensflag=1;
+            end else begin
+              dispensflag=0;
+            end;
+            ContractNr = Contrr.SerNr;
+            rwcnt=MatRowCnt(Contrr);
+            for (i=0;i<rwcnt;i=i+1) begin
+              MatRowGet(Contrr,i,Contrrw);
+              if (DateInRange(transdate,Contrrw.SDate,Contrrw.EDate)) and (DateInRange(transdate,Contrr.StartDate,Contrr.EndDate)) then begin
+                coef=coef+Contrrw.WorkLoad;
+              end;
+            end;
+            inctaxperc=GetEmplTaxPercent(emplcode,transdate,0,1,tmpstr,tmpstr,tmpstr);
+            PaymPayrollVcEmplSums(emplcode,Contrr.SerNr,year,month,tsdrwsum,tsdrwsumtot,tsdrwcode,tsdrwcnt,printemplflag);
+          end;
+        end;
+        if (coef>1) then begin coef=1; end;
+//        if (tsdrwsumtot[emplcode & ":" & "1030"]>0) or (tsdrwsumtot[emplcode & ":" & "1100"]>0) then begin printemplflag=true; end;
+        if (printemplflag) then begin 
+          if (repflag) then begin
+            DoPrintTSD_part2(tsdadd1,Emplr,coef,rw);
+          end else begin
+            DoExportTSD_part1(tsdadd1,Emplr);
+          end;
+          stot1030=0;
+          stot1060=0;
+          stot1070=0;
+          stot1090=0;
+          stot1100=0;
+          stot1110=0;
+          stot1120=0;
+          stot1130=0;
+          stot1140=0;
+          stot1160=0;
+          stot1170=0;
+          stot2150=0;
+          stot1030=tsdrwsumtot[emplcode & ":" & "1030"];
+          stot1060=tsdrwsumtot[emplcode & ":" & "1060"];
+          stot1070=tsdrwsumtot[emplcode & ":" & "1070"];
+          stot1100=tsdrwsumtot[emplcode & ":" & "1100"];
+          stot1110=tsdrwsumtot[emplcode & ":" & "1110"];
+          stot1120=tsdrwsumtot[emplcode & ":" & "1120"];
+          stot1130=tsdrwsumtot[emplcode & ":" & "1130"];
+          stot1140=tsdrwsumtot[emplcode & ":" & "1140"];
+          stot1160=tsdrwsumtot[emplcode & ":" & "1160"];
+          stot1170=tsdrwsumtot[emplcode & ":" & "1170"];
+          stot2150=tsdrwsumtot[emplcode & ":" & "2150"];
+         //cust - begin, ts - 2018/02
+          stotSUPP=tsdrwsumtot[emplcode & ":" & "SUPP"];
+          checksum = 0; roundup = 0;
+          if (stotSUPP > 0) and (Contrr.IncTaxFreeMinFlag==1) then begin
+            checksum = round((CalcIncTax(stotSUPP)),GetSalaryRoundMode("2"));
+            minsum = GetIncTaxFreeMin(ContractNr,transdate);
+            if (checksum > minsum) then begin
+              checksum = minsum;
+            end;
+            diff = stot1160 - checksum;           
+            if (diff > -1) and (diff < 1) then begin
+              roundup = stot1160-checksum;
+              stot1160 = checksum;
+              stot2150 = stot2150 + roundup;
+            end;
+          end;
+         //end
+          s1070=0;
+          s1090=0;
+          minsoctaxpaymsum=GetMinSocTaxPaymSum(transdate,stot1060,emplcode);
+          if (stot1060<minsoctaxpaymsum) then begin
+            if (dispensflag!=0) then begin
+              s1090=0;
+              stot1090=s1090;
+            end else begin
+              if (EmplSocTaxMin(emplcode)) then begin
+                s1090=minsoctaxpaymsum-stot1060;
+              end else begin
+                s1090=0;
+              end;
+            end;  
+            stot1090=s1090;
+          end;
+
+          s1070=stot1070;
+          if (s1070<=0) then begin s1070=0; end;
+          if (s1090<=0) then begin s1090=0; end;
+
+          if (repflag) then begin
+           if (tsdadd1) then begin
+              OutVal(158,0,s1070,M4val,true);
+              OutVal(180,0,s1090,M4val,true);
+            end else begin
+              OutVal(181,0,s1070,M4val,true); //2080
+              OutVal(203,0,s1090,M4val,true); //2100
+            end;
+          end;
+
+          for (i=0;i<tsdrwcnt;i=i+1) begin        
+            s1030=0;
+            s1060=0;
+            s1100=0;
+            s1110=0;
+            s1120=0;
+            s1130=0;
+            s1140=0;
+            s1160=0;
+            s1170=0;
+            s2150=0;
+            s1030=tsdrwsum[emplcode & ":" & tsdrwcode[i] & ":" & "1030"];
+            s1060=tsdrwsum[emplcode & ":" & tsdrwcode[i] & ":" & "1060"];
+            s1100=tsdrwsum[emplcode & ":" & tsdrwcode[i] & ":" & "1100"];
+            s1110=tsdrwsum[emplcode & ":" & tsdrwcode[i] & ":" & "1110"];
+            s1120=tsdrwsum[emplcode & ":" & tsdrwcode[i] & ":" & "1120"];
+            s1130=tsdrwsum[emplcode & ":" & tsdrwcode[i] & ":" & "1130"];
+            s1140=tsdrwsum[emplcode & ":" & tsdrwcode[i] & ":" & "1140"];
+            s1160=tsdrwsum[emplcode & ":" & tsdrwcode[i] & ":" & "1160"];
+            s1170=tsdrwsum[emplcode & ":" & tsdrwcode[i] & ":" & "1170"];
+            s2150=tsdrwsum[emplcode & ":" & tsdrwcode[i] & ":" & "2150"];
+           //cust - begin, ts - 2018/02
+            if (roundup!=0) and (i==0) then begin
+              s1160 = s1160 + roundup;
+              s2150 = s2150 + roundup;
+            end;
+           //end    
+            if (s1030<=0) then begin s1030=0; end;
+            if (s1060<=0) then begin s1060=0; end;
+            if (s1100<=0) then begin s1100=0; end;
+            if (s1110<=0) then begin s1110=0; end;
+            if (s1120<=0) then begin s1120=0; end;
+            if (s1130<=0) then begin s1130=0; end;
+            if (s1140<=0) then begin s1140=0; end;
+            if (s1160<=0) then begin s1160=0; end;
+            if (s1170<=0) then begin s1170=0; end;
+            if (s2150<=0) then begin s2150=0; end;
+            if ((s1030>0) or (s1100>0)) then begin
+              tsdrowspec="";
+              tsdrowspec=GetTSDRowSpec(tsdrwcode[i]);
+              if (repflag) then begin
+                DoPrintTSD_part3(tsdadd1,tsdrwcode[i],s1030,s1060,s1100,s1110,s1120,s1130,s1140,s1160,s1170,s2150,inctaxperc,tsdrowspec);
+              end else begin
+                DoExportTSD_part2(tsdadd1,Emplr,coef,tsdrwcode[i],i,s1030,s1060,s1070,s1090,s1100,s1110,s1120,s1130,s1140,s1160,s1170,s2150,inctaxperc,tsdrowspec,dispensflag,calcvalue);              
+              end;
+            end;
+          end;
+          if (repflag==false) then begin
+            if (tsdadd1) then begin
+              ExportPlainXml("</vmList>",5);
+              ExportPlainXml("</tsd_L1_A_Isik>",4);
+            end else begin
+              ExportPlainXml("</vmList>",5);
+              ExportPlainXml("</tsd_L2_A_Isik>",4);
+            end;
+          end;
+        end;
+      end;
+    end;
+    if (printemplflag) then begin 
+      if (repflag) then begin 
+        DoPrintTSD_part4(tsdadd1,stot1030,stot1060,stot1070,stot1090,stot1100,stot1110,stot1120,stot1130,stot1140,stot1160,stot1170,stot2150);
+      end;
+    end;
+  end;
+  if (repflag) then begin 
+    EndJob;
+  end;
+LTSDRn:;
+  return;
+end;
+
+global
+procedure DblTSDAdd1(string dblstr,string l,integer curwn)
+begin
+  record RcVc CurRepSpec;
+  record RcVc RepSpec;
+
+  if (nonblank(dblstr)) then begin
+    GetWindowRecord(curwn,CurRepSpec);
+    ReportDefaults(RepSpec,"TSDRClass");
+    RepSpec.repname = "TSDAddRn";
+    RepSpec.Media = mtScreen;
+    RepSpec.stoff = -1;
+    RepSpec.flags[1] = CurRepSpec.flags[1];
+    RepSpec.flags[2] = CurRepSpec.flags[2];
+    RepSpec.Custf=1; //Lisa 1
+    RepSpec.JobDf=1; //Report
+    RunReport(RepSpec,0);
+  end;
+  return;
+end;
+
+global
+procedure DblTSDAdd2(string dblstr,string l,integer curwn)
+begin
+  record RcVc CurRepSpec;
+  record RcVc RepSpec;
+
+  if (nonblank(dblstr)) then begin
+    GetWindowRecord(curwn,CurRepSpec);
+    ReportDefaults(RepSpec,"TSDRClass");
+    RepSpec.repname = "TSDAddRn";
+    RepSpec.Media = mtScreen;
+    RepSpec.stoff = -1;
+    RepSpec.flags[1] = CurRepSpec.flags[1];
+    RepSpec.flags[2] = CurRepSpec.flags[2];
+    RepSpec.Custf=2; //Lisa 2
+    RepSpec.JobDf=1; //Report
+    RunReport(RepSpec,0);
+  end;
+  return;
+end;
+
+global
+procedure TSDRn(record RcVc RepSpec)
+begin
+  record EmplVc Emplr;
+  record ContractVc Contrr;
+  record CYBlock CYr;
+  array string 20 zerotsdrwcode;
+  array string 20 tsdrwcode;
+  string 255 tstr;
+  val brsoctaxtot,pensiontot,unemplinstot,inctaxtot,soctaxtot,emplunemplinstot;
+  integer year,month,rw,acnt,i,tsdrwcnt;
+
+  year=RepSpec.flags[1];
+  month=RepSpec.flags[2];
+  rw = 1;
+  GetTSDRowsArray(tsdrwcode,tsdrwcnt);
+  
+  StartReportJob(USetStr(1500429));
+  tstr=USetStr(1500430) & year;
+  Header(rw,tstr,1);
+  rw = rw + 1;
+  tstr=USetStr(1500431) & month;
+  Header(rw,tstr,1);
+  rw = rw + 1;
+  EndHeader;
+
+  SetRepCol(2,30);
+  SetRepCol(3,200);
+  SetRepCol(4,255);
+  SetRepCol(5,310);
+  SetRepCol(6,15);
+  SetRepCol(7,365);
+  SetRepCol(8,420);
+  SetRepCol(9,480);
+
+  BlockLoad(CYr);
+  StartFormat(16);
+  OutString(0,0,"MAKSU- JA TOLLIAMETI PIIRKONDLIK MAKSUKESKUS",false);
+  EndFormat;
+  Gray_Divider(0,1);
+  StartFormat(16);
+  OutString(0,0,"MAKSUKOHUSTUSLANE",false);
+  EndFormat;
+  Gray_Divider(0,1);
+  StartFormat(16);
+  OutString(0,0,CYr.CompName,false);
+  EndFormat;
+  StartFormat(16);
+  OutString(0,0,CYr.Addr0,false);
+  OutString(1,0,"Reg. nr. " & CYr.OrgNr,true);
+  EndFormat;
+  StartFormat(16);
+  OutString(0,0,CYr.Addr1,false);
+  OutString(1,0,"Telefon " & CYr.Phone,true);
+  EndFormat;
+  StartFormat(16);
+  OutString(0,0,CYr.Addr2,false);
+  OutString(1,0,"E-post " & CYr.emailAddr,true);
+  EndFormat;
+  Gray_Divider(0,1);
+  StartFormat(16);
+  OutString(0,0,"TULU- JA SOTSIAALMAKSU NING KOHUSTUSLIKU KOGUMISPENSIONI",false);
+  EndFormat;
+  StartFormat(16);
+  OutString(0,0,"JA T……TUSKINDLUSTUSE MAKSETE DEKLARATSIOON",false);
+  EndFormat;
+  StartFormat(16);
+  EndFormat;
+  Gray_Divider(0,1);
+
+  PaymPayrollVcEmplSumsTotal(year,month,brsoctaxtot,pensiontot,unemplinstot,inctaxtot,soctaxtot,emplunemplinstot,zerotsdrwcode,acnt,tsdrwcode,tsdrwcnt);
+
+  StartFormat(16);
+  OutString(0,0,"1. Arvestatud sotsiaalmaks",false);
+  OutVal(1,0,soctaxtot,M4val,true);
+  EndFormat;
+  StartFormat(16);
+  OutString(0,0,"2. Kinnipeetud tulumaks",false);
+  OutVal(1,0,inctaxtot,M4val,true);
+  EndFormat;
+  StartFormat(16);
+  OutString(0,0,"3. Sotsiaalmaksuga maksustatud vŠljamaksed",false);
+  OutVal(1,0,brsoctaxtot,M4val,true);
+  EndFormat;
+  StartFormat(16);
+  OutString(0,0,"4. Kinnipeetud tšštuskindlustusmakse",false);
+  OutVal(1,0,unemplinstot,M4val,true);
+  EndFormat;
+  StartFormat(16);
+  OutString(0,0,"5. Arvestatud tšštuskindlustusmakse",false);
+  OutVal(1,0,emplunemplinstot,M4val,true);
+  EndFormat;
+  StartFormat(16);
+  OutString(0,0,"6. Kohustusliku kogumispensioni makse ja tŠiendav sissemakse",false);
+  OutVal(1,0,pensiontot,M4val,true);
+  EndFormat;
+
+  StartFormat(16);
+  EndFormat;
+  Gray_Divider(0,1);
+
+  tstr="";
+  if (acnt>0) then begin
+    for (i=0;i<acnt;i=i+1) begin        
+      if (tstr=="") then begin
+        tstr=USetStr(1500489) & zerotsdrwcode[i];
+      end else begin
+        tstr=tstr & ", " & zerotsdrwcode[i];
+      end;
+    end;
+    StartFormat(16);
+    OutString(0,"",tstr,false);
+    EndFormat;
+  end;
+
+  StartFormat(16);
+  OutString(0,"DblTSDAdd1","Vormi TSD lisa 1",false);
+  EndFormat;
+  StartFormat(16);
+  OutString(0,"DblTSDAdd2","Vormi TSD lisa 2",false);
+  EndFormat;
+  StartFormat(16);
+  EndFormat;
+   Gray_Divider(0,1);
+ StartFormat(16);
+  OutString(0,0,"MAKSUKOHUSTUSLANE / JUHT VÍI ESINDAJA: " & CYr.Manager,false);
+  EndFormat;
+  StartFormat(16);
+  OutString(0,0,"KOOSTAJA: " & CYr.ChiefAccountant,false);
+  EndFormat;
+  EndJob;
+LTSDRn:;
+  return;
+end;

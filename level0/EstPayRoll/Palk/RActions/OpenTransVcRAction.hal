@@ -1,0 +1,246 @@
+external function integer CheckObjs(string,string,var string);
+external function boolean ContractExsistsAndActive(LongInt);
+external function boolean PositionExsistsAndActive(string,LongInt,date);
+external function boolean OTrInUse(record OpenTransVc);
+external function Boolean SerNrTestOpenTransVc(LongInt,date);
+external function boolean PaymTypeExsists(string);
+external procedure SetMarkFlag(integer,var integer);
+
+global
+function LongInt OpenTransVcRecordDefaults(var record OpenTransVc OTr,record OpenTransVc OT2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+
+  OTr.SerNr = -1;
+  OTr.TransDate=CurrentDate;
+  if (SingleUserMode) then begin
+    OTr.SerNr = NextSerNr("OpenTransVc",OTr.TransDate,-1,false,"");
+  end;
+  OpenTransVcRecordDefaults = res; 
+  return;
+end;
+
+global
+function LongInt OpenTransVcRecordDuplicate(var record OpenTransVc OTr,record OpenTransVc OT2r,LongInt stat,LongInt long4)
+begin
+  row OpenTransVc OTrw;
+  LongInt res;
+  integer rwcnt,i;
+  
+  OTr.SerNr = -1;
+  OTr.OKFlag = 0;
+  SetMarkFlag(OTr.OKFlag,OTr.OKMark);
+  OTr.CalcFlag = 0;
+  SetMarkFlag(OTr.CalcFlag,OTr.CalcMark);
+  OTr.Invalid = 0;
+
+  if (SingleUserMode) then begin
+    OTr.SerNr = NextSerNr("OpenTransVc",OTr.TransDate,-1,false,"");
+  end;
+  OTr.TransDate=CurrentDate;
+  rwcnt=MatRowCnt(OTr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(OTr,i,OTrw);
+    OTrw.CalcSerNr=0;
+    MatRowPut(OTr,i,OTrw);
+  end;
+  OpenTransVcRecordDuplicate = res; 
+  return;
+end;
+
+global
+function LongInt OpenTransVcRecordCheck(var record OpenTransVc OTr,record OpenTransVc OT2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  record OpenTransVc OT3r;
+  row OpenTransVc OTrw;
+  LongInt updatemode,insertmode,errcode;
+  integer rwcnt,i;
+  string 255 tstr;
+
+  insertmode=1;
+  updatemode=2;
+  res = 0;
+
+  if (OT2r.Invalid!=0) then begin
+    RecordCheckError(1282,"",0,"");      
+    res = -1; 
+    goto LOpenTransVcRecordCheck;
+  end;
+  if (stat!=insertmode) then begin
+    if (OT2r.OKFlag!=0) then begin
+      goto LOpenTransVcRecordCheck;
+    end;  
+  end;
+  
+  if (stat==updatemode) then begin
+    if (OTr.SerNr<=0)  then begin
+      OTr.SerNr = OT2r.SerNr;
+    end;
+  end;
+  if (OTr.SerNr==-1) then begin
+      OTr.SerNr = NextSerNr("OpenTransVc",OTr.TransDate,-1,false,"");
+  end;
+  if (SerNrTestOpenTransVc(OTr.SerNr,OTr.TransDate)==false) then begin
+    RecordCheckError(1557,"",-1,"SerNr");      
+    res = -1; 
+    goto LOpenTransVcRecordCheck;
+  end;
+
+  if (stat==insertmode) or (stat==updatemode and OTr.SerNr!=OT2r.SerNr) then begin
+    OT3r.SerNr = OTr.SerNr;
+    if (ReadFirstMain(OT3r,1,true)) then begin
+      RecordCheckError(1547," " & OTr.SerNr,-1,"SerNr");      
+      res = -1; 
+      goto LOpenTransVcRecordCheck;
+    end;
+  end;   
+  if (len(OTr.SerNr)<=0 or (OTr.SerNr<=0)) then begin
+    RecordCheckError(1500358,"",-1,"SerNr");      
+    res = -1; 
+    goto LOpenTransVcRecordCheck;
+  end;
+  if blank(OTr.TransDate) then begin
+    RecordCheckError(1500342,"",-1,"TransDate");      
+    res = -1; 
+    goto LOpenTransVcRecordCheck;
+  end;
+  if blank(OTr.PaymTypeCode) then begin
+    RecordCheckError(1500316,"",-1,"PaymTypeCode");      
+    res = -1; 
+    goto LOpenTransVcRecordCheck;
+  end;
+  if (PaymTypeExsists(OTr.PaymTypeCode)==false) then begin
+    RecordCheckError(1500326," " & OTr.PaymTypeCode,-1,"PaymTypeCode");      
+    res = -1; 
+    goto LOpenTransVcRecordCheck;
+  end;
+    
+  rwcnt=MatRowCnt(OTr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(OTr,i,OTrw);
+    if (OTrw.ContrSerNr<=0) then begin
+      RecordCheckError(1500318,"",i,"ContrSerNr");      
+      res = -1; 
+      goto LOpenTransVcRecordCheck; 
+    end else begin
+      if (ContractExsistsAndActive(OTrw.ContrSerNr)==false) then begin
+        RecordCheckError(1500332," või ei ole aktiivne " & OTrw.ContrSerNr,i,"ContrSerNr");      
+        res = -1; 
+        goto LOpenTransVcRecordCheck; 
+      end;
+    end;
+    if (OTrw.ContrSerNr>0) then begin
+      if blank(OTrw.PosCode) then begin
+        RecordCheckError(1500307," " & OTrw.PosCode,i,"PosCode");      
+        res = -1; 
+        goto LOpenTransVcRecordCheck;
+      end else begin
+        if (PositionExsistsAndActive(OTrw.PosCode,OTrw.ContrSerNr,OTr.TransDate)==false) then begin
+          RecordCheckError(1500324," või ei ole aktiivne antud kuupäeval " & OTrw.PosCode,i,"PosCode");      
+          res = -1; 
+          goto LOpenTransVcRecordCheck; 
+        end;
+      end;
+      if blank(OTrw.Tariff) then begin
+        RecordCheckError(1500353,"",i,"Tariff");      
+        res = -1; 
+        goto LOpenTransVcRecordCheck;
+      end;
+      if blank(OTrw.Amount) then begin
+        RecordCheckError(1500365,"",i,"Amount");      
+        res = -1; 
+        goto LOpenTransVcRecordCheck;
+      end;
+      if blank(OTrw.Sum) then begin
+        RecordCheckError(1500359,"",i,"Sum");      
+        res = -1; 
+        goto LOpenTransVcRecordCheck;
+      end;
+      if (nonblank(OTrw.ObjCode)) then begin
+        errcode = CheckObjs("",OTrw.ObjCode,tstr);
+        if (errcode!=0) then begin
+          RecordCheckError(errcode,tstr,i,"ObjCode");      
+          res = -1; 
+          goto LOpenTransVcRecordCheck;
+        end;
+      end;
+    end;
+  end;
+LOpenTransVcRecordCheck:;
+  if (res==-1) then begin
+    OTr.OKFlag=0;
+    SetMarkFlag(OTr.OKFlag,OTr.OKMark);
+  end;
+  OpenTransVcRecordCheck = res;
+  return;
+end;
+
+global
+function LongInt OpenTransVcRecordSave(var record OpenTransVc OTr,record OpenTransVc OT2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+    
+  SetMarkFlag(OTr.OKFlag,OTr.OKMark);
+  SetMarkFlag(OTr.CalcFlag,OTr.CalcMark);
+  OpenTransVcRecordSave = res; 
+  return;
+end;
+
+global
+function LongInt OpenTransVcRecordUpdate(var record OpenTransVc OTr,record OpenTransVc OT2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+    
+  SetMarkFlag(OTr.OKFlag,OTr.OKMark);
+  SetMarkFlag(OTr.CalcFlag,OTr.CalcMark);
+  OpenTransVcRecordUpdate = res; 
+  return;
+end;
+
+global
+function LongInt OpenTransVcRecordRemoveTest(var record OpenTransVc OTr,record OpenTransVc OT2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+
+  res = 1;
+  if ((OTr.OKFlag!=0) or (OTr.CalcFlag!=0)) then begin
+    MessageBox(1560,"")
+    res = 0;
+  end;
+  OpenTransVcRecordRemoveTest = res; 
+  return;
+end;
+
+global
+updating function LongInt OpenTransVcRecordInvalidateTest(var record OpenTransVc OTr,record OpenTransVc OT2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+  boolean testf;
+  
+  res = 0;
+  testf = OTrInUse(OTr);
+  if (testf) then begin
+    MessageBox(1500369,"")
+    res = 0;
+  end else begin
+    if (OTr.Invalid==0) and (OTr.OKFlag!=0) then begin
+      OTr.Invalid = 1;
+      res = 1;
+    end;
+  end;
+LOpenTransVcRecordInvalidateTest:;
+  OpenTransVcRecordInvalidateTest = res;  
+  return;
+end;
+
+global
+updating function LongInt OpenTransVcRecordImport(var record OpenTransVc OTr,record OpenTransVc OT2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+  
+  SetMarkFlag(OTr.OKFlag,OTr.OKMark);
+  SetMarkFlag(OTr.CalcFlag,OTr.CalcMark);
+  OpenTransVcRecordImport = res; 
+  return;
+end;

@@ -1,0 +1,35 @@
+global
+updating function LongInt MinSocTaxBlockCheck(var record MinSocTaxBlock MSTr,record MinSocTaxBlock MST2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  Integer i,rwcnt;
+  row MinSocTaxBlock MSTrw;
+  row MinSocTaxBlock MST2rw;
+  
+  res = 0;
+  rwcnt = MatRowCnt(MSTr);
+  for (i=0; i<rwcnt;i=i+1) begin
+    MatRowGet(MSTr,i,MSTrw);
+    if blank(MSTrw.SDate) then begin
+      RecordCheckError(1500321,"",i,"SDate");      
+      res = -1; 
+      goto LMinSocTaxBlockCheck;
+    end;
+    if (nonblank(MSTrw.EDate)) then begin
+      if (MSTrw.EDate<MSTrw.SDate) then begin
+        RecordCheckError(1500322,"",i,"EDate");      
+        res = -1; 
+        goto LMinSocTaxBlockCheck;
+      end;
+    end;
+    if blank(MSTrw.MinSocTaxPerMonth) then begin
+      RecordCheckError(1500376,"",i,"MinSocTaxPerMonth");      
+      res = -1; 
+      goto LMinSocTaxBlockCheck;
+    end;
+  end;  
+
+LMinSocTaxBlockCheck:;  
+  MinSocTaxBlockCheck = res;
+  return;
+end;

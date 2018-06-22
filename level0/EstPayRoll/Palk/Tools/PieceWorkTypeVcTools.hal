@@ -1,0 +1,35 @@
+external procedure NextM4Number(string,var string);
+
+global
+function boolean GetNextPieceWorkTypeNr(var string posnr)
+begin
+  boolean res;
+  record PieceWorkTypeVc PWTr;
+  
+  PWTr.Code = "ZZZZZZZZZZZZZZZZZZZ";
+  if (ReadLastMain(PWTr,1,false)) then begin
+    NextM4Number(PWTr.Code,posnr);
+  end else begin
+    posnr = "1";
+  end;
+  GetNextPieceWorkTypeNr = res;
+  return;
+end;
+
+global
+function boolean PWTrInUse(string pwtcode)
+begin
+  boolean res;
+  record PieceWorkVc PWr;
+
+//avatud kanded
+  PWr.PieceWorkTypeCode = pwtcode;
+  if (ReadFirstKey("PieceWorkTypeCode",PWr,1,true)) then begin
+    res=true;
+    goto LPWTrInUse;
+  end;
+
+LPWTrInUse:;
+  PWTrInUse = res; 
+  return;
+end;

@@ -1,0 +1,97 @@
+external function boolean GetNextISCONr(var string);
+
+global
+function LongInt ISCOCodeVcRecordDefaults(var record ISCOCodeVc ISCOr,record ISCOCodeVc ISCO2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  
+  if (SingleUserMode) then begin
+    if (GetNextISCONr(ISCOr.Code)) then begin end;
+  end else begin
+    ISCOr.Code = "";
+  end;
+
+  ISCOCodeVcRecordDefaults = res; 
+  return;
+end;
+
+global
+function LongInt ISCOCodeVcRecordDuplicate(var record ISCOCodeVc ISCOr,record ISCOCodeVc ISCO2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  
+  if (SingleUserMode) then begin
+    if (GetNextISCONr(ISCOr.Code)) then begin end;
+  end else begin
+    ISCOr.Code = "";
+  end;
+
+  ISCOCodeVcRecordDuplicate = res; 
+  return;
+end;
+
+global
+function LongInt ISCOCodeVcRecordCheck(var record ISCOCodeVc ISCOr,record ISCOCodeVc ISCO2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  record ISCOCodeVc ISCO3r;
+  string 255 tstr;
+  LongInt updatemode,insertmode;
+  
+  insertmode=1;
+  updatemode=2;
+  res = 0;
+  
+  if (blank(ISCOr.Code)) then begin
+    if (stat==updatemode) and nonblank(ISCO2r.Code) then begin
+      ISCOr.Code=ISCO2r.Code;
+    end else begin
+      if (GetNextISCONr(ISCOr.Code)) then begin end;
+    end;
+  end;
+  if (stat==insertmode) or (stat==updatemode and ISCOr.Code!=ISCO2r.Code) then begin
+    ISCO3r.Code = ISCOr.Code;
+    if (ReadFirstMain(ISCO3r,1,true)) then begin
+      RecordCheckError(1547," " & ISCOr.Code,-1,"Code");      
+      res = -1; 
+      goto LISCOCodeVcRecordCheck;
+    end;
+  end;
+  if (len(ISCOr.Code)<=0) then begin
+    RecordCheckError(1500309,"",-1,"Code");      
+    res = -1; 
+    goto LISCOCodeVcRecordCheck;
+  end;
+
+LISCOCodeVcRecordCheck:;
+  ISCOCodeVcRecordCheck = res;
+  return;
+end;
+
+function boolean ISCOrInUse(string iscocode)
+begin
+  boolean res;
+  record PositionVc Posr;  
+
+  Posr.ISCOCode = iscocode;
+  res=ReadFirstKey("ISCOCode",Posr,1,true);
+
+  ISCOrInUse = res; 
+  return;
+end;
+
+global
+function LongInt ISCOCodeVcRecordRemoveTest(var record ISCOCodeVc ISCOr,record ISCOCodeVc ISCO2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+  boolean testf;
+
+  res = 1;
+  testf = ISCOrInUse(ISCOr.Code);
+  if (testf) then begin
+    MessageBox(1500311,"")
+    res = 0;
+  end;
+  ISCOCodeVcRecordRemoveTest = res; 
+  return;
+end;

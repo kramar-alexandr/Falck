@@ -1,0 +1,563 @@
+//KB 28.06.2017 new functions for getting data from IR Graph API
+external procedure GetUserEmail(string,var string);
+external function string 255 AddStr(string,string,string);
+external function string 255 StrReplace(string,string,string);
+external function string 255 GetCompanyInfoBrowserLink(string,string);
+external updating procedure ServiceSelectWClassSendMulti(string,string);
+//xml tools
+external procedure EstEInvEndTag(string,area);
+external procedure EstEInvStartTag(string,area);
+//string tools
+external function Integer InString2(string,string);
+//HttpAreaTools
+external function integer ParseFullHTTPHeader(area, var vector string);
+//IRTools
+external updating procedure UpdateIRServiceLastDateAndTime(string);
+//RegisterUserToolsServer.hal
+remote procedure RequestNewTokenFromIR();
+
+function string 255 FormatPhoneNumber(string rawPhoneNumber)
+begin
+  string 255 res;
+  
+  if(nonblank(rawPhoneNumber)) then begin
+    res = right(rawPhoneNumber,len(rawPhoneNumber) - len("tel:"));
+    res = StrReplace(res,"(","");
+    res = StrReplace(res,")","");
+  end;
+  FormatPhoneNumber = res;
+  return;
+end;
+
+global
+function boolean TokenNotAccepted(area reply)
+begin
+  boolean res;
+  vector string 255 httpReplyHeaders;
+
+  res = false;
+  ParseFullHTTPHeader(reply, httpReplyHeaders);
+  if (httpReplyHeaders["Status"] == "403 Forbidden" OR httpReplyHeaders["Status"] == "401 Unauthorized") then begin
+    res = true;
+  end;
+  TokenNotAccepted = res;
+  return;
+end;
+
+function string 255 GetVatIDFromXML(xml xmlData)
+begin
+  string 255 res;
+  integer i;
+
+  i = 0;
+  if (XMLNodeExists(xmlData, "result/primaryTopic/vatID")) then begin
+    if (XMLNodeExists(xmlData, "result/primaryTopic/vatID/item[0]")) then begin
+      //take only the first valid KMKR
+      //for (i=0; XmlNodeExists(xmlData, "result/primaryTopic/vatID/item[" & i & "]"); i=i+1) begin
+        res = AddStr(res,XmlGet(xmlData, "result/primaryTopic/vatID/item[" & i & "]"),",");
+      //end;
+    end else begin
+      res = XmlGet(xmlData, "result/primaryTopic/vatID");
+    end;
+  end;
+  GetVatIDFromXML = res;
+  return;
+end;
+
+function string 20 GetRegisterCodeFromLink(string apiReplyLink)
+begin
+  string 20 res;
+  string 50 stdPart;
+
+  stdPart = "https://graph.ir.ee/organizations/ee-";
+  res = right(apiReplyLink,len(apiReplyLink) - len(stdPart));
+  res = left(res,len(res) - 4); //.xml
+  GetRegisterCodeFromLink = res;
+  return;
+end;
+
+function string 30 GetOrgStatusFromLink(string apiReplyLink)
+begin
+  string 30 res;
+  string 50 stdPart;
+  stdPart = "http://graph.ir.ee/organization-status-types/";
+  res = right(apiReplyLink,len(apiReplyLink) - len(stdPart));
+  switch(res) begin
+    case "deleted": res = USetStr(1500170);
+    case "falsely-entered": res = USetStr(1500171);
+    case "in-bankruptcy": res = USetStr(1500172);
+    case "in-liquidation": res = USetStr(1500173);
+    case "not-entered": res = USetStr(1500174);
+    case "project": res = USetStr(1500175);
+    case "registered": res = USetStr(1500176);
+    case "transferred": res = USetStr(1500177);
+  end;
+  GetOrgStatusFromLink = res;
+  return;
+end;
+
+global
+procedure ParseURL_IR(string urlToParse, var string host, var integer port, var string funcName)
+begin
+  string 10 protocol;
+  string 255 remainingPart;
+  integer protocolEndPos, hostEndPos;
+  protocolEndPos = Instring2(urlToParse,"://");
+  protocol = left(urlToParse,protocolEndPos);
+  switch(protocol) begin
+    case "https": port = 443;
+    case "http": port = 80;
+  end;
+  remainingPart = right(urlToParse,len(urlToParse)-len(protocol)-3);
+  host = left(remainingPart,Instring2(remainingPart,"/"));
+  funcName = right(remainingPart,len(remainingPart)-len(host));
+  return;
+end;
+
+procedure GetClientAccessToken(var area composedToken)
+begin
+  string 255 filePath;
+
+  filePath = "tmp/ir/irtoken_" & CurrentCompany & ".txt";
+
+  SetFileOnServer(true);
+  AddFileToArea(filePath,composedToken,false);
+  SetFileOnServer(false);
+  return;
+end;
+
+procedure AddOpenCloseTag(string tagName, string tagValue, var area targetArea)
+begin
+  AddTextToArea("<" & tagName & ">" & tagValue & "</" & tagName & ">", targetArea);
+  AddTextToArea(chr(13) & chr(10),targetArea);
+  return;
+end;
+
+global
+function boolean GetDataFromIRToArea(string host, integer port, string funcName, var area replyArea, integer timeout)
+begin
+  boolean res;
+  area requestArea,tokenArea,authHeadArea;
+  integer maxRetries,retriesCount,sleepSeconds;
+
+  res = false;
+  maxRetries = 3;
+  if (IsMaintenance) then begin
+    sleepSeconds = 20;
+  end else begin
+    sleepSeconds = 3;
+  end;
+  while(retriesCount < maxRetries) begin
+    SetAreaZeroSize(replyArea);
+    SetAreaZeroSize(requestArea);
+    SetAreaZeroSize(tokenArea);
+    SetAreaZeroSize(authHeadArea);
+    //AddTextToArea("Authorization: Basic " & base64encode("btDppAwRe0" & ":" & "1dpK8bcokNWK") & chr(13) & chr(10),headerArea);
+    GetClientAccessToken(tokenArea);
+    AddTextToArea("Authorization: Bearer ",authHeadArea);
+    InsertAreaBeforeArea(tokenArea,requestArea);
+    InsertAreaBeforeArea(authHeadArea,requestArea);
+    AddTextToArea(chr(13) & chr(10),requestArea);
+    AddTextToArea(chr(13) & chr(10),requestArea);
+    res = SendRawWebRequest(host,port,true,"GET","/oauth" & funcName,"text/xml","",false,requestArea,replyArea,timeout);
+    retriesCount = retriesCount + 1;
+    if(TokenNotAccepted(replyArea)) then begin
+      LogText(0,"Token was not accepted by IR service, re-sending activation request... ");
+      RequestNewTokenFromIR;
+      res = false; //consider as fail
+    end;
+    if (res == true) then begin
+      goto LSKIP;
+    end;
+    LogText(0,"GetDataFromIRToArea failed, new retry in " & sleepSeconds & " seconds");
+    Sleep(sleepSeconds);
+  end;
+  LogText(0,"GetDataFromIRToArea failed, request dropped.");
+LSKIP:;
+  GetDataFromIRToArea = res;
+  return;
+end;
+
+global
+function boolean PostDataFromAreaToIR(string host, integer port, string funcName, area requestArea, var area replyArea)
+begin
+  boolean res;
+  area tokenArea,headerArea,authHeadArea;
+  area tempRequestArea;
+  integer maxRetries,retriesCount,sleepSeconds;
+
+  res = false;
+  maxRetries = 3;
+  if (IsMaintenance) then begin
+    sleepSeconds = 20;
+  end else begin
+    sleepSeconds = 3;
+  end;
+  while(retriesCount < maxRetries) begin
+    SetAreaZeroSize(replyArea);
+    SetAreaZeroSize(tokenArea);
+    SetAreaZeroSize(headerArea);
+    SetAreaZeroSize(authHeadArea);
+    SetAreaZeroSize(tempRequestArea);
+    InsertAreaBeforeArea(requestArea,tempRequestArea); //work with copy and non-var has no effect
+    GetClientAccessToken(tokenArea);
+    AddTextToArea(chr(13) & chr(10),headerArea);
+    AddTextToArea(chr(13) & chr(10),headerArea);
+    InsertAreaBeforeArea(tokenArea,headerArea);
+    AddTextToArea("Authorization: Bearer ",authHeadArea);
+    InsertAreaBeforeArea(authHeadArea,headerArea);
+    InsertAreaBeforeArea(headerArea,tempRequestArea);
+    res = SendRawWebRequest(host,port,true,"POST","/oauth" & funcName,"application/json","",false,tempRequestArea,replyArea,20);
+    retriesCount = retriesCount + 1;
+    if(TokenNotAccepted(replyArea)) then begin
+      LogText(0,"Token was not accepted by IR service, re-sending activation request... ");
+      RequestNewTokenFromIR;
+      res = false; //consider as fail
+    end;
+    if (res == true) then begin
+      goto LSKIP;
+    end;
+    LogText(0,"PostDataFromAreaToIR failed, new retry in " & sleepSeconds & " seconds");
+    Sleep(sleepSeconds);
+  end;
+  LogText(0,"PostDataFromAreaToIR failed, request dropped.");
+LSKIP:;
+  PostDataFromAreaToIR = res;
+  return;
+end;
+
+global
+function string 20 GetResponseStatus(area replyArea)
+begin
+  string 20 res;
+  vector string 255 httpReplyHeaders;
+
+  ParseFullHTTPHeader(replyArea,httpReplyHeaders);
+  res = httpReplyHeaders["Status"];
+  GetResponseStatus = res;
+  return;
+end;
+
+global
+procedure GetBankruptcyRiskScoreForOrg(string regNr, record ServiceCacheVc SCr, var boolean errorFlag,var val res)
+begin
+//val res;
+  xml parsedXMLdata;
+  string 10 formatedDate;
+  area replyArea;
+  string 255 funcName;
+
+  res = -1;
+  errorFlag = false;
+  formatedDate = DateToString(CurrentDate,"YYYY-MM-DD");
+  funcName = "/organizations/ee-" & Trim(regNr) & "/bankruptcy-risk-scores.xml?date=" & formatedDate;
+  if (GetDataFromIRToArea(SCr.ServiceHost,SCr.ServicePort,funcName,replyArea,5) == false
+    OR TokenNotAccepted(replyArea))then begin
+    errorFlag = true;
+  end;
+  parsedXMLdata = ParseXMLArea(replyArea);
+  if (XMLNodeExists(parsedXMLdata, "result/primaryTopic/hasValue")) then begin
+    res = StringToVal(XmlGet(parsedXMLdata,"result/primaryTopic/hasValue"),M4Val);
+  end;
+  queued.UpdateIRServiceLastDateAndTime("FINDCREDITSCORE");
+  //GetBankruptcyRiskScoreForOrg = res;
+  return;
+end;
+
+global
+function string 10 GetEMTAKForOrg(string regNr, record ServiceCacheVc SCr, var boolean errorFlag)
+begin
+  string 10 res;
+  xml parsedXMLdata;
+  area replyArea;
+  string 255 funcName;
+
+  res = "";
+  errorFlag = false;
+  funcName = "/organizations/ee-" & Trim(regNr) & ".xml";
+  if (GetDataFromIRToArea(SCr.ServiceHost,SCr.ServicePort,funcName,replyArea,5) == false
+    OR TokenNotAccepted(replyArea))then begin
+      errorFlag = true;
+  end;
+  parsedXMLdata = ParseXMLArea(replyArea);
+  res = XmlGet(parsedXMLdata,"result/primaryTopic/mainActivity");
+  queued.UpdateIRServiceLastDateAndTime("SENDESTADRLOOKUP");
+  GetEMTAKForOrg = res;
+  return;
+end;
+
+procedure ProcessOrganizationAddresses(string url, var area tempStorageArea, var boolean errorsFound)
+begin
+  string 255 countryName,locality,streetAddress,postalCode,region;
+  xml parsedSubXML;
+  area subLevelApiXMLReply;
+  string 255 host,funcName;
+  integer port;
+
+  if (nonblank(url)) then begin
+    ParseURL_IR(url,host,port,funcName); 
+    if (GetDataFromIRToArea(host,port,funcName,subLevelApiXMLReply,2)) then begin
+      parsedSubXML = ParseXMLArea(subLevelApiXMLReply);
+      countryName = XmlGet(parsedSubXML,"result/items/item[0]/countryName");
+      locality = XmlGet(parsedSubXML,"result/items/item[0]/locality");
+      streetAddress = XmlGet(parsedSubXML,"result/items/item[0]/streetAddress");
+      postalCode = XmlGet(parsedSubXML,"result/items/item[0]/postalCode");
+      region = XmlGet(parsedSubXML,"result/items/item[0]/region");
+      AddOpenCloseTag("countryName",countryName,tempStorageArea);
+      AddOpenCloseTag("locality",locality,tempStorageArea);
+      AddOpenCloseTag("streetAddress",streetAddress,tempStorageArea);
+      AddOpenCloseTag("postalCode",postalCode,tempStorageArea);
+      AddOpenCloseTag("region",region,tempStorageArea);
+    end else begin
+      errorsFound = true;
+    end;
+  end;
+  return;
+end;
+
+function string 50 GetTelephoneType(xml parsedXML, integer i)
+begin
+  string 50 res, temp;
+  integer j;
+
+  if (XmlNodeExists(parsedXML, "result/items/item[" & i & "]/type")) then begin
+    for (j=0; XmlNodeExists(parsedXML, "result/items/item[" & i & "]/type/item[" & j & "]"); j=j+1) begin
+      temp = XmlGetAttribute(parsedXML,"result/items/item[" & i & "]/type/item[" & j & "]", "href");
+      switch(temp) begin
+        case "http://www.w3.org/2006/vcard/ns#Fax": res = AddStr(res,"fax",",");
+        case "http://www.w3.org/2006/vcard/ns#Voice": res = AddStr(res,"phone",",");
+        case "http://www.w3.org/2006/vcard/ns#Cell": res = AddStr(res,"phone",",");
+      end;
+    end;
+  end;
+  GetTelephoneType = res;
+  return;
+end;
+
+procedure ProcessOrganizationTelephones(string url, var area tempStorageArea, var boolean errorsFound)
+begin
+  string 255 someNumber;
+  xml parsedSubXML;
+  area subLevelApiXMLReply;
+  string 255 host,funcName;
+  string 50 telephoneType;
+  integer port,i;
+
+  if (nonblank(url)) then begin
+    ParseURL_IR(url,host,port,funcName); 
+    if (GetDataFromIRToArea(host,port,funcName,subLevelApiXMLReply,2)) then begin
+      parsedSubXML = ParseXMLArea(subLevelApiXMLReply);
+      if (XmlNodeExists(parsedSubXML,"result/items")) then begin
+        EstEInvStartTag("telephones",tempStorageArea);
+        for (i=0; XmlNodeExists(parsedSubXML, "result/items/item[" & i & "]"); i=i+1) begin
+          someNumber = XmlGetAttribute(parsedSubXML,"result/items/item[" & i & "]/hasValue", "href");
+          someNumber = FormatPhoneNumber(someNumber);
+          telephoneType = GetTelephoneType(parsedSubXML,i);
+          if (InString2(telephoneType,"fax") != -1) then begin
+            AddOpenCloseTag("faxNumber",someNumber,tempStorageArea);
+          end;
+          if (InString2(telephoneType,"phone") != -1) then begin
+            AddOpenCloseTag("telephoneNumber",someNumber,tempStorageArea);
+          end;
+        end;
+        EstEInvEndTag("telephones",tempStorageArea);
+      end;
+    end else begin
+      errorsFound = true;
+    end;
+  end;
+  return;
+end;
+
+procedure ProcessOrganizationEmails(string url, var area tempStorageArea, var boolean errorsFound)
+begin
+  string 255 email;
+  xml parsedSubXML;
+  area subLevelApiXMLReply;
+  string 255 host,funcName;
+  integer port;
+
+  if (nonblank(url)) then begin
+    ParseURL_IR(url,host,port,funcName); 
+    if (GetDataFromIRToArea(host,port,funcName,subLevelApiXMLReply,2)) then begin
+      parsedSubXML = ParseXMLArea(subLevelApiXMLReply);
+      email = XmlGetAttribute(parsedSubXML,"result/items/item[0]/hasValue","href");
+      email = right(email,len(email) - len("mailto:"));
+      AddOpenCloseTag("email",email,tempStorageArea);
+    end else begin
+      errorsFound = true;
+    end;
+  end;
+  return;
+end;
+
+procedure ProcessOrganizationUrls(string url, var area tempStorageArea, var boolean errorsFound)
+begin
+  string 255 homePage;
+  xml parsedSubXML;
+  area subLevelApiXMLReply;
+  string 255 host,funcName;
+  integer port;
+
+  if (nonblank(url)) then begin
+    ParseURL_IR(url,host,port,funcName); 
+    if (GetDataFromIRToArea(host,port,funcName,subLevelApiXMLReply,2)) then begin
+      parsedSubXML = ParseXMLArea(subLevelApiXMLReply);
+      homePage = XmlGetAttribute(parsedSubXML,"result/items/item[0]/hasValue","href");
+      AddOpenCloseTag("homePage",homePage,tempStorageArea);
+    end else begin
+      errorsFound = true;
+    end;
+  end;
+  return;
+end;
+
+procedure ProcessPerson(string url, var area tempStorageArea, var boolean errorsFound)
+begin
+  string 255 givenName,familyName;
+  xml parsedSubXML;
+  area subLevelApiXMLReply;
+  string 255 host,funcName;
+  integer port;
+
+  if (nonblank(url)) then begin
+    ParseURL_IR(url,host,port,funcName); 
+    if (GetDataFromIRToArea(host,port,funcName,subLevelApiXMLReply,2)) then begin
+      parsedSubXML = ParseXMLArea(subLevelApiXMLReply);
+      givenName = XmlGet(parsedSubXML,"result/primaryTopic/givenName");
+      familyName = XmlGet(parsedSubXML,"result/primaryTopic/familyName");
+      AddOpenCloseTag("member",givenName & " " & familyName,tempStorageArea);
+    end else begin
+      errorsFound = true;
+    end;
+  end;
+  return;
+end;
+
+procedure ProcessOrganizationMembers(xml parsedSubXML, var area tempStorageArea, var boolean errorsFound)
+begin
+  string 255 subURL;
+  integer i;
+
+  if (XmlNodeExists(parsedSubXML,"result/primaryTopic/hasMember")) then begin
+    EstEInvStartTag("members",tempStorageArea);
+    subURL = XmlGetAttribute(parsedSubXML,"result/primaryTopic/hasMember","href");
+    if (blank(subURL)) then begin //if array
+      for (i=0; XmlNodeExists(parsedSubXML, "result/primaryTopic/hasMember/item[" & i & "]"); i=i+1) begin
+        subURL = XmlGetAttribute(parsedSubXML,"result/primaryTopic/hasMember/item[" & i & "]","href") & ".xml";
+        ProcessPerson(subURL,tempStorageArea,errorsFound);
+      end;
+    end else begin
+      subURL = subURL  & ".xml";
+      ProcessPerson(subURL,tempStorageArea,errorsFound);
+    end;
+    EstEInvEndTag("members",tempStorageArea);
+  end;
+  return;
+end;
+
+procedure ProcessOrganizationLink(string url, var area tempStorageArea, boolean detailed, var boolean errorsFound)
+begin
+  string 255 legalName,registrationCode,vatID,orgStatus,link;
+  string 255 subURL,fixedCapitalAmount,registrationDate,registrationDistrict, mainActivity;
+  xml parsedSubXML;
+  area subLevelApiXMLReply;
+  string 255 host,funcName;
+  integer port,i;
+
+  if (nonblank(url)) then begin
+    ParseURL_IR(url,host,port,funcName); 
+    if (GetDataFromIRToArea(host,port,funcName,subLevelApiXMLReply,2)) then begin
+      if (GetResponseStatus(subLevelApiXMLReply) == "200 OK") then begin
+        parsedSubXML = ParseXMLArea(subLevelApiXMLReply);
+        //Process plain data
+        legalName = XmlGet(parsedSubXML,"result/primaryTopic/legalName");
+        registrationCode = XmlGet(parsedSubXML,"result/primaryTopic/registrationCode");
+        AddOpenCloseTag("legalName",legalName,tempStorageArea);
+        AddOpenCloseTag("registrationCode",registrationCode,tempStorageArea);
+        if(detailed) then begin
+          vatID = GetVatIDFromXML(parsedSubXML);
+          subURL = XmlGetAttribute(parsedSubXML,"result/primaryTopic/orgStatus","href");
+          orgStatus = GetOrgStatusFromLink(subURL);
+          link = GetCompanyInfoBrowserLink(GetRegisterCodeFromLink(url),"report");
+          registrationDate = XmlGet(parsedSubXML,"result/primaryTopic/registrationDate");
+          registrationDistrict = XmlGet(parsedSubXML,"result/primaryTopic/registrationDistrict");
+          mainActivity = XmlGet(parsedSubXML,"result/primaryTopic/mainActivity");
+          fixedCapitalAmount = XmlGet(parsedSubXML,"result/primaryTopic/fixedCapitalAmount");
+          if (nonblank(fixedCapitalAmount)) then begin
+            fixedCapitalAmount = fixedCapitalAmount & " " & XmlGet(parsedSubXML,"result/primaryTopic/fixedCapitalCurrency");
+          end;
+          AddOpenCloseTag("vatID",vatID,tempStorageArea);
+          AddOpenCloseTag("orgStatus",orgStatus,tempStorageArea);
+          AddOpenCloseTag("link",link,tempStorageArea);
+          AddOpenCloseTag("registrationDate",registrationDate,tempStorageArea);
+          AddOpenCloseTag("registrationDistrict",registrationDistrict,tempStorageArea);
+          AddOpenCloseTag("mainActivity",mainActivity,tempStorageArea);
+          AddOpenCloseTag("fixedCapitalAmount",fixedCapitalAmount,tempStorageArea);
+
+          //Process linked data
+          subURL = XmlGetAttribute(parsedSubXML,"result/primaryTopic","href") & "/addresses.xml";
+          ProcessOrganizationAddresses(subURL,tempStorageArea,errorsFound);
+          subURL = XmlGetAttribute(parsedSubXML,"result/primaryTopic","href") & "/telephones.xml";
+          ProcessOrganizationTelephones(subURL,tempStorageArea,errorsFound);
+          subURL = XmlGetAttribute(parsedSubXML,"result/primaryTopic","href") & "/emails.xml";
+          ProcessOrganizationEmails(subURL,tempStorageArea,errorsFound);
+          subURL = XmlGetAttribute(parsedSubXML,"result/primaryTopic","href") & "/urls.xml";
+          ProcessOrganizationUrls(subURL,tempStorageArea,errorsFound);
+          ProcessOrganizationMembers(parsedSubXML,tempStorageArea,errorsFound);
+        end;
+      end;
+    end else begin
+      errorsFound = true;
+    end;
+  end;
+  return;
+end;
+
+global
+function boolean ProcessOrganizationsReply(area a_reply, var area tempStorageArea, boolean detailed)
+begin
+  xml parsedXML;
+  string 255 xkey,subxkey;
+  string 255 subLevelURL;
+  string 255 legalName,registrationCode;
+  integer i;
+  boolean errorsFound,res;
+
+  SetAreaZeroSize(tempStorageArea);
+  errorsFound = false;
+  res = true;
+  parsedXML = ParseXMLArea(a_reply);
+  xkey = "result/items/";
+  EstEInvStartTag("companies",tempStorageArea); //received data is saved to intermediate xml-format area
+  if (XmlNodeExists(parsedXML,"result/items")) then begin //if request consists of several organizations
+    for (i=0; XmlNodeExists(parsedXML, xkey & "item[" & i & "]"); i=i+1) begin
+      subxkey = xkey & "item[" & i & "]/";
+      subLevelURL = XmlGetAttribute(parsedXML,subxkey,"href") & ".xml";
+      if(InString2(subLevelURL,"https://graph.ir.ee/organizations/") != -1) then begin
+        EstEInvStartTag("company",tempStorageArea);
+        legalName = XmlGet(parsedXML,subxkey & "legalName");
+        registrationCode = GetRegisterCodeFromLink(subLevelURL);
+        AddOpenCloseTag("legalName",legalName,tempStorageArea);
+        AddOpenCloseTag("registrationCode",registrationCode,tempStorageArea);
+        EstEInvEndTag("company",tempStorageArea);
+      end;
+    end;
+  end else begin
+    if (XmlNodeExists(parsedXML,"result/primaryTopic")) then begin //if request consists of only single organization
+      subLevelURL = XmlGetAttribute(parsedXML,"result/primaryTopic","href") & ".xml";
+      if(InString2(subLevelURL,"https://graph.ir.ee/organizations/") != -1) then begin
+        EstEInvStartTag("company",tempStorageArea);
+        ProcessOrganizationLink(subLevelURL,tempStorageArea,detailed,errorsFound);
+        EstEInvEndTag("company",tempStorageArea);
+      end;
+    end;
+  end;
+  EstEInvEndTag("companies",tempStorageArea);
+  queued.UpdateIRServiceLastDateAndTime("SENDESTADRLOOKUP");
+  if(errorsFound) then begin
+    res = false;
+  end;
+  ProcessOrganizationsReply = res;
+  return;
+end;

@@ -1,0 +1,16 @@
+global
+function boolean GetNextSalFBSerNr(var LongInt sfbsernr)
+begin
+  boolean res;
+  record SalaryFBVc SFBr;
+  
+  SFBr.SerNr = 99999999999;
+  if (ReadLastMain(SFBr,1,false)) then begin
+    sfbsernr = SFBr.SerNr + 1;
+  end else begin
+    sfbsernr = 1;
+  end;
+
+  GetNextSalFBSerNr = res;
+  return;
+end;

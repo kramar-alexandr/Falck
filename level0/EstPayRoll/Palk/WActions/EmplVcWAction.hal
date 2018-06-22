@@ -1,0 +1,110 @@
+external function date GetBDateFromIDCode(string);
+
+global 
+function Boolean EmplDClassDeleteRowTest(Integer wn,Integer rownr)
+begin
+  record EmplVc Emplr;
+  integer updatemode;
+  boolean res;
+
+  res = true;
+  updatemode = 2;
+  if (WindowState(wn)==updatemode) then begin
+    GetPrevWindowRecord(wn,Emplr);
+  end else begin
+    GetWindowRecord(wn,Emplr);
+  end;
+  if (Emplr.ClosedFlag!=0) then begin
+    res = false;
+  end;
+
+  EmplDClassDeleteRowTest = res;
+  return;
+end;
+
+global
+function boolean EmplDClassActiveEditField(integer wn,string fieldname,integer fn,integer wnst,integer rownr,integer changed)
+begin
+  boolean res;
+  record EmplVc Emplr;
+  
+  res = true;
+  GetWindowRecord(wn,Emplr);
+  if (Emplr.ClosedFlag!=0) then begin
+    res = false;
+  end;    
+  if (wnst==Rs_update) then begin
+    switch (fieldname) begin
+      case "Code": res = false;
+    end;
+  end;
+  EmplDClassActiveEditField = res;
+  return;
+end;
+
+function boolean EmplDClassTaxCodeEFAfter(integer wn,integer rownr,integer changedf)
+  begin  
+  record EmplVc Emplr;
+  row EmplVc Emplrw;
+  record TaxVc Taxr;
+  row TaxVc Taxrw;
+  integer rwcnt,i;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,Emplr);
+    DeselectWindow(wn,false);
+    MatRowGet(Emplr,rownr,Emplrw);
+    Taxr.Code=Emplrw.TaxCode;
+    if (ReadFirstMain(Taxr,1,true)) then begin
+      rwcnt=MatRowCnt(Taxr);
+      for (i=0;i<rwcnt;i=i+1) begin
+        MatRowGet(Taxr,i,Taxrw);
+        if nonblank(Taxrw.Percent) then begin
+          if (DateInRange(CurrentDate,Taxrw.SDate,Taxrw.EDate)) then begin
+            Emplrw.TaxCode=Taxr.Code;
+            Emplrw.TaxName=Taxr.Name;
+            Emplrw.SDate=Taxrw.SDate;
+            Emplrw.EDate=Taxrw.EDate;
+            MatRowPut(Emplr,rownr,Emplrw);
+            PutWindowRecord(wn,Emplr);
+          end;
+        end;
+      end;    
+    end;
+  end;
+  EmplDClassTaxCodeEFAfter = true;
+  return;
+end;
+
+function boolean EmplDClassIDCodeEFAfter(integer wn,integer rownr,integer changedf)
+  begin  
+  record EmplVc Emplr;
+  date bdate;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,Emplr);
+    DeselectWindow(wn,false);
+    if nonblank(Emplr.IDCode) then begin
+      Emplr.BirthDate=GetBDateFromIDCode(Emplr.IDCode);
+    end else begin
+      Emplr.BirthDate=bdate;
+    end;
+    PutWindowRecord(wn,Emplr);
+  end;
+  EmplDClassIDCodeEFAfter = true;
+  return;
+end;
+
+global
+function boolean EmplDClassAfterEditField(integer wn,string fieldname,integer fn, integer rownr,integer changed)
+begin
+  boolean res;
+
+  switch (fieldname) begin
+    case "TaxCode": res = EmplDClassTaxCodeEFAfter(wn,rownr,changed);
+    case "IDCode": res = EmplDClassIDCodeEFAfter(wn,rownr,changed);
+  end;
+
+  EmplDClassAfterEditField = res;
+  return;
+end;

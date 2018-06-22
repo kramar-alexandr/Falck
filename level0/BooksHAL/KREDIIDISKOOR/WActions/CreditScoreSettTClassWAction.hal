@@ -1,0 +1,15 @@
+global
+function boolean CreditScoreSettTClassActiveEditField(Integer wn,string fieldname,Integer fn,Integer wnst,Integer rownr,Integer changed)
+begin
+  boolean res;
+  res = false;
+  if (changed) then begin //##ii
+    if(UserCanAction("AllowEditCreditScoreRules",false)) then begin
+      res = true;
+    end else begin //##ii
+      MessageBox(1500017,""); //##ii
+    end; //##ii
+  end;
+  CreditScoreSettTClassActiveEditField = res;
+  return;
+end;

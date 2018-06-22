@@ -1,0 +1,73 @@
+external procedure ExportTagXml(string,string,Integer);
+external procedure ExportPlainXml(string,Integer);
+external function string 255 ConvertXml(string);
+external procedure ExportValTagXml(string,val, integer);
+external procedure TSDAddRn(record RcVc);
+
+global
+procedure TSDEn(record RcVc RepSpec)
+begin
+  record CYBlock CYr;
+  string 255 tstr;
+  integer year,month;
+  Boolean test,TrHs;
+
+  year=RepSpec.flags[1];
+  month=RepSpec.flags[2];
+
+  ExportPlainXml("<?xml version=""1.0"" encoding=""UTF-8""?>",0);
+  BlockLoad(CYr);
+  ExportPlainXml("<tsd_vorm>",0);
+  ExportTagXml("regKood",CYr.OrgNr,2);
+  tstr=year;
+  if Len(tstr)==2 then begin 
+    tstr = "20" & tstr;
+  end;
+  ExportTagXml("c108_Aasta",tstr,2);
+  tstr = month;
+  if Len(tstr)==1 then begin 
+    tstr = "0" & tstr;
+  end;
+  ExportTagXml("c109_Kuu",tstr,2);
+  switch (RepSpec.ArtMode) begin
+    case 0: ExportTagXml("laadimisViis","L",2);
+    case 1: ExportTagXml("laadimisViis","P",2);
+  end;
+  ExportTagXml("vorm","TSD",2);
+
+  //Parandus
+  if (RepSpec.ArtMode==1) then begin 
+    if nonblank(RepSpec.f2) then begin
+      tstr = RepSpec.f2;
+      ExportTagXml("c121_ParPohjusKood",ConvertXml(tstr),2);
+    end;
+    if nonblank(RepSpec.f1) then begin
+      tstr = RepSpec.f1;
+      ExportTagXml("parPohjusTekst",ConvertXml(tstr),2);
+    end;
+  end;
+
+  //Lisa1
+  if (RepSpec.flags[4]==1) then begin
+    ExportPlainXml("<tsd_L1_0>",2);
+    ExportPlainXml("<aIsikList>",3);
+    RepSpec.Custf=1; //Lisa 1
+    RepSpec.JobDf=2; //Export
+    TSDAddRn(RepSpec);
+    ExportPlainXml("</aIsikList>",3);
+    ExportPlainXml("</tsd_L1_0>",2);
+  end; 
+
+  //Lisa2
+  if (RepSpec.flags[5]==1) then begin
+    ExportPlainXml("<tsd_L2_0>",2);
+    ExportPlainXml("<aIsikList>",3);
+    RepSpec.Custf=2; //Lisa 2
+    RepSpec.JobDf=2; //Export
+    TSDAddRn(RepSpec);
+    ExportPlainXml("</aIsikList>",3);
+    ExportPlainXml("</tsd_L2_0>",2);
+  end; 
+  ExportPlainXml("</tsd_vorm>",0);
+  return;
+end;

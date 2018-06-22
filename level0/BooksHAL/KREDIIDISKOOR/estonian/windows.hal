@@ -1,0 +1,263 @@
+//KB 20.06.2017 IR functionality new windows
+external function time GetCredScoreUpdTime();
+external function time GetEMTAKUpdTime();
+
+window CreditScoreSettTClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Krediidiskoor - seadistused",CreditScoreSettTClass,CGHbl,-);
+  SetBlid(CredScoreSettBlock);
+  SetWRect(65,80,600,200);
+  Sizeable(-1,-1,0,0);
+  MatrixBegin(8,60,-30,-20,-,10);
+  MatCol(1,25,"Skoor",0,ScoreRangeLastValue,false,0);
+  MatCol(1,75,"Hoiatuse tekst",0,DispMessage,false,0);
+  MatCol(1,-150,"Arve",0,AllowCreateIVVc,false,SetSClass);
+  MatCol(1,-100,"Tellimus",0,AllowCreateORVc,false,SetSClass);
+  MatCol(1,-50,"Lähetus",0,AllowCreateSHVc,false,SetSClass);
+  EndMatrix;
+  EndWindow;
+end;
+
+window IRTermsWClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  WindowBegin("Inforegistri teenuste tingimused",IRTermsWClass,CGother,RcType);
+  UseView(RcVc);
+  SetWRect(20,80,400,320);
+  h = 25; v = 25; vs = 20;
+  HalPushButton(h,v,200,v+20,"OpenTermsInBrowserIR","Tutvu tingimustega lähemalt");
+  v = v + 2 * vs;
+  StaticText(h,v+=vs,"Inforegistrile ligipääsuks luuakse konto e-mailile: ",false);
+  EditField(h+5,v+=vs,150,"",ViewOnly,f1,false,0);
+  v = v + vs;
+  StaticText(h,v+=vs,"(võetakse isiku kaardilt)",false);
+  v = -50;
+  HalPushButton(h     ,v,h+100,-25,"CloseActiveWindowIR","Ei nõustu");
+  HalPushButton(-h-100,v,-h   ,-25,"OpenRegWindowIR","Nõustun");
+  EndWindow; 
+end;
+
+window IRRegisterWClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  WindowBegin("Inforegistri teenuste muutmine",IRRegisterWClass,CGother,RcType);
+  UseView(RcVc);
+  SetWRect(20,80,400,300);
+  h = 50; v = 50; vs = 20;
+  StaticText(h,v,"Valige vajalikud teenused",false);
+  StaticText(h,v+=vs,"(deaktiveerimiseks võtke linnuke maha)",false);
+  CheckBox(h,v+=vs,0,"Krediidiskoor",flags[1]);
+  CheckBox(h,v+=vs,0,"Ettevõtte andmed",flags[2]);
+  CheckBox(h,v+=vs,0,"Veebilingid",flags[3]);
+  CheckBox(h,v+=vs,0,"Võlahaldus",flags[4]);
+  HalPushButton(h     ,-50,h+100,-25,"CloseActiveWindowIR","Jäta");
+  HalPushButton(-h-100,-50,-h   ,-25,"SendActivationRequestsIR","Kinnita");
+  EndWindow; 
+end;
+
+window IRDebtHandleSendWClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v;
+  WindowBegin("Võlahaldusesse saatmine",IRDebtHandleSendWClass,CGother,RcType);
+  UseView(RcVc);
+  SetWRect(20,160,440,280);
+  h = 25; v = -50;
+  StaticText(h,45,"Kas olete kindel, et tahate seda arvet võlahaldusesse saata?",false);
+  StaticText(h,60,"Arve saadetakse järjekorda ning Teiega võetakse peatselt ühendust.",false);
+  HalPushButton(h     ,v,h+100,-25,"CloseActiveWindowIR","Ei");
+  HalPushButton(-h-100,v,-h   ,-25,"SendInvoiceAsDebt","Jah");
+  EndWindow; 
+end;
+
+
+window SendDebtsVClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+
+  WindowBegin("Määra võlgnevuste edastamine",SendDebtsVClass,CGMnt,RcType);
+  UseView(RcVc);
+  SetWRect(20,100,400,200);
+  v = 10;
+  vs = 20;
+  h = 210;
+  StaticText(10,v+10,"TÄHELEPANU! Suure arvete koguse puhul võtab hooldus aega",false);
+  v = v + vs;
+  PeriodField(h,v+=vs,"Arvete periood");
+  EditFieldTL(h,v+=vs, 150,"Kliendid",M4Str,Normal,30,f2,false,0);
+  EditFieldTL(h,v+=vs, 150,"Välja arvatud klassifikaatoriga",M4Str,Normal,30,f3,false,CClassSClass);
+  EditFieldTL(h,v+=vs, 60,"Minimaalne võlgnevus (baasvaluuta 1)",M4Val,Normal,30,vals0,false,0);
+  EditFieldTL(h,v+=vs, 40,"Ületatud päevi vähemalt",M4Int,Normal,30,flags[0],false,0);
+  EndWindow;
+end;
+
+window IRSetTClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  WindowBegin("Inforegistri seadistused",IRSetTClass,CGsbl,-);
+  SetBlid(IRSetBlock);
+  SetWRect(20,80,440,290);
+  vs = 20; h = 180; v = 6;
+  EditField(h,v,150,"Päringu tulemuste arv (1-50)",Normal,SearchResQaunt,false,0);
+  EditField(h,v+=vs,150,"Esimene kontakt vana skooriga:",ViewOnly,FailedCredScoreCU,false,0);
+  EditField(h,v+=vs,150,"Uuenduse vea kuupäev",ViewOnly,FailureDate,false,0);
+  EditField(h,v+=vs,50,"Krediidiskoori ajast. aeg(tund)",ViewOnly,UpdCredScoreSchedHour,false,0);
+  EditField(h,v+=vs,50,"Võlahalduse ajast. aeg(tund)",ViewOnly,SendDebtsSchedHour,false,0);
+  //EditField(h,v+=vs,150,"CREDSCORE COMPLETE",Normal,CredScoreComplFlag,false,0); //TODO for debug
+  //EditField(h,v+=vs,150,"DEBTS COMPLETE",Normal,SendDebtsComplFlag,false,0); //TODO for debug
+  CheckBox(h,v+=vs,0,"Ajutiselt peata teenuseid",ServiceDisabledFlag);
+  EndWindow;
+end;
+
+window UpdateCreditScoresVClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  WindowBegin("Uuenda Krediidiskoorid",UpdateCreditScoresVClass,CGMnt,RcType);
+  SetWRect(20,80,400,200);
+  DynamicWindow;
+  //Sizeable(-1,-1,-1,-1);
+  h = 25; v = 20; vs = 15;
+  StaticText(h,v,"TÄHELEPANU!   Suure kontaktide andmebaasi puhul võtab",false);
+  StaticText(h,v+=vs,"päring palju aega ja takistab andmebaasiga töötamist",false);
+  v = v + vs;
+  StaticText(h,v+=vs,"Hinnatud uuendamise aeg on: " & GetCredScoreUpdTime,false);
+  StaticText(h,v+=vs,"",false);
+  EndWindow;
+end;
+
+window EstAddrLookupIRRClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v;
+  WindowBegin("Inforegistri info päring",EstAddrLookupIRRClass,CGRcW,RcType);
+  SetWRect(20,80,405,340);
+  EditFieldTL(h=150,v=6, 150,"Ärinimi või selle osa",M4Str,Normal,50,f3,false,0);
+  EditFieldTL(h=150,v+=20, 150,"Registrikood",M4UStr,Normal,50,f2,false,0);
+  EndWindow;
+end;
+
+window IRDebtHandleLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("device","computer")
+begin
+  WindowBegin("Võlahalduses arved",IRDebtHandleLClass,CGmlist,-);
+  SpawnClass(IRDebtHandleDClass);
+  SetWRect(65,80,700,300);
+  Sizeable(-1,-1,0,0);
+  UseView(IRDebtHandleVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Arve Nr.",InvoiceNr,false,InvoiceNr);
+  RlCol(80,80,"Saaja",DebtRegCode,false);
+  RlCol(150,150,"Saaja nimi",DebtName,false);
+  RlCol(-220,-220,"Arve summa",InvoiceAmount,false);
+  RlCol(-150,-150,"Võlg",ClaimAmount,false);
+  RlCol(-100,-100,"Valuuta",CurncyCode,false);
+  RlCol(-50,-50,"Tasutud",PaidFlag,false);
+  EndWindow;
+end;
+
+window IRDebtHandleDClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("device","computer")
+begin
+  real h,h2,v,vs,w;
+  WindowBegin("Võlahalduses arve",IRDebtHandleDClass,CGview,-);
+  UseView(IRDebtHandleVc);
+  SetWRect(65,50,850,200);
+  Sizeable(-1,-1,0,0);
+  vs = 20; w = 200; v = 6; h = 150; h2 = 550;
+  EditField(h,v+=vs, w, "Arve Nr.",ViewOnly,InvoiceNr,false,0);
+  EditField(h2,v, w, "Arve summa",ViewOnly,InvoiceAmount,false,0);
+  EditField(h,v+=vs, w, "Arve kuupäev",ViewOnly,InvIssDate,false,0);
+  EditField(h2,v, w, "Arve võlg",ViewOnly,ClaimAmount,false,0);
+  EditField(h,v+=vs, w, "Laekumistähtaeg",ViewOnly,InvDueDate,false,0);
+  EditField(h2,v, w, "Arve valuuta",ViewOnly,CurncyCode,false,0);
+  v = v + vs;
+  EditField(h,v+=vs, w, "Saatja reg. kood",ViewOnly,CredRegCode,false,0);
+  EditField(h2,v, w, "Saatja kontakti nimi",ViewOnly,CredContactName,false,0);
+  EditField(h,v+=vs, w, "Saatja nimi",ViewOnly,CredName,false,0);
+  EditField(h2,v, w, "Saatja kontakti e-mail",ViewOnly,CredContactEmail,false,0);
+  EditField(h2,v+=vs, w, "Saatja kontakti telefon",ViewOnly,CredContactPhone,false,0);
+  EditField(h,v+=vs, w, "Saaja reg. kood",ViewOnly,DebtRegCode,false,0);
+  EditField(h2,v, w, "Saatmise kuupäev",ViewOnly,ClaimCreatedDate,false,0);
+  EditField(h,v+=vs, w, "Saaja nimi",ViewOnly,DebtName,false,0);
+  CheckBox(h2,v,0,"Tasutud",PaidFlag);
+  CheckBox(h2,v+vs,0,"Saadetud",SentFlag);
+  v = v + vs;
+  EditField(h,v+=vs, w, "Esindaja reg. kood",ViewOnly,ReprentRegCode,false,0);
+  EditField(h,v+=vs, w, "Esindaja nimi",ViewOnly,ReprName,false,0);
+  EndWindow;
+end;
+
+window FillEmtakVClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  WindowBegin("Lisa EMTAK klassifikaatorid kontaktidele",FillEmtakVClass,CGMnt,RcType);
+  SetWRect(20,80,400,200);
+  DynamicWindow;
+  //Sizeable(-1,-1,-1,-1);
+  h = 25; v = 20; vs = 15;
+  StaticText(h,v,"TÄHELEPANU!   Suure kontaktide andmebaasi puhul võtab",false);
+  StaticText(h,v+=vs,"päring palju aega ja takistab andmebaasiga töötamist",false);
+  v = v + vs;
+  StaticText(h,v+=vs,"Hinnatud uuendamise aeg on: " & GetEMTAKUpdTime,false);
+  StaticText(h,v+=vs,"",false);
+  EndWindow;
+end;
+
+window ActivPromptWClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v;
+  WindowBegin("Inforegistri teenused",ActivPromptWClass,CGother,RcType);
+  UseView(RcVc);
+  SetWRect(20,80,400,230);
+  h = 25; v = -50;
+  StaticText(h,45,"Inforegistri teenuseid saab aktiveerida moodulis Üldine,",false);
+  StaticText(h,60,"seadistuses - E-teenuste seadistused või ajutiselt ",false);
+  StaticText(h,75,"peatada moodulis Tehnika, Inforegistri seadistused",false);
+  HalPushButton(h     ,v,h+100,-25,"GoToActivationIR","Aktiveerima");
+  HalPushButton(-h-100,v,-h   ,-25,"CloseActiveWindowIR","Ei soovi");
+  EndWindow; 
+end;
+
+window IRAccConfirmWClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v;
+  WindowBegin("Inforegistri konto loomine",IRAccConfirmWClass,CGother,RcType);
+  UseView(RcVc);
+  SetWRect(20,160,430,320);
+  h = 25; v = -50;
+  StaticText(h,45,"Kas soovite valitud isikule luua Inforegistri konto?",false);
+  StaticText(h,60,"Registreerimisandmeid saadetakse isiku e-mailile:",false);
+  EditField(h,75,150,"",ViewOnly,f1,false,0);
+  HalPushButton(h     ,v,h+100,-25,"CloseActiveWindowIR","Ei");
+  HalPushButton(-h-100,v,-h   ,-25,"ConfirmRegisterIR","Jah");
+  EndWindow; 
+end;
+
+window IRIdleTasksManageWClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h2,h3,h4,v,vs;
+  WindowBegin("Inforegistri teenuste ajastamine",IRIdleTasksManageWClass,CGother,RcType);
+  UseView(RcVc);
+  SetWRect(20,160,500,320);
+  h = 25; v = 20; vs = 15; h2 = 45; h3 = 170; h4 = 370;
+  StaticText(h,v+=vs,"Krediidiskoori uuendused",false);
+  HalPushButton(h2,v+=vs,h2+100,v+20,"CredScoreTaskAdd","Ajasta");
+  HalPushButton(h3,v,h3+100,v+20,"CredScoreTaskRemove","Peata");
+  EditField(h4,v,40,"Aeg (tund 0-24)",Normal,flags[0],false,0);
+  v = v + 2 * vs;
+  StaticText(h,v+=vs,"Võlahaldusesse saatmine",false);
+  HalPushButton(h2,v+=vs,h2+100,v+20,"SendDebtsTaskAdd","Ajasta");
+  HalPushButton(h3,v,h3+100,v+20,"SendDebtsTaskRemove","Peata");
+  EditField(h4,v,40,"Aeg (tund 0-24)",Normal,flags[1],false,0);
+  EndWindow; 
+end;

@@ -1,0 +1,145 @@
+global 
+function Boolean AbsenceFBDClassDeleteRowTest(Integer wn,Integer rownr)
+begin
+  record AbsenceFBVc AFBr;
+  integer updatemode;
+  boolean res;
+
+  res = true;
+  updatemode = 2;
+  if (WindowState(wn)==updatemode) then begin
+    GetPrevWindowRecord(wn,AFBr);
+  end else begin
+    GetWindowRecord(wn,AFBr);
+  end;
+  if (AFBr.OKFlag!=0) then begin
+    res = false;
+  end;
+
+  AbsenceFBDClassDeleteRowTest = res;
+  return;
+end;
+
+global
+function boolean AbsenceFBDClassActiveEditField(integer wn,string fieldname,integer fn,integer wnst,integer rownr,integer changed)
+begin
+  boolean res;
+  record AbsenceFBVc AFBr;
+  
+  res = true;
+  GetWindowRecord(wn,AFBr);
+  if (AFBr.OKFlag!=0) then begin
+    res = false;
+  end;    
+  if (wnst==Rs_update) then begin
+    switch (fieldname) begin
+      case "SerNr": res = false;
+    end;
+  end;
+  AbsenceFBDClassActiveEditField = res;
+  return;
+end;
+
+global
+function boolean AbsenceFBDClassOKFlagButtonAction(integer wn,integer value)
+begin
+  boolean res;
+  record AbsenceFBVc AFBr;
+  integer normalmode,updatemode;
+  
+  res = true;
+  normalmode = 0;
+  updatemode = 2;
+  if (WindowState(wn)==normalmode) then begin
+    GetWindowRecord(wn,AFBr);
+    if (AFBr.OKFlag!=0) then begin
+      res = false;
+      if (UserCanAction("UnOKAll",false)) then begin
+        res = true;
+      end;
+    end;
+  end;  
+  if (WindowState(wn)==updatemode) then begin
+    GetPrevWindowRecord(wn,AFBr);
+    if (AFBr.OKFlag!=0) then begin
+      res = false;
+    end;
+  end;  
+  AbsenceFBDClassOKFlagButtonAction = res;
+  return;
+end;
+
+function boolean AbsenceFBDClassContrSerNrEFAfter(integer wn,integer rownr,integer changedf)
+  begin  
+  record AbsenceFBVc AFBr;
+  row AbsenceFBVc AFBrw;
+  record ContractVc Contrr;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,AFBr);
+    DeselectWindow(wn,false);
+    MatRowGet(AFBr,rownr,AFBrw);
+    Contrr.SerNr = AFBrw.ContrSerNr;
+    ClearRow(AFBr,AFBrw,1);
+    AFBrw.ContrSerNr = Contrr.SerNr;
+    if (ReadFirstMain(Contrr,1,true)) then begin
+      AFBrw.Firstname = Contrr.Firstname;
+      AFBrw.Surname = Contrr.Surname;
+    end;
+    MatRowPut(AFBr,rownr,AFBrw);
+    PutWindowRecord(wn,AFBr);
+  end;
+
+  AbsenceFBDClassContrSerNrEFAfter = true;
+  return;
+end;
+
+global
+function boolean AbsenceFBDClassAfterEditField(integer wn,string fieldname,integer fn, integer rownr,integer changed)
+begin
+  boolean res;
+
+  switch (fieldname) begin
+    case "ContrSerNr": res = AbsenceFBDClassContrSerNrEFAfter(wn,rownr,changed);
+  end;
+
+  AbsenceFBDClassAfterEditField = res;
+  return;
+end;
+
+global
+function Boolean AbsenceFBDClassOpenRecord(Integer wn,string fieldname,Integer fn,Integer rownr)
+begin
+  Boolean res;
+  record AbsenceFBVc AFBr;
+  row AbsenceFBVc AFBrw;
+  record AbsTypeVc ATr;
+  record ContractVc Contrr;
+  Integer nwn;
+
+  GetWindowRecord(wn,AFBr);  
+  DeselectWindow(wn,false);
+  if (rownr>=0) then begin
+    MatRowGet(AFBr,rownr,AFBrw);
+  end;
+  switch (fieldname) begin
+    case "ContrSerNr":
+      if (AFBrw.ContrSerNr>0) then begin
+        Contrr.SerNr = AFBrw.ContrSerNr;
+        if (ReadFirstMain(Contrr,1,true)) then begin
+          nwn = OpenWindow("ContractDClass",1,0,"","",Contrr);    
+          res = true;
+        end;
+      end;
+    case "AbsTypeCode":
+      if nonblank(AFBrw.AbsTypeCode) then begin
+        ATr.Code = AFBrw.AbsTypeCode;
+        if (ReadFirstMain(ATr,1,true)) then begin
+          nwn = OpenWindow("AbsTypeDClass",1,0,"","",ATr);    
+          res = true;
+        end;
+      end;
+  end;
+  AbsenceFBDClassOpenRecord = res;
+  return;
+end;

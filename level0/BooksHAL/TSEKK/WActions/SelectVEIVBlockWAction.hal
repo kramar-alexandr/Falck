@@ -1,0 +1,43 @@
+remote function boolean GetVEIVDetails(record SelectVEIVBlock, longint, var date, var string, var val, var string);
+
+
+function boolean SelectVEIVTClassVEIVSerNrAfterEditField(integer wn, integer rownr)
+begin
+  boolean res;
+  record SelectVEIVBlock SelectVEIVbl;
+  string 255 errMsg,theName;
+  row SelectVEIVBlock SelectVEIVblrw;
+  date theDate;
+  val theVal;
+  GetWindowRecord(wn,SelectVEIVbl);
+  MatRowGet(SelectVEIVbl,rownr,SelectVEIVblrw);
+  res = GetVEIVDetails(SelectVEIVbl,SelectVEIVblrw.VEIVSerNr,theDate,theName,theVal,errMsg);
+  if (res == false) then begin
+    SelectVEIVblrw.VEIVSerNr = "";
+  end else begin
+      SelectVEIVblrw.VEIVDate = theDate;
+      SelectVEIVblrw.VEIVVendor = theName;
+      SelectVEIVblrw.VEIVTotVal = theVal;
+  end;
+  MatRowPut(SelectVEIVbl,rownr,SelectVEIVblrw);
+  PutWindowRecord(wn,SelectVEIVbl);
+  if(res == false) then begin
+    MessageBox(0,errMsg);
+  end;
+  SelectVEIVTClassVEIVSerNrAfterEditField = res;
+  return;
+end;  
+
+global
+function boolean SelectVEIVTClassAfterEditField(integer wn, string fieldname, integer fn, integer rownr, integer changed)
+begin
+  boolean res;
+  res = false;
+  if(changed == 1) then begin
+    switch (fieldname) begin
+      case "VEIVSerNr": res = SelectVEIVTClassVEIVSerNrAfterEditField(wn,rownr);
+    end;
+  end;
+  SelectVEIVTClassAfterEditField = res;
+  return;
+end;

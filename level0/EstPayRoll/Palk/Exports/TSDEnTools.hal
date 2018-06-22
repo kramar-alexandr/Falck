@@ -1,0 +1,157 @@
+external procedure ExportTagXml(string,string,Integer);
+external procedure ExportPlainXml(string,Integer);
+external function string 255 ConvertXml(string);
+
+global
+procedure ExportValTagXml(string stag,val t, integer pos)
+begin
+  string 255 res;
+
+  res = ValToString(t,M4Val,"",".",0);
+  ExportTagXml(stag,res,pos);
+  return;
+end;
+
+global
+procedure DoExportTSD_part1(boolean tsdadd1,record EmplVc Emplr)
+begin
+  string 255 tstr;
+  
+    if (tsdadd1) then begin 
+      ExportPlainXml("<tsd_L1_A_Isik>",4);
+      ExportTagXml("c1000_Kood",Emplr.IDCode,5);
+      tstr=Emplr.Firstname & " " & Emplr.Surname;      
+      if nonblank(tstr) then begin
+        ExportTagXml("c1010_Nimi",ConvertXml(tstr),5);
+      end;
+    end else begin
+      ExportPlainXml("<tsd_L2_A_Isik>",4);
+      ExportTagXml("c2000_Kood",Emplr.IDCode,5);
+      tstr=Emplr.Firstname & " " & Emplr.Surname;      
+      if nonblank(tstr) then begin
+        ExportTagXml("c2010_Nimi",ConvertXml(tstr),5);
+      end;
+    end;
+    ExportPlainXml("<vmList>",5);
+    return;
+end;
+
+global
+procedure DoExportTSD_part2(boolean tsdadd1,record EmplVc Emplr,val coef,string tsdrwcode,integer rownr,val s1030,val s1060,val s1070,val s1090,val s1100,val s1110,val s1120,val s1130,val s1140,val s1160,val s1170,val s2150,val inctaxperc,string tsdrowspec,integer dispensflag,integer calcvalue)
+begin 
+  string 255 tstr;
+  integer j;
+  val tmp1070,tmp1090;
+  
+  if (rownr==0) then begin
+    tmp1070=s1070; //2080
+    tmp1090=s1090; //2100
+  end else begin
+    tmp1070=0;
+    tmp1090=0;
+  end;
+
+  if (tsdadd1) then begin //Lisa1
+    ExportPlainXml("<tsd_L1_A_Vm>",6);
+    ExportTagXml("c1020_ValiKood",tsdrwcode,7);
+    ExportValTagXml("c1030_Summa",s1030,7);
+    if (tsdrwcode=="10") and ((coef>0) and (coef<1)) then begin
+      ExportValTagXml("c1040_OtMaar",coef,7);
+    end;
+    if nonblank(Emplr.CountryCode1) then begin
+      tstr = Emplr.CountryCode1;
+      ExportTagXml("c1050_RiikKood",ConvertXml(tstr),7);
+    end;
+    if (s1060!=0) then begin
+      ExportValTagXml("c1060_Smvm",s1060,7);
+    end;
+    if (dispensflag!=0) then begin
+      if (tmp1070!=0) then begin
+        ExportValTagXml("c1070_TvpVah",tmp1070,7);
+      end;
+    end;
+    if (tmp1090!=0) then begin
+      ExportValTagXml("c1090_KuumSuur",tmp1090,7);
+    end;
+    if (calcvalue!=0) then begin
+      if (s1100!=0) then begin
+        ExportValTagXml("c1100_Sm",s1100,7);
+      end;
+      if (s1110!=0) then begin
+        ExportValTagXml("c1110_Kp",s1110,7);
+      end;
+      if (s1120!=0) then begin
+        ExportValTagXml("c1120_Tkvm",s1120,7);
+      end;
+      if (s1130!=0) then begin
+        ExportValTagXml("c1130_Tk",s1130,7);
+      end;
+      if (s1140!=0) then begin
+        ExportValTagXml("c1140_Ttk",s1140,7);
+      end;
+      if (s1170!=0) then begin
+        ExportValTagXml("c1170_Tm",s1170,7);
+      end;
+    end;
+    ExportPlainXml("<mvtList>",7);
+    ExportPlainXml("<tsd_L1_A_Mvt>",8);
+    ExportTagXml("c1150_TuliKood",tsdrowspec,9);
+    ExportValTagXml("c1160_Summa",s1160,9);
+    ExportPlainXml("</tsd_L1_A_Mvt>",8);
+    ExportPlainXml("</mvtList>",7);
+    ExportPlainXml("</tsd_L1_A_Vm>",6);
+  end else begin //Lisa2
+    ExportPlainXml("<tsd_L2_A_Vm>",6);
+    if nonblank(Emplr.CountryCode) then begin
+      tstr = Emplr.CountryCode;
+      ExportTagXml("c2020_RiikKood",ConvertXml(tstr),7);
+    end; 
+    ExportTagXml("c2030_ValiKood",tsdrwcode,7);
+    ExportValTagXml("c2040_Summa",s1030,7);
+    if (coef!=0) then begin
+     ExportValTagXml("c2050_OtMaar",coef,7);
+    end;
+    if nonblank(Emplr.CountryCode1) then begin
+      tstr = Emplr.CountryCode1;
+      ExportTagXml("c2060_RiikKood",ConvertXml(tstr),7);
+    end;
+    if (calcvalue!=0) then begin
+      if (s1060!=0) then begin
+        ExportValTagXml("c2070_Smvm",s1060,7);
+      end;
+    end;
+    if (dispensflag!=0) then begin
+      if (tmp1070!=0) then begin
+        ExportValTagXml("c2080_TvpVah",tmp1070,7);
+      end;
+    end;
+    if (tmp1090!=0) then begin
+      ExportValTagXml("c2100_KuumSuur",tmp1090,7);
+    end;
+    if (calcvalue!=0) then begin
+      if (s1100!=0) then begin
+        ExportValTagXml("c2110_Sm",s1100,7);
+      end;  
+      if (s1120!=0) then begin
+        ExportValTagXml("c2120_Tkvm",s1120,7);
+      end;
+      if (s1130!=0) then begin
+        ExportValTagXml("c2130_Tk",s1130,7);
+      end;
+      if (s1140!=0) then begin
+        ExportValTagXml("c2140_Ttk",s1140,7);
+      end;
+      if (s2150!=0) then begin
+        ExportValTagXml("c2150_Tmvm",s2150,7);
+      end;
+      if (inctaxperc!=0) then begin
+        ExportValTagXml("c2160_TmMaar",inctaxperc,7);
+      end;
+      if (s1170!=0) then begin
+        ExportValTagXml("c2170_Tm",s1170,7);
+      end;
+    end;  
+    ExportPlainXml("</tsd_L2_A_Vm>",6);
+  end;
+  return;
+end;

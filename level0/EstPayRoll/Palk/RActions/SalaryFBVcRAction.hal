@@ -1,0 +1,175 @@
+external function boolean GetNextSalFBSerNr(var LongInt);
+external function boolean ContractExsists(LongInt);
+external procedure SetMarkFlag(integer,var integer);
+
+global
+function LongInt SalaryFBVcRecordDefaults(var record SalaryFBVc SFBr,record SalaryFBVc SFB2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+   
+  if (SingleUserMode) then begin
+    if (GetNextSalFBSerNr(SFBr.SerNr)) then begin end;
+  end else begin
+    SFBr.SerNr = -1;
+  end;
+  SalaryFBVcRecordDefaults = res; 
+  return;
+end;
+
+global
+function LongInt SalaryFBVcRecordDuplicate(var record SalaryFBVc SFBr,record SalaryFBVc SFB2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+ 
+  SFBr.OKFlag = 0;
+  SetMarkFlag(SFBr.OKFlag,SFBr.OKMark);
+  SFBr.Invalid = 0;
+  if (SingleUserMode) then begin
+    if (GetNextSalFBSerNr(SFBr.SerNr)) then begin end;
+  end else begin
+    SFBr.SerNr =-1;
+  end;
+  SalaryFBVcRecordDuplicate = res; 
+  return;
+end;
+
+global
+function LongInt SalaryFBVcRecordCheck(var record SalaryFBVc SFBr,record SalaryFBVc SFB2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  record SalaryFBVc SFB3r;
+  row SalaryFBVc SFBrw;
+  row SalaryFBVc SFB2rw;
+  integer rwcnt,i;
+  LongInt updatemode,insertmode;
+  
+  insertmode=1;
+  updatemode=2;
+  res = 0;
+
+  if (SFB2r.Invalid!=0) then begin
+    RecordCheckError(1282,"",0,"");      
+    res = -1; 
+    goto LSalaryFBVcRecordCheck;
+  end;
+  if (stat!=insertmode) then begin
+    if (SFB2r.OKFlag!=0) then begin
+      goto LSalaryFBVcRecordCheck;
+    end;
+  end;
+  
+  if (stat==updatemode) then begin
+    if (SFBr.SerNr<=0)  then begin
+      SFBr.SerNr = SFB2r.SerNr;
+    end;
+  end;
+  if (SFBr.SerNr==-1) then begin
+    if (GetNextSalFBSerNr(SFBr.SerNr)) then begin end;
+  end;
+
+  if (stat==insertmode) or (stat==updatemode and SFBr.SerNr!=SFB2r.SerNr) then begin
+    SFB3r.SerNr = SFBr.SerNr;
+    if (ReadFirstMain(SFB3r,1,true)) then begin
+      RecordCheckError(1547," " & SFBr.SerNr,-1,"SerNr");      
+      res = -1; 
+      goto LSalaryFBVcRecordCheck;
+    end;
+  end;   
+  if (len(SFBr.SerNr)<=0 or (SFBr.SerNr<=0)) then begin
+    RecordCheckError(1500343,"",-1,"SerNr");      
+    res = -1; 
+    goto LSalaryFBVcRecordCheck;
+  end;
+ 
+  rwcnt=MatRowCnt(SFBr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(SFBr,i,SFBrw);
+    if (SFBrw.ContrSerNr<=0) then begin
+      RecordCheckError(1500318,"",i,"ContrSerNr");      
+      res = -1; 
+      goto LSalaryFBVcRecordCheck; 
+    end else begin
+      if (ContractExsists(SFBrw.ContrSerNr)==false) then begin
+        RecordCheckError(1500332," v›i ei ole aktiivne " & SFBrw.ContrSerNr,i,"ContrSerNr");      
+        res = -1; 
+        goto LSalaryFBVcRecordCheck; 
+      end;
+    end;
+    if blank(SFBrw.FBDate) then begin
+      RecordCheckError(1500342,"",i,"FBDate");      
+      res = -1; 
+      goto LSalaryFBVcRecordCheck;
+    end;
+    if blank(SFBrw.BrutoSum) then begin
+      RecordCheckError(1500359,"",i,"BrutoSum");      
+      res = -1; 
+      goto LSalaryFBVcRecordCheck;
+    end;
+  end;
+LSalaryFBVcRecordCheck:;
+  if (res==-1) then begin
+    SFBr.OKFlag=0;
+    SetMarkFlag(SFBr.OKFlag,SFBr.OKMark);
+  end;
+  SalaryFBVcRecordCheck = res;
+  return;
+end;
+
+global
+function LongInt SalaryFBVcRecordSave(var record SalaryFBVc SFBr,record SalaryFBVc SFB2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+ 
+  SetMarkFlag(SFBr.OKFlag,SFBr.OKMark);
+  SalaryFBVcRecordSave = res; 
+  return;
+end;
+
+global
+function LongInt SalaryFBVcRecordUpdate(var record SalaryFBVc SFBr,record SalaryFBVc SFB2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+ 
+  SetMarkFlag(SFBr.OKFlag,SFBr.OKMark);
+  SalaryFBVcRecordUpdate = res; 
+  return;
+end;
+
+global
+function LongInt SalaryFBVcRecordRemoveTest(var record SalaryFBVc SFBr,record SalaryFBVc SFB2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+
+  res = 1;
+  if (SFBr.OKFlag!=0) then begin
+    MessageBox(1560,"")
+    res = 0;
+  end;
+  SalaryFBVcRecordRemoveTest = res; 
+  return;
+end;
+
+global
+updating function LongInt SalaryFBVcRecordInvalidateTest(var record SalaryFBVc SFBr,record SalaryFBVc SFB2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+
+  res = 0;
+  if (SFBr.Invalid==0) and (SFBr.OKFlag!=0) then begin
+    SFBr.Invalid = 1;
+    res = 1;
+  end;
+LSalaryFBVcRecordInvalidateTest:;
+  SalaryFBVcRecordInvalidateTest = res;  
+  return;
+end;
+
+global
+updating function LongInt SalaryFBVcRecordImport(var record SalaryFBVc SFBr,record SalaryFBVc SFB2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+
+  SetMarkFlag(SFBr.OKFlag,SFBr.OKMark);
+  SalaryFBVcRecordImport = res; 
+  return;
+end;

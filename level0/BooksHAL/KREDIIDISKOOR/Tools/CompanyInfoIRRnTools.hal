@@ -1,0 +1,153 @@
+external function Boolean SetInSet2(string,string);
+external procedure ExtractObjWithSeparator(string,string,Boolean,var Integer,var string);
+external function boolean IsNumeric(string);
+//cust KB 1.06.2017, IR new functions
+remote function boolean IRServiceActivated(string);
+remote updating procedure CreateEMTAKClassifier(string, string);
+remote updating procedure StoreCUServiceUsage(date,string,Integer,string,Integer,Integer);//cust, ts - 2018/04, e-service statistic
+
+global
+function boolean ValidEMTAKCode(string code)
+begin
+  boolean res;
+  
+  res = false;
+  if (IsNumeric(code) AND nonblank(code)) then begin
+    res = true;
+  end;
+  ValidEMTAKCode = res;
+  return;
+end;
+
+global
+function boolean AddClassifierToCU(var record CUVc CUr, string classifier)
+begin
+  string 200 tstr;
+  integer maxlen;
+  boolean testf;
+  boolean res;
+  
+  res = false;
+  testf = true;
+  maxlen = 200;
+  if ((SetInSet(classifier,CUr.Classification)) == false) then begin
+    tstr = CUr.Classification;
+    if ((len(tstr) + len(classifier)) > maxlen) then begin
+      testf = false;
+    end;
+    if(testf) then begin
+      if (blank(tstr)) then begin
+        tstr = classifier;        
+      end else begin
+        tstr = tstr & "," & classifier;
+      end;
+      CUr.Classification = tstr;
+      res = true;
+    end;
+  end;
+  AddClassifierToCU = res;
+  return;
+end;
+
+global
+procedure CompanyInfoIRsm()
+begin
+  record CUVc CUr;
+  record RcVc RepSpec;
+  Integer wn;
+
+  if (IRServiceActivated("IRSENDESTADRLOOKUP")) then begin
+    ReportDefaults(RepSpec,"EstAddrLookupRClass");
+    wn = CurWindow;
+    GetWindowRecord(wn,CUr);
+    if (nonblank(CUr.RegNr1)) then begin
+      RepSpec.flags[0] = 0;
+      RepSpec.flags[1] = WindowState(wn);
+      RepSpec.ArtMode = wn;
+      RepSpec.repname = "CompanyInfoIRRn";
+      RepSpec.Media = mtScreen;
+      RepSpec.f2 = Trim(CUr.RegNr1);
+      RunReport(RepSpec,0);
+    end;
+  end else begin
+    MessageBox(1500003,"");
+  end;
+  return;
+end;
+
+global
+procedure DblContactInfoUpdCU(string dblstr, string l,integer currepwn)
+begin
+  record CUVc CUr;
+  string 255 tstr;
+  string 255 wnstr,homePage,email,telephoneNumber,faxNumber;
+  Integer wn;
+  Integer pos;
+
+  tstr = l;
+  pos = 0;
+  ExtractObjWithSeparator(";",tstr,false,pos,wnstr);
+  wn = StringToInt(wnstr);
+  if (wn > 0 AND GetWindowClass(wn) == "CUDClass") then begin
+    DeselectWindow(wn,false);
+    GetWindowRecord(wn,CUr);
+    ExtractObjWithSeparator(";",tstr,false,pos,homePage);
+    ExtractObjWithSeparator(";",tstr,false,pos,email);
+    ExtractObjWithSeparator(";",tstr,false,pos,telephoneNumber);
+    ExtractObjWithSeparator(";",tstr,false,pos,faxNumber);
+    if (blank(CUr.wwwAddr)) then begin
+      CUr.wwwAddr = homePage;
+    end;
+    if (blank(CUr.eMail)) then begin
+      CUr.eMail = email;
+    end;
+    if (blank(CUr.Phone)) then begin
+      CUr.Phone = telephoneNumber;
+    end;
+    if (blank(CUr.Fax)) then begin
+      CUr.Fax = faxNumber;
+    end;
+    PutWindowRecord(wn,CUr);
+  end;
+  return;
+end;
+
+global updating
+procedure DblAddEMTAKCU(string dblstr, string l,integer currepwn)
+begin
+  record CUVc CUr;
+  string 255 tstr;
+  string 255 wnstr,mainActivity;
+  Integer wn;
+  Integer pos;
+
+  tstr = l;
+  pos = 0;
+  ExtractObjWithSeparator(";",tstr,false,pos,wnstr);
+  wn = StringToInt(wnstr);
+  if (wn > 0 AND WindowValid(wn) AND GetWindowClass(wn) == "CUDClass") then begin
+    DeselectWindow(wn,false);
+    GetWindowRecord(wn,CUr);
+    ExtractObjWithSeparator(";",tstr,false,pos,mainActivity);
+    if (ValidEMTAKCode(mainActivity)) then begin
+      CreateEMTAKClassifier(mainActivity,mainActivity);
+      if (IsRecordLocked(CUr)==false) then begin
+        if (AddClassifierToCU(CUr,mainActivity) == false) then begin
+          MessageBox(1500063,"");
+        end else begin
+          PutWindowRecord(wn,CUr);
+        end;
+      end;
+    end;
+  end;
+  return;
+end;
+
+global
+procedure DblOpenHomePageWeb(string dblstr,string url,Integer currepwn)
+begin
+  if (nonblank(url)) then begin
+    OpenWebBrowser(url);
+  end;
+  return;
+end;

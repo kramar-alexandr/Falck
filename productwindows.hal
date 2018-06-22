@@ -1,0 +1,3449 @@
+external inner function Boolean AcceptanceStatusColumnTest(string);
+external inner procedure RateField(real,real,real,string,integer,string,boolean,real,real,string,boolean);
+external inner procedure DisplayRecordDetails_EST(LongInt,LongInt,string,date,time,string,string,string,string,string,string,string,string,string,string,string,Integer,string,string,string,val,string,Boolean,string,string);
+external inner procedure DrawPOSInterface2_EST(string,string,record POSButtonsVc,string,Integer,Integer);
+external inner function string 255 VATZoneEditFieldLabel_EST(Integer);
+external inner function string 255 VATZoneNameEST();
+external inner function string 60 UserDefined(string,string);
+external inner function Boolean IsMoveToCloud(record SetupStatusBlock);
+external inner function Boolean TouchScreenLookVertical();
+external inner function Boolean TouchScreenLookVertical();
+external inner function Boolean IsSessionOpen(string,string,Date,Time);
+external inner function Boolean UseTaxTemplatesforTaxCalc();
+external inner function real ItemButtons(string,Integer);
+external inner function Boolean HasCharts();
+external inner function Integer LoginShortcutsLines(Integer);
+external inner function real DrawPaymentModesButtons_IV_EST(real);
+external inner function real FunctionButtons_EST(string);
+external inner function Boolean IsEnterprise();
+external inner function Boolean StandardHansa();
+external inner function Boolean HasAdvancedAccounting();
+external inner function Boolean HasAdvancedStock();
+external inner function Boolean HasApprovals();
+external inner function Boolean HasBase2();
+external inner function Boolean HasCustomerStatusReport();
+external inner function Boolean HasDownpayments();
+external inner function Boolean HasExtTax();
+external inner function Boolean HasFiscalPrinter();
+external inner function Boolean HasIncomeAndExpenseBook();
+external inner function Boolean HasIntegratedNL();
+external inner function Boolean HasItemClassification();
+external inner function Boolean HasItemGroups();
+external inner function Boolean HasMultiCurrency();
+external inner function Boolean HasNumberSeries();
+external inner function Boolean HasNLBudget();
+external inner function Boolean HasLanguages();
+external inner function Boolean HasPersons();
+external inner function Boolean HasPrepayments();
+external inner function Boolean HasRussianPrepayment();
+external inner function Boolean HasSalesman();
+external inner function Boolean HasSalesmanBonus();
+external inner function Boolean HasSalesGroup();
+external inner function Boolean HasSerialNumbers();
+external inner function Boolean HasSimAccruals();
+external inner function Boolean HasTaxMatrix();
+external inner function Boolean HasVATZone();
+external inner function Boolean HasMetroTestFeatures();
+external inner function Boolean HasMultiLocations();
+external inner function Boolean HasObjects();
+external inner function Boolean HasWorkOrders();
+external inner function Boolean HasTouchScreenLook();
+external inner function Boolean HasTREO();
+external inner function Boolean HasVarieties();
+external inner function Boolean HasWithholdingTax();
+external inner function Boolean HasWorkOrders();
+external inner function Boolean HasModAT2();
+external inner function Boolean HasModCL();
+external inner function Boolean HasModCRM();
+external inner function Boolean HasModHotel();
+external inner function Boolean HasModHRM();
+external inner function Boolean HasModIN();
+external inner function Boolean HasModNL();
+external inner function Boolean HasModPL();
+external inner function Boolean HasModPO();
+external inner function Boolean HasModSL();
+external inner function Boolean HasModTS();
+remote inner function Boolean ReadPOSButtons(string,string,longint,var string,var string,var string,var record POSButtonsVc);  //Bk HAL //##cc
+external inner function real VATZoneButtonsLabelsEST(real,real,real,real);
+external inner function Boolean HasJewelleryInterface();
+external inner function string 5 GetCreditScoreString(val); //cust KB 1.06.2017
+external inner function integer CreditScoreToColor(val); //cust KB 1.06.2017
+remote inner procedure GetCredScoreAndDateFor(string, var val, var date); //cust KB 14.09.2017
+external inner function boolean CredScoreCanExist(record CUVc); //cust KB 18.04.2018
+external inner function Boolean HasLimitedAccess();
+external inner function Boolean HasEInvoicing();
+
+begin
+
+  SetLangMode(LangEstonian,"EST",0);
+
+  return;
+end;
+
+//Bk, eteenuste kanaldused
+//Bk, krediidiskoor
+//Bk, SpecialMenu("Ettevõtte andmed"
+//Bk, SpecialMenu("Edasta Mailbowsse"
+//Bk, SpecialMenu("Uuenda krediidiskoor"
+window CUDClass:14
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h1,h2,h3,h4,h5,l,v,vm,vm2,vs;
+  string 255 label;
+  record CUVc CUr;
+  Integer wn,tilenr;
+  record ModuleBlock Modb;
+  //cust start KB 02.06.2017
+  string 10 creditScoreString;
+  val creditScore;
+  integer creditScoreColor;
+  date creditScoreUpdDate
+  //cust end
+
+  BlockLoad(Modb);
+  WindowBegin("Kontakt",CUDClass,CGview,-);
+  DynamicWindow;
+  SetWRect(20,80,840,441);//##cc
+  Sizeable(-1,-1,0,0);
+  UseView(CUVc);
+  FormName(PrintCUD);
+
+  wn = CurWindow;
+  if (wn>0) then begin
+    if (GetWindowClass(wn)=="CUDClass") then begin
+      GetWindowRecord(wn,CUr);
+    end;
+  end;
+
+  if (HasLocalization("EST,GBR,LTU,LVA,NOR")) then begin
+    ActiveFieldOnNew("Code"); // dont change, otherwise automatic address lookup helper window wont show automatically //wns
+                              // this should not be based on localization, but rather on if the
+                              // address lookup is enabled, erik
+  end else begin
+    ActiveFieldOnNew("Name");
+  end;
+  if (HasMetroTestFeatures or GUIType!=kGUIMetro) then begin
+    CommunicateButton;
+  end;
+  if (HasJewelleryInterface) then begin
+    Tile(0,155,false,"",Code);
+  end else begin
+    Tile(0,95,false,"",Code);
+  end;
+  v = 6; h = 130; l=223; vs = 20; h1=410; h2 = 350; h3 = 430; h4 = 580; h5 = 460;
+  EditField(h,v ,   165,"Kood",Normal,Code,false,TSerSClass);//Bk //##cc
+  EditField(h1,v,50,"Kliendiklass",Normal,CustCat,false,CCatSClass);
+  EditField(h,v+=vs,95,"Lühikood",Normal,SearchKey,false,0);
+  EditField(h1,v,50,"Tarnijaklass",Normal,VECat,false,VGSClass);
+  if (HasJewelleryInterface) then begin
+    EditField(h,v+=vs,95,"Tiitel",Normal,Salutation1,false,0);
+    EditField(h1,v,50,"ANA kood",Normal,ANACode,false,0);
+    EditField(h,v+=vs,h1-h+50,"Eesnimi",Normal,Salutation2,false,0);
+    EditField(h,v+=vs,h1-h+50,"Perek. nimi",Normal,Salutation3,false,0);
+  EditField(h,v+=vs,h1-h+50,"Nimi",Normal,Name,false,0); 
+  end else begin
+    EditField(h,v+=vs,h1-h+50,"Nimi",Normal,Name,false,0);
+  end;
+  CheckBox(h1+80,v=6,0,"K_lient",CUType);
+  CheckBox(h1+80,v+=16,0,"Tarnija",VEType);
+  if (HasModHotel) then begin
+  CheckBox(h1+80,v+=16,0,"Külaline",GuestType);
+  end;
+  if (HasJewelleryInterface) then begin
+    CheckBox(h1+180,v+=32,0,"Mitte saata masskirju",NoLetterPosting);//##cc
+    CheckBox(h1+180,v+=16,0,"Mitte saata mass e-maile",NoMailPosting);//##cc
+    EditField(h1+180,v+=20,100,"Müügimees",Normal,SalesMan,false,UserSClass);//##cc
+  end;
+  v=6;
+  if (HasModHRM or IsEnterprise) then begin
+    CheckBox(h1+180,v,0,"Töötaja",EmployeeType); v = v + 16;
+  end;
+  if (StandardHansa==false) then begin
+    CheckBox(h1+180,v,0,"Edasimüüja",DealerType); 
+  end;
+  CheckBox(h1+180,v+=16,0,"Vihje",LeadType); 
+
+  CheckBox(h1+280,v=6,0,"Filiaal",BranchType);
+//  HalPushButton(h1+170,v=10,h1+170+100,v+20,"UpdCustomerAddressCUDsm","Update Address");
+//  HalPushButton(h1+170,v=10,h1+170+100,v+20,"CreditInfoCUDsm","Credit Info");
+//  HalPushButton(h1+170,v=10,h1+170+100,v+20,"UpdCustomerAddressCUDsm","Update Address");
+  tilenr = 1;
+  TileButton(tilenr,"Le_ping"); tilenr = tilenr + 1;
+  TileButton(tilenr,"Lähetus"); tilenr = tilenr + 1;
+  TileButton(tilenr,"Tingimused"); tilenr = tilenr + 1;
+  TileButton(tilenr,"Hinnad"); tilenr = tilenr + 1;
+  TileButton(tilenr,"Ettevõt_e"); tilenr = tilenr + 1;
+  TileButton(tilenr,"Kontod"); tilenr = tilenr + 1;
+  TileButton(tilenr,"E-arved"); tilenr = tilenr + 1;
+  if (StandardHansa==false) then begin
+    TileButton(tilenr,"Veeb"); tilenr = tilenr + 1;
+  end;
+  TileButton(tilenr,"K_ommentaar"); tilenr = tilenr + 1;
+  if (true) then begin//HasModHotel
+    TileButton(tilenr,"Külaline"); tilenr = tilenr + 1;
+  end;
+  if (StandardHansa==false) then begin
+    if (GuiType==kGuiMetro) then begin//UGLY
+      TileButton(tilenr,"Muu"); tilenr = tilenr + 1;
+    end else begin
+      TileButton(tilenr,"Omakirj."); tilenr = tilenr + 1;
+    end;
+  end;
+  TileButton(tilenr,"Märkmed"); tilenr = tilenr + 1;
+  if (CUr.CUType!=0 and HasCharts) then begin
+    TileButton(tilenr,"BI"); tilenr = tilenr + 1;
+  end;
+  tilenr = 1;
+  Tile(tilenr,290,true,tilenr,InvAddr0); tilenr = tilenr + 1;
+  v=6;
+  HalPushButton(h+120,v,h+120+100,v+20,"UpdCustomerAddressCUDsm","Uuenda aadressi");
+  //Bk KB 15.08.2017
+  if(nonblank(CUr.RegNr1)) then begin
+    HalPushButton(h+300,v,h+300+100,v+20,"CompanyInfoWebLinkIRsm","Inforegister");
+  end;
+  //Bk end;
+  v=v+10;
+  //Bk KB 01.06.2017
+  GetCredScoreAndDateFor(CUr.RegNr1,creditScore,creditScoreUpdDate);
+  creditScoreString = GetCreditScoreString(creditScore);
+  creditScoreColor = CreditScoreToColor(creditScore);
+  if(CredScoreCanExist(CUr)) then begin
+    ColourPushButton(20,50,90,70,"GetLatestCreditScoreForCustsm",creditScoreString,creditScoreColor);
+    StaticText(20,85,"Krediidiskoor",false);
+    if(nonblank(creditScore)) then begin
+      StaticText(20,100, creditScoreUpdDate,false);
+    end;
+  end;
+  //cust end
+  StaticText(h,v+13,"Arve aadress",false);
+  label = UserDefined("CUVc","InvAddr0");
+  EditField(h,v+=vs,-20,label,Normal,InvAddr0,false,0);
+  label = UserDefined("CUVc","InvAddr1");
+  EditField(h,v+=vs,-20,label,Normal,InvAddr1,false,0);
+  label = UserDefined("CUVc","InvAddr2");
+  EditField(h,v+=vs,-20,label,Normal,InvAddr2,false,0);
+  label = UserDefined("CUVc","InvAddr3");
+  EditField(h,v+=vs,-20,label,Normal,InvAddr3,false,0);
+  label = UserDefined("CUVc","InvAddr4");
+  EditField(h,v+=vs,-20,label,Normal,InvAddr4,false,0);
+  EditField(h,v+=vs,50,"Riik",Normal,CountryCode,false,CountrySClass);
+  if (HasLocalization("BRA")) then begin 
+    EditField(h2-159,v,214,"",ViewOnly,InvCountryName,false,0);
+    v = v + vs;
+  end;  
+  EditField(h1,v,-20,"Osakond",Normal,Department,false,0);
+  EditField(h,v+=vs,150,"Telefon",Normal,Phone,false,0);
+  EditField(h1,v,-20,"Faks",Normal,Fax,false,0);
+  EditField(h,v+=vs,150,"Muu telefon",Normal,AltPhone,false,0);
+  EditField(h1,v,-20,"Mobiiltelefon",Normal,Mobile,false,0);
+  EditField(h,v+=vs,150,"Skype nimi",Normal,SkypeName,false,0);
+  EditField(h1,v,-20,"SIP",Normal,SIPCode,false,0);
+  EditField(h,v+=vs,150,"E-mail",Normal,eMail,false,0);
+  EditField(h1,v,-20,"Lühikood",Normal,Extension,false,0);
+  EditField(h,v+=vs,150,"Peam. kontaktisik",Normal,Person,false,ContactSClass);
+  EditField(h1,v,-20,"Veebileht",Normal,wwwAddr,false,0);
+  EditField(h,v+=vs,-20,"Klassifikaatorid",Normal,Classification,false,CClassSClass);
+  if (HasLocalization("CHN")) then begin
+    EditField(h,v+=vs,150,"QQ konto number",Normal,QQName,false,0); 
+    EditField(h1,v,-20,"Weibo konto number",Normal,WeiboName,false,0); 
+  end;
+  RecordList2(10,v+=40,-30,-39,"ContactRelVc");
+  RlColKey(4,4,"Kood",ContactCode,false,ActCustContactCode);
+  RlCol(55,55,"Tiitel",ContactTitle,false);
+  RlColKey(105,105,"Nimi",ContactName,false,ActCustContactName);
+  RlCol(235,235,"Telefon",ContactPhone,false);
+  RlCol(335,335,"Mobiil",ContactMobile,false);
+  RlCol(435,435,"Amet",JobTitle,false);
+  RlCol(535,535,"E-mail",ContacteMail,false);
+//  RlCol(-1,-1,"",Invalid,true);
+  Tile(tilenr,240,false,tilenr,DelAddr0); tilenr = tilenr + 1;
+  v=6;
+  if (HasLocalization("CAN,GBR,LVA,EST,SWE,USA")) then begin
+  HalPushButton(h+120,v,h+120+100,v+20,"UpdDeliveryAddressCUDsm","Uuenda aadressi");
+  end;
+  v=v+12;
+  StaticText(h,v+13,"Lähetusaadress",false);
+  label = UserDefined("CUVc","DelAddr0");
+  EditField(h,v+=vs,-20,label,Normal,DelAddr0,false,0);
+  label = UserDefined("CUVc","DelAddr1");
+  EditField(h,v+=vs,-20,label,Normal,DelAddr1,false,0);
+  label = UserDefined("CUVc","DelAddr2");
+  EditField(h,v+=vs,-20,label,Normal,DelAddr2,false,0);
+  label = UserDefined("CUVc","DelAddr3");
+  EditField(h,v+=vs,-20,label,Normal,DelAddr3,false,0);
+  label = UserDefined("CUVc","DelAddr4");
+  EditField(h,v+=vs,-20,label,Normal,DelAddr4,false,0);
+  EditField(h,v+=vs,50,"Riik",Normal,DelCountry,false,CountrySClass);
+  if (HasLocalization("BRA")) then begin 
+    EditField(h2-159,v,203,"",ViewOnly,DelCountryName,false,0);
+    v = v + vs;
+  end;    
+  EditField(h2+50,v,-20,"Tell. kommentaar",Normal,OrderComment,false,0);
+  EditField(h,v+=vs,120,"Transpordi nr.",Normal,FreightNr,false,0);
+  EditField(h2+50,v,70,"Regioon",Normal,Region,false,RegionSClass); 
+  EditField(h,vm=(v+=vs),120,"Müügi lähetusting.",Normal,ShipDeal,false,ShipDealSClass);
+  EditField(h2+50,v,70,"Ostu lähetusting.",Normal,VEShipDeal,false,ShipDealSClass); 
+  EditField(h,v+=vs,120,"Müügi lähetusviis",Normal,ShipMode,false,DMSClass);
+  EditField(h2+50,v,70,"Ostu lähetusviis",Normal,VEShipMode,false,DMSClass); 
+  EditField(h,v+=vs,120,"Teekond",Normal,Sorting,false,DelRouteSClass);
+/* these fields were used for securities trading, this module doesnt exist in hansa anymore */
+/* Two of these fields are used in Russia and Ukraine */
+//  EditField(h,vm=(v+=vs),120,"Securities Acc.",Normal,SecAccount,false,0);
+//  EditField(h,v+=vs,120,"Bank Account",Normal,BankAccount,false,0);//xx
+//  EditField(h,v+=vs,120,"Account Operator",Normal,AccOperator,false,BankSClass);//xx
+//##  EditField(h,v+=vs ,70, "Com. Matrix",Normal,ComCode,false,ComSClass);
+  ButtonFrame(h5+30,v=vm,150,2,"Lähetuse kp. põhineb");
+  RadioButton(h5+30,v,0,0,"Hetke kp.",DeliveryBasedOn);
+  RadioButton(h5+30,v+=16,1,0,"Planeeritud lähetuse kp.",DeliveryBasedOn);  
+  Tile(tilenr,190,false,tilenr,PayDeal); tilenr = tilenr + 1;
+  EditField(h,v=6,35,"Müügi tas.ting.",Normal,PayDeal,false,PDSClass);
+  EditField(h,v+=vs,80,"Müügi krediidilimiit",Normal,CreditLimit,true,0);
+  EditField(h,v+=vs,80,"Müügi kred.limiidi pv-i",Normal,CreditLimitDays,false,0);
+  EditField(h,v+=vs,80,"Nende tarnija kood",Normal,TheirCode,false,0);  
+  EditField(h,v+=vs,80,"Arve saaja",Normal,InvoiceToCode,false,CUSClass); 
+//  EditField(h,v+=vs,80,"",Normal,ANACode,false,0);
+  EditField(h,v+=2*vs,80,"Viivise %",Normal,IntRate,false,0);
+  EditField(h,v+=vs,80,"Koostamise kp.",ViewOnly,DateCreated,false,0);
+  EditField(h,v+=vs,80,"Peamine partner",Normal,MainPartner,false,CUSClass);
+  EditField(h2,v=6,35,"Ostu tas.ting.",Normal,VEPayDeal,false,PDSClass);
+  EditField(h2,v+=vs,80,"Ostu krediidilimiit",Normal,VECreditLimit,true,0);
+  EditField(h2,v+=vs,80,"Ostu kred.limiidi päevi",Normal,VECreditLimitDays,false,0);
+  EditField(h2,v+=vs,80,"Nende kliendikood",Normal,VECustID,false,0);  
+  EditField(h2,v+=vs,80,"Arve saaja",Normal,VEInvoiceToCode,false,VESClass);
+  EditField(h2,v+=vs,80,"Faktooring",Normal,VEFactoring,false,VESClass);
+  EditField(h2,v+=vs,80,"Min. tell. summa",Normal,MinOrdSum,false,0);
+  EditField(h2,v+=vs,80,"Ostu viide",Normal,RefStr,false,0);
+  EditField(h2,v+=vs,80,"Viimati muudetud",Normal,DateChanged,false,0);
+  CheckBox(h5-5,v=12,0,"Suletud",blockedFlag);//##cc
+  CheckBox(h5-5,v+=16,0,"Ootel",OnHoldFlag);//##cc
+  CheckBox(h5-5,v+=16,0,"M_ärgukirjad",RemndrFlag);//##cc
+//  CheckBox(h5,v+=16,0,"Collection",ColectionFlag);
+  CheckBox(h5-5,v+=16,0,"Viivis",InterestFlag);//##cc
+  CheckBox(h5-5,v+=16,0,"E_ttemaks",OnAccount);//##cc
+  if (StandardHansa==false) then begin
+  CheckBox(h5-5,v+=16,0,"Faktooringuta",NoFactoringFlag);//##cc
+  CheckBox(h5-5,v+=16,0,"Lisamaksuta",NoTax1);//##cc
+  CheckBox(h5-5,v+=16,0,"Ainult koondarved",GroupInv);//##cc
+    CheckBox(h5-5,v+=16,0,"Isearveldus",SelfBilling);//##cc
+    CheckBox(h5,v+=16,0,"Kinnitatud keemilise ladustamise jaoks",ChemicalStorageApproved); 
+    CheckBox(h4,v=12,0,"EGO klient",EGOFlag);
+    CheckBox(h4,v+=16,0,"EDI klient",EDIFlag);
+    CheckBox(h4,v+=16,0,"Luba siseneda",AllowLogin);
+//  CheckBox(h4,v+=16,0,"Allow FTP Access",FTPLogin);
+    CheckBox(h4,v+=16,0,"Ainult fiskaalarved",FiscalFlag);
+    CheckBox(h4,v+=16,0,"Ära koosta masskirju",NoLetterPosting);
+  end else begin
+    CheckBox(h4,v=12,0,"Ära koosta masskirju",NoLetterPosting);
+  end;
+  CheckBox(h4,v+=16,0,"Ära koosta masskirju",NoMailPosting);
+  CheckBox(h4,v+=16,0,"Region. lisamaksudeta",NoRepa);
+  if (HasLocalization("GBR,LTU,POL,LVA")) then begin
+    CheckBox(h4,v+=16,0,"Tagatisraha",RvrsVAT);
+  end;
+  if (HasExtTax) then begin
+  CheckBox(h4,v+=16,0,"Region. lisamaksudeta",NoTax2);//Est redesigned to fit long text/KLS//##cc  report and fix in core!
+  end;
+  Tile(tilenr,110,false,tilenr,PLCode); tilenr = tilenr + 1;
+  EditField(h,v=6,  80,"Müügivaluuta",Normal,CurncyCode,false,CurncyCodeSClass);
+  EditField(h,v+=vs ,80, "Hinnakiri",Normal,PLCode,false,PLDefSClass);
+  EditField(h,v+=vs ,80, "Hinnaal. maatriks",Normal,RebCode,false,RebSClass);
+  if (HasSalesman or HasSalesmanBonus) then begin
+  EditField(h,v+=vs,80,"Müügimees",Normal,SalesMan,false,UserSClass);
+  end;
+  EditField(h,v+=vs,80,"Vaikimisi artikkel",Normal,CompItemCode,false,CompItemSClass);
+  EditField(h2,v=6,80,"Ostuvaluuta",Normal,VECurncyCode,false,CurncyCodeSClass);
+  EditField(h2,v+=2*vs ,80, "Hank.hin.maatriks",Normal,VERebCode,false,RebSClass);
+  if (HasSalesGroup) then begin
+  EditField(h2,v+=vs,80,"Müügigrupp",Normal,SalesGroup,false,SalesGroupSClass);
+  end;
+  ButtonFrame(h5,v=24,150,3,"Hind põhineb");
+  RadioButton(h5,v,0,0,"Tellimuse kp.",PriceBasedOn);
+  RadioButton(h5,v+=16,1,0,"Planeeritud lähetuse kp.",PriceBasedOn);
+  RadioButton(h5,v+=16,2,0,"Saatmise kp.",PriceBasedOn);  
+  Tile(tilenr,180,false,tilenr,Comment); tilenr = tilenr + 1;
+  EditField(h,v=6,-20,"Kommentaar",Normal,Comment,false,0);
+  EditField(h,v+=vs,-20,"Hoiatus müügil",Normal,WarnText1,false,0);
+  EditField(h,v+=vs,-20,"Hoiatus ostul",Normal,VEWarnText1,false,0);
+  EditField(h,v+=vs,120,"#VAT Reg. No.#",Normal,VATNr,false,0);
+  EditField(h2-20,v,120,"Reg.nr.1",Normal,RegNr1,false,0);
+  ButtonFrame(h5+30,v+18,143,1,"Tüüp");
+  RadioButton(h5+30,v+18,0,0,"Ettevõtte",CustType);
+  RadioButton(h5+110,v+18,1,0,"Eraisik",CustType);
+  v = v + vs;
+  EditField(h,v,120,"Riigi #VAT Reg. No.#",Normal,CountryVATNr,false,0);
+  EditField(h2-20,v,120,"#Reg. No. 2#",Normal,RegNr2,false,RegDefSClass);
+  EditField(h,v+=vs,120,"KMKR kontrolli kp.",Normal,VATNrCheckDate,false,PasteCurDate);
+  if (IsBooks) then begin //##ii
+    //  EditField(h2-20,v,120,"GLN",Normal,RecipientGLN,false,0); //##ii
+    EditField(h2-20,v,120,"Teenuse ID",Normal,RecipientGLN,false,0);//Bk HAL //##ii
+  end else begin //##ii
+    EditField(h2-20,v,120,"GLN",Normal,RecipientGLN,false,0);
+  end;//##ii
+  if (HasLocalization("HRV,SVN")) then begin 
+    EditField(h,v+=vs,120,"Seaduslik vorm",Normal,LegalForm,false,CULegalFormSClass);
+  end;
+  EditField(h,v+=vs,20,"Müügi KM-kood",Normal,VATCode,false,VATCodeSClass);
+  if (HasTaxMatrix) then begin
+    EditField(h+135,v,50,"Müügi maksugr.",Normal,TaxTemplateCode,false,TaxTemplateSClass);
+  end;
+  HalPushButton(h2-10,v,h2-10+100,v+20,"UpdCustomerAddressCUDsm","Uuenda aadressi");
+  EditField(h,v+=vs,20,"Ostu KM-kood",Normal,VEVATCode,false,VATCodeSClass);
+  if (HasTaxMatrix) then begin
+    EditField(h+135,v,50,"Ostu maksugr.",Normal,VETaxTemplateCode,false,TaxTemplateSClass);
+  end;
+  EditField(h,v+=vs,50,"Keel",Normal,LangCode,false,LangSClass);
+  EditField(h2-20, v,50,"Äritegevus",Normal,BusinessNature,false,BNSClass); 
+  EditField(h,v+=vs, 260,"Äriüksus",Normal,BusinessEntity,false,SetSClass);
+  if (HasLocalization("ARG")) then begin
+    ButtonFrame(h+125,v+=20,177,4,"Maksu tingimus ");
+    RadioButton(h+125,v,2,0,"Muu",TaxCondition);
+    RadioButton(h+125,v+=16,0,0,"Kohalik",TaxCondition);
+    RadioButton(h+125,v+=16,1,0,"Mitmepoolne lepe",TaxCondition);
+    RadioButton(h+125,v+=16,3,0,"Lihtsustatud maksumaksmine",TaxCondition);
+  end;  
+  if (HasLocalization("BRA")) then begin
+    EditField(h,v+=vs,120,"SUFRAMA reg. nr.",Normal,SuframaRegNr,false,0);
+  end;
+//  EditField(h,v+=vs,120,"Kanal",Normal,WebServiceChannel,false,SetSClass);
+  v = 130;
+  v = VATZoneButtonsLabelsEST(h5+30,v,170,16);
+  Tile(tilenr,130,false,tilenr,AccAP); tilenr = tilenr + 1;
+  EditField(h,v=6,80,"Ostuvõlakonto",Normal,AccAP,false,AccSClass);
+  EditField(h,v+=vs,80,"Kulukonto",Normal,AccCost,false,AccSClass);
+  EditField(h,v+=vs,80,"Ostu ettemaksukonto",Normal,OnAccAccAP,false,AccSClass);
+  EditField(h,v+=vs,120,"Müügi objektid",Normal,Objects,false,ObjSClass);
+  EditField(h,v+=vs,120,"Ostu objektid",Normal,VEObjects,false,ObjSClass); 
+  EditField(h,v+=vs,50,"Tasumise kood",Normal,PaymentCode,false,PaymentCodeSClass); 
+  EditField(h,v+=vs,50,"Tax Exemption",Normal,TaxExemption,false,TaxExemptionsSClass); //!!TRANSLATE
+  if (HasLocalization("HRV,HUN,POL,SRB,SLV,SVN")) then begin
+  ButtonFrame(h,v+=40,150,3,"Konteeri laekumise KM");
+  RadioButton(h,v,0,0,"Vaikimisi",IPBookVAT);
+  RadioButton(h,v+=16,1,0,"Konteeri KM",IPBookVAT);
+  RadioButton(h,v+=16,2,0,"Ära konteeri KM",IPBookVAT);
+  end;
+EditField(h,v+=vs,200,"IBAN Kood",Normal,IBANCode,false,0);//##cc
+  EditField(h1,v+=vs,-20,"Pangakood",Normal,AccOperator,false,BankSClass);//##cc
+  EditField(h1,v=6,-20,"Arveldusarve",Normal,BankAccount,false,0);//##cc
+  EditField(h1,v+=vs,-20,"Arveldusarve 2",Normal,Bank,false,0);  
+  EditField(h1,v+=vs,80,"Harukontor",Normal,SortCode,false,0);
+    if (HasWithholdingTax) then begin
+  EditField(h1,v+=vs,120,"Kinnipidamiste tasumisviis",Normal,WithPayMode,false,PMSClass);
+  end;
+  if (HasLocalization("HRV,HUN,POL,SRB,SLV,SVN")) then begin
+    ButtonFrame(h1,v+=60,150,3,"Konteeri tasumise KM");
+  RadioButton(h1,v,0,0,"Vaikimisi",OPBookVAT);
+  RadioButton(h1,v+=16,1,0,"Konteeri KM",OPBookVAT);
+  RadioButton(h1,v+=16,2,0,"Ära konteeri KM",OPBookVAT);
+  end;  
+  Tile(tilenr,170,false,tilenr,ANACode); tilenr = tilenr + 1;
+  StaticText(h,v=20,"E-arved",true);
+  if (HasLocalization("EST")==false) then begin //Bk+ //##ii
+    EditField(h,vm=(v+=10),80,"Alguskp.",Normal,ANACode,false,0);//##ii
+  end; //Bk+ //##ii
+//  EditField(h,vm=(v+=10),80,"E-arve konto",Normal,ANACode,false,0);
+//  EditField(h,v+=vs,80,"Alt. E-arve konto",Normal,eInvAlternativeAccount,false,0);
+
+  ButtonFrame(h,v+=40,163,1,"Vastuvõtu eelistus");
+  RadioButton(h,v,kEInvoiceRcvPreferenceDefault,0,"Vaikimisi",eInvRcvPref);
+  RadioButton(h,v+=16,3,0,"Eelistus teenuse portaalist",eInvRcvPref); //Bk //##cc
+  RadioButton(h,v+=16,kEInvoiceRcvPreferenceElectronic,0,"E-arve portaali",eInvRcvPref);//##ii
+  if (HasLocalization("LVA")) then begin
+    RadioButton(h,v+=16,kEInvoiceRcvPreferenceEMail,0,"Email",eInvRcvPref); //!!TRANSLATE
+    RadioButton(h,v+=16,kEInvoiceRcvPreferencePaper,0,"Paper Invoice",eInvRcvPref); //!!TRANSLATE
+    RadioButton(h,v+=16,kEInvoiceRcvPreferenceInternetBank,0,"Internet Bank",eInvRcvPref); //!!TRANSLATE
+  end else begin
+  if (HasLocalization("FIN,NOR,SWE")) then begin
+    RadioButton(h,v+=16,kEInvoiceRcvPreferenceEMail,0,"E-mail",eInvRcvPref);
+  end else begin
+    RadioButton(h,v+=16,kEInvoiceRcvPreferencePaper,0,"Paberarved",eInvRcvPref); 
+    end;
+  end;  
+  if (HasLocalization("EST")) then begin //##ii
+    RadioButton(h,v+=16,kEInvoiceRcvPreferenceEMail,0,"E-mail",eInvRcvPref); //##ii
+    RadioButton(h,v+=16,kEInvoiceRcvPreferenceInternetBank,0,"Interneti pank",eInvRcvPref);  //##ii
+  end; //##ii
+  if (Modb.InterCompany) then begin
+    RadioButton(h,v+=16,kEInvoiceRcvPreferenceInternal,0,"Sisene ettevõte",eInvRcvPref);
+    EditField(h+130,v,30,"",Normal,eInvRcvToCompanyCode,false,Companies2SClass);
+  end;
+  RadioButton(h,v+=16,kEInvoiceRcvPreferenceNone,0,"Ei saada e-arveid",eInvRcvPref);
+  EndFrame;
+  if (HasLocalization("EST,LTU")) then begin
+    ButtonFrame(h,v+=40,143,1,"Alternatiivne kanal");
+    RadioButton(h,v,kEInvoiceRcvPreferenceDefault,0,"Pole kasutusel",eInvAltRcvPref);
+    RadioButton(h,v+=16,kEInvoiceRcvPreferenceElectronic,0,"E-arve portaali",eInvAltRcvPref);
+    RadioButton(h,v+=16,kEInvoiceRcvPreferencePaper,0,"Paberarve",eInvAltRcvPref);
+    RadioButton(h,v+=16,kEInvoiceRcvPreferenceEMail,0,"E-mail",eInvAltRcvPref);
+    RadioButton(h,v+=16,kEInvoiceRcvPreferenceInternetBank,0,"Interneti pank",eInvAltRcvPref); 
+    EndFrame;
+    h = 130; //##ii
+    CheckBox(h,v+=60,0,"E-arve pdf failiga",eInvAttachPDF); //##ii
+    CheckBox(h,v+=16,0,"Ära saada e-arveid",eInvStop);  //##ii
+    CheckBox(h,vm=(v+=16),0,"E-arve lühiformaadis",eInvShortNote); //##ii //SK
+    EditField(h1,v=vm,150,"OVT-tunnus",Normal,ANACode,false,0); //##ii //ts 2018/02
+  end;
+  vm2 = v;
+
+  if (HasLocalization("EST") == false) then begin //Bk+ //##ii
+  CheckBox(h1,v=vm,0,"Ära saada e-arveid",eInvStop);
+  if (HasLocalization("FIN")==false) then begin
+    CheckBox(h1,v+=16,0,"E-arve pdf failiga",eInvAttachPDF);
+    ButtonFrame(h1,v+=44,143,3,"Paberarve postikulu"); 
+  end else begin
+    ButtonFrame(h1,v+=60,143,3,"Paberarve postikulu"); 
+  end;
+  RadioButton(h1,v,2,0,"Vaikimisi",eInvPostage);
+  RadioButton(h1,v+=16,0,0,"Prioriteet",eInvPostage);
+  RadioButton(h1,v+=16,1,0,"Tavaline",eInvPostage);
+  if (HasLocalization("EST,LTU")) then begin
+    CheckBox(h1,v+=84,0,"E-arve lühiformaadis",eInvShortNote); //##cc
+  end;
+  StaticText(h,v=(vm2+40),"E-ostutellimused",true);
+  ButtonFrame(h,v+=20,163,3,"Vastuvõtu eelistus"); 
+  RadioButton(h,v,kPORcvPreferenceNone,0,"Keel",ePORcvPref);
+  RadioButton(h,v+=16,kPORcvPreferenceDefault,0,"Vaikimisi",ePORcvPref);
+  if (Modb.InterCompany) then begin
+    RadioButton(h,v+=16,kPORcvPreferenceInternal,0,"Sisene ettevõte",ePORcvPref);
+    EditField(h+130,v,30,"",Normal,ePORcvToCompanyCode,false,Companies2SClass);
+  end;
+  EndFrame;
+  end;  //Bk+ //##ii
+
+  if (StandardHansa==false) then begin
+    Tile(tilenr,70,false,tilenr,WebConf); tilenr = tilenr + 1;
+  EditField(h,vm=(v=6),120,"Veebi konverents",Normal,WebConf,true,0);
+  EditField(h1,v,150,"Peaklassifikaator",Normal,MainDispGroup,false,WebNGProductCatSClass);
+  EditField(h,v+=vs,120,"Veebi alglehekülg",Normal,WebStartPage,false,0);
+  EditField(h1,v,150,"Näita veebis",Normal,WebDisplays,false,WebDisplaySClass);
+  EditField(h,v+=vs,120,"Transp.kood",Normal,FreightCode,false,WebFreightSClass);
+  EditField(h1,v,150,"Veebi objektitüüp",Normal,WebOTCode,false,OTSClass);
+  end;
+  Tile(tilenr,170,false,tilenr,Comment0); tilenr = tilenr + 1;
+  EditField(h,v=6,-20,"Kommentaar",Normal,Comment0,false,0);
+  EditField(h,v+=vs,-20,"",Normal,Comment1,false,0);
+  EditField(h,v+=vs,-20,"",Normal,Comment2,false,0);
+  EditField(h,v+=vs,-20,"Viisakustiitel",Normal,Title,false,CourtesyTitlesSClass);
+  EditField(h,v+=vs,-20,"Ametinimetus",Normal,JobDesc,false,JobTitleSClass);
+  EditField(h,v+=vs,-20,"Tervitus 1",Normal,Salutation1,false,0);
+  EditField(h,v+=vs,-20,"Tervitus 2",Normal,Salutation2,false,0);
+  EditField(h,v+=vs,-20,"Tervitus 3",Normal,Salutation3,false,0);
+  if (true) then begin//HasModHotel
+    Tile(tilenr,250,false,tilenr,DocType); tilenr = tilenr + 1;
+    EditField(h,v=6,100,"Dok. tüüp",Normal,DocType,false,CUDocTypeSClass);
+    EditField(h2,v,-20,"ID",Normal,PassportNr,false,0);
+    EditField(h2,v+=vs,-20,"Nimi dokumendil",Normal,NameinDocument,false,0);
+//  EditFieldTL(h,vm=(v+=20),100,"Nationality",M4StrSet,Normal,423,Nationality,false,StrSetSClass);
+    EditField(h,vm=(v+=20),100,"Rahvus",Normal,Nationality,false,CountrySClass);
+    EditField(h,v+=20,100,"Sünnipäev",Normal,BirthDate,false,PasteCurDate);
+    EditField(h,v+=20,100,"Sünnikoht",Normal,BirthPlace,false,0);
+    EditField(h,v+=20,100,"Sünniriik",Normal,BirthCountry,false,CountrySClass);
+    EditField(h,v+=20,100,"Amet",Normal,Profesion,false,0);   
+    EditField(h,v+=20,100,"Ajaleht",Normal,Newspaper,false,NewspaperSClass);
+    EditField(h,v+=20,100,"Salasõna",Normal,Passphrase,false,0);
+    EditField(h,v+=vs,100,"Reisikorraldaja",Normal,TourOperator,false,CUSClass);
+    EditField(h,v+=vs,100,"Agent",Normal,Agent,false,CUSClass);
+    EditField(h,v+=vs,100,"Vaik. tasumisviis",Normal,DefGuestPayMode,false,PMSClass);
+    EditField(h,v+=vs,100,"Vaikimisi res. päritolu",Normal,BookOrigin,false,BookOrgSClass);
+    EditField(h,v+=vs,300,"Toitlustus",Normal,DietRemarks,false,0);
+    EditField(h,v+=vs,300,"Nõudmised",Normal,RequirementRemarks,false,0);
+
+    ButtonFrame(h2,v=vm+20,100,2,"Sugu");
+    RadioButton(h2,v,0,0,"Mees",Gender);
+    RadioButton(h2,v+=17,1,0,"Naine",Gender);
+
+    CheckBox(h2+130,v=vm+20,0,"Suitsetaja",Smoking);
+    CheckBox(h2+130,v+=17,0,"Mustas nimekirjas",Blacklist);
+
+    ButtonFrame(h2,vm=(v+=40),100,4,"Perekonnaseis");
+    RadioButton(h2,v,0,0,"Vallaline",MarStatus);
+    RadioButton(h2,v+=17,1,0,"Abielus",MarStatus);
+    RadioButton(h2,v+=17,2,0,"Lahutatud",MarStatus);
+    RadioButton(h2,v+=17,3,0,"Lesk",MarStatus);
+ 
+    ButtonFrame(h2=h2+130,v=vm,100,3,"Vanus");
+    RadioButton(h2,v,1,0,"Laps",AgeStatus);
+    RadioButton(h2,v+=17,0,0,"Täiskasvanu",AgeStatus);
+    RadioButton(h2,v+=17,2,0,"Pensionär",AgeStatus);
+  end;
+
+  if (StandardHansa==false) then begin
+    Tile(tilenr,270,false,tilenr,UserStr1); tilenr = tilenr + 1;
+    v=6;h=180;
+    label = UserDefined("CUVc","UserStr1");
+    if (nonblank(label)) then begin
+      EditField(h,v,-20,label,Normal,UserStr1,false,0);
+    end;
+    label = UserDefined("CUVc","UserStr2");
+    if (nonblank(label)) then begin
+      EditField(h,v+=vs,-20,label,Normal,UserStr2,false,0);
+    end;
+    label = UserDefined("CUVc","UserStr3");
+    if (nonblank(label)) then begin
+      EditField(h,v+=vs,-20,label,Normal,UserStr3,false,0);
+    end;
+    label = UserDefined("CUVc","UserStr4");
+    if (nonblank(label)) then begin
+      EditField(h,v+=vs,-20,label,Normal,UserStr4,false,0);
+    end;
+    label = UserDefined("CUVc","UserStr5");
+    if (nonblank(label)) then begin
+      EditField(h,v+=vs,-20,label,Normal,UserStr5,false,0);
+    end;
+    label = UserDefined("CUVc","UserVal1");
+    if (nonblank(label)) then begin
+      EditField(h,v+=vs,-20,label,Normal,UserVal1,false,0);
+    end;
+    label = UserDefined("CUVc","UserVal2");
+    if (nonblank(label)) then begin
+      EditField(h,v+=vs,-20,label,Normal,UserVal2,false,0);
+    end;
+    label = UserDefined("CUVc","UserVal3");
+    if (nonblank(label)) then begin
+      EditField(h,v+=vs,-20,label,Normal,UserVal3,false,0);
+    end;
+    label = UserDefined("CUVc","UserDate1");
+    if (nonblank(label)) then begin
+      EditField(h,v+=vs,80,label,Normal,UserDate1,false,PasteCurDate);
+    end;
+    label = UserDefined("CUVc","UserDate2");
+    if (nonblank(label)) then begin
+      EditField(h,v+=vs,80,label,Normal,UserDate2,false,PasteCurDate);
+    end;
+    label = UserDefined("CUVc","UserDate3");
+    if (nonblank(label)) then begin
+      EditField(h,v+=vs,80,label,Normal,UserDate3,false,PasteCurDate);
+    end;
+
+    EditField(h,v+=vs,-20,"Aadressiraamatud",Normal,AddressBooks,false,0);
+  end;
+
+  Tile(tilenr,500,false,tilenr,Math2); tilenr = tilenr + 1;
+  CheckBox(50,v=6,0,"HTML",HtmlFlag);
+  StaticText(50,v+=30,"Märkmed",true);
+  TextField(50,v+5,-20,370,Math2,0); //##cc
+  if (CUr.CUType!=0 and HasCharts) then begin
+    Tile(tilenr,400,false,tilenr,-); tilenr = tilenr + 1;
+    ChartArea(10,6,-10,390,"$CUDCLass_BIChart");
+  end;
+
+  if (GuiType==kGuiMetro) then begin // Temporarily disabled on Windows 8
+    if (UserCanReport("CustPSRn","",true) and HasCustomerStatusReport) then begin
+      SpecialMenu("Kliendi hetkeseis",'e',0,"CUStatusCUDsm");
+    end;
+    if (UserCanReport("VEPSRn","",true)) then begin
+      SpecialMenu("Tarnija hetkeseis",'u',4,"VEStatusVEDsm");
+    end;
+    SpecialMenu("Seo olemasolev kontakt",' ',1,"AddContactCUDsm"); 
+    SpecialMenu("Uus kontakt",' ',1,"NewContactCUDsm");
+    SpecialMenu("Tegevus",'c',2,"NewActCUDsm");
+  end else begin
+    if (UserCanReport("CustPSRn","",true) and HasCustomerStatusReport) then begin
+      SpecialMenu("Kliendi hetkeseis",'e',0,"CUStatusCUDsm");
+    end;
+    if (UserCanReport("VEPSRn","",true)) then begin
+  SpecialMenu("Tarnija hetkeseis",'u',4,"VEStatusVEDsm");
+  end;
+    SpecialMenu("Seo olemasolev kontakt",' ',1,"AddContactCUDsm");
+    SpecialMenu("Eemalda kontaktisik",' ',1,"DelContactCUDsm");
+    SpecialMenu("Muuda seotud kontaktisikut",' ',1,"EditContactCUDsm");
+    SpecialMenu("Uuenda kontaktisikuid",' ',6,"UpdContactAddrCUDsm");
+    if (HasLocalization("ARG")) then begin
+      SpecialMenu("Ava regionaalne vaade",' ',1,"RPCUTaxDsm");
+    end;
+    if (HasLocalization("ARG,BRA,ITA,KEN,MEX,PRT,SGP,ZAF")) then begin
+      SpecialMenu("Ava tarnija kinnipidamised",' ',1,"WHVEDsm");
+    end; //EMZ
+  if (GuiType==kGuiCocoa) then begin
+    SpecialMenu("Kopeeri lokaalsesse aadressiraamatusse",' ',7,"CopyToLocalAddressBookDsm");
+  end;
+  if (GuiType==kGuiiPhone) then begin
+      SpecialMenu("Muuda salasõna",' ',1,"ChangePasswdCUDsm");
+    end;
+    //cust KB 26.06.2017
+    SpecialMenu("Ettevõtte andmed",' ',8,"CompanyInfoIRsm");
+    SpecialMenu("Edasta Mailbowsse",' ',1,"SendToMailbowCUDsm"); //##ii
+    SpecialMenu("Uuenda krediidiskoor",' ',9,"GetLatestCreditScoreForCustsm"); //##cc
+    //cust end
+    SpecMenuGroup("",kSpecMenuGroupTypeExtendedPlusMenu,0);
+//    SpecialMenu("Activity",'c',2,"NewActCUDsm");
+    SpecialMenu("Kontaktisik",' ',1,"NewContactCUDsm");
+    if (StandardHansa==false) then begin
+      SpecialMenu("E-mail",'m',5,"NewMailCUDsm");
+  end;
+    SpecialMenu("Objektid",' ',1,"CreateObjectCUDsm");
+    SpecialMenu("Juhusliku parooliga e-mail",' ',3,"RandomPassMailCUDsm");
+  end;
+  EndWindow;
+end;
+
+//Bk, SpecialMenu("PDFi päring"
+window IVDClass:2
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h1,h2,h3,h4,hm,hs,t,v,v2,v3,vm,vs,width,h5;
+  string 255 label;
+  Integer rn;
+  record IVVc IVr; //##ii
+  record LocalMachineBlock LMb;//##ii
+  record POSButtonsVc POSBr; //##ii
+  string 255 bc1,bc2,compname,lmc,nr,sessdesc,sm; //##ii
+  time tt; //##ii
+  date td; //##ii
+  integer acnt,wn; //##ii
+  longint bm,lt,rt,tp,page; //##ii
+
+  WindowBegin("Arve",IVDClass,CGview,-);
+  Sizeable(-1,-1,0,0);
+  UseView(IVVc);
+//if (HasTouchScreenLook==false) then begin  //no more TS interface in SL , Karls' order
+if (true) then begin
+  ActiveFieldOnNew("CustCode");
+  SetWRect(20,80,750,480); //##cc
+  CommunicateButton;
+  Tile(0,74,false,"",CustCode);
+  EditField(75,vm=(v=6),75,"Nr.",Normal,SerNr,false,TSerSClass);//##cc
+  EditField(75,v+=20,75,"Klient",Normal,CustCode,false,CUSClass);//##cc
+  EnterSkip(PayDeal);
+  EditField(h=255,v=vm,-40,"Nimi",Normal,Addr0,false,0);
+  if (StandardHansa==false) then begin
+    if (HasLocalization("FIN")) then begin
+      EditField(h,vm=(v+=20),180,"Tasumise viide",ViewOnly,CalcFinRef,false,0);
+    end else begin
+  EditField(h,vm=(v+=20),135,"Amet. ser.nr.",Normal,OfficialSerNr,false,LegalInvNrSClass);
+    end;
+    if (HasLocalization("BRA")) then begin
+      EditField(500,vm,135,"Bank Receipt No.",ViewOnly,BankReceiptNr,false,0);
+    end;
+  end else begin
+    v = v + 20;
+    vm = v;
+  end;
+  CheckBox(h4=-80,v,0,"Kinnita",OKFlag);
+  TileButton(1,"Tingimused");
+  TileButton(2,"Artiklid");
+  TileButton(3,"Valuuta");
+  TileButton(4,"Lähetustingimused");
+  TileButton(5,"Tunnused");
+  TileButton(6,"Hinnakiri");
+  TileButton(7,"Arve aadress");
+  TileButton(8,"Lähetusaadress");
+  Tile(1,110,false,"1",InvDate);
+  vs = 20; h1 = 110; h2 = 290; h3 = 530; h4 = -100;
+  EditField(h1,vm=(v=6),82,"Arve kp.",Normal,InvDate,false,PasteCurDate);
+  EditField(h1,v+=vs,35,"Tasumistingimus",Normal,PayDeal,false,PDSClass);//PDMSClass);
+  EditField(h1,v+=vs,82,"Laekumistähtaeg",Normal,PayDate,false,PasteCurDate);
+  EditField(h1,v+=vs,82,"Kande kp.",Normal,TransDate,false,PasteCurDate);
+  EditField(h1,v+=vs,82,"Teenuse läh. kp.",Normal,ServiceDelDate,false,PasteCurDate); 
+  EditField(h2,v=vm,135,"Meie esindaja",Normal,OurContact,false,0);
+  EditField(h2,v+=vs,135,"Nende esindaja",Normal,ClientContact,false,ContactSClass);
+  EditField(h2,v+=vs,135,"Objektid",Normal,Objects,false,ObjSClass);
+  EditField(h2,v+=vs,135,"Viide",Normal,RefStr,false,0);
+  EditField(h2,v+=vs,135,"Kliendi tell. nr.",Normal,CustOrdNr,false,0);
+  EditField(h3,v=vm,80,"Müügimees",Normal,SalesMan,false,UserSClass); //##cc  report and fix in core!
+  if (StandardHansa) then begin //##cc
+    EditField(h3,v+=vs,80,"Ladu",Normal,Location,false,LocationSClass);
+  end else begin
+    EditField(h3,v+=vs,80,"Projekt",Normal,PRCode,false,0);
+  end;  
+  EditField(h3,v+=vs,80,"Kredit. põhjus",Normal,Reason,false,StandProblemsSClass); 
+  if (HasLocalization("MEX")) then begin
+    EditField(h3,v+=vs,80,"Tasumisviis",Normal,PMCode,false,PMSClass);
+  end;
+  if (HasLocalization("BRA")) then begin
+    EditField(h3,v+=vs,80,"E-arve tüüp",Normal,BrazilEInvType,false,BrazilEInvTypeSClass);
+  end;
+  if (HasLocalization("ITA")) then begin
+    EditField(h3,v+=vs,130,"PA Contract",Normal,PubAdmContract,false,0);
+  end;
+  if (HasLocalization("BOL,BRA,HRV,MEX")) then begin
+    EditField(h3,v+=vs,130,"Maksupitsat",ViewOnly,TaxAdminServSeal,false,0);
+  end;
+  if (HasLocalization("MEX")) then begin
+    EditField(h3,v+=vs,80,"Tas. konto nr.",Normal,PayAccNo,false,0); 
+  end;
+  if (HasLocalization("RUS")) then begin 
+    EditField(h3,v+=vs,-20,"Laekumise info",Normal,ReceiptInfo,false,0);
+  end;
+  if (HasLocalization("ITA")) then begin
+    EditField(h3,v+=vs,130,"PA Project",Normal,PubAdmProject,false,0);
+  end;
+  CheckBox(-80,v=6,0,"Vaidlustatud",DisputedFlag);
+  if (StandardHansa) then begin
+    CheckBox(h4,v+=16,0,"Muuda ladu",UpdStockFlag);
+  end;
+  EnterSkip(Math);
+  Tile(2,220,true,"2",Math);
+  //  CheckBox(20,-20,0,"OK",OKFlag);
+  if (CompileType!=ctiPhone) then begin
+  EditField(55,-21,35,"Valuuta",Normal,CurncyCode,false,CurncyCodeSClass); //##cc SK
+  if (UseTaxTemplatesforTaxCalc==false) then begin
+  if (UserCanAction("ViewCostPrice",true)) then begin
+        EditField(160,-41,70,"MK %",Normal,GPProc,true,0);
+        EditField(160,-21,70,"Kokku MK",ViewOnly,TotGP,true,0);
+      end;
+      if (HasLocalization("GBR,LTU,POL,LVA")) then begin
+        EditField(310,-41,50,"Reverse #VAT#",ViewOnly,RvrsVAT,true,0);
+        EditField(290,-21,70,"Ext. Tax",ViewOnly,TAX1Sum,true,0);
+      end else begin
+  EditField(290,-41,70,"Maks2",ViewOnly,TAX2Sum,true,0);
+  EditField(290,-21,70,"Lisamaks",ViewOnly,TAX1Sum,true,0);
+      end;
+  EditField(410,-41,95,"KM",ViewOnly ,Sum3,true,0);
+  end else begin
+    if (UserCanAction("ViewCostPrice",true)) then begin
+        EditField(290,-41,70,"MK %",Normal,GPProc,true,0); 
+      EditField(290,-21,70,"Kokku MK",ViewOnly,TotGP,true,0);
+    end;
+      EditField(410,-41,95,"Maks",ViewOnly ,Sum3,true,0);
+  end;
+    EditField(410,-21,95,"Baas 1",ViewOnly,BaseSum4,true,0);
+    EditField(-150,-41,95,"Vahesumma",ViewOnly ,Sum1,true,0);
+    EditField(-150,-21,95,"KOKKU",ViewOnly ,Sum4,true,0);
+  end else begin
+    EditField(55,-41,80,"Valuuta",Normal,CurncyCode,false,CurncyCodeSClass);
+    EditField(55,-21,80,"#VAT#",ViewOnly ,Sum3,true,0);
+    EditField(-120,-41,80,"V.a. maks",ViewOnly,TAX1Sum,true,0);
+    EditField(-120,-21,80,"KOKKU",ViewOnly ,Sum4,true,0);
+  end;
+  v = 24;
+  MatrixBegin(4,v,-50,-49,-,200);
+  MatTypedRow(stp);
+  MatOverStrike(ovst);
+  Flip(0);
+  MatCol(t=kInvoiceRowTypeNormal,32,"Artikkel",0,ArtCode,false,ForSaleINSClass);
+  //  MatCol(t,94,"Var",0,VARList,true,VARSClass);
+  //  MatCol(t,144,"Qty",0,Quant,true,0);
+  if (HasVarieties) then begin
+  MatCol(t,94,"Kogus",0,Quant,true,MATVARINSClass);
+  end else begin
+    MatCol(t,94,"Kogus",0,Quant,true,0);
+  end;
+  EnterSkip(ArtCode);
+  MatCol(t=kInvoiceRowTypeStructuredItemComponent,32,"Artikkel",0,ArtCode,false,ForSaleINSClass);
+  if (HasVarieties) then begin
+  MatCol(t,94,"Kogus",0,Quant,true,MATVARINSClass);
+  end else begin
+    MatCol(t,94,"Kogus",0,Quant,true,0);
+  end;
+  EnterSkip(ArtCode);
+  MatText(t=kInvoiceRowTypeCredit,32,"Kreedit arvele",true);
+  MatCol(t,208,"",0,OrdRow,false,ARSClass);
+  MatCol(t,-216,"",0,Spec,false,0);//MatText(t,-216,"",true); 
+  MatText(t=kInvoiceRowTypeDebit,32,"Deebet arvele",true); 
+  MatCol(t,208,"",0,OrdRow,false,0); 
+  MatCol(t,-216,"",0,Spec,false,0);//MatText(t,-216,"",true);
+  MatText(t=kInvoiceRowTypeInterest,32,"Viivis",true);
+  MatCol(t,98,"",0,ArtCode,false,0);
+  MatCol(t,153,"",0,Quant,true,0);
+  MatCol(t,188,"",0,Spec,false,0);
+  MatText(t=kInvoiceRowTypeDownpayment,32,"Ettemaks",true);
+  MatColTL(t,122,"",0,-1,ViewOnly,0,ArtCode,true,0); 
+  MatColTL(t,188,"",0,-1,ViewOnly,0,Quant,true,0);
+  MatCol(t,238,"",0,Spec,false,0);
+  MatColTL(t,-240,"",0,-1,ViewOnly,0,Price,true,0);
+  MatColTL(t,-180,"",0,-1,ViewOnly,0,vRebate,true,0);
+  MatColTL(t,-140,"",0,-1,Normal,0,Sum,true,0); //?? TL?
+  if (UseTaxTemplatesforTaxCalc) then begin
+    MatCol(t,-100,"",0,SalesAcc,false,AccSClass);
+    MatCol(t,-54,"",0,TaxTemplateCode,false,TaxTemplateSClass);
+  end else begin
+    MatCol(t,-70,"",0,SalesAcc,false,AccSClass);
+    MatCol(t,-24,"",0,VATCode,false,VATCodeSClass);
+  end;
+  MatText(t=kInvoiceRowTypePrepayment,32,"Ettemaks nr.",true);
+  MatCol(t,170,"",0,CUPNr,false,ARPay3SClass);//##cc
+  MatCol(t,-300,"",0,BasePrice,false,0);//##cc
+  MatCol(t,-170,"",0,Price,true,0);// Price holds the VAT sum, Recipe holds the date of prepaym. BasePrice holds amount in base 1, TAX1Reb holds TAX1Sum
+  MatCol(t,-100,"",0,Sum,true,0);
+  MatText(t=kInvoiceRowTypeLoan,32,"Laen",true);
+  MatCol(t,98,"",0,CuAccCode,true,CuAccSClass);
+  MatCol(t,-350,"",0,SalesAcc,true,AccSClass);
+  MatCol(t,-230,"",0,Objects,false,0);
+  MatCol(t,-110,"",0,Sum,true,0);
+  MatCol(t,-30,"",0,VATCode,false,VATCodeSClass);
+  MatText(t=kInvoiceRowTypeLoanInterest,32,"Laenuintress",true);
+  MatCol(t,98,"",0,CuAccCode,true,CuAccSClass);
+  MatCol(t,-350,"",0,SalesAcc,true,AccSClass);
+  MatCol(t,-230,"",0,Objects,false,0);
+  MatCol(t,-110,"",0,Sum,true,0);
+  MatCol(t,-30,"",0,VATCode,false,VATCodeSClass);
+  MatText(t=kInvoiceRowTypeUpdateMark,32,"Allkiri",false);
+  MatColTL(t,94,"Allkirjasta",0,-1,ViewOnly,0,VoidedSign,false,0);
+  MatCol(t,144,"Nimetus",0,Spec,false,0);
+  MatText(t=kInvoiceRowTypeVoid,32,"Tühista",false);
+  MatColTL(t,65,"Allk.",0,-1,ViewOnly,0,VoidedSign,false,0);
+  MatCol(t,100,"Artikkel",0,ArtCode,false,ForSaleINSClass);
+  if (HasVarieties) then begin
+  MatCol(t,150,"Kog.",0,Quant,true,MATVARINSClass);
+  end else begin
+    MatCol(t,150,"Kogus",0,Quant,true,0);
+  end;
+  MatCol(t,190,"Hind",0,Price,true,0);
+  MatCol(t,250,"Nimets",0,Spec,false,0);
+  MatCol(t,-195,"Seerianr./Partiinr.",0,SerialNr,false,SerialNrSClass);
+  MatCol(t,-110,"%",0,vRebate,true,0);
+  MatCol(t,-80,"Summa",0,Sum,true,0);
+  MatText(t=kInvoiceRowTypeSubtotal,32,"Vahesumma",true);
+  MatCol(t,100,"",0,Spec,false,0);
+  MatColTL(t,-140,"Summa",0,-1,ViewOnly,0,Sum,true,0);
+  //  MatCol(t,-70,"Cost",0,Cost,true,0);
+  MatText(t=kInvoiceRowTypeHidden,32,"See ja kõik järgnevad read on väljatrükil varjatud",false);
+  MatText(t=kInvoiceRowTypeCorrection,32,"K",true);
+  MatCol(t,45,"Artikkel",0,ArtCode,false,ForSaleINSClass);
+  MatCol(t,91,"Kogus",0,Quant,true,0);
+  MatText(t=kInvoiceRowTypeRetention,32,"Kinnipidamine",true);
+  MatCol(t,100,"",0,Spec,false,0);
+  MatColTL(t,-210,"Müügikonto",0,-1,0,0,SalesAcc,false,AccSClass);
+  MatColTL(t,-110,"Summa",0,-1,0,0,Sum,true,0);
+  MatCol(t,-30,"",0,VATCode,false,VATCodeSClass);
+  MatText(t=kInvoiceRowTypeGiftVoucherSold,32,"KK",true);
+  MatCol(t,58,"",0,GCNr,false,GCSClass);
+  MatCol(t,-416,"",0,Spec,false,0);
+  MatCol(t,-84,"Summa",0,Sum,true,0);
+  MatCol(t,-24,"",0,VATCode,false,VATCodeSClass);  
+  MatText(t=kInvoiceRowTypeGiftVoucherPayment,32,"S.KK",true);
+  MatCol(t,58,"",0,GCNr,false,GCSSClass);
+  MatCol(t,-316,"",0,Spec,false,0);
+  MatCol(t,-84,"Summa",0,Sum,true,0);
+  MatCol(t,-24,"",0,VATCode,false,VATCodeSClass);  
+  MatText(t=kInvoiceRowTypeCashPayment,32,"SULARAHA",true);
+  MatCol(t,94,"Summa",0,Sum,true,0);
+  MatCol(t,198,"Tas. viis",0,PayMode,true,PMSClass);
+  MatCol(t,250,"Nimetus",0,Spec,false,0);
+  MatText(t=kInvoiceRowTypeLoyaltyPointsPayment,32,"LOYPA",true);
+  MatCol(t,68,"Summa",0,Sum,true,0);
+  MatCol(t,108,"Punktid",0,Points,true,0);
+  MatCol(t,148,"Valuuta",0,CurncyCode,true,CurncyCodeSClass);
+  MatCol(t,-280,"Nimetus",0,Spec,false,0);
+  MatText(t=kInvoiceRowTypeLoyaltyPointsBonus,28,"LOYBO",true);
+  MatCol(t,68,"Punktid",0,Points,true,0);
+  MatCol(t,141,"Nimetus",0,Spec,false,0);
+  MatText(t=kInvoiceRowTypeCreditCardPayment,32,"KrK",true);  
+  MatCol(t,94,"Summa",0,Sum,true,0);
+  MatCol(t,198,"Tas. viis",0,PayMode,true,PMSClass);
+  MatCol(t,250,"Nimetus",0,Spec,false,0);
+  MatCol(t,-280,"",0,CreditCard,false,CreditCardSClass);
+  MatCol(t,-84,"Autoriseerimine",0,AuthorizationCode,false,0);
+  MatText(t=kInvoiceRowTypeSwishPayment,32,"Swish",true); //!!TRANSLATE
+  MatCol(t,94,"Sum",0,Sum,true,0); //!!TRANSLATE
+  MatCol(t,198,"P. Mode",0,PayMode,true,PMSClass); //!!TRANSLATE
+  MatCol(t,250,"Spec",0,Spec,false,0); //!!TRANSLATE
+  MatCol(t,-280,"",0,CreditCard,false,CreditCardSClass); //!!TRANSLATE
+  MatCol(t,-84,"Authorization",0,AuthorizationCode,false,0); //!!TRANSLATE
+  MatText(t=kInvoiceRowTypeHeader,32,"Päis",true);  
+  MatCol(t,100,"",0,Spec,false,0);
+  MatText(t=kInvoiceRowType18,28,"Reserveeritud",true); // Don't use this number
+  MatCol(t,100,"",0,Spec,false,0);
+  MatText(t=kInvoiceRowType19,28,"Reserveeritud",true); // Don't use this number
+  MatCol(t,100,"",0,Spec,false,0);
+  MatText(t=kInvoiceRowTypePerceptionTax,32,"Per. maks",true);
+  MatCol(t,132,"",0,CuAccCode,false,0);
+  MatCol(t,252,"",0,TAX2Prc,true,0);
+  MatCol(t,292,"",0,Sum,true,0);
+  MatCol(t,372,"",0,SalesAcc,false,AccSClass);
+  MatCol(t,452,"",0,Spec,false,0);  
+  MatText(t=kInvoiceRowTypeWithholdingTax,32,"Kinnipidamise maks",true);
+  MatCol(t,132,"",0,WHTax,false,WHTaxSClass);
+  MatCol(t,172,"",0,SalesAcc,false,AccSClass);
+  MatCol(t,292,"",0,Sum,true,0);
+  MatCol(t,392,"",0,Spec,false,0);
+  if (StandardHansa==false) then begin
+  MatText(t=kInvoiceRowTypeMultiBuyDiscount,32,"Kampaania pakkumised",true);
+  end;
+  MatCol(t,152,"",0,MBRCode,false,0);
+  MatCol(t,192,"",0,ArtCode,false,ForSaleINSClass);
+  MatCol(t,-400,"",0,Spec,false,0);
+  MatCol(t,-270,"",0,Quant,true,0);
+  MatCol(t,-235,"",0,Price,true,0);
+  MatCol(t,-135,"",0,vRebate,true,0);
+  MatCol(t,-100,"",0,Sum,true,0);
+  MatText(t=kInvoiceRowTypeDebtorsTransfer,32,"MGV ÜLEK",true);
+  MatCol(t,94,"Määra",0,Spec,false,0);
+  MatCol(t,-235,"Müügivõla konto",0,SalesAcc,false,0);
+  MatCol(t,-135,"Summa",0,Sum,true,0);
+  MatCol(t,-30,"KM-k",0,VATCode,false,0);
+/*
+  MatText(t=kInvoiceRowTypePreviousDownpayment,32,"Prev. Down Payment",true);
+  MatColTL(t,152,"",0,-1,ViewOnly,0,CUPNr,true,0);
+  MatColTL(t,222,"",0,-1,ViewOnly,0,ServiceDelDate,true,0);
+  MatColTL(t,-200,"",0,-1,Normal,0,Price,true,0);
+  MatColTL(t,-100,"",0,-1,Normal,0,Sum,true,0);
+  */
+  //t = 21 kInvoiceRowTypeChequePayment
+  MatText(t=kInvoiceRowTypeActivationDate,32,"Activation Date",true);
+  MatCol(t,130,"",0,ServiceDelDate,false,PasteCurDate);
+  Flip(1);
+  //  MatCol(t=kInvoiceRowTypeNormal,194,"Description",0,Spec,false,0);
+  t=kInvoiceRowTypeNormal;
+    MatCol(t,144,"Nimetus",0,Spec,false,0);
+  MatCol(t,-235,"Ühikuhind",0,Price,true,0);
+  //  MatColTL(t,-235,"",0,M45Val,Normal,0,Price,true,0);
+  MatCol(t,-135,"%",0,vRebate,true,0);
+  MatCol(t,-100,"Summa",0,Sum,true,0);
+  MatCol(t=kInvoiceRowTypeStructuredItemComponent,144,"Nimetus",0,Spec,false,0);
+  MatCol(t,-235,"Ühikuhind",0,Price,true,0);
+  //  MatColTL(t,-235,"",0,M45Val,Normal,0,Price,true,0);
+  MatCol(t,-135,"%",0,vRebate,true,0);
+  MatCol(t,-100,"Sum",0,Sum,true,0);
+  MatCol(t=kInvoiceRowTypeInterest,-260,"",0,OrdRow,true,0);
+  MatCol(t,-235,"",0,BasePrice,true,0);
+  MatCol(t,-135,"",0,vRebate,true,0);
+  MatCol(t,-100,"",0,Sum,true,0);
+  MatCol(t=kInvoiceRowTypeCorrection,144,"Nimetus",0,Spec,false,0);
+  MatCol(t,-235,"Ühikuhind",0,Price,true,0);
+  MatCol(t,-135,"%",0,vRebate,true,0);
+  MatCol(t,-100,"Summa",0,Sum,true,0);
+  Flip(2);
+  MatCol(t=kInvoiceRowTypeNormal,144,"Nimetus",0,Spec,false,0);
+  MatCol(t,-360,"Konto",0,SalesAcc,false,AccSClass);
+  if (StandardHansa==false) then begin
+  MatCol(t,-310,"Per.mudel",0,PeriodCode,false,AutSimPerSClass);
+  end;
+  MatCol(t,-255,"Ladu",0,Location,false,LocationSClass);
+  MatCol(t,-180,"Asukoht",0,PosCode,false,UsedPosSClass);
+  if (UseTaxTemplatesforTaxCalc) then begin
+    MatCol(t,-144,"Objektid",0,Objects,false,ObjSClass);
+    MatCol(t,-70,"MK-k",0,TaxTemplateCode,false,TaxTemplateSClass);
+  end else begin
+    MatCol(t,-124,"Objektid",0,Objects,false,ObjSClass);
+    if ((HasLocalization("GBR,LTU,POL") and IsEnterprise) or HasLocalization("LVA")) then begin
+      MatCol(t,-60,"KM-k",0,VATCode,false,VATCodeSClass); 
+      MatCol(t,-30,"Rvrs",0,RvrsVATCode,false,VATCodeSClass); //!!TRANSLATE
+    end else begin
+    MatCol(t,-30,"KM-k",0,VATCode,false,VATCodeSClass);
+    end;
+  end;
+  MatCol(t=kInvoiceRowTypeStructuredItemComponent,144,"Description",0,Spec,false,0);
+  MatCol(t,-360,"Konto",0,SalesAcc,false,AccSClass);
+  if (StandardHansa==false) then begin
+  MatCol(t,-310,"Per.mudel",0,PeriodCode,false,AutSimPerSClass);
+  end;
+  MatCol(t,-255,"Ladu",0,Location,false,LocationSClass);
+  if (StandardHansa==false) then begin
+  MatCol(t,-180,"Asukoht",0,PosCode,false,UsedPosSClass);
+  end;
+  if (UseTaxTemplatesforTaxCalc) then begin
+    MatCol(t,-144,"Objektid",0,Objects,false,ObjSClass);
+    MatCol(t,-70,"MK-d",0,TaxTemplateCode,false,TaxTemplateSClass);
+  end else begin
+    MatCol(t,-124,"Objektid",0,Objects,false,ObjSClass);
+    MatCol(t,-30,"KM-k",0,VATCode,false,VATCodeSClass);
+  end;
+  MatCol(t=kInvoiceRowTypeInterest,-70,"",0,SalesAcc,false,AccSClass);
+  MatCol(t,-24,"",0,VATCode,false,VATCodeSClass);
+  //  MatCol(t=kInvoiceRowTypePrepayment,-224,"",0,SalesAcc,false,AccSClass);
+  //  MatCol(t,-24,"",0,VATCode,false,VATCodeSClass);
+  MatCol(t=kInvoiceRowTypeCorrection,144,"Nimetus",0,Spec,false,0);
+  MatCol(t,-250,"Konto",0,SalesAcc,false,AccSClass);
+  if (StandardHansa==false) then begin
+  MatCol(t,-170,"Per.mudel",0,PeriodCode,false,AutSimPerSClass);
+  end;
+  MatCol(t,-104,"Objektid",0,Objects,false,ObjSClass);
+  if (UseTaxTemplatesforTaxCalc) then begin
+    MatCol(t,-35,"M. kood",0,TaxTemplateCode,false,TaxTemplateSClass); 
+  end else begin
+  MatCol(t,-30,"KM-k",0,VATCode,false,VATCodeSClass);
+  end;
+  Flip(3);
+  t=kInvoiceRowTypeNormal;
+    MatCol(t,144,"Nimetus",0,Spec,false,0);
+  if (UserCanAction("ViewCostPrice",true)) then begin
+    MatCol(t,-380,"Üh.hind",0,Price,true,0);
+    MatCol(t,-315,"%",0,vRebate,true,0);
+    MatCol(t,-280,"Hind B2",0,BasePriceB2,true,0);
+    MatCol(t,-210,"Hind",0,BasePrice,true,0);
+    MatCol(t,-140,"Müügikate",0,rowGP,true,0);
+    MatCol(t,-70,"FIFO",0,FIFO,true,0);
+  end else begin
+    MatCol(t,-235,"Üh.hind",0,Price,true,0);
+    MatCol(t,-135,"%",0,vRebate,true,0);
+    MatCol(t,-100,"Summa",0,Sum,true,0);
+  end;
+  MatCol(t=kInvoiceRowTypeStructuredItemComponent,144,"Nimetus",0,Spec,false,0);
+  if (UserCanAction("ViewCostPrice",true)) then begin
+    MatCol(t,-380,"Üh.hind",0,Price,true,0);
+    MatCol(t,-315,"%",0,vRebate,true,0);
+    MatCol(t,-280,"Ostuhind BV2",0,BasePriceB2,true,0);
+    MatCol(t,-210,"Ostuhind",0,BasePrice,true,0);
+    MatCol(t,-140,"MK",0,rowGP,true,0);
+    MatCol(t,-70,"FIFO",0,FIFO,true,0);
+  end else begin
+    MatCol(t,-235,"Ühikuhind",0,Price,true,0);
+    MatCol(t,-135,"%",0,vRebate,true,0);
+    MatCol(t,-100,"Summa",0,Sum,true,0);
+  end;
+  MatCol(t=kInvoiceRowTypeCorrection,144,"Nimetus",0,Spec,false,0);
+  if (UserCanAction("ViewCostPrice",true)) then begin
+  MatCol(t,-315,"Üh.hind",0,Price,true,0);
+  MatCol(t,-245,"%",0,vRebate,true,0);
+  MatCol(t,-210,"Ostuhind",0,BasePrice,true,0);
+  MatCol(t,-140,"Müügikate",0,rowGP,true,0);
+  MatCol(t,-70,"FIFO",0,FIFO,true,0);
+  end else begin
+    MatCol(t,-235,"Üh.hind",0,Price,true,0);
+    MatCol(t,-135,"%",0,vRebate,true,0);
+    MatCol(t,-100,"Summa",0,Sum,true,0);
+  end;
+  Flip(4);
+  t=kInvoiceRowTypeNormal;
+  MatCol(t=kInvoiceRowTypeNormal,144,"Nimetus",0,Spec,false,0);
+  MatCol(t,-370,"Müügimehed",0,Salesmen,false,UserSClass);
+  MatCol(t,-310,"Seerianr./Partiinr.",0,SerialNr,false,SerialNrSClass); //Bk //##cc
+//  MatCol(t,-240,"Main Serial No.",0,MotherNr,true,0);
+  MatCol(t,-220,"Hinna f.",0,PriceFactor,true,0);
+  MatCol(t,-170,"Retsept",0,Recepy,false,RecSClass); 
+  if (UserCanAction("ViewCostPrice",true)) then begin
+    MatCol(t,-70,"Rea FIFO",0,FIFORowVal,true,0);
+  end else begin
+  end;
+  MatCol(t=kInvoiceRowTypeStructuredItemComponent,144,"Nimetus",0,Spec,false,0);
+  MatCol(t,-310,"Seerianr./Partiinr.",0,SerialNr,false,SerialNrSClass);//Bk //##cc
+  MatCol(t,-240,"Hinnafaktor",0,PriceFactor,true,0);
+  MatCol(t,-180,"   Retsept",0,Recepy,true,0);
+  if (UserCanAction("ViewCostPrice",true)) then begin
+    MatCol(t,-110,"Rea FIFO",0,FIFORowVal,true,0);
+  end else begin
+  end;
+  MatCol(t,-40,"Koef.",0,Coefficient,true,0);
+  MatCol(t=kInvoiceRowTypeCorrection,144,"Nimetus",0,Spec,false,0);
+  MatCol(t,-310,"Seerianr./Partiinr.",0,SerialNr,false,SerialNrSClass);//Bk //##cc
+  MatCol(t,-240,"Hinnafaktor",0,PriceFactor,true,0);
+  MatCol(t,-180,"Retsept",0,Recepy,true,0);
+  if (UserCanAction("ViewCostPrice",true)) then begin
+    MatCol(t,-110,"Rea FIFO",0,FIFORowVal,true,0);
+  end else begin
+  end;
+  MatCol(t,-80,"",0,MotherArtCode,false,0);
+  MatCol(t,-40,"",0,RecipeQuant,false,0);
+  //  MatCol(t,-40,"Coeff",0,Coefficient,true,0);
+  Flip(5);
+  t=kInvoiceRowTypeNormal;
+  MatCol(t=kInvoiceRowTypeNormal,144,"Nimetus",0,Spec,false,0);
+  MatCol(t,-315,"Ühik",0,UnitCode,false,UnitSClass);
+  MatCol(t,-260,"Üh.kogus",0,UnitFactQuant,true,0);
+  MatCol(t,-200,"Laius",0,UnitXval,true,0);
+  MatCol(t,-160,"Kõrgus",0,UnitYval,true,0);
+  MatCol(t,-120,"Sügav.",0,UnitZval,true,0);
+  MatCol(t,-80,"Üh.2 üh.hind",0,UnitFactPrice,true,0);
+  MatCol(t=kInvoiceRowTypeStructuredItemComponent,144,"Nimetus",0,Spec,false,0);
+  MatCol(t,-315,"Ühik",0,UnitCode,false,UnitSClass);
+  MatCol(t,-260,"Ühik. kogus",0,UnitFactQuant,true,0);
+  MatCol(t,-200,"Laius",0,UnitXval,true,0);
+  MatCol(t,-160,"Kõrgus",0,UnitYval,true,0);
+  MatCol(t,-120,"Sügavus",0,UnitZval,true,0);
+  MatCol(t,-80,"Üh.2 üh.hind",0,UnitFactPrice,true,0);
+  MatCol(t=kInvoiceRowTypeCorrection,144,"Nimetus",0,Spec,false,0);//New Row Type..
+  MatCol(t,-315,"Ühik",0,UnitCode,false,UnitSClass);
+  MatCol(t,-260,"Üh.kogus",0,UnitFactQuant,true,0);
+  MatCol(t,-200,"Laius",0,UnitXval,true,0);
+  MatCol(t,-160,"Kõrgus",0,UnitYval,true,0);
+  MatCol(t,-120,"Sügav.",0,UnitZval,true,0);
+  MatCol(t,-80,"Üh.2 üh.hind",0,UnitFactPrice,true,0);
+  Flip(6);
+  t=kInvoiceRowTypeNormal;
+    MatCol(t,144,"Nimetus",0,Spec,false,0);
+  MatCol(t,-390,"Kl. art. nr.",0,CustArtCode,false,CUINSClass);
+  MatCol(t,-300,"Koef.",0,Coefficient,true,0); 
+  MatCol(t,-260,"Hinnafaktor",0,PriceFactor,true,0);
+  if (UserCanAction("HWContractAdmin",false) or UserCanAction("HWContractCUServiceHistEdit",false) or UserCanAction("HWContract_LocalAdmin",false)) then begin
+  MatCol(t,-210,"Kl.teen.lep.nr.",0,CUServiceHistNr,false,0);
+  end;
+  MatCol(t,-130,"Kred. rida",0,CreditedRow,false,0);
+  MatCol(t,-70,"Tagatisraha",0,RepaExVAT,true,0);
+  MatCol(t=kInvoiceRowTypeStructuredItemComponent,144,"Nimetus",0,Spec,false,0);
+  MatCol(t,-390,"Kl. art. nr.",0,CustArtCode,false,CUINSClass);
+  MatCol(t,-300,"Koef.",0,Coefficient,true,0);
+  MatCol(t,-260,"Hinnafaktor",0,PriceFactor,true,0);
+  if (UserCanAction("HWContractAdmin",false) or UserCanAction("HWContractCUServiceHistEdit",false) or UserCanAction("HWContract_LocalAdmin",false)) then begin
+  MatCol(t,-210,"Teen.lep.nr.",0,CUServiceHistNr,false,0);
+  end;
+  MatCol(t,-130,"Kred. rida",0,CreditedRow,false,0);
+  MatCol(t,-70,"Tagasisraha",0,RepaExVAT,true,0);
+  MatCol(t=kInvoiceRowTypeCorrection,144,"Nimetus",0,Spec,false,0);
+  MatCol(t,-80,"Tagatisraha",0,RepaExVAT,true,0);
+  Flip(7);
+  t = kInvoiceRowTypeNormal;
+  if (GuiType!=kGuiiPhone) then begin
+    MatCol(t,144,"Nimetus",0,Spec,false,0);
+  end;
+  MatCol(t,-240,"Tolli nr.",0,CustomsNr,false,0);
+  MatCol(t,-100,"Päritoluriik",0,CountryOfOrg,false,CountrySClass);
+  MatCol(t=kInvoiceRowTypeStructuredItemComponent,144,"Nimetus",0,Spec,false,0);
+  MatCol(t,-240,"Tolli nr.",0,CustomsNr,false,0);
+  MatCol(t,-100,"Päritoluriik",0,CountryOfOrg,false,CountrySClass);
+  MatCol(t=kInvoiceRowTypeCorrection,144,"Nimetus",0,Spec,false,0);
+  MatCol(t,-240,"Tolli nr.",0,CustomsNr,false,0);
+  MatCol(t,-100,"Päritoluriik",0,CountryOfOrg,false,CountrySClass);
+  InsertRowTest;
+  DeleteRowTest;
+  RowMenuBegin("");
+  RowMenuItem(0,"Artikli hetkeseis",'I','I',0,"ItemStatusIVDsm");
+  RowMenuItem(0,"Vaata eelmiseid müügihindu",' ',' ',0,"IVLastSPrsm");
+  RowMenuItem(0,"Lisa päise rida",' ',' ',0,"HeaderLineIVDsm");
+  RowMenuItem(0,"Lisa peidetud rida",' ',' ',0,"HiddenLineIVDsm");
+  if (HasLocalization("SVN")==false) then begin
+    RowMenuItem(0,"Lisa sularaha rida",' ',' ',0,"CashLineIVDsm");
+    RowMenuItem(0,"Lisa krediitkaardi rida",' ',' ',0,"CreditCardLineIVDsm");
+  end;
+  if (StandardHansa==false) then begin
+    RowMenuItem(0,"Lisa kinnipidamine",' ',' ',0,"RetentionLineIVDsm");
+  end;
+  RowMenuItem(0,"Lisa vahesumma",' ',' ',0,"SubTotalLineIVDsm");
+  RowMenuItem(0,"Apple garantii hetkeseisu kontroll",'w',' ',0,"WarrantyStatusIVDsm");
+  if (FileExists("hob/hmdatadef.hob")) then begin//??? why here and not it ahansamail ? 
+    RowMenuItem(0,"Add license start date",' ',' ',0,"LicStartIVDsm");
+  end;
+  EndRowMenu;
+  EndMatrix;
+  vs = 22;
+  v = 18; VTab(-35,v,-16,v+vs,ToolFlip,1,"A");
+  v=v+ vs; VTab(-35,v,-16,v+vs,ToolFlip,2,"B");
+  v=v+ vs; VTab(-35,v,-16,v+vs,ToolFlip,3,"C");
+  v=v+ vs; VTab(-35,v,-16,v+vs,ToolFlip,4,"D");
+  v=v+ vs; VTab(-35,v,-16,v+vs,ToolFlip,5,"E");
+  v=v+ vs; VTab(-35,v,-16,v+vs,ToolFlip,6,"F");
+  v=v+ vs; VTab(-35,v,-16,v+vs,ToolFlip,7,"G");
+  Tile(3,70,false,"3",FrRate);
+  vs = 20;
+  EditField(h=110,v=6,50,"Valuuta",Normal,CurncyCode,false,CurncyCodeSClass);
+  EditField(h,v+vs,50,"Baasvaluuta 1",Normal,BaseRate1,true,0);
+  EditField(h,v+(vs*2),50,"Baasvaluuta 2",Normal,BaseRate2,true,0);
+  EditField(h2=295,v,50,"Kurss",Normal,FrRate,true,0);
+  RateField(h3=360,v,50,":",Normal,"ToRateB1",true,h3+60,v+14,"Baasvaluuta 1",false);
+  RateField(h3,v+=vs,50,":",Normal,"ToRateB2",true,h3+60,v+14,"Baasvaluuta 2",false);
+  Tile(4,130,false,"4",ShipDeal);//Bk  //##cc
+  vs = 20; h1 = 110; h2 = 310; h3 = 530; h4 = -100;
+  EditField(h1,v=6,80,"Lähetustingimused",Normal,ShipDeal,false,ShipDealSClass);
+  EditField(h1,v+=vs,80,"Lähetusviis",Normal,ShipMode,false,DMSClass);
+  if (StandardHansa==false) then begin
+    EditField(h1,v+=vs,80,"Teekond",Normal,Sorting,false,DelRouteSClass);
+    EditField(h1,v+=vs,80,"Ladu",Normal,Location,false,LocationSClass);
+    EditField(h1,v+=vs,80,"Plan. saatmisee kp.",Normal,PlanSendDate,false,PasteCurDate);
+    EditField(h1,v+=vs,80,"Plan. saatmise aeg",Normal,PlanSendTime,false,PasteCurTime);
+  end;
+  EditField(h1,v+=vs,80,"Filiaal",Normal,BranchID,false,AllCUSClass);
+  EditField(h2,v=vm,80,"Kogus kokku",ViewOnly,TotQty,true,0);
+  EditField(h2,v+=vs,80,"Kaal kokku",ViewOnly,TotWeight,true,0);
+  EditField(h2,v+=vs,80,"Maht kokku",ViewOnly,TotVolume,true,0);
+  EditField(h3,v=vm,80,"Transport",Normal,FrPrice,true,0);//Bk //##cc
+  if (StandardHansa==false) then begin
+    EditField(h2,v+=vs,80,"Transpordifirma",Normal,FreightCode,false,FreightCompanySClass);//##ii
+    EditField(h2,v+=vs,80,"Plan. saabumise kp.",Normal,PlanArrDate,false,PasteCurDate);
+    EditField(h2,v+=vs,80,"Plan. saabumise aeg",Normal,PlanArrTime,false,PasteCurTime);
+//    EditField(h2,v+=vs,80,"Transpordifirma",Normal,FreightCode,false,FreightCompanySClass);//##cc
+    CheckBox(h4=-80,v=vm,0,"Uuenda ladu",UpdStockFlag);//##cc
+    EditField(h3,v+=2*vs,80,"Trans. KM-k",Normal,FrVATCode,true,VATCodeSClass);
+    EditField(h3,v+=vs,80,"Intrastati kandekood",Normal,IntrastatTransCode,true,IntrastatTransCodeSClass); 
+    EditField(h3,v+=vs,80,"Glob. transpordi nr.",Normal,GlobalTransportNr,false,0); 
+    EditField(h3,v+=vs,80,"Glob. transpordi kp.",Normal,GlobalTransportDate,false,PasteCurDate); 
+  end;
+  Tile(5,170,false,"5",OrderNr);
+  EditField(h1,v=vm,80,"Tellimuse nr.",ViewOnly,OrderNr,false,0);
+  if (StandardHansa==false) then begin
+  EditField(h1,v+=vs,80,"Teenindustell. nr",ViewOnly,SVONr,false,0);
+  EditField(h1,v+=vs,80,"Krediidil. nr.",ViewOnly ,CredManNr,false,0);
+  end;
+  EditField(h1,v+=vs,135,"Ametlik ser. nr. 2",Normal,OfficialSerNr2,false,0);
+  if (HasLocalization("FIN")) then begin
+    EditField(h1,v+=vs,135,"Lähetusaadress",Normal,DeliverySiteCode,false,0);
+    EditField(h1,v+=vs,135,"Asukoha number",Normal,WorkSiteNumber,false,0);
+  end;
+  if (HasLocalization("BRA")) then begin
+    EditField(h1,v+=vs,80,"Riiklik teenus",Normal,FedServCode,false,FederalSerSClass); 
+  end;
+  if (HasLocalization("ARG,BOL")) then begin
+    EditField(h1,v+=vs,135,"CAE/CAEA",Normal,CAE,false,0);
+    EditField(h1,v+=vs,135,"CAE Expiry",Normal,CAEExpiry,false,0);
+    EditField(h1,v+=vs,70,"CAEA Start",ViewOnly,CAEAStartDate,false,0);
+  end;
+
+  EditField(h2=350,v=vm,80,"Stat. väärtus",Normal,StatVal,true,0);
+  EditField(h2,v+=vs,80,"Aeg",Normal,TransTime,false,SetSClass);
+  EditField(h2,v+=vs,80,"Printimise kuupäev",ViewOnly,PrintDate,false,0);
+  EditField(h2,v+=vs,80,"Võimaluse komm.",ViewOnly,OYDescription,false,0);
+  if (FileExists("hob/hmdatadef.hob")) then begin//??? why here and not it ahansamail ? 
+    EditField(h2,v+=vs,80,"ToBe Inv.Nr",ViewOnly,ToBeIVNr,false,0);
+  end;
+  //  ColourPushButton(-100,v,-20,v+60,"TestIVDClassCardData","Test" & chr(10) & "CardData",4);
+  //  SoftEditField(h3+50,v,100,"Control Code"  ,ViewOnly ,"TaxAuthIDCC",false,0,M4Str,60);
+  if (StandardHansa==false) then begin
+    if (HasLocalization("ARG,BOL")) then begin
+      EditField(h2,v+=vs,135,"Maksuameti ID",Normal,TaxAuthID,false,0);
+      EditField(h2,v+=vs,135,"Kontrollkood",ViewOnly ,TaxAuthIDCC,false,0);
+    end;
+    if (HasLocalization("PRT")) then begin
+    EditField(h2,v+=vs,135,"Hetkeseis",Normal,Status,false,SetSClass);
+    end;
+    if (HasLocalization("ARG,PRT")) then begin
+    EditField(h2,v+=vs,135,"Maksu tüüp",Normal,TaxInvType,false,SetSClass);
+    end;
+    if (HasLocalization("ARG")) then begin
+    EditField(h2,v+=vs,70,"CAEA Expiry",ViewOnly,CAEAExpiryDate,false,0);
+    end;
+    if (HasLocalization("SVN")) then begin
+      EditField(h2,v+=vs,180,"E-arve. konf. nr.",ViewOnly,TaxAdminReceiptNr,false,0);
+      EditField(h2,v+=vs,180,"Maksupitsat",ViewOnly,TaxAdminServSeal,false,0);
+    end;
+  end;
+  //  EditField(h2,v+=vs,135,"E-Inv Exp. Date",ViewOnly,EInvExpDate,false,0);//Tx server
+  //  EditField(h2,v+=vs,135,"E-Inv Exp. Qty",ViewOnly,EInvExpQty,false,0);
+  CheckBox(h3=445,v=vm,0,"Ära koosta märgukirju",NoRemndrFlag); //##cc
+  CheckBox(h3,v+=16,0,"Ära arvesta viivist",NoInterestFlag);
+  CheckBox(h3,v+=16,0,"Kogumiseta",NoColectionFlag);
+  CheckBox(h3,v+=16,0,"Fiskaalarve",FiscalFlag);
+  CheckBox(h3+130,v=vm,0,"Info kande E-osale",ARonTR);
+  CheckBox(h3+130,v+=16,0,"Ära saada e-arvena",NoEInvoice);
+  CheckBox(h3+130,v+=16,0,"Isearveldamine",SelfBilling);
+  CheckBox(h3+130,v+=16,0,"Aseta laekumise KM",IPBookVAT); 
+  if (HasLocalization("LTU")) then begin
+    CheckBox(h3+130,v+=16,0,"Exclude from Exports",ExcludeFromExports);
+  end;
+//    CheckBox(h3,v+=16,0,"Including VAT",InclVAT);
+  //  CheckBox(h3,v+=16,0,"E-Invoice Exported",EInvExpFlag);
+  Tile(6,150,false,"6",PriceList); vs = 20; h3=550;
+  EditField(h1,v=vm,80,"Hinnakiri",Normal,PriceList,false,PLDefSClass);
+  EditField(h1,v+=vs,80,"Hinnaal. maatriks",Normal,RebCode,false,0);
+  //  EditField(h1,v+=vs,80,"Disc. %",ViewOnly,DiscPerc,false,0);
+  //  EditField(h1,v+=vs,80,"Disc. Amount",ViewOnly,DiscSum,false,0);
+  EditField(h1,v+=vs,80,"Org.klient",ViewOnly,OrgCust,false,0);
+  if (StandardHansa==false) then begin
+  EditField(h1,v+=vs,80,"Krediitkaart",Normal,CreditCard,false,CreditCardSClass);
+  EditField(h1,v+=vs,80,"Autoriseerimine",Normal,AuthorizationCode,false,0);
+  end;
+  EditField(h1,v+=vs,80,"Müügivõlad",Normal,ARAcc,false,AccSClass);
+  EditField(h1,v+=vs,-20,"Kommentaar",Normal,InvComment,false,0);
+  if (HasSalesGroup) then begin
+  EditField(h2,v=vm,80,"Müügigrupp",ViewOnly,SalesGroup,true,0);//##cc
+  EditField(h2,v+=vs,80,"Keel",Normal,LangCode,false,LangSClass);
+  end else begin
+    EditField(h2,v=vm,80,"Keel",Normal,LangCode,false,LangSClass); 
+  end;
+  EditField(h2,v+=vs,80,"Teenustasu",Normal,Commision,true,0);
+  EditField(h2,v+=vs,80,"Kokku teen.-ga",ViewOnly,SumIncCom,true,0);
+  EditField(h2,v+=vs,80,"Viivis",Normal,IntCode,true,IntSClass);
+  if (StandardHansa==false) then begin
+  EditField(h2,v+=vs,80,"Org. nr.",Normal,CredInv,false,0);
+  EditField(h3,v=vm,80,"Märgukirjatase",Normal,LastRemndr,false,0);
+  end else begin
+    EditField(h3,v=vm,80,"Org. nr.",Normal,CredInv,false,0); 
+    EditField(h3,v+=vs,80,"Märgukirjatase",Normal,LastRemndr,false,0);
+  end;
+  EditField(h3,v+=vs,80,"Viimane märguk. kp.",Normal,LastRemDate,false,PasteCurDate);
+  if (StandardHansa==false) then begin
+  EditField(h3,v+=vs,80,"Kliendikaart",Normal,LoyaltyCardNr,false,LoyaltyCardSClass);
+  end;
+  EnterSkip(Math);
+  if (StandardHansa==false) then begin
+  EditField(h3,v+=vs,80,"Liikmetase",ViewOnly,LCMLevel,false,LCMemberLevelSClass);
+  EditField(h3,v+=vs,80,"Kliendikaardi punktid",ViewOnly,Points,true,0);
+  end;
+  if (HasTREO) then begin
+    EditField(h3,v+=vs,80,"TREO nr.",Normal,TREONr,false,0);
+  end;
+  Tile(7,250,false,"7",Addr1); vs = 20;
+  label = UserDefined("CUVc","InvAddr0");
+  if (blank(label)) then begin label = "Arve"; end;
+  EditField(h=110,v=6,-20,label,Normal,Addr1,false,0);
+  label = UserDefined("CUVc","InvAddr1");
+  if (blank(label)) then begin label = "Address"; end;
+  EditField(h,v+=vs, -20,label,Normal,Addr2,false,0);
+  label = UserDefined("CUVc","InvAddr2");
+  EditField(h,v+=vs, -20,label,Normal,Addr3,false,0);
+  label = UserDefined("CUVc","InvAddr3");
+  EditField(h,v+=vs, -20,label,Normal,InvAddr3,false,0);
+  label = UserDefined("CUVc","InvAddr4");
+  EditField(h,v+=vs, -20,label,Normal,InvAddr4,false,0);
+  EditField(h,vm=(v+=vs),80,"Riik",Normal,InvCountry,false,CountrySClass);
+  if (HasLocalization("BRA")) then begin 
+    EditField(h2-89,v,232,"",ViewOnly,InvCountryName,false,0);
+    h5 = -170;
+    width = 150;
+  end else begin
+    h5 = -270;
+    width = 135;
+  end;
+  EditField(h5,v,width,"Konto Op.",Normal,BankCode,false,BankSClass); 
+  if (StandardHansa==false) then begin
+    if (HasApprovals) then begin
+      SoftEditField(h3=h+4,v=(vm+=40),123,"Kinnituse hetkeseis",ViewOnly,"AcceptanceStatusFlag",false,0,M4Str,255);
+    end;
+/*
+//oldapprovals    
+    ButtonFrame(h3=h+4,v=(vm+=40),123,6,"Approval Status");
+    RadioButton(h3,v,kAcceptanceStateNotRequired,0,"Not Required",AcceptanceStatus);
+    RadioButton(h3,v+=16,kAcceptanceStateNotStarted,0,"Not Started",AcceptanceStatus);
+    RadioButton(h3,v+=16,kAcceptanceStateNotRequested,0,"Not Reuested",AcceptanceStatus);
+    RadioButton(h3,v+=16,kAcceptanceStatePending,0,"Pending",AcceptanceStatus);
+    RadioButton(h3,v+=16,kAcceptanceStateApproved,0,"Approved",AcceptanceStatus);
+    RadioButton(h3,v+=16,kAcceptanceStateRejected,0,"Rejected",AcceptanceStatus);
+*/    
+    v = VATZoneButtonsLabelsEST(h3=290,v=vm,170,16);
+  end else begin
+    v = VATZoneButtonsLabelsEST(h3=290,v=vm+40,170,16);
+  end;
+  EditField(h2=-170,v=vm,150,"Regioon",Normal,Region,false,RegionSClass); 
+  EditField(h2,v+=vs,150,"KMKR nr.",Normal,VATNr,false,0);
+  EditField(h2,v+=vs,150,"#Reg. nr.# 1",Normal,RegNr1,false,0);
+  EditField(h2,v+=vs,150,"GLN",ViewOnly,RecipientGLN,false,0); 
+  EditField(h2,v+=vs,150,"Telefon",Normal,Phone,false,0);
+  EditField(h2,v+=vs,150,"Faks",Normal,Fax,false,0);
+  Tile(8,170,false,"8",ShipAddr0); vs = 20;
+  if (StandardHansa==false) then begin
+  EditField(h1,v=6,80,"Aadressi kood",Normal,DelAddrCode,false,DelAddr3SClass);
+  EditField(h1,v+=vs,-20,"Lähetus-",Normal,ShipAddr0,false,0);
+  end else begin
+    EditField(h1,v=6,-20,"Lähetus-",Normal,ShipAddr0,false,0); 
+  end;
+  EditField(h1,v+=vs,-20,"Aadress",Normal,ShipAddr1,false,0);
+  EditField(h1,v+=vs,-20,"",Normal,ShipAddr2,false,0);
+  EditField(h1,v+=vs,-20,"",Normal,ShipAddr3,false,0);
+  EditField(h1,v+=vs,-20,"",Normal,DelAddr3,false,0);
+  EditField(h1,v+=vs,-20,"",Normal,DelAddr4,false,0);
+  EditField(h1,v+=vs,80,"Riik",Normal,DelCountry,false,CountrySClass);
+  if (HasLocalization("BRA")) then begin 
+    EditField(h1+91,v,232,"",ViewOnly,DelCountryName,false,0);
+  end;  
+  EditField(h2,v,150,"Lähetuse GLN",ViewOnly,DelRecipientGLN,false,0);
+  EnterSkip(InvDate);
+  if (GuiType==kGuiMetro) then begin // Temporarily disabled on Windows 8
+    SpecialMenu("Arve hetkeseis",'r',2,"IVInfoIVDsm");
+    SpecialMenu("Artikli hetkeseis",'I',0,"ItemStatusIVDsm");
+    SpecialMenu("Ava finantskanne",'t',8,"OpenTRFromIV");
+    SpecialMenu("Kreeditarve",' ',20,"CreateCreditNoteIVDsm");
+    SpecialMenu("Add Subtotal",' ',12,"SubTotalLineIVDsm");
+    SpecialMenu("Seo ettemaksuga",' ',4,"ConnectToPrepayIVDsm");
+/*not working yet
+    SpecialMenu("E-mail",'m',23,"CreateMailFromIVDsm");
+*/
+  end else begin
+//    SpecialMenu("Item Status",'I',0,"ItemStatusIVDsm");
+    if (HasCustomerStatusReport) then begin 
+     SpecialMenu("Kliendi hetkeseis",'e',0,"CUStatusIVDsm");
+    end;
+    SpecialMenu("Artikli otsing",'f',1,"ItemSearchDsm");
+    SpecialMenu("Arve hetkeseis",'r',2,"IVInfoIVDsm");
+    SpecialMenu("Lisa tagatisraha",' ',19,"RepaIVsm");
+    if (GuiType==kGuiiPhone) then begin
+//      SpecialMenu("Sign",' ',10,"SignIVDsm");//what is that ? 
+    end;
+  SpecialMenu("Muuda baasvaluutaks 1",' ',14,"SwitchToBase1IVDsm");
+  SpecialMenu("Seo ettemaksuga",' ',4,"ConnectToPrepayIVDsm");
+  SpecialMenu("Arvuta hinnaalandus ümber",' ',11,"RecalcDiscountIVDsm");
+  SpecialMenu("Arvuta kaal ja maht ümber",' ',10,"RecalcWeightIVDsm");
+  SpecialMenu("Arvuta valuutahinnakirja artiklid ümber",' ',5,"UpdatePricesIVDsm");
+  SpecialMenu("Trüki kassaorder",' ',7,"PrintCashInOutIVDsm");
+    if (HasLocalization("PRT")==false) then begin  
+  SpecialMenu("Trüki proformaarve",' ',3,"PrintProformaIVDsm");
+    end;
+  if (StandardHansa==false) then begin
+  SpecialMenu("Trüki tsekiprinterisse",' ',19,"PrintToFiscPrntIVDsm");
+  SpecialMenu("Krediitkaardimakse",' ',22,"CCPayIVDsm");
+  SpecialMenu("Muuda osaliste maksete laekumisi",' ',24,"EditInstalmentIVDsm");
+    end;
+    if (HasLocalization("EST,LTU")) then begin
+      SpecialMenu("Saada e-arve uuesti",' ',21,"ResendEstEIVDsm"); 
+    end else begin
+  SpecialMenu("Saada e-arve uuesti",' ',21,"ResendEIVDsm");
+    end;
+  if (HasLocalization("ARG")) then begin 
+      SpecialMenu("Saada Argentiina e-arve",'n',17,"SendArgEInvIVDsm");
+    SpecialMenu("Leia CAE/CAEA",'',17,"ConsultarArgEInvIVDsm");
+  end;
+  if (HasLocalization("MEX")) then begin
+      SpecialMenu("Saada Mehhiko e-arve",'e',17,"SendMexEInvIVDsm"); 
+    end;
+    if (HasLocalization("BRA")) then begin 
+    SpecialMenu("Saada Brasiilia e-arve (uuesti)",' ',27,"SendBraEInvIVDsm");
+      SpecialMenu("Get Bank Receipt",' ',28,"GetBankReceiptDsm");
+    end;
+    if (HasLocalization("FIN")) then begin
+      SpecialMenu("Ekspordi Finvoice",' ',28,"ExportFinvoiceIVDsm");
+    end;
+    if (HasLocalization("CAN,USA")) then begin
+      SpecialMenu("Get Tax Rates",' ',0,"IVGetTaxRates2Dsm"); //!!TRANSLATE
+    end;
+
+  SpecialMenu("Ava finantskanne",'t',8,"OpenTRFromIV");
+    if (StandardHansa==false) then begin
+      SpecialMenu("Allahindluse muutmine",' ',24,"MgrsDiscOverrideIVDsm");
+      if (HasTaxMatrix) then begin
+        SpecialMenu("Ava maksumaatriks",' ',25,"TestVatMatrixIVDsm");
+      end;
+    end;
+    if (HasApprovals) then begin
+      SpecialMenu("Saada kinnitamiseks",' ',6,"IVSendforAcceptanceIVDsm");
+      SpecialMenu("Tühista kinnitamise päring",' ',2,"CancelApprovalRequestDsm");
+    end;
+//cust - begin: ts 2018/05, eteenused - manuse päring
+    if (HasLocalization("EST")) then begin 
+      SpecialMenu("PDFi päring",' ',9,"GetEstEInvoicePdfDsm");
+    end;
+//cust - end
+    SpecMenuGroup("",kSpecMenuGroupTypeExtendedPlusMenu,0);
+  if (HasModCRM) then begin
+//      SpecialMenu("Tegevus",'c',9,"CreateActFromIVDsm"); 
+  end;
+  SpecialMenu("Kassasissetulek",' ',1,"DoCLInFromIVD");
+  SpecialMenu("Kreeditarve",' ',20,"CreateCreditNoteIVDsm");
+  if (StandardHansa==false) then begin
+  SpecialMenu("Krediidihalduse leping",' ',25,"CreateCredManIVsm");
+  end;
+  SpecialMenu("Leping",' ',13,"COFromIVDsm");
+  if (StandardHansa==false) then begin
+      if (HasLocalization("PRT")==false) then begin
+  SpecialMenu("Parandusarve",' ',16,"CorrectionIVsm");
+      end;
+      SpecialMenu("Deebetarve",' ',20,"CreateDebitNoteIVDsm");
+      SpecialMenu("EDI arve",' ',9,"DoEDIInvFromIVD");
+    end;
+    SpecialMenu("E-mail",'m',23,"CreateMailFromIVDsm");
+    if (HasLocalization("UKR")) then begin
+      SpecialMenu("Avanss",' ',18,"FirstEventIVDsm");
+    end;
+    if (StandardHansa==false) then begin
+         SpecialMenu("Osaliste maksete laekumised",' ',6,"CreateInstalmentsIVDsm");
+      if (HasLocalization("HRV,POL,RUS,SRB,SVN,UKR")) then begin
+         SpecialMenu("Käibemaksu parandus, (M/R)",' ',17,"VATCorrectionIVsm");
+      end;
+
+    //  SpecialMenu("GSXAutoEnrollmentIVDsm",'w',26,"GSXAutoEnrollmentIVDsm");
+
+    //  SpecialMenu("TESTSendArgEInvoiceFECAESolicitar",' ',25,"TESTSendArgEInvoiceFECAESolicitar");
+    //  SpecialMenu("Test Mex E-Invoices",'1',0,"TestMexEInvoices");
+    end;
+    SpecialMenu("Uus klient",' ',0,"AddCustomerIVDsm");
+    SpecialMenu("Uus artikkel",' ',0,"AddItemIVDsm");  
+  end;
+  
+end else begin
+  if !(IsEnterprise or IsBooks) then begin //##cc
+  integer wn;
+  longint bm,lt,rt,tp,page;
+  real h,h2,h3,h4,v;
+  record IVVc IVr;
+  record LocalMachineBlock LMb;
+  record POSButtonsVc POSBr;
+  string 255 bc1,bc2,compname,lmc,nr,sessdesc,sm;
+  end; //##cc
+  
+  BlockLoad(LMb);
+
+  //StopAlert(LMb.POSButtonGroup);
+
+  wn = CurWindow;
+  GetScreenSize(wn,tp,lt,bm,rt);
+  switch (GuiType) begin
+    case kGuiCocoa:
+      bm = bm - 80;
+    case kGuiWindowsDesktop:
+      tp = tp + 30;
+      bm = bm - 40;
+      rt = rt - 55;
+      lt = lt - 45;
+    case kGuiGDI:
+      tp = tp + 30;
+      bm = bm - 40;
+      rt = rt - 55;
+      lt = lt - 45;
+    case kGuiWPF:
+      tp = tp + 30;
+      bm = bm - 40;
+      rt = rt - 55;
+      lt = lt - 45;
+  end;
+
+  page = StringToInt(GetWindowString(wn,"touchscreenwindowpage"));
+  if (page<1) then begin
+    page = 1;
+  end;
+  //stopalert("about to call ReadPOSButtons, page:" & page);
+  ReadPOSButtons("IVDClass",LMb.POSButtonGroup,page,bc1,bc2,compname,POSBr);
+  SetWRect(lt,tp,rt,bm);
+    AbsoluteWindowSize;
+  if (TestEnablerFile("EnNoFullscreenWindow")==false) then begin
+    FullscreenWindow;
+  end;
+  BrowseButtons(false);
+  BrowseButtons(false);
+  DynamicWindow;
+  UseView(IVVc);
+  ActiveFieldOnNew("ivcashcommand");
+  if (GuiType!=kGuiiPhone) then begin
+    ToolBar;
+//      PushButton(-340,5,-340 + 34,5+18,ToolPasteSpec,"v");
+    EndToolBar;
+  end;
+
+  v = 20;
+  h = -300; h2 = -150; h3 = -70; h4 = -10;
+
+  wn = CurWindow;
+  if (wn>0) then begin
+    switch (GetWindowClass(wn)) begin
+      case "IVDClass":
+        GetWindowRecord(wn,IVr);
+    end;
+  end;
+  if (GuiType==kGuiiPhone) then begin
+    if (TouchScreenLookVertical) then begin
+      v = 20;
+      h = -300; h2 = -150; h3 = -70; h4 = -10;
+
+      td = IVr.TransDate;
+      if (blankdate(td)) then begin td = CurrentDate; end;
+      tt = IVr.TransTime;
+      if (blanktime(tt)) then begin tt = CurrentTime; end;
+      lmc = IVr.MachineName;
+      if (blank(lmc)) then begin lmc = LMb.LocalMachineCode; end;
+      sm = IVr.SalesMan;
+      if (blank(sm)) then begin sm = CurrentUser; end;
+      nr = "Invoice: ";
+      if (IVr.SerNr>0) then begin
+        nr = nr & IVr.SerNr;
+      end;
+
+      if (IsEnterprise or IsBooks) then begin //##cc
+        if (IsSessionOpen(IVr.MachineName,IVr.DrawerCode,CurrentDate,CurrentTime)) then begin
+          sessdesc = "POS sessioon avatud";
+      end else begin
+          sessdesc = "*** POS sessioon suletud ***";
+        end;
+      end;
+
+      DisplayRecordDetails_EST(10,-100,compname,td,tt,lmc,sm,nr,IVr.CustCode,IVr.Addr0,
+        IVr.Addr1,IVr.Addr2,IVr.Addr3,IVr.Phone,IVr.Objects,
+        IVr.LoyaltyCardNr,LMb.ShowBaggerSupervisor,"","",
+        "",blankval,sessdesc,true,IVr.OfficialSerNr,
+        IVr.TaxAdminServSeal);
+
+      SoftEditFieldTLX(360,-120,h4,"",M4Str,ViewOnly,100,30,patM4black,"CustomerDisplayData_Line1",true,0);
+      SoftEditFieldTLX(360,-80,h4,"",M4Str,ViewOnly,100,50,patM4black,"CustomerDisplayData_Line2",true,0);
+
+      SoftEditField(2000,-22,200,""  ,Normal ,"ivcashcommandlastitemsernrf",false,0,M4Str,255);
+
+      DrawPOSInterface2_EST(bc1,bc2,POSBr,"",100,bm); //!!TRANSLATE
+    end else begin
+
+      v = 20;
+      h = -300; h2 = -150; h3 = -70; h4 = -10;
+
+      td = IVr.TransDate;
+      if (blankdate(td)) then begin td = CurrentDate; end;
+      tt = IVr.TransTime;
+      if (blanktime(tt)) then begin tt = CurrentTime; end;
+      lmc = IVr.MachineName;
+      if (blank(lmc)) then begin lmc = LMb.LocalMachineCode; end;
+      sm = IVr.SalesMan;
+      if (blank(sm)) then begin sm = CurrentUser; end;
+      nr = "Invoice: ";
+      if (IVr.SerNr>0) then begin
+        nr = nr & IVr.SerNr;
+      end;
+
+      if (IsEnterprise or IsBooks) then begin //##cc
+          if (IsSessionOpen(IVr.MachineName,IVr.DrawerCode,CurrentDate,CurrentTime)) then begin
+            sessdesc = "POS sessioon avatud";
+          end else begin
+            sessdesc = "*** POS sessioon suletud ***";
+          end;
+      end;
+
+      DisplayRecordDetails_EST(10,26,compname,td,tt,lmc,sm,nr,IVr.CustCode,IVr.Addr0,
+        IVr.Addr1,IVr.Addr2,IVr.Addr3,IVr.Phone,IVr.Objects,
+        IVr.LoyaltyCardNr,LMb.ShowBaggerSupervisor,"","",
+        "",blankval,sessdesc,true,IVr.OfficialSerNr,
+        IVr.TaxAdminServSeal);
+
+
+      if (bm<650) then begin
+        SoftEditFieldTLX(360,6,h4,"",M4Str,ViewOnly,100,20,patM4black,"CustomerDisplayData_Line1",true,0);
+        SoftEditFieldTLX(360,36,h4,"",M4Str,ViewOnly,100,30,patM4black,"CustomerDisplayData_Line2",true,0);
+      end else begin
+        SoftEditFieldTLX(360,6,h4,"",M4Str,ViewOnly,100,30,patM4black,"CustomerDisplayData_Line1",true,0);
+        SoftEditFieldTLX(360,46,h4,"",M4Str,ViewOnly,100,50,patM4black,"CustomerDisplayData_Line2",true,0);
+      end;
+
+      SoftEditField(2000,-22,200,""  ,Normal ,"ivcashcommandlastitemsernrf",false,0,M4Str,255);
+
+      DrawPOSInterface2_EST(bc1,bc2,POSBr,"",100,bm); //!!TRANSLATE
+    end;
+    BottomBar;
+  end else begin
+    td = IVr.TransDate;
+    if (blankdate(td)) then begin td = CurrentDate; end;
+    tt = IVr.TransTime;
+    if (blanktime(tt)) then begin tt = CurrentTime; end;
+    lmc = IVr.MachineName;
+    if (blank(lmc)) then begin lmc = LMb.LocalMachineCode; end;
+    sm = IVr.SalesMan;
+    if (blank(sm)) then begin sm = CurrentUser; end;
+    nr = "Arve: ";
+    if (IVr.SerNr>0) then begin
+      nr = nr & IVr.SerNr;
+    end;
+
+    if (IsSessionOpen(IVr.MachineName,IVr.DrawerCode,CurrentDate,CurrentTime)) then begin
+      sessdesc = "POS sessioon avatud";
+    end else begin
+      sessdesc = "*** POS sessioon suletud ***";
+    end;
+
+    // StopAlert("IsSessionOpen(" & IVr.MachineName & "," & IVr.DrawerCode & "," & IVr.TransDate & "," & IVr.TransTime & "); -> " & sessdesc);
+
+    DisplayRecordDetails_EST(10,26,compname,td,tt,lmc,sm,nr,IVr.CustCode,IVr.Addr0,IVr.Addr1,IVr.Addr2,IVr.Addr3,IVr.Phone,IVr.Objects,IVr.LoyaltyCardNr,LMb.ShowBaggerSupervisor,"","","",blankval,sessdesc,true,IVr.OfficialSerNr,IVr.TaxAdminServSeal);
+
+    if (bm<650) then begin
+      SoftEditFieldTLX(420,6,h4,"",M4Str,ViewOnly,100,20,patM4black,"CustomerDisplayData_Line1",true,0);
+      SoftEditFieldTLX(420,36,h4,"",M4Str,ViewOnly,100,30,patM4black,"CustomerDisplayData_Line2",true,0);
+    end else begin
+      SoftEditFieldTLX(520,6,h4,"",M4Str,ViewOnly,100,30,patM4black,"CustomerDisplayData_Line1",true,0);
+      SoftEditFieldTLX(520,46,h4,"",M4Str,ViewOnly,100,50,patM4black,"CustomerDisplayData_Line2",true,0);
+    end;
+
+    switch (LMb.POSButtonsPosition) begin
+      case kPOSButtonsPositionLeft:
+        SoftEditField(110,-22,200,"Artikkel/Käsk"  ,Normal ,"ivcashcommand",false,0,M4Str,255);
+      case kPOSButtonsPositionRight:
+        SoftEditField(-260,-22,200,"Artikkel/Käsk"  ,Normal ,"ivcashcommand",false,0,M4Str,255);
+    end;
+    SoftEditField(2000,-22,200,""  ,Normal ,"ivcashcommandlastitemsernrf",false,0,M4Str,255);
+    DrawPOSInterface2_EST(bc1,bc2,POSBr,"",100,bm); //!!TRANSLATE
+    BottomBar;
+  end;
+end;
+  EndWindow;
+end;
+
+//Bk, SpecialMenu("PDFi päring"
+window VIDClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h1,h2,h3,h4,t,v,vm,vs;
+  record CYBlock CYb;
+  string 255 label;
+  Integer tilenr;
+  Integer f,flipnr;
+  Integer pos;
+
+  WindowBegin("Ostuarve",VIDClass,CGview,-); 
+  SetWRect(20,80,770,460);
+//  if (IsEnterprise==false) or (IsBooks==false) and (HasModNL==false) then begin //##cc
+//  end else begin //##cc
+   Sizeable(-1,-1,0,0);
+//  end; //##cc
+  UseView(VIVc);
+//  FormName(PrintVID);   
+  ActiveFieldOnNew("VECode");      
+  if (IsEnterprise==false) and (IsBooks==false) then begin //##cc
+    if (IsBooks and IsStandardProduct==false) then begin
+      AutoSizeWindow(false);
+    end;
+    v = 6; h = 90; h2 = 260; h3 = 460; h4=-120; vs = 20;
+    if (HasVATZone or ((HasMultiCurrency or HasBase2) and (HasModNL))) then begin
+      Tile(0,74,false,"",VECode);
+    end;
+    if (HasNumberSeries) then begin
+      EditField(h,v,80,"Number",Normal,SerNr,false,TSerSClass);
+    end else begin
+      EditField(h,v,80,"Nr.",Normal,SerNr,false,0);
+    end;
+    EditField(h2,v,-40,"Nimi",Normal,VEName,false,0);
+
+    EditField(h,vm=(v+=20),80,"#Supplier#",Normal,VECode,false,VESClass); 
+    EditField(h2,v,80,"Arve kp.",Normal,InvDate,false,PasteCurDate);
+    CheckBox(-80,v,0,"Kinnita",OKFlag);
+    if (HasModNL) then begin
+      EditField(h3,v,-100,"Viide",Normal,RefStr,false,0); 
+    end;
+    if (HasVATZone) then begin
+      tilenr = 1;
+      TileButton(tilenr,"Tingimused"); tilenr = tilenr + 1;
+      TileButton(tilenr,"Kulud"); tilenr = tilenr + 1;
+      if (HasMultiCurrency or HasBase2) then begin
+        TileButton(tilenr,"Valuuta"); tilenr = tilenr + 1;
+      end;
+      TileButton(tilenr,"Muu"); tilenr = tilenr + 1;
+      tilenr = 1;
+      Tile(tilenr,100,false,tilenr,InvoiceNr); tilenr = tilenr + 1;
+      v = 6;
+    end else begin
+      if (HasMultiCurrency or HasBase2) and (HasModNL) then begin
+        tilenr = 1;
+        TileButton(tilenr,"Tingimused"); tilenr = tilenr + 1;
+        TileButton(tilenr,"Kulud"); tilenr = tilenr + 1;
+      TileButton(tilenr,"Muu"); tilenr = tilenr + 1;
+      tilenr = 1;
+      Tile(tilenr,100,false,tilenr,InvoiceNr); tilenr = tilenr + 1;
+      v = 6;
+    end else begin
+      v = v + vs;
+      end;
+    end;
+    vm = v;
+    EditField(h,v,80,"Tarnija arve nr.",Normal,InvoiceNr,false,0);
+    EditField(h,v+=vs,80,"KOKKU",Normal,PayVal,true,0);
+    EditField(h,v+=vs,80,"KM",Normal,VATVal,true,0);
+    EditField(h2,v=vm,35,"Tas.viis",Normal,PayDeal,false,PDSClass);
+    if (HasModNL) then begin
+    EditField(h2,v+=vs,80,"Kandekuupäev",Normal,TransDate,false,PasteCurDate);
+    end;
+    EnterSkip(Math);
+    EditField(h2,v+=vs,80,"Tasumistähtaeg",Normal,DueDate,false,PasteCurDate);
+    v = vm;
+    EditField(h3,v,90,"Kreedit arvele",Normal,CredInv,false,APSClass);
+    if (HasLanguages) then begin
+      EditField(h4,v,80,"Keel",Normal,LangCode,false,LangSClass);
+    end;
+    EditField(h3,v+=vs,90,"#Sort Code#",Normal,SortCode,false,0);
+    if (HasObjects) then begin
+      EditField(h4,v,80,"Objektid",Normal,Objects,false,ObjSClass);
+    end;
+    EditField(h3,v+=vs,-40,"Panga konto",Normal,BankAcc,false,0);
+    if (HasLocalization("POL")) then begin
+      EditField(h2,v+=vs,80,"Teenuse lähetamise kp",Normal,ServiceDelDate,false,PasteCurDate);
+    end;
+    EditField(h2,v+=vs,-40,"Kommentaar",Normal,Comment,false,0);
+    if (HasModNL or HasModTS or HasIncomeAndExpenseBook) then begin
+      if (HasVATZone or HasMultiCurrency or HasBase2) then begin
+        Tile(tilenr,330,true,tilenr,Math); tilenr = tilenr + 1;
+        v = 6;
+      end else begin
+        v = v + 2*vs;
+      end;
+      BlockLoad(CYb);
+      if (HasAdvancedStock or HasModAT2 or HasModTS or HasModPO or (HasVATZone and HasLocalization("POL"))) then begin
+        MatrixBegin(10,v,-50,-32,-,99);
+      end else begin
+        MatrixBegin(10,v,-27,-32,-,99);
+      end;
+    MatTypedRow(stp);
+    MatOverStrike(ovst);
+      flipnr = 0;
+      Flip(flipnr); flipnr = flipnr + 1;
+      MatCol(t=kInvoiceRowTypeNormal,24,"Konto",0,AccNumber,false,AccSClass); 
+      Flip(flipnr); flipnr = flipnr + 1;
+      pos = 90;
+    if (HasObjects) then begin
+        MatCol(t=kInvoiceRowTypeNormal,pos,"Objektid",0,Objects,false,ObjSClass); pos = pos + 90;
+        if (HasAdvancedAccounting) then begin
+          MatCol(t,pos,"Short.",0,ACShort,false,ACShortSClass); //!!TRANSLATE
+          pos = pos + 60;
+        end;
+        MatCol(t,pos,"Kirjeldus",0,Comment,false,0);
+    end else begin
+        if (HasAdvancedAccounting) then begin
+          MatCol(t,pos,"Short.",0,ACShort,false,ACShortSClass); //!!TRANSLATE
+          pos = pos + 60;
+        end;
+        MatCol(t,pos,"Kirjeldus",0,Comment,false,0);
+      end;
+      MatCol(t,-130,"Summa",0,Sum,true,0);
+      if (CYb.UseTaxTemplatesforTaxCalc!=0) then begin
+        MatCol(t,-35,"M-kd",0,TaxTemplateCode,false,TaxTemplateSClass);
+      end else begin
+        MatCol(t,-35,"#V-Cd#",0,VATCode,false,VATCodeSClass);
+      end;
+
+      MatText(t=kInvoiceRowTypePrepayment,24,"Ettemaksu number",true); 
+      MatCol(t,208,"",0,PrepayNr,false,APPay3SClass); 
+      MatCol(t,-266,"",0,Comment,false,0); 
+      MatCol(t,-160,"",0,PrepayAmount,true,0);/* Price holds the #VAT# sum, Recipe holds the date of prepaym. */ 
+      MatCol(t,-70,"",0,VATVal,true,0); 
+
+      MatText(t=kInvoiceRowTypeEmployee,24,"Employee to pay",true); //!!TRANSLATE
+      MatCol(t,208,"",0,UserCode,false,UserSClass); //!!TRANSLATE
+      MatCol(t,-406,"",0,AccNumber,false,0); //!!TRANSLATE
+      MatCol(t,-306,"",0,Objects,false,0); //!!TRANSLATE
+      MatCol(t,-206,"",0,Comment,false,0); //!!TRANSLATE
+
+      if (HasAdvancedStock or HasModTS or HasModPO) then begin
+        Flip(flipnr); flipnr = flipnr + 1;
+        pos = 140;
+        t = kInvoiceRowTypeNormal;
+        if (HasAdvancedStock) then begin
+          MatCol(t,pos,"Tellimuse klass",0,OrderType,false,0); 
+          MatCol(t,-360,"Lao klass",0,StockType,false,SetSClass); 
+        end else begin
+          MatCol(t=1,pos,"Kirjeldus",0,Comment,false,0); 
+        end;
+        MatCol(t,-260,"Summa",0,Sum,true,0); 
+        MatCol(t,-190,"Artikkel",0,Item,false,INSClass); 
+        MatCol(t,-130,"Kog.",0,qty,true,0); 
+          MatCol(t,-100,"Projekt",0,PRCode,false,PRSClass); 
+        if (CYb.UseTaxTemplatesforTaxCalc!=0) then begin
+          MatCol(t,-30,"Maksu mall",0,TaxTemplateCode,false,TaxTemplateSClass); 
+        end else begin
+          MatCol(t,-30,"KM Kood",0,VATCode,false,VATCodeSClass); 
+        end;
+        MatText(3,270,"",true); 
+      end else begin
+        if (HasVATZone) then begin
+          if (HasLocalization("POL")) then begin
+            Flip(flipnr); flipnr = flipnr + 1;
+            pos = 140;
+            MatCol(t=1,pos,"Description",0,Comment,false,0); //!!TRANSLATE
+            MatCol(t,-200,"Amount",0,Sum,true,0); //!!TRANSLATE
+            MatCol(t,-120,"Item",0,Item,false,INSClass); //!!TRANSLATE
+            MatCol(t,-60,"Qty",0,qty,true,0); //!!TRANSLATE
+          end;
+        end;
+      end;
+      if (HasModAT2) then begin
+        Flip(flipnr); flipnr = flipnr + 1;
+        MatCol(t=kInvoiceRowTypeNormal,140,"Kirjeldus",0,Comment,false,0);
+        MatCol(t,-300,"Asset No.",0,InventoryNr,false,AT2UnitSClass); //!!TRANSLATE
+        MatCol(t,-150,"Asset Trans. Type",0,AssetTransType,false,SetSClass); //!!TRANSLATE
+      end;
+    InsertRowTest;
+    DeleteRowTest;
+      RowMenuBegin("");
+      RowMenuItem(0,"Saldo",'=','=',0,"BalanceVIDsm");
+      EndRowMenu;
+    EndMatrix;
+      vs = 20;
+//      v = 18;//canoot be set to 18 on windows
+      if (flipnr>2) then begin
+        for (f=1;f<flipnr;f=f+1) begin
+          VTab(-35,v,-16,v+vs,ToolFlip,f,chr(asc("A") + f - 1)); 
+          v = v + vs;
+        end;
+      end;
+    EditField(-140,-20,-40,"Arvutatud KM",ViewOnly,CalcVATVal,true,0);
+      if (HasMultiCurrency or HasBase2) then begin
+        Tile(tilenr,70,false,tilenr,FrRate); tilenr = tilenr + 1;
+        h1 = h + 20;
+        v = 6;
+        EditField(h1,v=6,50,"Valuuta",Normal,CurncyCode,false,CurncyCodeSClass);
+        if (HasMultiCurrency) then begin
+          if (HasBase2) then begin
+            EditField(h1,v+vs,50,"Baasvaluuta 1",Normal,BaseRate1,true,0);
+          end else begin
+            EditField(h1,v+vs,50,"Baasvaluuta",Normal,BaseRate1,true,0);
+          end;
+          if (HasBase2) then begin  
+            EditField(h1,v+(vs*2),50,"Baasvaluuta 2",Normal,BaseRate2,true,0);
+          end;
+          EditField(h2=295,v,50,"Kurss",Normal,FrRate,true,0);
+          if (HasBase2) then begin  
+            RateField(h3=360,v,50,":",Normal,"ToRateB1",true,h3+60,v+14,"Baasvaluuta 1",false);
+            RateField(h3,v+=vs,50,":",Normal,"ToRateB2",true,h3+60,v+14,"Baasvaluuta 2",false);
+          end else begin
+            RateField(h3=360,v,50,":",Normal,"ToRateB1",true,h3+60,v+14,"Baasvaluuta",false);
+          end;
+        end else begin
+          EditField(h1,v+=vs,50,"Baasvaluuta 1",Normal,BaseRate1,true,0);
+          EditField(h1,v+=vs,50,"Baasvaluuta 2",Normal,BaseRate2,true,0);
+        end;
+      end;
+      if (HasVATZone) then begin
+        Tile(tilenr,120,false,tilenr,InvoiceNr); tilenr = tilenr + 1;
+        v = 20;
+        v = VATZoneButtonsLabelsEST(h,v,170,16);
+      end;
+      SpecialMenu("Saldo",'=',0,"BalanceVIDsm");
+      SpecialMenu("Ostuarve hetkeseis",'r',2,"VIInfoVIDsm");
+      if (HasIntegratedNL or IsBooks) then begin //##cc
+        SpecialMenu("Ava finantskanne",'t',5,"OpenTRFromVI");
+      end;
+      if ((HasRussianPrepayment or HasPrepayments) and HasModPL) then begin
+        SpecialMenu("Seo ettemaksuga",' ',6,"ConnectToPrepayVIDsm");
+      end;
+      if (HasModAT2) then begin
+        SpecialMenu("Asset",' ',7,"CreateAT2FromVI"); //!!TRANSLATE
+      end;
+    end else begin
+      if (HasMultiCurrency or HasBase2) then begin
+        EditField(h,v+=vs,50,"Valuuta",Normal,CurncyCode,false,CurncyCodeSClass);
+        if (HasMultiCurrency) then begin
+          if (HasBase2) then begin
+            EditField(h,v+vs,50,"Baasval. 1",Normal,BaseRate1,true,0); 
+          end else begin
+            EditField(h,v+vs,50,"Baaasval.",Normal,BaseRate1,true,0);
+          end;
+          if (HasBase2) then begin  
+            EditField(h,v+(vs*2),50,"Baasval 2",Normal,BaseRate2,true,0); 
+          end;
+          EditField(h2=295,v,50,"Kurss",Normal,FrRate,true,0);
+          if (HasBase2) then begin  
+            RateField(h3=360,v,50,":",Normal,"ToRateB1",true,h3+60,v+14,"Baasvaluuta 1",false);
+            RateField(h3,v+=vs,50,":",Normal,"ToRateB2",true,h3+60,v+14,"Baasvaluuta 2",false);
+          end else begin
+            RateField(h3=360,v,50,":",Normal,"ToRateB1",true,h3+60,v+14,"Baasvaluuta",false);
+          end;
+        end else begin
+          EditField(h,v+=vs,50,"Baasval. 1",Normal,BaseRate1,true,0);
+          EditField(h,v+=vs,50,"Baasval. 2",Normal,BaseRate2,true,0);
+        end;
+      end;
+      SpecialMenu("Arve hetkeseis",'r',2,"VIInfoVIDsm");
+      if (HasIntegratedNL or IsBooks) then begin //##cc
+        SpecialMenu("Ava finantskanne",'t',5,"OpenTRFromVI");
+      end;
+      if ((HasRussianPrepayment or HasPrepayments) and HasModPL) then begin
+        SpecialMenu("Seo ettemaksuga",' ',6,"ConnectToPrepayVIDsm");
+    end;
+    end;
+    if (HasWithholdingTax) then begin
+      SpecialMenu("Add Withholding Tax",' ',26,"WithholdingLineVIDsm"); //!!TRANSLATE
+    end;
+    SpecMenuGroup("",kSpecMenuGroupTypeExtendedPlusMenu,0);
+    SpecialMenu("Kreeditarve",' ',15,"CreateCreditNoteVIDsm"); 
+    if (HasModCL) then begin
+      SpecialMenu("Kassaväljaminekuorder",' ',8,"DoCLOutFromVID"); 
+    end;
+    if (HasModNL and HasMultiCurrency) then begin
+      SpecialMenu("Sisearve",' ',12,"IntIVFromVIDsm");
+    end;
+    if (HasLocalization("POL") and HasVATZone) then begin
+      SpecialMenu("Internal Invoice",' ',12,"IntIVFromVIDsm"); //!!TRANSLATE
+    end;
+    if (HasLocalization("HRV,POL,RUS,SLV,SVN,SRB,UKR")) and (HasIntegratedNL) then begin
+      SpecialMenu("KM parandus O/R",' ',9,"VATCorrectionVIsm");
+    end;
+    SpecialMenu("Lisa tarnija",' ',0,"AddSupplierVIDsm");
+    if (HasModAT2) then begin
+      SpecialMenu("Asset",' ',7,"CreateAT2FromVI"); //!!TRANSLATE
+    end;
+  end else begin
+    BlockLoad(CYb);
+    vs = 20;
+  Tile(0,94,false,"",InvDate);
+    if (IsEnterprise or IsBooks) then begin //##cc
+      h = 75; h2 = 260; h3 = 530;
+    end else begin
+      h = 90; h1 = 90; h2 = 270; h3 = 470; h4=-110;
+    end;
+    if (HasNumberSeries) then begin
+      EditField(h,vm=(v=6),95,"Nr.",Normal,SerNr,false,TSerSClass);
+    end else begin
+      EditField(h,vm=(v=6),95,"Nr.",Normal,SerNr,false,0);
+    end;
+  EditField(h,v+=vs,95,"Tarnija",Normal,VECode,false,VESClass);
+  EnterSkip(PayVal);
+  EditField(h2,v=vm,-40,"Nimi",Normal,VEName,false,0);
+    if (IsEnterprise or IsBooks) then begin //##cc
+  EditField(h2,vm=(v+=20),95,"Ootel summa",Normal,HoldSum,true,0);
+    end else begin
+      EditField(h2,v+=vs,80,"Arve kuupäev",Normal,InvDate,false,PasteCurDate);
+      EditField(h3,v,90,"Viide",Normal,RefStr,false,0);
+    end;
+  CheckBox(h4=-100,v,0,"Kinnita",OKFlag);
+    if (IsEnterprise or IsBooks) then begin //##cc
+  EditField(h,v+=vs,95,"KOKKU",Normal,PayVal,true,0);
+  EditField(h2,v,95,"Käibemaks",Normal,VATVal,true,0);
+    end;
+    tilenr = 1;
+    TileButton(tilenr,"Tingimused"); tilenr = tilenr + 1;
+    TileButton(tilenr,"Kulud"); tilenr = tilenr + 1;
+    TileButton(tilenr,"Valuuta"); tilenr = tilenr + 1;
+    if (IsEnterprise or IsBooks) then begin //##cc
+      if (HasLocalization("UKR")) then begin
+      TileButton(tilenr,"Käibemaksukurss"); tilenr = tilenr + 1;
+      end;
+      TileButton(tilenr,"Kommentaar"); tilenr = tilenr + 1;
+      TileButton(tilenr,"Kontod"); tilenr = tilenr + 1; 
+      TileButton(tilenr,"Arve aadress"); tilenr = tilenr + 1;
+    end;
+    tilenr = 1;
+    Tile(tilenr,90,false,tilenr,InvDate); tilenr = tilenr + 1;
+    if (IsEnterprise or IsBooks) then begin //##cc
+      vs = 20; h1 = 110; h2 = 290; h3 = 530; h4 = -90;
+  EditField(h1,vm=(v=6),82,"Arve kuupäev",Normal,InvDate,false,PasteCurDate);
+      EditField(h1,v+=vs,35,"Tasumistingimus",Normal,PayDeal,false,PDSClass);//PDSClass
+  EditField(h1,v+=vs,82,"Kandekuupäev",Normal,TransDate,false,PasteCurDate);
+  EditField(h1,v+=vs,82,"Tähtaeg",Normal,DueDate,false,0);
+      if (HasLocalization("POL")) then begin 
+        EditField(h1,v+=vs,82,"Teenuse läh. kp.",Normal,ServiceDelDate,false,PasteCurDate); 
+      end;
+    end else begin
+      EditField(h,v=6,80,"Tarnija arve nr.",Normal,InvoiceNr,false,0);
+      EditField(h,v+=vs,80,"KOKKU",Normal,PayVal,true,0);
+      EnterSkip(PayDeal);
+      EditField(h,v+=vs,80,"#VAT#",Normal,VATVal,true,0);
+    end;
+    if (IsEnterprise or IsBooks) then begin //##cc
+  EditField(h2,v=vm,135,"Tarnija arvenr.",Normal,InvoiceNr,false,0);
+  EditField(h2,v+=vs,135,"Kinnitajad",Normal,OKPersons,false,UserSClass);
+  EditField(h2,v+=vs,135,"Objektid",Normal,Objects,false,ObjSClass);
+  EditField(h2,v+=vs,135,"Viide",Normal,RefStr,false,0);
+    end else begin
+      EditField(h2,v=6,35,"Tas.ting.",Normal,PayDeal,false,PDSClass);
+      EnterSkip(Math);
+      EditField(h2,v+=vs,80,"Kandekuupäev",Normal,TransDate,false,PasteCurDate);
+      EditField(h2,v+=vs,80,"Tasumistähtaeg",Normal,DueDate,false,0);
+    end;
+    if (IsEnterprise or IsBooks) then begin //##cc
+  EditField(h3,v=vm,82,"Vastuvõtm.kp.",Normal,RcvDate,false,PasteCurDate);
+  EditField(h3,v+=vs,82,"Allahindlusekp.",Normal,RebDate,false,PasteCurDate);
+  EditField(h3,v+=vs,82,"Kassa-ale",Normal,RebVal,true,0);
+  EditField(h3,v+=vs,82,"Kreedit arvele",Normal,CredInv,false,APSClass);
+    end else begin
+      EditField(h3,v=6,90,"Kreedit arvele",Normal,CredInv,false,APSClass);
+      EditField(h3,v+=vs,90,"Pangakonto",Normal,BankAcc,false,0);
+      EditField(h3,v+=vs,90,"#Sort Code#",Normal,SortCode,false,0);
+      v = 6;
+      if (HasLanguages) then begin
+        EditField(h4,v,90,"Keel",Normal,LangCode,false,LangSClass);
+        v = v + vs;
+      end;
+      if (HasObjects) then begin
+        EditField(h4,v,90,"Objektid",Normal,Objects,false,ObjSClass);
+        v = v + vs;
+      end;
+    end;
+  EnterSkip(Math);
+    if (HasAdvancedAccounting) then begin
+  CheckBox(h4,v=6,0,"Ootel",Closed);
+      if (StandardHansa==false) then begin
+  CheckBox(h4,v+=16,0,"Eelkonteering",PrelBook);
+      end;
+    end;
+    Tile(tilenr,130,true,tilenr,Math); tilenr = tilenr + 1;
+  EditField(70,-21,50,"Valuuta",Normal,CurncyCode,false,CurncyCodeSClass);//##cc 
+    if (HasWithholdingTax) then begin
+      if (StandardHansa==false) then begin
+  EditField(200,-20,70,"Kin.maks",Normal,WithHoldingTax,true,0);//##cc
+      end;
+    end;
+    if (HasExtTax) then begin
+  EditField(330,-20,70,"Lisamaks",ViewOnly,TAX1Sum,true,0);//##cc
+    end;
+  EditField(-240,-20,40,"Arvestatud KM",ViewOnly,CalcVATVal,true,0);//##cc
+  //SoftEditField(-120,-20,70,"Vahesumma",ViewOnly,"NettVal",true,0,M4Val,255); //##cc
+  EnterSkip(Math);
+//  CheckBox(20,-21,0,"Kinnita",OKFlag);
+  h=4;
+    if (HasModNL) then begin
+    if (IsEnterprise or IsBooks) then begin //##cc
+  MatrixBegin(h,v=24,-50,-24,-,299);
+    end else begin
+      MatrixBegin(h,v=24,-27,-24,-,99);
+    end;
+  MatTypedRow(stp); 
+  MatOverStrike(ovst);
+    flipnr = 0;
+    Flip(flipnr); flipnr = flipnr + 1;
+      MatCol(t=kInvoiceRowTypeNormal,32,"Konto",0,AccNumber,false,AccSClass);
+    if (HasObjects) then begin
+      MatCol(t,90,"Objektid",0,Objects,false,ObjSClass); 
+    end;
+  MatText(t=6,32,"Ettemaksu number",true);
+      MatCol(t,208,"",0,PrepayNr,false,APPay3SClass);
+  MatCol(t,-266,"",0,Comment,false,0);
+  MatCol(t,-160,"",0,PrepayAmount,true,0);/* Price holds the VAT sum, Recipe holds the date of prepaym. */
+  MatCol(t,-70,"",0,VATVal,true,0);
+
+      MatText(t=kInvoiceRowTypeEmployee,32,"Employee to pay",true); //!!TRANSLATE
+      MatCol(t,158,"",0,UserCode,false,UserSClass); //!!TRANSLATE
+      MatCol(t,-406,"",0,AccNumber,false,0); //!!TRANSLATE
+      MatCol(t,-306,"",0,Objects,false,0); //!!TRANSLATE
+      MatCol(t,-206,"",0,Comment,false,0); //!!TRANSLATE
+
+      MatText(t=kInvoiceRowTypeDownpayment,32,"Ettemaks",true);
+      MatColTL(t,122,"",0,-1,ViewOnly,0,Item,true,0);
+      MatColTL(t,208,"",0,-1,ViewOnly,0,qty,true,0);
+      MatCol(t,268,"",0,Comment,false,0);
+//      MatColTL(t,-240,"",0,-1,ViewOnly,0,Price,true,0);
+//      MatColTL(t,-180,"",0,-1,ViewOnly,0,vRebate,true,0);
+      MatColTL(t,-170,"",0,-1,Normal,0,Sum,true,0);
+      if (CYb.UseTaxTemplatesforTaxCalc!=0) then begin
+        MatCol(t,-100,"",0,AccNumber,false,AccSClass);
+        MatCol(t,-54,"",0,TaxTemplateCode,false,TaxTemplateSClass);
+      end else begin
+        MatCol(t,-90,"",0,AccNumber,false,AccSClass);
+        MatCol(t,-30,"",0,VATCode,false,VATCodeSClass);
+      end;
+
+      MatText(t=kInvoiceRowTypeRetention,32,"Kinnipidamine",true);
+  MatCol(t,100,"",0,Comment,false,0);
+      if (HasModTS) then begin
+  MatCol(t,-340,"Projekt",0,PRCode,false,PRSClass);
+      end;
+  MatCol(t,-210,"Konto",0,AccNumber,false,AccSClass);
+  MatCol(t,-110,"Summa",0,Sum,true,0);
+  if (CYb.UseTaxTemplatesforTaxCalc!=0) then begin
+  MatCol(t,-30,"MK-k",0,TaxTemplateCode,false,TaxTemplateSClass);
+  end else begin
+  MatCol(t,-30,"KM-k",0,VATCode,false,VATCodeSClass);
+  end;
+  MatText(t=kInvoiceRowTypeWithholdingTax,32,"Kinnipid.maks",true);
+  MatCol(t,132,"",0,WHTax,false,WHTaxSClass);
+  MatCol(t,172,"",0,AccNumber,false,AccSClass);
+  MatCol(t,292,"",0,Sum,true,0);
+  MatCol(t,392,"",0,Comment,false,0);
+    Flip(flipnr); flipnr = flipnr + 1;
+      t = 1; pos = 180;
+      if (HasAdvancedAccounting) then begin
+        MatCol(t,pos,"Lühi",0,ACShort,false,ACShortSClass);
+        pos = pos + 60;
+    end;
+      MatCol(t,pos,"Kirjeldus",0,Comment,false,0);
+  MatCol(t,-120,"Summa",0,Sum,true,0);
+  if (CYb.UseTaxTemplatesforTaxCalc!=0) then begin
+  MatCol(t,-30,"MK-k",0,TaxTemplateCode,false,TaxTemplateSClass);
+  end else begin
+  MatCol(t,-30,"KM-k",0,VATCode,false,VATCodeSClass);
+  end;
+//  MatCol(t,-30,"TT",0,TaxTemplateCode,false,VATCodeSClass);
+      if (HasAdvancedStock or HasModTS or HasModPO) then begin
+      Flip(flipnr); flipnr = flipnr + 1;
+        pos = 140;
+        t=1;
+        if (HasAdvancedStock) then begin
+          MatCol(t,pos,"Tellimuse tüüp",0,OrderType,false,0);
+          MatCol(t,-360,"Lao tüüp",0,StockType,false,SetSClass);
+        end else begin
+          MatCol(t=1,pos,"Kirjeldus",0,Comment,false,0);
+        end;
+  MatCol(t,-260,"Summa",0,Sum,true,0);
+  MatCol(t,-190,"Artikkel",0,Item,false,INSClass);
+  MatCol(t,-130,"Kog.",0,qty,true,0);
+        if (HasModTS) then begin
+  MatCol(t,-100,"Projekt",0,PRCode,false,PRSClass);
+        end;
+  if (CYb.UseTaxTemplatesforTaxCalc!=0) then begin
+  MatCol(t,-30,"MK-k",0,TaxTemplateCode,false,TaxTemplateSClass);
+  end else begin
+  MatCol(t,-30,"KM-k",0,VATCode,false,VATCodeSClass);
+  end;
+  MatText(3,270,"",true);
+      end;
+      if (HasSimAccruals or IsBooks) then begin //##cc
+      Flip(flipnr); flipnr = flipnr + 1;
+        MatCol(t=kInvoiceRowTypeNormal,140,"Kirjeldus",0,Comment,false,0);
+  MatCol(t,-260,"Summa",0,Sum,true,0);
+  MatCol(t,-180,"Per. mudel",0,PeriodCode,false,AutSimPerSClass);
+  MatCol(t,-80,"Käibemaks",0,VATVal,true,0);
+      end;
+      if (HasAdvancedStock or HasSerialNumbers) then begin
+      Flip(flipnr); flipnr = flipnr + 1;
+        MatCol(t=kInvoiceRowTypeNormal,140,"Kirjeldus",0,Comment,false,0);
+  MatCol(t,-350,"Artikkel",0,Item,false,INSClass);
+        if (HasSerialNumbers) then begin
+  MatColTL(t,-250,"Seerianr.",0,-1,ViewOnly,-1,SerialNr,false,0);
+        end;
+  MatCol(t,-130,"Kog.",0,qty,true,0);
+        if (HasAdvancedStock) then begin
+  MatColTL(t,-70,"Hinnaerinevus",0,-1,ViewOnly,-1,VarianceAmount,false,0);
+        end;
+      end;
+      Flip(flipnr); flipnr = flipnr + 1;
+        MatCol(t=kInvoiceRowTypeNormal,140,"Kirjeldus",0,Comment,false,0);
+  MatCol(t,-300,"Inventarinr.",0,InventoryNr,false,AT2UnitSClass);
+  MatCol(t,-150,"PV kande tüüp",0,AssetTransType,false,SetSClass);
+  InsertRowTest;
+  DeleteRowTest;
+//      RowMenuBegin("");
+//      EndRowMenu;
+  EndMatrix;
+  vs = 20;
+    v = 18; 
+    if (flipnr>2) then begin
+      for (f=1;f<flipnr;f=f+1) begin
+        VTab(-35,v,-16,v+vs,ToolFlip,f,chr(asc("A") + f - 1));
+        v = v + vs;
+        end;
+      end;
+    end;
+  
+    Tile(tilenr,70,false,tilenr,FrRate); tilenr = tilenr + 1;
+  vs = 20;
+    if (HasBase2) then begin
+      h1 = h1 + 20;
+    end;
+  EditField(h1,v=6,50,"Valuuta",Normal,CurncyCode,false,CurncyCodeSClass);
+    if (HasMultiCurrency) then begin
+    if (HasBase2) then begin
+        EditField(h1,v+vs,50,"Baasvaluuta 1",Normal,BaseRate1,true,0);
+    end else begin
+        EditField(h1,v+vs,50,"Baasvaluuta",Normal,BaseRate1,true,0);
+      end;
+      if (HasBase2) then begin  
+        EditField(h1,v+(vs*2),50,"Baasvaluuta 2",Normal,BaseRate2,true,0);
+      end;
+      EditField(h2=295,v,50,"Kurss",Normal,FrRate,true,0);
+      if (HasBase2) then begin  
+        RateField(h3=360,v,50,":",Normal,"ToRateB1",true,h3+60,v+14,"Baasvaluuta 1",false);
+        RateField(h3,v+=vs,50,":",Normal,"ToRateB2",true,h3+60,v+14,"Baasvaluuta 2",false);
+      end else begin
+        RateField(h3=360,v,50,":",Normal,"ToRateB1",true,h3+60,v+14,"Baasvaluuta",false);
+      end;    
+    end else begin
+      EditField(h1,v+=vs,50,"Baasvaluuta 1",Normal,BaseRate1,true,0);
+      EditField(h1,v+=vs,50,"Baasvaluuta 2",Normal,BaseRate2,true,0);
+    end;
+    if (IsEnterprise or IsBooks) then begin //##cc
+      if (HasLocalization("SVK,UKR")) then begin
+      Tile(tilenr,70,false,tilenr,VATFrRate); tilenr = tilenr + 1;
+  vs = 20;
+        EditField(h=110,v=6,50,"Valuuta",Normal,CurncyCode,false,CurncyCodeSClass);
+        EditField(h,v+vs,50,"Baasvaluuta 1",Normal,VATBaseRate1,true,0); 
+        EditField(h,v+(vs*2),50,"Baasvaluuta 2",Normal,VATBaseRate2,true,0);   
+        EditField(h2=295,v,50,"#VAT# kurss",Normal,VATFrRate,true,0); 
+        RateField(h3=360,v,50,":",Normal,"VATToRateB1",true,h3+60,v+14,"Baasvaluuta 1",false);
+        RateField(h3,v+=vs,50,":",Normal,"VATToRateB2",true,h3+60,v+14,"Baasvaluuta 2",false);       
+      end;
+      Tile(tilenr,110,false,tilenr,PRCode); tilenr = tilenr + 1;
+  vs = 20; h1 = 110; h2 = 290; h3 = 550; h4 = -100;
+      if (StandardHansa==false) then begin
+  EditField(h1,v=vm,82,"Faktooring",Normal,VEFactoring,false,VESClass);
+        EditField(h1,v+=vs,82,"Filiaal",ViewOnly,BranchID,false,0);
+      end else begin
+        EditField(h1,v=vm,82,"Filiaal",ViewOnly,BranchID,false,0); 
+      end;
+  EditField(h1,v+=vs,82,"Ostuval. summa",Normal,SupCurVal,false,0);
+  EditField(h1,v+=20,82,"Stat. väärtus",Normal,StatVal,true,0);
+  EditField(h1,v+=vs,-20,"Kommentaar",Normal,Comment,false,0);
+  EditField(h2,v=vm,80,"Müügimees",Normal,SalesMan,false,UserSClass);
+      if (HasSalesGroup) then begin
+  EditField(h2,v+=vs,80,"Müügigrupp",Normal,SalesGroup,false,SalesGroupSClass);
+  EditField(h2+160,v,80,"Org. hank.",ViewOnly,OrgVE,false,0);
+      end;
+  EditField(h2,v+=vs,80,"Keel",Normal,LangCode,false,LangSClass);
+  EditField(h2,v+=vs,80,"Ostuvõla konto",Normal,APAcc,false,AccSClass);
+  CheckBox(h3,v=6,0,"Info kande E-osale",APonTR);
+        if (HasLocalization("PRT")==false) then begin 
+  CheckBox(h3,v+=16,0,"Isearveldamine",SelfBilling);
+        end;
+      CheckBox(h3,v+=16,0,"Konteeri tasumine #VAT#",OPBookVAT); 
+        if (HasLocalization("ARG")) then begin 
+  CheckBox(h3,v+=16,0,"Fiskaalarve",FiscalFlag);
+      end;
+      Tile(tilenr,90,false,tilenr,POSerNr); tilenr = tilenr + 1;
+  EditField(h1,v=vm,82,"OT. number",ViewOnly,POSerNr,false,0);
+      if (StandardHansa==false) then begin
+  EditField(h1,v+=vs,82,"Ostuprotsessi nr.",Normal,POCQStatNr,false,POCQStatSClass);
+  EditField(h1,v+=vs,82,"Teenuse läh. kuup.",Normal,ServiceDelDate,false,PasteCurDate);
+        if (HasLocalization("ARG")) then begin 
+  EditField(h1,v+=vs,82,"CAE kehtivus",Normal,CAEExpiry,false,PasteCurDate);
+        end;
+      end;
+  EditField(h2,v=vm,135,"Panga kood",Normal,BankCode,false,BankSClass);
+      if (HasLocalization("EST")) then begin
+        EditField(h3,v,-20,"Maksa nimele",Normal,PayToName,false,0); 
+      end;
+  EditField(h2,v+=vs,135,"A/a | IBAN",Normal,BankAcc,false,VEBankAccSClass); //Bk //##cc
+  EditField(h2,v+=vs,135,"Harukontor",Normal,SortCode,false,0);
+        if (HasLocalization("ARG")) then begin 
+  EditField(h2,v+=vs,135,"CAE",Normal,CAE,false,0);
+        end;
+        v = vm;
+        if (HasLocalization("ARG,BOL")) then begin 
+          EditField(h3,v,-20,"Maksuameti ID",Normal,TaxAuthID,false,0); 
+          EditField(h3,v+=vs,-20,"Kontrollkood",Normal,TaxAuthIDCC,false,0); 
+      end;
+      EditField(h3,v+=vs,-20,"Vöötkood",Normal,BarCode,false,0);
+      EditField(h3,v+=vs,-20,"Tasumise kood",Normal,PaymentCode,false,PaymentCodeSClass);
+/*
+  EditField(h2,v,30,"Tarnija KM-kood",Normal,VEVatCode,false,VATCodeSClass);
+  EditField(h3,v,80,"Official Ser. No.",Normal,OfficialSerNr,false,0);
+*/
+      Tile(tilenr,250,false,tilenr,Addr1); tilenr = tilenr + 1;
+  label = UserDefined("CUVc","InvAddr0");
+  if (blank(label)) then begin label = "Arve-"; end;
+  EditField(h=110,v=6,-20,label,Normal,Addr1,false,0);
+  label = UserDefined("CUVc","InvAddr1");
+  if (blank(label)) then begin label = "aadress"; end;
+  EditField(h,v+=vs, -20,label,Normal,Addr2,false,0);
+  label = UserDefined("CUVc","InvAddr2");
+  EditField(h,v+=vs, -20,label,Normal,Addr3,false,0);
+  label = UserDefined("CUVc","InvAddr3");
+  EditField(h,v+=vs, -20,label,Normal,InvAddr3,false,0);
+  label = UserDefined("CUVc","InvAddr4");
+  EditField(h,v+=vs, -20,label,Normal,InvAddr4,false,0);
+  EditField(h,vm=(v+=vs),80,"Riik",Normal,InvCountry,false,CountrySClass);
+      if (HasApprovals) then begin
+        SoftEditField(h3=h+4,v=(vm+=40),123,"Kinnituse hetkeseis",ViewOnly,"AcceptanceStatusFlag",false,0,M4Str,255);
+/*      
+        ButtonFrame(h3=h+4,v=(vm+=40),123,6,"Kinnituse hetkeseis");
+  RadioButton(h3,v,kAcceptanceStateNotRequired,0,"Pole vajalik",AcceptanceStatus);
+  RadioButton(h3,v+=16,kAcceptanceStateNotStarted,0,"Alustamata",AcceptanceStatus);
+  RadioButton(h3,v+=16,kAcceptanceStateNotRequested,0,"Saatmata",AcceptanceStatus);
+  RadioButton(h3,v+=16,kAcceptanceStatePending,0,"Ootel",AcceptanceStatus);
+  RadioButton(h3,v+=16,kAcceptanceStateApproved,0,"Kinnitatud",AcceptanceStatus);
+  RadioButton(h3,v+=16,kAcceptanceStateRejected,0,"Tagasi lükatud",AcceptanceStatus);
+*/        
+        v = VATZoneButtonsLabelsEST(h3=290,v=vm,170,16);
+      end else begin
+        v = VATZoneButtonsLabelsEST(h3=290,v=vm+20,170,16);
+      end;
+  EditField(h2=-170,v=vm,150,"Regioon",Normal,Region,false,RegionSClass); 
+  EditField(h2,v+=vs,150,"KMKR nr.",Normal,VATNr,false,0);
+      if (HasLocalization("HRV,SVN")) then begin  
+      EditField(h2,v+=vs,50,"Juriidiline vorm",ViewOnly,VELegalForm,false,0);
+      end;
+  EditField(h2,v+=vs,150,"Telefon",Normal,Phone,false,0);
+  EditField(h2,v+=vs,150,"Faks",Normal,Fax,false,0);  
+    end;
+  SpecialMenu("Võrdsusta",'=',0,"BalanceVIDsm");
+    if (HasModNL) then begin
+  SpecialMenu("Vaata ostuarve hetkeseisu",'r',2,"VIInfoVIDsm");
+    end;
+    if (HasModTS) then begin
+  SpecialMenu("Lisa kinnipidamine",' ',25,"RetentionLineVIDsm"); 
+    end;
+    if (HasWithholdingTax) then begin
+  SpecialMenu("Lisa kinnipid.maks",' ',26,"WithholdingLineVIDsm"); 
+    end;
+    if (HasEInvoicing) then begin
+  SpecialMenu("Ava e-ostuarve pdf",' ',13,"OpenVEIVPDFDsm");
+    end;
+    if (HasIntegratedNL or IsBooks) then begin //##cc
+  SpecialMenu("Ava finantskanne",'t',5,"OpenTRFromVI");
+    end;
+    if (HasAdvancedAccounting) then begin
+  SpecialMenu("Ava eelkonteeritud finantskanne",' ',13,"OpenTRFromVI2");
+    end;
+    if ((HasRussianPrepayment or HasPrepayments) and HasModPL) then begin
+      SpecialMenu("Seo ettemaksuga",' ',6,"ConnectToPrepayVIDsm");
+    end;
+    if (HasModIN and HasAdvancedAccounting) then begin
+      if (StandardHansa==false) then begin
+        SpecialMenu("Võrdlemata ostutellimused",' ',11,"PUNotReconVIDsm");
+      end;
+      SpecialMenu("Artikli otsing",'f',1,"ItemSearchDsm");
+    end;
+    if (HasTaxMatrix) then begin
+      SpecialMenu("Ava maksumaatriks",' ',25,"OpenVatMatrixVIDsm"); 
+    end;
+    if (HasModCL) then begin
+      SpecialMenu("Trüki kassaorder",' ',3,"PrintCashInOutVIDsm");
+    end;
+    if (HasApprovals) then begin
+      SpecialMenu("Saada kinnitamiseks",' ',6,"VISendforAcceptanceVIDsm");
+      SpecialMenu("Tühista kinnitamise päring",' ',2,"CancelApprovalRequestDsm");
+    end;    
+//cust - begin: ts 2018/05, eteenused - manuse päring
+    if (HasLocalization("EST")) then begin 
+      SpecialMenu("PDFi päring",' ',9,"GetEstVEEInvoicePdf2Dsm");
+    end;
+//cust - end
+    SpecMenuGroup("",kSpecMenuGroupTypeExtendedPlusMenu,0);
+    if (HasModCRM) then begin
+//      SpecialMenu("Tegevus",'c',4,"ActFromVIDsm");
+    end;
+  SpecialMenu("Põhivara",' ',7,"CreateAT2FromVI");
+    if (HasModCL) then begin
+  SpecialMenu("Kassaväljaminek",' ',8,"DoCLOutFromVID");
+    end;
+  SpecialMenu("Kreeditarve",' ',15,"CreateCreditNoteVIDsm");
+    if ((HasModNL and HasMultiCurrency) and (StandardHansa==false)) then begin
+  SpecialMenu("Koosta sisearve",' ',12,"IntIVFromVIDsm");
+    end;
+    if (HasLocalization("UKR")) then begin
+  SpecialMenu("Avanss",' ',10,"FirstEventVIDsm");
+    end;
+    if (HasLocalization("HRV,POL,RUS,SLV,SVN,SRB,UKR")) and (HasIntegratedNL) then begin
+      SpecialMenu("Käibemaksu parandus, (O/R)",' ',9,"VATCorrectionVIsm");
+  end;
+  end;
+  EndWindow;
+end;
+
+//Bk, "Süsteemi teade"
+//Bk, "Reg. nr."
+//Bk, "Hank. Reg. nr."
+//Bk, SpecialMenu("PDFi päring"
+//Bk, SpecialMenu("Kulutus"
+window VEIVDClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real f,h,h1,h2,h3,t,v,vm,vs;
+  WindowBegin("Tarnija e-arve",VEIVDClass,CGview,-);
+  SetWRect(20,80,620,420);
+  Sizeable(-1,-1,0,0);
+  UseView(VEIVVc);
+  ActiveFieldOnNew("OurCustCode");  
+  CommunicateButton;
+  FormName(VEIVForm);
+  vs=20;
+  Tile(0,48+22,false,"",OurCustCode);
+  EditField(75,vm=(v=6), 82,"Nr.",Normal,SerNr,false,TSerSClass);
+  EditField(316,v,95, "Tarnija arve nr.",Normal,VESerNr,false,0);
+  EditField(550,v,95, "#Supplier# arve nr 2",Normal,InvoiceNr,false,0);
+  EditField(75,v+=vs,316+20,"Nimi",ViewOnly,VECompName,false,0);
+  EditField(550,v,95, "Versiooni nr.",Normal,VersionNr,false,0);
+  EnterSkip(PayDeal);
+//  EditField(h=216,v=vm,-40,"Name",Normal,Addr0,false,0);
+  v = v+24;
+  TileButton(1,"Tingimused");
+  TileButton(2,"Artiklid");
+  TileButton(3,"Tunnused");
+  TileButton(4,"Arve aadress");
+  TileButton(5,"Läh. aadress");
+  TileButton(6,"Meie andmed");
+  TileButton(7,"Lisainfo");
+  TileButton(8,"Tarnija andmed");
+//  CheckBox(210,v,0,"OK",OKFlag);
+  Tile(1,92,false,"1",InvDate);
+  vs = 20; h1 = 110; h2 = 300; h3 = 480;
+  EditField(h1,vm=(v=6),82,"Arve kuupäev",Normal,InvDate,false,PasteCurDate);
+  EditField(h1,v+=vs,35,"Tasumistingimus",Normal,PayDeal,false,PDSClass);//PDMSClass);
+  EditField(h1,v+=vs,82,"Laekumistähtaeg",Normal,PayDate,false,PasteCurDate);
+  EditField(h1,v+=vs,82,"Kande kp.",Normal,TransDate,false,PasteCurDate);
+  EditField(h2,v, 135,"Nende esindaja",Normal,ClientContact,false,ContactSClass);
+  EditField(h2,v=vm,135,"Hank. esindaja",Normal,OurContact,false,0);
+//  EditField(h3+50,v,50,"Salesman",Normal,SalesMan,false,UserSClass);
+  EditField(h2,v+=vs,135,"Tas.ting tekst",Normal,pdComment,false,0);
+  EditField(h2,v+=vs,135,"Ametlik seerianr.",Normal,OfficialSerNr,false,LegalInvNrSClass);
+
+  ButtonFrame(h3+65,v=vm+15,140,2,"Hetkeseis");
+  RadioButton(h3+65,v,1,0,"OK",OKStatus); 
+  RadioButton(h3+65,v+=16,2,0,"Tagasi lükatud",OKStatus); 
+  EditField(h3+65,v+=29,-40,"Tag.lükk. põhjus",Normal,RejectReason,false,0); 
+  EditField(h1,v+vs,-40,"Süsteemi teade",Normal,Footer2,false,0);//Bk, reused ts - 2018/05
+
+  EnterSkip(Math);
+  Tile(2,190,true,"2",Math);
+  EditField(65,-41,50,"Valuuta",Normal,CurncyCode,false,CurncyCodeSClass);
+  EditField(190,-41,70,"Transport",Normal,FrPrice,true,0);
+  EditField(190,-21,70,"Lisamaks",ViewOnly,TAX1Sum,true,0);
+  EditField(310,-41,80,"KM",ViewOnly ,Sum3,true,0);
+  EditField(310,-21,80,"Maks 2",ViewOnly,TAX2Sum,true,0);
+  EditField(440,-21,95,"Baas",ViewOnly,BaseSum4,true,0);
+  EditField(-133,-41,95,"Summa",ViewOnly ,Sum1,true,0);
+  EditField(-133,-21,95,"KOKKU",ViewOnly ,Sum4,true,0);
+  v = 24;
+  MatrixBegin(4,v,-50,-49,-,200);
+  MatTypedRow(stp);
+  Flip(0);
+  MatCol(t=1,32,"Hank.art.",0,VEArtCode,false,PISClass);
+  MatCol(t,94,"H.kogus",0,VEQuant,true,0);
+  EnterSkip(VEArtCode);
+  MatText(t=3,32,"Kreedit arvele",true);
+  MatCol(t,208,"",0,VEOrdRow,false,ARSClass);
+  MatCol(t,-216,"",0,VESpec,false,0);//MatText(t,-216,"",true);
+  MatText(t=4,32,"Viivis",true);
+  MatCol(t,98,"",0,VEArtCode,false,0);
+  MatCol(t,153,"",0,VEQuant,true,0);
+  MatCol(t,188,"",0,VESpec,false,0);
+  MatText(t=5,32,"Ettemaks",true);
+  MatColTL(t,122,"",0,-1,ViewOnly,0,VEArtCode,true,0); 
+  MatColTL(t,188,"",0,-1,ViewOnly,0,VEQuant,true,0);
+  MatCol(t,238,"",0,VESpec,false,0);
+  MatColTL(t,-170,"",0,-1,Normal,0,VESum,true,0); //?? TL?
+  MatCol(t,-24,"",0,VATCode,false,VATCodeSClass);
+  MatText(t=6,32,"Ettemaks nr.",true);
+  MatCol(t,170,"",0,VECUPNr,true,ARPaySClass);
+  MatCol(t,-300,"",0,VESpec,false,0);
+  MatCol(t,-170,"",0,VEPrice,true,0);// Price holds the VAT sum, Recipe holds the date of prepaym. 
+  MatCol(t,-100,"",0,VESum,true,0);
+  MatText(t=7,32,"Laen",true);
+  MatCol(t,-110,"",0,VESum,true,0);
+  MatCol(t,-30,"",0,VEVATCode,false,VATCodeSClass);
+  MatText(t=8,32,"Laenuint.",true);
+  MatCol(t,-110,"",0,VESum,true,0);
+  MatCol(t,-30,"",0,VEVATCode,false,VATCodeSClass);
+  MatText(t=9,32,"Vahesumma",true);
+  MatCol(t,100,"",0,VESpec,false,0);
+  MatCol(t,-140,"Summa",0,VESum,true,0);
+  MatText(t=10,32,"See ja kõik järgnevad read on väljatrükil varjatud",false);
+  MatText(t=11,32,"K",true);
+  MatCol(t,47,"Artikkel",0,VEArtCode,false,PISClass);
+  MatCol(t,94,"Kogus",0,VEQuant,true,0);
+  MatText(t=12,32,"Kinnipidamine",true);
+  MatCol(t,188,"",0,VESpec,false,0);
+  MatColTL(t,-170,"",0,-1,ViewOnly,0,VESum,true,0); //?? TL?
+  MatCol(t,-24,"",0,VATCode,false,VATCodeSClass);
+  MatText(t=13,32,"KK",true);
+  MatCol(t,-316,"",0,VESpec,false,0);
+  MatCol(t,-84,"Summa",0,VESum,true,0);
+  MatCol(t,-24,"",0,VEVATCode,false,VATCodeSClass);  
+  MatText(t=14,32,"S.KK",true);
+  MatCol(t,-316,"",0,VESpec,false,0);
+  MatCol(t,-84,"Summa",0,VESum,true,0);
+  MatCol(t,-24,"",0,VEVATCode,false,VATCodeSClass);  
+  MatText(t=15,32,"SULARAHA",true);
+  MatCol(t,68,"Summa",0,VESum,true,0);
+  MatCol(t,-280,"Kirj",0,VESpec,false,0);
+  MatText(t=16,32,"KrK",true);
+  MatCol(t,58,"Summa",0,VESum,true,0);
+  MatText(t=17,32,"Päis",true);
+  MatCol(t,100,"",0,VESpec,false,0);
+  // t=18
+  // t=19
+  // t=20
+  // t=21
+  // t=22
+  // t=23
+  // t=24
+  MatText(t=101,32,"KM Kokkuvõte",true);
+  MatCol(t,188,"",0,VESpec,false,0);
+  MatCol(t,-310,"",ViewOnly,VEVATPrc,true,0);
+  MatCol(t,-240,"",ViewOnly,VEPrice,true,0);
+  MatCol(t,-170,"",ViewOnly,VESum,true,0);
+  MatCol(t,-30,"",0,VATCode,false,VATCodeSClass);
+  MatText(t=102,32,"Osamakse",true);
+  MatCol(t,188,"",0,VESpec,false,0);
+  MatCol(t,-310,"",ViewOnly,VEServiceDelDate,true,0);
+  MatCol(t,-230,"",ViewOnly,VEPrice,true,0);
+  MatCol(t,-150,"",ViewOnly,VESum,true,0);
+  MatCol(t,-70,"",ViewOnly,VEVATSum,true,0);
+  Flip(1);
+  MatCol(t=1,144,"Nimetus",0,VESpec,false,0);
+  MatCol(t,-325,"Ühikuhind",0,VEPrice,true,0);
+  MatCol(t,-265,"%",0,VEvRebate,true,0);
+  MatCol(t,-230,"Summa",0,VESum,true,0);
+  MatCol(t,-150,"Kulukonto",0,CostAcc,false,AccSClass);
+  MatCol(t,-90,"KM %",0,VEVATPrc,true,0);
+  MatCol(t,-30,"KM-k",0,VATCode,false,VATCodeSClass);  
+  MatCol(t=4,-260,"",0,VEOrdRow,true,0);
+  MatCol(t,-135,"",0,VEvRebate,true,0);
+  MatCol(t,-100,"",0,VESum,true,0);
+  MatCol(t=11,144,"Nimetus",0,VESpec,false,0);
+  MatCol(t,-235,"Ühikuhind",0,VEPrice,true,0);
+  MatCol(t,-135,"%",0,VEvRebate,true,0);
+  MatCol(t,-100,"Summa",0,VESum,true,0);
+  Flip(2);
+  MatCol(t=1,144,"Nimetus",0,VESpec,false,0);
+  MatCol(t,-280,"Seerianr.",0,VESerialNr,false,SerialNrSClass);
+  MatCol(t,-180,"Hinnafaktor",0,VEPriceFactor,true,0);
+  MatCol(t,-100,"Tagatisraha",0,VERepaExVAT,true,0);
+  MatCol(t=11,144,"Nimetus",0,VESpec,false,0);
+  MatCol(t,-350,"Seerianr.",0,VESerialNr,false,SerialNrSClass);
+  MatCol(t,-250,"KM määr",0,VEVATPrc,true,0);
+  MatCol(t,-180,"Hinnafaktor",0,VEPriceFactor,true,0);
+  MatCol(t,-100,"Tagatisraha",0,VERepaExVAT,true,0);
+  Flip(3);
+  MatCol(t=1,144,"Artikkel",0,ArtCode,false,INSClass);
+  MatCol(t,-400,"Kulukonto",0,CostAcc,false,AccSClass);
+  MatCol(t,-300,"Objektid",0,Objects,false,ObjSClass);
+  MatCol(t,-160,"Kogus",0,Quant,false,0);
+  MatCol(t,-100,"KM %",0,VEVATPrc,true,0);
+  MatCol(t,-40,"H.KM-k",0,VEVATCode,true,0);
+/*  
+  Flip(5);
+  MatCol(t=1,144,"Description",0,Spec,false,0);
+  MatCol(t,-315,"Unit",0,UnitCode,false,UnitSClass);
+  MatCol(t,-260,"Unit Qty",0,UnitFactQuant,true,0);
+  MatCol(t,-200,"Width",0,UnitXval,true,0);
+  MatCol(t,-160,"Height",0,UnitYval,true,0);
+  MatCol(t,-120,"Depth",0,UnitZval,true,0);
+  MatCol(t,-80,"Unit Pr. of Unit",0,UnitFactPrice,true,0);
+  MatCol(t=11,144,"Description",0,Spec,false,0);//New Row Type..
+  MatCol(t,-315,"Unit",0,UnitCode,false,UnitSClass);
+  MatCol(t,-260,"Unit Qty",0,UnitFactQuant,true,0);
+  MatCol(t,-200,"Width",0,UnitXval,true,0);
+  MatCol(t,-160,"Height",0,UnitYval,true,0);
+  MatCol(t,-120,"Depth",0,UnitZval,true,0);
+  MatCol(t,-80,"Units Unit Price",0,UnitFactPrice,true,0);
+*/  
+  InsertRowTest;
+  DeleteRowTest;
+  EndMatrix;
+  vs = 22;
+  v = 18; VTab(-35,v,-16,v+vs,ToolFlip,1,"A");
+  v=v+ vs; VTab(-35,v,-16,v+vs,ToolFlip,2,"B");
+  v=v+ vs; VTab(-35,v,-16,v+vs,ToolFlip,3,"C");
+  Tile(3,130,false,"5",VEOrderNr); 
+  vs = 20; h = 110;
+  EditField(h,v=6,60,"Hank. tell. nr.",ViewOnly,VEOrderNr,false,0);
+  EditField(h2,v,-20,"Meie tell. nr.",Normal,OurOrdNr,false,POSClass);
+  EditField(h,v+=vs,95,"Originaalklient",ViewOnly,OrgCust,false,0);
+//  EditField(h2,v,-20,"Sorting",Normal,Sorting,false,0);
+  EditField(h2+150,v,  -20,"Viide",Normal,CalcFinRef,false,0);
+  EditField(h2,v   ,50,"Teen.tell.",ViewOnly,SVONr,false,0);
+  EditField(h,v+=vs, -20,"Kommentaar",Normal,InvComment,false,0);
+  EditField(h,v+=vs,80,"Kogus kokku",ViewOnly,VETotQty,true,0);
+  EditField(h2,v,80,"Kaal kokku",ViewOnly,VETotWeight,true,0);
+  EditField(h3,v,80,"Maht kokku",ViewOnly,VETotVolume,true,0);
+  EditField(h,v+=vs,80,"Stat. väärtus",Normal,StatVal,true,0);
+  EditField(h2,v,80,"Teenuse läh.kp.",Normal,ServiceDelDate,false,PasteCurDate);
+  EditField(h3,v,80,"Viivis",ViewOnly,IntCode,true,0);
+  EditField(h,v+=vs,80,"Pangakood",Normal,VEBankCode,true,0);
+  EditField(h2,v,80,"Panganimi",Normal,VEBank1,false,0);
+  EditField(h3,v,80,"A/a | IBAN",ViewOnly,VEBank2,true,0); //Bk //##cc
+
+  Tile(4,230,false,"6",Addr1); 
+  vs = 20; h2 = 350;
+  EditField(h=110,v=6,-20,"Nimi",Normal,Addr0,false,0);
+  EditField(h,v+=vs,-20,"Arve-",Normal,Addr1,false,0);
+  EditField(h,v+=vs, -20,"aadress",Normal,Addr2,false,0);
+  EditField(h,v+=vs, -20,"",Normal,Addr3,false,0);
+  EditField(h,v+=vs, -20,"",Normal,InvAddr3,false,0);
+  EditField(h,vm=(v+=vs), -20,"",Normal,InvAddr4,false,0);
+  v = VATZoneButtonsLabelsEST(h+4,v+=40,170,16);
+  EditField(h2,v=vm+vs, -20,"KMKR nr.",Normal,VATNr,false,0);
+  EditField(h2,v+=vs,100,"Reg. nr.",Normal,RegNr1,false,0); //##ii ts - 2018/01
+  EditField(h2,v+=vs,100,"Telefon",Normal,Phone,false,0);
+  EditField(h2,v+=vs,100,"Faks",Normal,Fax,false,0);
+  Tile(5,150,false,"7",ShipAddr0); vs = 20;
+  EditField(h=110,v=6,-20,"Lähetus-",Normal,ShipAddr0,false,0);
+  EditField(h,v+=vs, -20,"aadress",Normal,ShipAddr1,false,0);
+  EditField(h,v+=vs, -20,"",Normal,ShipAddr2,false,0);
+  EditField(h,v+=vs, -20,"",Normal,ShipAddr3,false,0);
+  EditField(h,v+=vs, -20,"",Normal,DelAddr3,false,0);
+  EditField(h,v+=vs, -20,"",Normal,DelAddr4,false,0);
+  EditField(h,v+=vs,80,"Aadress",Normal,DelAddrCode,false,DelAddrSClass);
+  EditField(h2,v,80,"Regioon",Normal,Region,false,RegionSClass); 
+  EnterSkip(InvDate);
+  Tile(6,130,false,"6",VEVATNr); 
+  vs = 20; h = 110; h2 = 300; h3 = 500;
+  EditField(h,v=6,60,"Hank. arve nr.",ViewOnly,VESerNr,false,0);
+  EditField(h2,v,80,"Hank. KMKR nr.",Normal,VEVATNr,false,0);
+  EditField(h3-30,v,80,"Hank. Reg. nr.",Normal,VERegNr1,false,0); //##ii ts - 2018/01
+  EditField(h3,v,80,"Tarnija",Normal,VECode,false,VESClass);
+  EditField(h,v+=20,60,"Kulukonto",Normal,CostAcc,false,AccSClass);
+  EditField(h2,v,80,"Meie ostuarve nr.",Normal,VISerNr,false,0);
+  EditField(h3,v,80,"Meie ostutell. nr.",Normal,OurOrdNr,false,0);
+  ButtonFrame(h,v+=40,80,2,"Hetkeseis");
+  RadioButton(h,v,1,0,"Kinnitatud",OKStatus);
+  RadioButton(h,v+=16,2,0,"Tagasi lükatud",OKStatus);
+  EditField(h2,v,-40,"Põhjus",Normal,RejectReason,false,0);
+  Tile(7,200,false,"6",Header0); 
+  vs = 20; h = 110; h2 = 300; h3 = 500;
+  EditField(h,v=6,-40,"Päis",ViewOnly,Header0,false,0);
+  EditField(h,v+=20,-40,"",ViewOnly,Header1,false,0);
+  EditField(h,v+=20,-40,"",ViewOnly,Header2,false,0);
+  EditField(h,v+=20,-40,"Jalus",ViewOnly,Footer0,false,0);
+  EditField(h,v+=20,-40,"",ViewOnly,Footer1,false,0);
+  EditField(h,v+=20,-40,"",ViewOnly,Footer2,false,0);
+  ButtonFrame(h,v+=40,100,2,"HansaWorld");
+  RadioButton(h,v,0,0,"Ära blokeeri",NotPaidFlag);
+  RadioButton(h,v+=16,1,0,"Blokeeritud",NotPaidFlag);
+  Tile(8,200,false,"8",VECompName); 
+  vs = 20; h = 110; h2 = 500;
+  EditField(h,v=6,f=300,"Nimi",ViewOnly,VECompName,false,0);
+  EditField(h2,v,100,"Telefon",ViewOnly,VEPhone,false,0);
+  EditField(h,v+=20,f,"Aadress",ViewOnly,VEAddr0,false,0);
+  EditField(h2,v,100,"Faks",ViewOnly,VEFax,false,0);
+  EditField(h,v+=20,f,"",ViewOnly,VEAddr1,false,0);
+  EditField(h2,v,100,"E-mail",ViewOnly,VEeMail,false,0);
+  EditField(h,v+=20,f,"",ViewOnly,VEAddr2,false,0);
+  EditField(h,v+=20,f,"",ViewOnly,VEAddr3,false,0);
+  SpecialMenu("Ava ostutellimus",' ',2,"OpenPOFromVEIVDsm");
+//cust - begin: ts 2018/05, eteenused - manuse päring
+  if (HasLocalization("EST")) then begin 
+    SpecialMenu("PDFi päring",' ',9,"GetEstVEEInvoicePdfDsm");
+  end;
+//cust - end
+  SpecMenuGroup("",kSpecMenuGroupTypeExtendedPlusMenu,0);
+  SpecialMenu("Ostuarve",'F',0,"VIFromVEIVDsm");
+  SpecialMenu("Kontakt",' ',1,"CUFromVEIVDsm");
+  SpecialMenu("Ostutellimusest ostuarve",' ',3,"VIFromPO_VEIVDsm");
+//cust KB 04.12.2017 tsekk.ee
+  SpecialMenu("Kulutus",'',4,"ExpFromVEIVDsm")
+//cust end
+  EndWindow;
+end;
+
+//Bk, SpecialMenu("Koosta kulutus valitud arvetest"
+window VEIVLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Tarnija e-arved",VEIVLClass,CGmlist,-);
+  SetWRect(20,80,800,291);
+  Sizeable(-1,-1,0,0);
+  SpawnClass(VEIVDClass);
+  UseView(VEIVVc);
+  FormName(PrintVEIVL);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,2,"N_r.",SerNr,false,SerNr);
+  RlColKey(71,66,"Kin",OKFlag,false,OKFlag);
+  RlColKey(100,100,"Ostuarve nr.",VISerNr,false,VISerNr);
+  RlColKey(180,180,"Arve kp.",InvDate,false,InvDate);
+  RlCol(260,260,"Tell.nr.",VEOrderNr,false);
+  RlColKey(330,340,"Tarnija",VECode,false,VECode);
+  RlColKey(410,410,"Nimi",VECompName,false,VECompName);
+  RlCol(-115,-115,"Summa",Sum4,true);
+  RlCol(-15,-15,"",CredMark,true);
+  SearchField("Otsi");
+  if (HasLimitedAccess) and (IsBooks==false) then begin //##cc
+  BrowseSubsetButton(-40,-15);
+  end;
+//  SpecialMenu("Koosta ostuarve",'F',0,"VIFromVEIVLsm");
+  SpecialMenu("Impordi Finvoice",' ',1,"ImportFinvoiceVEIVLsm");
+  //cust KB 04.12.2017 tsekk.ee
+  if (GuiType != kGuiCocoa) then begin
+    SpecialMenu("Koosta kulutus mitmest arvetest",' ',2,"OpenVEIVLSelWindowsm");
+  end else begin
+    SpecialMenu("Koosta kulutus valitud arvetest",' ',2,"ExpFromVEIVLsm"); 
+  end;
+  //cust end 
+  EndWindow;
+end;
+
+//Bk, KB tsekk.ee 09.01.2018 completely new window in Hansa
+window VEIVSClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Tarnija e-arved",VEIVSClass,CGslist,-);
+  SetWRect(20,80,800,291);
+  Sizeable(-1,-1,0,0);
+  UseView(VEIVVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,2,"N_r.",SerNr,false,SerNr);
+  RlColKey(71,66,"Kin",OKFlag,false,OKFlag);
+  RlColKey(100,100,"Ostuarve nr.",VISerNr,false,VISerNr);
+  RlColKey(180,180,"Arve kp.",InvDate,false,InvDate);
+  RlCol(260,260,"Tell.nr.",VEOrderNr,false);
+  RlColKey(330,340,"Tarnija",VECode,false,VECode);
+  RlColKey(410,410,"Nimi",VECompName,false,VECompName);
+  RlCol(-115,-115,"Summa",Sum4,true);
+  RlCol(-15,-15,"",CredMark,true);
+  SearchField("Otsi");
+  if (HasLimitedAccess) and (IsBooks==false) then begin //##cc
+  BrowseSubsetButton(-40,-15);
+  end;
+  EndWindow;
+end;
+//cust end
+
+//Bk, lots of changes
+window EInvoiceTClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h1,h2,h3,l,v,v2,vm,vs;
+  record EInvoiceBlock EIb;
+  string 255 tstr;
+  Integer tilenr;
+
+  BlockLoad(EIb);
+  tstr = "E-teenuste seadistused";
+  if (IsStandardProduct) then begin
+    tstr = "E-teenuste seadistused"; 
+  end;
+  WindowBegin(tstr,EInvoiceTClass,CGSbl,-);
+  SetBlid(EInvoiceBlock);
+  ContactBackground;
+  v = 6; h = 80; h1 = 70; h2 = 290; vs=20;
+  if (IsEnterprise or IsBooks) then begin 
+    SetWRect(64,80,600,480);
+    DynamicWindow;
+  Tile(0,30,false,"",Header0);
+  tilenr = 1;
+//  TileButton(tilenr,"Aktiveerimine"); tilenr = tilenr + 1; 
+  TileButton(tilenr,"E-arve seadistused"); tilenr = tilenr + 1; 
+    if (HasLocalization("ARG,EST,HRV,LTU,MEX")) then begin
+    TileButton(tilenr,"E-arve teenused"); tilenr = tilenr + 1;
+  end;
+    if (HasLocalization("SVN")) then begin
+      TileButton(tilenr,"Fiskaalarved"); tilenr = tilenr + 1; 
+    end;
+  if (HasEInvoicing) then begin
+    //TileButton(tilenr,"E-tasumised"); tilenr = tilenr + 1; 
+    if (HasLocalization("EST") == false) then begin 
+    TileButton(tilenr,"Teenuse hetkeseis"); tilenr = tilenr + 1;
+    end; 
+  end;
+  //cust KB 06.06.2017
+  if (HasLocalization("EST")) then begin
+    TileButton(tilenr,"Inforegister"); tilenr = tilenr + 1;
+    TileButton(tilenr,"Muud teenused"); tilenr = tilenr + 1; 
+  end;
+  //cust end
+  tilenr = 1;
+/*//Bk
+  Tile(tilenr,320,false,tilenr,StopReason);  tilenr = tilenr + 1;
+  ButtonFrame(h,v=20,390,4,"Vaikimisi seadistused elektroonsele andmevahetusele");
+  RadioButton(h,v,0,0,"Ei saada E-Arveid",DefaultEBehave);
+  RadioButton(h,v+=16,1,0,"Saada kõik, mida saab saata; normaalne printimine",DefaultEBehave);
+  RadioButton(h,v+=16,2,0,"Saada kõik, mida saab saata; saadetud arvete väljatrükil Koopia",DefaultEBehave);
+  RadioButton(h,v+=16,3,0,"Saada kõik",DefaultEBehave);
+  ButtonFrame(h,vm=(v+=60),180,2,"E-Arvete saatmine");
+  RadioButton(h,v,0,0,"Vaikimisi",OutEInvoices);
+  RadioButton(h,v+=16,1,0,"Aktiveeritud",OutEInvoices);
+  if (HasEInvoicing) then begin
+  ButtonFrame(h,v+=40,180,2,"E-Arvete vastuvõtmine");
+  RadioButton(h,v,0,0,"Vaikimisi",RcvEInvoices);
+  RadioButton(h,v+=16,1,0,"Aktiveeritud",RcvEInvoices);
+  ButtonFrame(h,v+=40,180,2,"Saada elektooniline KM-deklaratsioon");
+  RadioButton(h,v,0,0,"Vaikimisi",OutEVat);
+  RadioButton(h,v+=16,1,0,"Aktiveeritud",OutEVat);
+  ButtonFrame(h2,v=vm,180,2,"E-Tasumiste saatmine");
+  RadioButton(h2,v,0,0,"Vaikimisi",OutEPayments);
+  RadioButton(h2,v+=16,1,0,"Aktiveeritud",OutEPayments);
+  ButtonFrame(h2,v+=40,180,2,"Otsekorraldusnõuete saatmine");
+  RadioButton(h2,v,0,0,"Vaikimisi",OutEDirDebt);
+  RadioButton(h2,v+=16,1,0,"Aktiveeritud",OutEDirDebt);
+  end;
+  CheckBox(h,v+=80,0,"Elektroonne andmevahetus peatatud",StopEInvoices);
+  EditField(h,v+=20, -20,"Põhjus",Normal,StopReason,false,0);
+*/
+  Tile(tilenr,320,false,tilenr,Header0);  tilenr = tilenr + 1;
+/* //Bk
+    EditField(h,v=10, 50,"Päis",Normal,Header0,false,LTxtSClass);
+//  EditField(h,v+=20, -40,"",Normal,Header1,false,0);
+  EditField(h,v+=20, 50,"Jalus",Normal,Footer0,false,LTxtSClass);
+  EditField(h,v+=20, 50,"Faktooring",Normal,Footer2,false,LTxtSClass);
+  EditField(h,vm=(v+=20),80,"Print. blankett",Normal,PrintLayout,false,0);
+    if (HasLocalization("LVA")) then begin
+      EditField(h,vm=(v+=20),80,"Supp. Inv. Partner",Normal,SuppInvoicePartner,false,0); //!!TRANSLATE
+    end;
+    if (HasLocalization("SVN")) then begin
+      EditField(h,v+=20,150,"Certificate",Normal,Certificate,false,0);
+      EditField(h,v+=20,150,"Private Key",Normal,PrivateKey,false,0);
+      EditFieldTL(h,vm=(v+=20),150,"Passphrase",M4Star,Normal,200,Passphrase,false,0);
+    end;
+*/
+    CheckBox(h,v=6,0,"Testi E-arveid (ainult testandmebaasis)",TestFlag);
+/* //Bk
+    CheckBox(180,v+=16,0,"Kasuta OCR viiteid",UseOCRReference);
+    CheckBox(180,v+=16,0,"Saada sularahaarveid e-arvetena",CashNotes);
+*/
+    CheckBox(h,v+=16,0,"Jäta vahele artiklikoodita read E-arvel",NoLineswoItemonEInv);
+    if (HasLocalization("FIN,NOR,SWE")==false) then begin
+      CheckBox(h,v+=16,0,"E-arved PDF failidega",AttachPDFtoElectronicInvoice);
+    end;
+    if (HasLocalization("FIN,NOR,SWE")) then begin
+      CheckBox(180,v+=16,0,"E-arve finvoice arvega kaasa",AttachFInvoicetoEInv);
+      vm = vm + 16;
+    end;
+  ButtonFrame(h,v=v+50,390,4,"Vastuvõtu eelistus (kui kontakti kaardil on määratud 'vaikimisi')");
+    if (IsBooks) then begin 
+    RadioButton(h,v,kEInvoiceRcvPreferenceDefault,0,"Eelistus teenuse portaalist",RcvInvoicePref);//commented back 
+    v = v + 16; 
+    end; 
+    RadioButton(h,v,kEInvoiceRcvPreferenceElectronic,0,"E-arve portaali",RcvInvoicePref);
+    if (HasLocalization("LAT")) then begin
+      RadioButton(h,v+=16,kEInvoiceRcvPreferenceEMail,0,"E-mail",RcvInvoicePref); 
+      RadioButton(h,v+=16,kEInvoiceRcvPreferencePaper,0,"Paberarve",RcvInvoicePref);
+    end else begin
+    if (HasLocalization("FIN,NOR,SWE")) then begin
+      RadioButton(h,v+=16,kEInvoiceRcvPreferenceEMail,0,"E-mail",RcvInvoicePref);
+    end else begin
+  RadioButton(h,v+=16,kEInvoiceRcvPreferencePaper,0,"Paberarve",RcvInvoicePref);
+      end;
+    end;
+//Bk start   
+    if (HasLocalization("EST")) then begin 
+      RadioButton(h,v+=16,kEInvoiceRcvPreferenceEMail,0,"E-mail",RcvInvoicePref); 
+      RadioButton(h,v+=16,kEInvoiceRcvPreferenceInternetBank,0,"Interneti pank",RcvInvoicePref);  
+    end; 
+//Bk end   
+  RadioButton(h,v+=16,kEInvoiceRcvPreferenceNone,0,"Ei saada e-arveid",RcvInvoicePref); 
+    EndFrame;
+    if (HasLocalization("SWE")) then begin
+  ButtonFrame(h,v+=40,180,3,"Registreerimine partneri juures");
+  RadioButton(h,v,0,0,"Ei ole registreeritud",RegAtPartner);
+  RadioButton(h,v+=16,1,0,"Registreerimisel",RegAtPartner);
+  RadioButton(h,v+=16,2,0,"Registreeritud",RegAtPartner);
+    end;
+  if (HasEInvoicing) then begin
+      if (HasLocalization("SVN")) then begin
+        ButtonFrame(h,v+=40,180,2,"Version"); //!!TRANSLATE
+        RadioButton(h,v,0,0,"1.5",EInvoiceVersion); //!!TRANSLATE
+        RadioButton(h,v+=16,1,0,"1.6",EInvoiceVersion); //!!TRANSLATE
+        CheckBox(h,v+=24,0,"Portaali ootel staatuses",SaveXMLFlag);
+      end else begin
+  if (HasLocalization("EST")) then begin 
+    ButtonFrame(h,v+=50,180,1,"E-arve saatmine"); 
+    CheckBox(h,v,0,"Portaali ootel staatuses",ExportIVSendPlainINasStockIN); //Bk, reuse 
+  end; 
+  if (HasLocalization("EST")) then begin 
+    ButtonFrame(h+200,v,190,1,"E-arve vastuvõtmine"); 
+    CheckBox(h+200,v,0,"Ainult kinnitatud",DblAcceptEPay); //Bk, reuse 
+  end; 
+  ButtonFrame(h,v+=50,390,2,"Tarnija E-arve ridade ülekanne ostuarvele"); 
+  RadioButton(h,v,0,0,"Ühe summeeritud reana tarnija kulukontoga",VEIVRowTransfer); 
+  RadioButton(h,v+=16,1,0,"Iga rida eraldi",VEIVRowTransfer); 
+    CheckBox(h,v+=26,0,"Ära nõua KM-koodi tarnija e-arve ridadel",NoVATOnVEIVVcRow); 
+  if (HasLocalization("EST")) then begin 
+    CheckBox(h,v+=16,0,"Näita ostuarvel tarnija e-arve rea kommentaare",VEIVRowComment); 
+    CheckBox(h,v+=16,0,"Tarnija e-arve vastuvõtmine kõikide manustega",IncAllAttach); 
+    CheckBox(h,v+=16,0,"Tarnija e-arve automaatne kinnitamine",AutoVIfromVEIV); 
+    EditField(h+32,v+=32,-40,"Süsteemi teade",Normal,ServiceMessage,false,0);
+    CheckBox(h,v+=vs,0,"Elektroonne andmevahetus peatatud",StopEInvoices); 
+  end;
+      end;
+  end;
+/* //Bk
+    if (HasLocalization("EST")) then begin
+    ButtonFrame(h2,v=vm+50,180,1,"E-arved saata");
+//     ButtonFrame(h2,v=vm+50,180,2,"Electronic Invoices");
+   RadioButton(h2,v,0,0,"Kõigile klientidele",WhomEInvoices);
+//      RadioButton(h2,v+=16,1,0,"Only for Specified Customers",WhomEInvoices); 
+  //RadioButton(h2,v+=16,1,0,"Ainult määratud klientidele",WhomEInvoices);
+  ButtonFrame(h2,v+=40,180,2,"Paberarve postitus");
+    end else begin
+      ButtonFrame(h2,v=vm+50,180,2,"Paberarve postitus");
+    end;
+  RadioButton(h2,v,0,0,"Kiir",Postage);
+  RadioButton(h2,v+=16,1,0,"Tava",Postage);
+*/
+/*
+  Tile(2,150,false,"2",DblAcceptMinSumEPay);  tilenr = tilenr + 1;
+  v = 6;
+no support
+  ButtonFrame(h,v+=40,350,3,"Dbl. Accepting of Payments");
+  RadioButton(h,v,0,0,"Not Required",DblAcceptEPay);
+  RadioButton(h,v+=16,1,0,"Required for all Payments",DblAcceptEPay);
+  RadioButton(h,v+=16,2,0,"Required for Payments above: ",DblAcceptEPay);
+  EditField(h2+50,v,80,"",Normal,DblAcceptMinSumEPay,false,0);
+*/
+  if (HasLocalization("ARG")) then begin
+    Tile(tilenr,300,false,tilenr,Certificate);  tilenr = tilenr + 1;
+    CheckBox(h=150,v=10,0,"Saada AFIP arved elektrooniliselt",OutArgEInvoices);
+    CheckBox(h,v+=16,0,"Anna ametl. seerianumber automaatselt",AssignOfficialSerNr);
+  EditField(h,v+=vs,150,"Sertifikaat",Normal,Certificate,false,0);
+  EditField(h,v+=vs,150,"Võti",Normal,PrivateKey,false,0);
+  EditField(h,v+=vs,150,"Salasõna",Normal,Passphrase,false,0);
+  EditField(h,v+=vs,50,"GMT nihe",Normal,GMTOffset,true,0);
+  EditField(h,v+=vs,150,"CAEA",ViewOnly,CAEA,false,0);
+  HalPushButton(h+230,v,h+230+90,v+20,"EInvoiceTClassRequestCAEA","Küsi CAEA");
+  EditField(h,v+=vs,70,"CAEA algus",ViewOnly,CAEAStartDate,false,0);
+  EditField(h+150,v,70,"CAEA lõpp",ViewOnly,CAEAExpiryDate,false,0);  
+  EditField(h,v+=vs,150,"Viimane CAEA",ViewOnly,LastFortnightCAEA,false,0);
+  EditField(h,v+=vs,70,"Viimase CAEA algus",ViewOnly,LastFortnightCAEAStartDate,false,0);
+  EditField(h+150,v,70,"CAEA lõpukp.",ViewOnly,LastFortnightCAEAExpiryDate,false,0);  
+  EditField(h,v+=vs,150,"Eelmine CAEA",ViewOnly,ScdLastFortnightCAEA,false,0);
+  EditField(h,v+=vs,70,"Eelmise CAEA algus",ViewOnly,ScdLastFortnightCAEAStartDate,false,0);
+  EditField(h+150,v,70,"CAEA lõpukp.",ViewOnly,ScdLastFortnightCAEAExpiryDate,false,0);  
+    EditField(h,v+=vs,70,"Tühjenda sisenemise pilet",Normal,ClearLoginTicketTime,false,PasteCurTime);
+  CheckBox(h,v+=vs,0,"Luba ekspordi arvete saatmist",SendExportIV);
+  CheckBox(h,v+=16,0,"Isearveldus",ArgSelfBilling);
+    CheckBox(h,v+=16,0,"Saada tavalised artiklid laoartiklitena eksportarvetel",ExportIVSendPlainINasStockIN);
+    CheckBox(h,v+=16,0,"Kohalik arve baasis 1",DomesticInvoiceinBase1); 
+  end;
+  if (HasLocalization("MEX")) then begin
+    Tile(tilenr,250,false,tilenr,Certificate);  tilenr = tilenr + 1;
+  EditField(h=110,v=20,-20,"Sertifikaadi nr.",Normal,CertificateNr,false,0);
+  EditField(h,v+=vs,-20,"Sertifikaat",Normal,Certificate,false,0); 
+  EditField(h,v+=vs,-20,"Võti",Normal,PrivateKey,false,0);
+  EditField(h,v+=vs,-20,"Paroolifraas",Normal,Passphrase,false,0);
+  EditField(h,v+=vs,-20,"E-arvete säilitamine",Normal,EInvoiceStoragePath,false,0);
+    ButtonFrame(h,v+=45,100,3,"E-arve tüüp");
+    RadioButton(h,v,0,0,"CFDI",MexEInvType);
+    RadioButton(h,v+=16,1,0,"CFD",MexEInvType);
+    RadioButton(h,v+=16,2,0,"EDX",MexEInvType); 
+  end;
+  if (HasLocalization("HRV")) then begin
+      Tile(tilenr,310,false,tilenr,-);  tilenr = tilenr + 1;
+    EditField(h=110,v=20,-20,"Sertifikaat",Normal,Certificate,false,0);
+    EditField(h,v+=vs,-20,"Võti",Normal,PrivateKey,false,0);
+    EditFieldTL(h,v+=vs,-20,"Salasõna",M4Star,Normal,200,Passphrase,false,0);
+    EditField(h,v+=vs,-160,"(Live) Host",Normal,LiveHostName,false,0);
+    EditField(-100,v,-20,"Port",Normal,LivePort,false,0);
+    EditField(h,v+=vs,-160,"Teekond",Normal,LivePath,false,0);
+    EditField(h,v+=vs,-160,"(Test) Host",Normal,TestHostName,false,0);
+    EditField(-100,v,-20,"Port",Normal,TestPort,false,0);
+    EditField(h,v+=vs,-160,"Teekond",Normal,TestPath,false,0);
+    CheckBox(h,v+=vs,0,"Ühendu testserveriga",TestFlag);
+    CheckBox(h,v+=vs,0,"Salvesta XML saatmise asemel",SaveXMLFlag);
+      if (HasLocalization("HRV")) then begin
+    EditField(h=200,v+=vs,100,"Vaikimisi XML skeem (#S/L# arved)",Normal,IVVcDefaultXML,false,XMLExportSClass);
+    EditField(h=200,v+=vs,100,"Vaikimisi XML skeem (POS arved)",Normal,IVCashVcDefaultXML,false,XMLExportSClass);
+    EditField(h=200,v+=vs,100,"Vaikimisi XML skeem (Rest. tell.)",Normal,RestAccVcDefaultXML,false,XMLExportSClass);
+      end;
+    end;
+    if (HasLocalization("SVN")) then begin
+      Tile(tilenr,310,false,tilenr,-);  tilenr = tilenr + 1;
+      EditField(h=110,v=20,-20,"Sertifikaat",Normal,FiscInvCertificate,false,0);
+      EditField(h,v+=vs,-20,"Võti",Normal,FiscInvPrivateKey,false,0);
+      EditFieldTL(h,v+=vs,-20,"Salasõna",M4Star,Normal,200,FiscInvPassphrase,false,0); 
+      EditField(h,v+=vs,-160,"(Live) Host",Normal,FiscInvLiveHostName,false,0); 
+      EditField(-100,v,-20,"Port",Normal,FiscInvLivePort,false,0);
+      EditField(h,v+=vs,-160,"Teekond",Normal,FiscInvLivePath,false,0);
+      EditField(h,v+=vs,-160,"(Test) Host",Normal,FiscInvTestHostName,false,0); 
+      EditField(-100,v,-20,"Port",Normal,FiscInvTestPort,false,0); 
+      EditField(h,v+=vs,-160,"Teekond",Normal,FiscInvTestPath,false,0); 
+      CheckBox(h,v+=vs,0,"Ühenda testserveriga",FiscInvTestFlag); 
+      CheckBox(h,v+=vs,0,"Salvesta XML",FiscInvSaveXMLFlag); 
+  end;
+    if (HasLocalization("EST,LTU")) then begin
+    Tile(tilenr,310,false,tilenr,CntOutEstEInvoices);  tilenr = tilenr + 1;
+    h1 = 70; h2 = 295; h3 = 400; l = 55;
+    ButtonFrame(h1-10,v=26,413,5,"E-arvete saatmine");
+    CheckBox(h1,v,0,"Teenus aktiveeritud",OutEstEInvoices);
+    EditField(h3,v,l,"Päringus saadetavate e-arvete arv",Normal,CntOutEstEInvoices,false,0);
+    CheckBox(h1,v+=vs,0,"Peata ajutiselt teenus",StopOutEstEInvoices);
+    EditField(h3-90,v+=vs,l,"Viimase päringu kuupäev",ViewOnly,LastOutEstEInvoicesDate,false,0);
+    EditField(h3,v,l,"kell",ViewOnly,LastOutEstEInvoicesTime,false,0);
+    EndFrame;
+    ButtonFrame(h1-10,v+=49,413,2,"E-arvete staatuse päring");
+    CheckBox(h1,v,0,"Peata ajutiselt teenus",StopOutEstEInvStatus);
+    EditField(h3-90,v+=vs,l,"Viimase päringu kuupäev",ViewOnly,LastOutEstEInvStatusDate,false,0);
+    EditField(h3,v,l,"kell",ViewOnly,LastOutEstEInvStatusTime,false,0);
+    EndFrame;
+    ButtonFrame(h1-10,v+=49,413,5,"E-arvete vastuvõtmine");
+    CheckBox(h1,v,0,"Teenus aktiveeritud",InIVEstEInvoices);
+    CheckBox(h1,v+=vs,0,"Peata ajutiselt teenus",StopInIVEstEInvoices);
+    CheckBox(h1,v+=vs,0,"E-arvete vastuvõtmine ilma pdf failideta",StopInIVEstEInvPdf);
+    EditField(h3,v+=vs,l,"E-arvete pdf vastuvõtmine, kirjete arv (1 - 10)",Normal,CntInIVEstEInvPdf,true,0);
+    EditField(h3,v+=vs,l,"Viimane pdf päring (Müügi e-arve)",Normal,LastInIVEstEInvSerial,false,0);
+    EditField(h3-90,v+=vs,l,"Viimase päringu kuupäev",ViewOnly,LastInIVEstDate,false,0);
+    EditField(h3,v,l,"kell",ViewOnly,LastInIVEstTime,false,0);
+    EditField(h3-90,v+=vs,l,"Viimane sissetulnud e-arve",Normal,LastInIVEstEInvoicesDate,false,0);
+    EditField(h3,v,l,"kell",Normal,LastInIVEstEInvoicesTime,false,0);
+    EndFrame;
+    ButtonFrame(h1-10,v+=49,413,5,"Tarnija e-arvete vastuvõtmine");
+    CheckBox(h1,v,0,"Teenus aktiveeritud",InEstEInvoices);
+    CheckBox(h1,v+=vs,0,"Peata ajutiselt teenus",StopInEstEInvoices);
+    CheckBox(h1,v+=vs,0,"E-arvete vastuvõtmine ilma pdf failideta",StopInEstEInvPdf);
+    EditField(h3,v+=vs,l,"E-arvete pdf vastuvõtmine, kirjete arv (1 - 10)",Normal,CntInEstEInvPdf,true,0);
+    EditField(h3,v+=vs,l,"Viimane pdf päring (Tarnija e-arve)",Normal,LastInEstEInvStatusSerial,false,0);
+    EditField(h3-90,v+=vs,l,"Viimase päringu kuupäev",ViewOnly,LastInEstDate,false,0);
+    EditField(h3,v,l,"kell",ViewOnly,LastInEstTime,false,0);
+    EditField(h3-90,v+=vs,l,"Viimane sissetulnud hankija e-arve",Normal,LastInEstEInvoicesDate,false,0);
+    EditField(h3,v,l,"kell",Normal,LastInEstEInvoicesTime,false,0);
+    EndFrame;
+    CheckBox(h1,v+=26,0,"Aktiveeri “debug” reziim",DebugFlag); 
+    EditField(h1+30,v+=32,-40,"E-arve konto",Normal,PrivateKey,false,0);
+    EditField(h1+30,v+=vs,-40,"Süsteemi teade",Normal,ServiceMessage,false,0);
+    v = v + 2 * vs;
+    HalPushButton(300,v   ,430,v+20,"OpenRegWindowEInv","Aktiveeri / Muuda");
+  end;
+  if (HasEInvoicing) then begin
+/* //Bk
+    Tile(tilenr,250,false,tilenr,EPayCertificate);  tilenr = tilenr + 1;
+    EditField(h=120,v=20,-20,"Sertifikaat",Normal,EPayCertificate,false,0);
+  EditField(h,v+=vs,-20,"Salajane võti",Normal,EPayPrivateKey,false,0);
+  EditField(h,v+=vs,-20,"Salasõna",Normal,EPayPassphrase,false,0);
+  EditField(h,v+=vs,-20,"Vastuvõtja",Normal,EPayRecipient,false,0);
+  EditField(h,v+=vs,-20,"Vastuvõtja sertifikaat",Normal,EPayRecipientCertificate,false,0);
+  EditField(h,v+=vs,-20,"Allkirjastaja roll",Normal,EPaySignerRole,false,0);
+  EditField(h,v+=vs,-20,"Kliendi sertifikaat",Normal,EPayRequestCertificate,false,0);
+  EditField(h,v+=vs,-20,"Kliendi salajane võti",Normal,EPayRequestPrivateKey,false,0);
+*/
+  if (HasLocalization("EST") == false) then begin 
+    Tile(tilenr,250,false,tilenr,-);  tilenr = tilenr + 1;
+  v = 6;
+  if (TaskExists("SendEInvoice")) then begin
+    tstr = "Käivitatud";
+  end else begin
+    tstr = "Peatatud";
+  end;
+  StaticText(30,v2=25,tstr,false);
+  HalPushButton(h+=100,v,h+200,v+20,"RestartSendEInvoice","Saada e-arved");
+  if (TaskExists("ReceiveEInvoice")) then begin
+    tstr = "Käivitatud";
+  end else begin
+    tstr = "Peatatud";
+  end;
+  StaticText(30,v2+=25,tstr,false);
+  HalPushButton(h,v+=25,h+200,v+20,"RestartReceiveEInvoice","Võta vastu e-arved"); 
+  if (TaskExists("SendEPayment")) then begin 
+    tstr = "Käivitatud";
+  end else begin
+    tstr = "Peatatud";
+  end;
+  StaticText(30,v2+=25,tstr,false);
+  HalPushButton(h,v+=25,h+200,v+20,"RestartSendEPayment","Saada e-tasumised"); 
+  if (TaskExists("SendEDirectDebit")) then begin 
+    tstr = "Käivitatud";
+  end else begin
+    tstr = "Peatatud"; 
+  end;
+  StaticText(30,v2+=25,tstr,false);
+  HalPushButton(h,v+=25,h+200,v+20,"RestartSendEDirectDebit","Saada otsekorraldus");
+  if (TaskExists("GetEVATDeclarationStatuses")) then begin
+    tstr = "Käivitatud";
+  end else begin
+    tstr = "Peatatud";
+  end;
+  StaticText(30,v2+=25,tstr,false);
+  HalPushButton(h,v+=25,h+200,v+20,"RestartGetEVATDeclarationStatuses","Saada elektrooniline KM deklaratsioon");
+end;
+ end; 
+  //cust KB 06.06.2017
+  if (HasLocalization("EST")) then begin
+    Tile(tilenr,320,false,tilenr,-);  tilenr = tilenr + 1;
+    v = 0; h3 = 390;
+    ButtonFrame(h1-10,v+20,400,2,"Krediidiskoor");
+    CheckBox(h1,v+=vs,0,"Teenus aktiveeritud",CreditScoreServiceFlag);
+    EditField(h3,v,l,"Viimase päringu kuupäev",ViewOnly,CreditScoreStatusDate,false,0);
+    EditField(h3,v+=vs,l,"Viimase päringu aeg",ViewOnly,CreditScoreStatusTime,false,0);
+    EndFrame;
+    v = v + vs + 9;
+    ButtonFrame(h1-10,v+20,400,2,"Ettevõtte andmed");
+    CheckBox(h1,v+=vs,0,"Teenus aktiveeritud",CustomerDataServiceFlag);
+    EditField(h3,v,l,"Viimase päringu kuupäev",ViewOnly,CustomerDataStatusDate,false,0);
+    EditField(h3,v+=vs,l,"Viimase päringu aeg",ViewOnly,CustomerDataStatusTime,false,0);
+    EndFrame;
+    v = v + vs + 9;
+    ButtonFrame(h1-10,v+20,400,2,"Veebilingid");
+    CheckBox(h1,v+=vs,0,"Teenus aktiveeritud",WebLinkServiceFlag);
+    EditField(h3,v,l,"Viimase päringu kuupäev",ViewOnly,WebLinkStatusDate,false,0);
+    EditField(h3,v+=vs,l,"Viimase päringu aeg",ViewOnly,WebLinkStatusTime,false,0);
+    EndFrame;
+    v = v + vs + 9;
+    ButtonFrame(h1-10,v+20,400,2,"Võlahaldus");
+    CheckBox(h1,v+=vs,0,"Teenus aktiveeritud",DebtsServiceFlag);
+    EditField(h3,v,l,"Viimase päringu kuupäev",ViewOnly,DebtsStatusDate,false,0);
+    EditField(h3,v+=vs,l,"Viimase päringu aeg",ViewOnly,DebtsStatusTime,false,0);
+    EndFrame;
+    v = v + vs * 3;
+    h2 = 150;
+    StaticText(h1-10,v,"Automaatsete toimingute ajastamine",false);
+    HalPushButton(300,v-15,430,v+20,"ManageTimedEventsm","Ajasta / Peata");
+    v = v + vs;
+    EditField(h+30,v+=20, -20,"Süsteemi teade",Normal,ServiceMessage,false,0);
+    v = v + 2 * vs;
+    HalPushButton(300,v   ,430,v+20,"OpenTermsWindowIR","Aktiveeri / Muuda");
+  end;
+  //cust end
+//Bk begin: TS 2017/09
+    Tile(tilenr,310,false,tilenr,-);  tilenr = tilenr + 1; 
+    h1 = 70; h2 = 295; h3 = 400; l = 70;
+    CheckBox(h1,v=26,0,"Pensioni liitumispäring",Service4Flag);
+    if (EIb.Service4Flag!=1) then begin
+      HalPushButton(300,v,430,v+20,"SendActivationRequestEInv4","Aktiveeri");
+    end else begin
+      HalPushButton(300,v,430,v+20,"StopServiceRequestEInv4","Deaktiveeri");
+    end;
+    CheckBox(h1,v+=32,0,"Äriregistri päring",Service5Flag);
+    if (EIb.Service5Flag!=1) then begin
+      HalPushButton(300,v,430,v+20,"SendActivationRequestEInv5","Aktiveeri");
+    end else begin
+      HalPushButton(300,v,430,v+20,"StopServiceRequestEInv5","Deaktiveeri");
+    end;
+    CheckBox(h1,v+=32,0,"Valuutakursside päring",Service6Flag);
+    if (EIb.Service6Flag!=1) then begin
+      HalPushButton(300,v,430,v+20,"SendActivationRequestEInv6","Aktiveeri");
+    end else begin
+      HalPushButton(300,v,430,v+20,"StopServiceRequestEInv6","Deaktiveeri");
+    end;
+    CheckBox(h1,v+=32,0,"Mailbow",Service11Flag);
+    if (EIb.Service11Flag!=1) then begin
+      HalPushButton(300,v,430,v+20,"SendActivationRequestEInv11","Aktiveeri");
+    end else begin
+      HalPushButton(300,v,430,v+20,"StopServiceRequestEInv11","Deaktiveeri");
+    end;
+
+    //cust KB 15.03.2018 tsekk.ee
+    CheckBox(h1,v+=32,0,"Tsekk.ee",TsekkActivFlag);
+    if (EIb.TsekkActivFlag != 1) then begin
+      HalPushButton(300,v,430,v+20,"OpenTermsWindowTsekk","Aktiveeri");
+    end else begin
+      HalPushButton(300,v,430,v+20,"OpenDeActivTsekk","Deaktiveeri");
+      HalPushButton(450,v,500,v+20,"SendLogInReqTsekk","Sisene");
+    end;
+    //cust end
+
+    EditField(h1+30,v+=52,-40,"Süsteemi teade",Normal,ServiceMessage,false,0);
+//Bk end
+/* //Bk
+ if (HasLocalization("EST")) then begin
+    SpecialMenu("Aktiveeri e-teenus",' ',0,"EstEInvoiceRegisterTsm");
+    SpecialMenu("Sulge e-teenus",' ',0,"EstEInvoiceCloseTsm");
+  end else begin
+    SpecialMenu("Registreeri E-arved",' ',0,"EInvoiceRegisterTsm");
+  end;
+*/
+    if (HasLocalization("SWE")) then begin 
+  SpecialMenu("Registreeri E-arved",' ',0,"EInvoiceRegisterTsm");
+  end;
+  if (HasLocalization("ARG")) then begin
+    SpecialMenu("Tühjenda sisenemise pileti aeg ja kuupäev",' ',0,"EInvoiceClearLoginTicketTsm");
+    SpecialMenu("Test Communication with AFIP E-inv. Server",' ',0,"EInvoiceTestCommunicationTsm");
+  end;
+  end else begin
+    if (HasLocalization("ARG,MEX")) then begin
+      SetWRect(64,80,550,480);
+      Tile(0,30,false,"",Header0);
+      tilenr = 1;
+     TileButton(tilenr,"Activation"); tilenr = tilenr + 1;
+      TileButton(tilenr,"E-Invoices Misc"); tilenr = tilenr + 1;
+      tilenr = 1;
+      Tile(tilenr,300,false,tilenr,-);  tilenr = tilenr + 1;
+    end else begin
+     SetWRect(64,80,420,480);
+    end;
+    if (HasFiscalPrinter and HasLocalization("SVN")) then begin
+      EditField(h=120,vm=(v=6),-20,"Sertifikaat",Normal,FiscInvCertificate,false,0);
+      EditField(h,v+=vs,-20,"Privaatvõti",Normal,FiscInvPrivateKey,false,0); 
+      EditFieldTL(h,v+=vs,-20,"Passphrase",M4Star,Normal,200,FiscInvPassphrase,false,0);
+      EditField(h,v+=vs,-160,"(Live) Host",Normal,FiscInvLiveHostName,false,0); 
+      EditField(-100,v,-20,"Port",Normal,FiscInvLivePort,false,0); 
+      EditField(h,v+=vs,-160,"Path",Normal,FiscInvLivePath,false,0); 
+      EditField(h,v+=vs,-160,"(Test) Host",Normal,FiscInvTestHostName,false,0);
+      EditField(-100,v,-20,"Port",Normal,FiscInvTestPort,false,0); 
+      EditField(h,v+=vs,-160,"Path",Normal,FiscInvTestPath,false,0);
+      CheckBox(h,v+=vs,0,"Connect to Test server",FiscInvTestFlag); 
+      CheckBox(h,v+=vs,0,"E-arved saata",FiscInvSaveXMLFlag);
+    end;
+    if (HasLocalization("ARG,FIN,NOR,SWE")) then begin
+    ButtonFrame(h=120,vm=(v=25),180,2,"");
+    RadioButton(h,v,0,0,"Mitte aktiivne",OutEInvoices); 
+    RadioButton(h,v+=16,1,0,"Aktiivne",OutEInvoices); 
+    ButtonFrame(h,v+=40,180,4,"Vastuvõtmise eelistus"); 
+    RadioButton(h,v,kEInvoiceRcvPreferenceDefault,0,"E-arved saata",RcvInvoicePref);
+    RadioButton(h,v+=16,kEInvoiceRcvPreferenceElectronic,0,"",RcvInvoicePref);
+      if (HasLocalization("FIN,NOR,SWE")==false) then begin
+      RadioButton(h,v+=16,kEInvoiceRcvPreferencePaper,0,"Paberarved",RcvInvoicePref); 
+    end;
+    RadioButton(h,v+=16,kEInvoiceRcvPreferenceNone,0,"Ei võta vastu",RcvInvoicePref); 
+    EndFrame;
+      if (HasLocalization("FIN,NOR,SWE")==false) then begin
+        CheckBox(h,v+=24,0,"Electronic Invoices with pdf Files",AttachPDFtoElectronicInvoice);
+      end;
+     CheckBox(h,v+=40,0,"Elektroonne andmevahetus peatatud",StopEInvoices); 
+      EditField(h,v+=20, -20,"Reason",Normal,StopReason,false,0);
+    end;
+    if (HasEInvoicing) then begin
+      if (HasLocalization("ARG,EST,HRV,LTU,MEX")) then begin
+        if (HasLocalization("ARG")) then begin
+          Tile(tilenr,300,false,tilenr,Certificate);  tilenr = tilenr + 1;
+          CheckBox(h=150,v=10,0,"Send Invoices electronically to AFIP",OutArgEInvoices);
+          CheckBox(h,v+=16,0,"Automatically assign Official Ser No.",AssignOfficialSerNr);
+          tstr = "Stopped";
+          if (TaskExists("SendEInvoice")) then begin
+            tstr = "Running";
+          end;
+          v = v + vs;
+          StaticText(h-60,v+18,tstr,false);
+          HalPushButton(h,v,h+160,v+20,"RestartSendEInvoice","Send Electronic Invoices");
+          EditField(h,v+=30,150,"Certificate",Normal,Certificate,false,0);
+          EditField(h,v+=vs,150,"Private Key",Normal,PrivateKey,false,0);
+          EditField(h,v+=vs,150,"Passphrase",Normal,Passphrase,false,0);
+          EditField(h,v+=vs,50,"GMT Offset",Normal,GMTOffset,true,0);          
+          EditField(h,v+=vs,150,"CAEA",ViewOnly,CAEA,false,0);
+          HalPushButton(h+230,v,h+230+90,v+20,"EInvoiceTClassRequestCAEA","Request CAEA");
+          EditField(h,v+=vs,70,"CAEA Start",ViewOnly,CAEAStartDate,false,0);
+          EditField(h+150,v,70,"CAEA Expiry",ViewOnly,CAEAExpiryDate,false,0);
+          EditField(h,v+=vs,150,"Last CAEA",ViewOnly,LastFortnightCAEA,false,0);
+          EditField(h,v+=vs,70,"Last CAEA Start",ViewOnly,LastFortnightCAEAStartDate,false,0);
+          EditField(h+150,v,70,"CAEA Expiry",ViewOnly,LastFortnightCAEAExpiryDate,false,0);
+          EditField(h,v+=vs,150,"Previous CAEA",ViewOnly,ScdLastFortnightCAEA,false,0);
+          EditField(h,v+=vs,70,"Previous CAEA Start",ViewOnly,ScdLastFortnightCAEAStartDate,false,0);
+          EditField(h+150,v,70,"CAEA Expiry",ViewOnly,ScdLastFortnightCAEAExpiryDate,false,0);
+          EditField(h,v+=vs,70,"Clear Login Ticket",Normal,ClearLoginTicketTime,false,PasteCurTime);
+          CheckBox(h,v+=vs,0,"Send Export Invoices electronically to AFIP",SendExportIV);
+          CheckBox(h,v+=16,0,"Self Billing",ArgSelfBilling);
+          CheckBox(h,v+=16,0,"Send Plain Items as #Stocked# Items for Export Invoices",ExportIVSendPlainINasStockIN);
+          if (HasMultiCurrency or HasBase2) then begin
+            CheckBox(h,v+=16,0,"Domestic Invoice in Base1",DomesticInvoiceinBase1);
+          end;
+        end;
+      end;
+    end;
+/*    
+    ButtonFrame(h2,v=vm,180,2,"Postage");
+    RadioButton(h2,v,0,0,"Priority",Postage);
+    RadioButton(h2,v+=16,1,0,"Economy",Postage);
+*/
+  end;
+  EndWindow;
+end;
+
+//Bk, lots of changes
+window EInvQueryIntrvlTClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h1,h2,l,v,vm,vs;
+  WindowBegin("E-teenuste ajastamine",EInvQueryIntrvlTClass,CGSbl,EServSYSCtrlType);
+  SetBlid(EInvQueryIntrvlBlock);
+  SetWRect(20,80,480,330);
+  vs = 20; h = 240; h1 = 20; h2 = 315; l = 70;
+  ButtonFrame(h1,v=26,413,1,"E-arvete saatmine");
+  EditField(h,v,l,"Päringu ajaintevall sekundites",Normal,EInvReq,true,0);
+  StaticText(h2,v+14,"(60 sek - 4 h)",false);
+  ButtonFrame(h1,v+=49,413,1,"E-arvete staatuse päring");
+  EditField(h,v,l,"Päringu ajaintevall sekundites",Normal,EInvStatReq,true,0);
+  StaticText(h2,v+14,"(60 sek - 4 h)",false);
+  ButtonFrame(h1,v+=49,413,1,"E-arvete vastuvõtmine");
+  EditField(h,v,l,"Päringu ajaintevall sekundites",Normal,GetInvReq,true,0);
+  StaticText(h2,v+14,"(60 sek - 4 h)",false);
+  EditField(h,v+=vs,l,"Päringu (pdf) ajaintevall sekundites",Normal,GetInvPdfReq,true,0);
+  StaticText(h2,v+14,"(60 sek - 4 h)",false);
+  EndFrame;
+  ButtonFrame(h1,v+=49,413,2,"Tarnija e-arvete vastuvõtmine");
+  EditField(h,v,l,"Päringu ajaintevall sekundites",Normal,SupInvReq,true,0);
+  StaticText(h2,v+14,"(60 sek - 4 h)",false);
+  EditField(h,v+=vs,l,"Päringu (pdf) ajaintevall sekundites",Normal,SupInvPdfReq,true,0);
+  StaticText(h2,v+14,"(60 sek - 4 h)",false);
+  EndFrame;
+  ButtonFrame(h1,v+=49,413,1,"Valuutakursside päring");
+  EditField(h,v,l,"Päringu ajaintevall sekundites",Normal,GetCurRateReq,true,0);
+  StaticText(h2,v+14,"(60 sek - 4 h)",false);
+  EndFrame;
+  ButtonFrame(h1,v+=49,413,1,"Üldine");
+  EditField(h,v,l,"Vaheserveri päringu intervall sekundites",Normal,StatusCheckReq,true,0);
+  StaticText(h2,v+14,"(60 s - 4 h)",false);
+  EndWindow;
+end;
+
+//Bk, SpecialMenu("Registreeri Inforegistri kasutajaks"
+window UserLClass:3
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Isikud",UserLClass,CGmlist,UserView);
+  SetWRect(64,80,564,298);
+  SpawnClass(USDClass);
+  Sizeable(-1,-1,0,0);
+  UseView(UserVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"Allkiri",Code,false,Code);
+  RlColKey(81,81,"Nimi",Name,false,Name);
+  RlCol(-40,-40,"Suletud",Closed,false);
+  SearchField("Otsi");
+//  SpecialMenu("Ava postkast",' ',0,"OpenMailboxUserLsm");
+  if (IsStandardProduct or IsSberbankProduct) then begin 
+    if (GuiType==kGuiMetro) then begin
+      RowMenuBegin("");
+      RowMenuItem(0,"Muuda salasõna",' ',' ',4300,"ChangePasswdUserLsm");
+      RowMenuItem(1,"Aktiveeri isiklik arhiiv",' ',' ',4300,"ActivatePersDesktopLsm");
+      EndRowMenu;
+      if (HasPersons and UserRegisterAccessTest("UserVc",kAccessInsert)) then begin //!!TRANSLATE
+      SpecMenuGroup("",kSpecMenuGroupTypeButtonsInBottomBarRight,0);
+      SpecialMenuWithIcon("Koosta kasutaja",' ',4313,1,"CreateNewUser");
+      end;
+    end else begin
+    SpecialMenu("Muuda salasõna",' ',1,"ChangePasswdUserLsm");
+//    SpecialMenu("Aktiveeri isiklik töölaud",' ',2,"ActivatePersDesktopLsm");
+      SpecMenuGroup("",kSpecMenuGroupTypeExtendedPlusMenu,0);
+      if (HasPersons and UserRegisterAccessTest("UserVc",kAccessInsert)) then begin //!!TRANSLATE
+      SpecialMenu("Kasutaja",' ',4,"CreateNewUser");
+      end;
+      SpecialMenu("Valideerimise e-mail",'e',5,"ValidateUserEmailAddressLsm");
+    end;
+  end else begin
+    if (BuildProductCode=="SmartApps") then begin
+      SpecialMenu("Muuda salasõna",' ',1,"ChangePasswdUserLsm");
+      SpecialMenu("Tegevuste nimekiri",' ',2,"ToDoUserLsm");
+    end else begin
+      if (GuiType==kGuiMetro) then begin
+        RowMenuBegin("");
+        RowMenuItem(0,"Muuda salasõna",' ',' ',4300,"ChangePasswdUserLsm");
+        RowMenuItem(1,"Koosta postkast",' ',' ',4300,"CreateMailboxUserLsm");
+        if (HasCalendar) then begin
+        RowMenuItem(2,"Ava kalender",' ',' ',4300,"OpenCalendarUserLsm");
+        end;
+        RowMenuItem(3,"Tööülesanded",' ',' ',4300,"ToDoUserLsm");
+        EndRowMenu;
+        SpecMenuGroup("",kSpecMenuGroupTypeButtonsInBottomBarRight,0);
+        if (UserRegisterAccessTest("UserVc",kAccessInsert)) then begin //!!TRANSLATE
+        SpecialMenuWithIcon("Koosta kasutaja",' ',4313,1,"CreateNewUser");
+        end;
+      end else begin
+  SpecialMenu("Muuda salasõna",' ',1,"ChangePasswdUserLsm");
+        SpecialMenu("Muuda allahindluse salasõna",' ',1,"ChangeDiscPasswdUserLsm");
+  SpecialMenu("Ava tööülesannete register",' ',2,"ToDoUserLsm");
+        if (HasCalendar) then begin
+  SpecialMenu("Ava kalender",' ',2,"OpenCalendarUserLsm");  
+        end;
+        //if (IsCloudControllerClient) then begin // Cloud Controller Specific //##cc
+        //  SpecialMenu("Seadista SSH avalik võti",' ',3,"ASPAssignSSHKeyLsm"); //##cc
+        //end; //##cc
+        SpecialMenu("Registreeri Inforegistri kasutajaks",' ',2,"OpenAccRegWindowIRsm");  //cust KB 19.09.2017
+        SpecMenuGroup("",kSpecMenuGroupTypeExtendedPlusMenu,0);
+  SpecialMenu("Postkast",' ',3,"CreateMailboxUserLsm");
+        if (UserRegisterAccessTest("UserVc",kAccessInsert)) then begin 
+  SpecialMenu("Kasutaja",' ',4,"CreateNewUser");
+        end;
+        SpecialMenu("Valideerimise e-mail",'e',5,"ValidateUserEmailAddressLsm"); 
+        SpecialMenu("Kontrolli e-maili aadressi",' ',6,"CheckUserEmailAddressLsm");
+      end;
+end;
+end;
+  EndWindow;
+end;
+
+//Bk
+window ERTClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  WindowBegin("Valuutakursside seadistus",ERTClass,CGSbl,-);
+  SetWRect(20,80,420,200);//EST redesigned to fit long text /KLS //##cc  report and fix in core!
+  SetBlid(ERBlock);
+  vs = 20; h=190;
+  CheckBox(h=50,v=15,0,"Uuenda baasvaluuta kursse",BCRates);
+  CheckBox(h,v+=16,0,"Kirjuta olemasolev kurss üle",OverwriteExistRate);
+  CheckBox(h,v+=16,0,"Kasuta vahetuskursi teenust automaatselt",IdleTask);
+  CheckBox(h,v+=16,0,"Vahetuskursi #VAT# seadus",VATLawExchangeRate);
+  //EditFieldTL(h+50,v+=25, 70,"Aeg",M4Time,Normal,0,ERTime,false,PasteCurTime);//cust KB 06.02.2018 disabled, now PeriodicTask
+  EditFieldTL(h+50,v+=20, 70,"B2 Val. kood",M4Code,Normal,5,B2CurCode,false,CurncyCodeSClass);
+
+  EndWindow;
+end;

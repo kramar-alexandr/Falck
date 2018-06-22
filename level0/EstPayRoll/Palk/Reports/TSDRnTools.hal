@@ -1,0 +1,451 @@
+external procedure GetPaymTypeData(string,var integer,var integer,var integer,var integer,var integer,var integer,var string,var integer,var integer);
+external function val GetMinSocTax(date);
+external function val GetEmplTaxPercent(string,date,integer,val,var string,var string,var string);
+
+global
+procedure GetTSDRowsArray(var array string astr,var Integer acnt)
+begin
+  record TSDRowsBlock TSDRr;
+  row TSDRowsBlock TSDRrw;
+  Integer i,j,rwcnt;
+  boolean testf;
+  
+  BlockLoad(TSDRr);
+  acnt=0;
+  rwcnt = MatRowCnt(TSDRr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(TSDRr,i,TSDRrw);
+    testf=true;
+    for (j=0;j<acnt;j=j+1) begin        
+      if (astr[j]==TSDRrw.Code) then begin
+        testf=false;
+      end;
+    end;  
+    if (testf) then begin  
+      astr[acnt]=TSDRrw.Code;
+      acnt=acnt + 1;
+    end;
+  end;  
+  return;
+end;
+
+global
+function string 255 GetTSDRowSpec(string tsdrow)
+begin
+  string 255 res;
+  record TSDRowsBlock TSDRr;
+  row TSDRowsBlock TSDRrw;
+  Integer i,j,rwcnt;
+  
+  BlockLoad(TSDRr);
+  res="";
+  rwcnt = MatRowCnt(TSDRr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(TSDRr,i,TSDRrw);
+    if (TSDRrw.Code==tsdrow) then begin
+      res=TSDRrw.Spec;
+      goto LGetTSDRowSpec; 
+    end;
+  end;  
+LGetTSDRowSpec:;
+  GetTSDRowSpec=res;
+  return;
+end;
+
+global
+procedure PaymPayrollVcEmplSums(string emplcode,LongInt contrnr,integer year,integer month,var vector val tsdrwsum,var vector val tsdrwsumtot,array string tsdrwcode,integer tsdrwcnt,var boolean printemplflag)
+begin
+  record PaymPayrollVc PPr;
+  row PaymPayrollVc PPrw;
+  integer paymtypeflag,soctaxflag,emplunemplinsflag,tmpflag,brutoinctaxfreeminflag,inctaxflag;
+  integer rwcnt,i,j,k;
+  boolean TrHs,testf,testf1;
+  string 10 tsdrowcode,tmpstr;
+  val minsoctax,s,percent,dpdiscsum;
+  
+  ResetLoop(PPr);
+  TrHs=true;
+  PPr.OKFlag=1;
+  while (LoopKey("OKFlag",PPr,1,TrHs)) begin
+    if (PPr.OKFlag!=1) then begin
+      TrHs=false;
+    end;
+    if (TrHs) then begin
+      testf=true;    
+      if (PPr.Invalid==1) then begin
+        testf=false;
+      end;
+      if (testf) then begin
+        rwcnt=MatRowCnt(PPr);
+        for (i=0;i<rwcnt;i=i+1) begin
+          MatRowGet(PPr,i,PPrw);
+          testf1=true;    
+          if (PPrw.ContrSerNr!=contrnr) then begin
+            testf1=false;
+          end;
+          if blankdate(PPrw.PDate) then begin
+            PPrw.PDate=PPr.PaymDate;
+          end;
+          if (year!=GetYear(PPrw.PDate)) then begin
+            testf1=false;
+          end else begin
+            if (month!=GetMonth(PPrw.PDate)) then begin
+              testf1=false;
+            end;
+          end;
+          if (testf1) then begin
+            GetPaymTypeData(PPrw.PaymTypeCode,paymtypeflag,tmpflag,tmpflag,inctaxflag,soctaxflag,emplunemplinsflag,tsdrowcode,brutoinctaxfreeminflag,tmpflag);
+            testf1=false;
+            for (j=0;j<tsdrwcnt;j=j+1) begin        
+              if (tsdrwcode[j]==tsdrowcode) then begin
+                testf1=true;
+              end; 
+            end;
+            if (testf1) then begin
+              printemplflag=true;
+              minsoctax=GetMinSocTax(PPrw.PDate);
+              if ((paymtypeflag==7) or (paymtypeflag==1)) then begin //Tasuliigi tuup: Tasu v›i Kinnipidamine (bruto)
+
+                tsdrwsum[emplcode & ":" & tsdrowcode & ":" & "1030"]= tsdrwsum[emplcode & ":" & tsdrowcode & ":" & "1030"]+PPrw.BrutoSum; 
+                tsdrwsumtot[emplcode & ":" & "1030"]=tsdrwsumtot[emplcode & ":" & "1030"]+PPrw.BrutoSum; 
+
+                if (soctaxflag!=0) then begin
+                  tsdrwsum[emplcode & ":" & tsdrowcode & ":" & "1060"]= tsdrwsum[emplcode & ":" & tsdrowcode & ":" & "1060"]+PPrw.BrutoSum; 
+                  tsdrwsumtot[emplcode & ":" & "1060"]=tsdrwsumtot[emplcode & ":" & "1060"]+PPrw.BrutoSum; 
+                end;
+
+                percent=GetEmplTaxPercent(emplcode,PPrw.PDate,5,PPrw.DPDiscSum,tmpstr,tmpstr,tmpstr);
+                dpdiscsum=PPrw.DPDiscSum/percent*100;
+                tsdrwsum[emplcode & ":" & tsdrowcode & ":" & "1070"]= tsdrwsum[emplcode & ":" & tsdrowcode & ":" & "1070"]+dpdiscsum; 
+                tsdrwsumtot[emplcode & ":" & "1070"]=tsdrwsumtot[emplcode & ":" & "1070"]+dpdiscsum; 
+
+                if (PPrw.BrutoSum<minsoctax) then begin
+                  tsdrwsum[emplcode & ":" & tsdrowcode & ":" & "1090"]= tsdrwsum[emplcode & ":" & tsdrowcode & ":" & "1090"]+(minsoctax-PPrw.BrutoSum); 
+                  tsdrwsumtot[emplcode & ":" & "1090"]=tsdrwsumtot[emplcode & ":" & "1090"]+(minsoctax-PPrw.BrutoSum); 
+                end;
+
+                tsdrwsum[emplcode & ":" & tsdrowcode & ":" & "1100"]= tsdrwsum[emplcode & ":" & tsdrowcode & ":" & "1100"]+PPrw.SocTaxSum; 
+                tsdrwsumtot[emplcode & ":" & "1100"]=tsdrwsumtot[emplcode & ":" & "1100"]+PPrw.SocTaxSum; 
+
+                tsdrwsum[emplcode & ":" & tsdrowcode & ":" & "1110"]= tsdrwsum[emplcode & ":" & tsdrowcode & ":" & "1110"]+PPrw.PensionSum; 
+                tsdrwsumtot[emplcode & ":" & "1110"]=tsdrwsumtot[emplcode & ":" & "1110"]+PPrw.PensionSum; 
+
+                if (emplunemplinsflag!=0) then begin
+                  tsdrwsum[emplcode & ":" & tsdrowcode & ":" & "1120"]= tsdrwsum[emplcode & ":" & tsdrowcode & ":" & "1120"]+PPrw.BrutoSum; 
+                  tsdrwsumtot[emplcode & ":" & "1120"]=tsdrwsumtot[emplcode & ":" & "1120"]+PPrw.BrutoSum; 
+                end;
+
+                tsdrwsum[emplcode & ":" & tsdrowcode & ":" & "1130"]= tsdrwsum[emplcode & ":" & tsdrowcode & ":" & "1130"]+PPrw.UnemplInsSum; 
+                tsdrwsumtot[emplcode & ":" & "1130"]=tsdrwsumtot[emplcode & ":" & "1130"]+PPrw.UnemplInsSum; 
+
+                tsdrwsum[emplcode & ":" & tsdrowcode & ":" & "1140"]= tsdrwsum[emplcode & ":" & tsdrowcode & ":" & "1140"]+PPrw.EmplUnemplInsSum; 
+                tsdrwsumtot[emplcode & ":" & "1140"]=tsdrwsumtot[emplcode & ":" & "1140"]+PPrw.EmplUnemplInsSum; 
+
+                if (brutoinctaxfreeminflag!=0) then begin
+                  s=PPrw.BrutoSum;
+                end else begin
+                  s=PPrw.IncTaxFreeMinSum-PPrw.AddTaxSum;//ts, 2018/01
+                end;
+                tsdrwsum[emplcode & ":" & tsdrowcode & ":" & "1160"]= tsdrwsum[emplcode & ":" & tsdrowcode & ":" & "1160"]+s; 
+                tsdrwsumtot[emplcode & ":" & "1160"]=tsdrwsumtot[emplcode & ":" & "1160"]+s; 
+
+                tsdrwsum[emplcode & ":" & tsdrowcode & ":" & "1170"]= tsdrwsum[emplcode & ":" & tsdrowcode & ":" & "1170"]+PPrw.IncTaxSum; 
+                tsdrwsumtot[emplcode & ":" & "1170"]=tsdrwsumtot[emplcode & ":" & "1170"]+PPrw.IncTaxSum; 
+                
+                if (inctaxflag) then begin
+                  tsdrwsum[emplcode & ":" & tsdrowcode & ":" & "2150"]= tsdrwsum[emplcode & ":" & tsdrowcode & ":" & "2150"]+(PPrw.BrutoSum-PPrw.IncTaxFreeMinSum+PPrw.AddTaxSum);//ts, 2018/01
+                  tsdrwsumtot[emplcode & ":" & "SUPP"]=tsdrwsumtot[emplcode & ":" & "SUPP"]+PPrw.BrutoSum;//ts, 2018/01
+                  tsdrwsumtot[emplcode & ":" & "2150"]=tsdrwsumtot[emplcode & ":" & "2150"]+(PPrw.BrutoSum-PPrw.IncTaxFreeMinSum+PPrw.AddTaxSum);//ts, 2018/01
+                end;
+              end;
+            end;
+          end;
+        end;
+      end;
+    end;
+  end;
+  return;
+end;
+
+global
+procedure PaymPayrollVcEmplSumsTotal(integer year,integer month,var val brutotot,var val pensiontot,var val unemplinstot,var val inctaxtot,var val soctaxtot,var val emplunemplinstot,var array string zerotsdrwcode,var integer acnt,array string tsdrwcode,integer tsdrwcnt)
+begin
+  record PaymPayrollVc PPr;
+  row PaymPayrollVc PPrw;
+  integer paymtypeflag,soctaxflag,tmpflag;
+  string 20 tsdrowcode;
+  integer rwcnt,i,j;
+  boolean TrHs,testf,testf1;
+  
+  acnt=0;
+  ResetLoop(PPr);
+  TrHs=true;
+  PPr.OKFlag=1;
+  while (LoopKey("OKFlag",PPr,1,TrHs)) begin
+    if (PPr.OKFlag!=1) then begin
+      TrHs=false;
+    end;
+    if (TrHs) then begin
+      testf=true;    
+      if (PPr.Invalid==1) then begin
+        testf=false;
+      end;
+      if (testf) then begin
+        rwcnt=MatRowCnt(PPr);
+        for (i=0;i<rwcnt;i=i+1) begin
+          MatRowGet(PPr,i,PPrw);
+          testf1=true;    
+          if blankdate(PPrw.PDate) then begin
+            PPrw.PDate=PPr.PaymDate;
+          end;
+          if (year!=GetYear(PPrw.PDate)) then begin
+            testf1=false;
+          end else begin
+            if (month!=GetMonth(PPrw.PDate)) then begin
+              testf1=false;
+            end;
+          end;
+          if (testf1) then begin
+            GetPaymTypeData(PPrw.PaymTypeCode,paymtypeflag,tmpflag,tmpflag,tmpflag,soctaxflag,tmpflag,tsdrowcode,tmpflag,tmpflag);
+            if ((paymtypeflag==7) or (paymtypeflag==1)) then begin //Tasuliigi tuup: Tasu v›i Kinnipidamine (bruto)
+              testf1=false;
+              for (j=0;j<tsdrwcnt;j=j+1) begin        
+                if (tsdrwcode[j]==tsdrowcode) then begin
+                  testf1=true;
+                end; 
+              end;
+
+              if (trim(tsdrowcode)=="") then begin //empty TSD rows message
+                for (j=0;j<acnt;j=j+1) begin
+                  testf1=true;
+                  if (zerotsdrwcode[j]==PPrw.PaymTypeCode) then begin
+                    testf1=false;
+                  end;
+                end;  
+                if (testf1) then begin  
+                  zerotsdrwcode[acnt]=PPrw.PaymTypeCode;
+                  acnt=acnt+1;
+                end;
+              end;  
+
+              if (soctaxflag==1) then begin
+                brutotot=brutotot+PPrw.BrutoSum;
+              end;
+              pensiontot=pensiontot+PPrw.PensionSum;
+              unemplinstot=unemplinstot+PPrw.UnemplInsSum;
+              inctaxtot=inctaxtot+PPrw.IncTaxSum;
+              soctaxtot=soctaxtot+PPrw.SocTaxSum;
+              emplunemplinstot=emplunemplinstot+PPrw.EmplUnemplInsSum;
+            end;
+          end;
+        end;
+      end;
+    end;
+  end;
+  return;
+end;
+
+global
+procedure DoPrintTSD_part1(boolean tsdadd1,integer year,integer month,var integer rw)
+begin
+  string 255 tstr;
+    
+  StartReportJob("");
+  tstr=USetStr(1500430) & year;
+  Header(rw,tstr,1);
+  rw = rw + 1;
+  if (tsdadd1) then begin
+    tstr=USetStr(1500432) & year;
+  end else begin
+    tstr=USetStr(1500490) & year;
+  end;
+  Header(rw,tstr,0);
+  rw = rw + 1;
+  tstr=USetStr(1500431) & month;
+  Header(rw,tstr,1);
+  rw = rw + 1;
+  EndHeader;
+  
+  if (tsdadd1) then begin
+    StartFormat(16);
+    OutString(0,0,"MR - maksustav riik (1050).",false);
+    OutString(0,0,"OTM - osalise tššaja mŠŠr (1040).",false);
+    OutString(0,0,"1070 - tššv›imetuspensionŠri osa, millelt maksab sotsiaalmaksu riik.",false);
+    OutString(0,0,"1090 - sotsiaalmaksuga maksustatava vŠljamakse suurendus seoses sotsiaalmaksu miinimum kohustusega. ",false);
+    OutString(0,0,"VML - vŠljamakse liik (1020).",false);
+    OutString(0,0,"1030 - brutosumma.",false);
+    OutString(0,0,"1060 - sotsiaalmaksuga maksustatav vŠljamakse.",false);
+    OutString(0,0,"1100 - sotsiaalmaks.",false);
+    OutString(0,0,"1110 - kinnipeetud kohustusliku kogumispensioni makse.",false);
+    OutString(0,0,"1120 - tšštuskindlustusmaksega maksustatav vŠljamakse.",false);
+    OutString(0,0,"1130 - kinnipeetud tšštuskindlustusmakse.",false);
+    OutString(0,0,"1140 - tššandja tšštuskindlustusmakse.",false);
+    OutString(0,0,"MVTL - tulumaksu kinnipidamisel maha arvatud maksuvaba tulu liik (1150).",false);
+    OutString(0,0,"1160 - tulumaksu kinnipidamisel maha arvatud maksuvaba tulu summa.",false);
+    OutString(0,0,"1170 - kinnipeetud tulumaks.",false);
+    EndFormat;
+  end else begin
+    StartFormat(16);
+    OutString(0,0,"RR - residendiriik (2020).",false);
+    OutString(0,0,"MR - maksustav riik (2060).",false);
+    OutString(0,0,"OTM - osalise tššaja mŠŠr (2050).",false);
+    OutString(0,0,"2080 - tššv›imetuspensionŠri osa, millelt maksab sotsiaalmaksu riik.",false);
+    OutString(0,0,"2100 - sotsiaalmaksuga maksustatava vŠljamakse suurendus seoses sotsiaalmaksu miinimum kohustusega. ",false);
+    OutString(0,0,"VML - vŠljamakse liik (2030).",false);
+    OutString(0,0,"2040 - brutosumma.",false);
+    OutString(0,0,"2070 - sotsiaalmaksuga maksustatav vŠljamakse.",false);
+    OutString(0,0,"2110 - sotsiaalmaks.",false);
+    OutString(0,0,"2120 - tšštuskindlustusmaksega maksustatav vŠljamakse.",false);
+    OutString(0,0,"2130 - kinnipeetud tšštuskindlustusmakse.",false);
+    OutString(0,0,"2140 - tššandja tšštuskindlustusmakse.",false);
+    OutString(0,0,"2150 - tulumaksuga maksustatav vŠljamakse.",false);
+    OutString(0,0,"2160 - kinnipeetud tulumaksu mŠŠr.",false);
+    OutString(0,0,"2170 - kinnipeetud tulumaks.",false);
+    EndFormat;
+  end;
+  StartFormat(16);
+  EndFormat;
+  if (tsdadd1) then begin
+    StartFormat(16);
+    OutString(0,0,"",false);
+    OutString(11,0,"Isikukood",false);
+    OutString(55,0,"Nimi",false);
+    OutString(105,0,"MR",false); //maksustav riik
+    OutString(135,0,"OTM",true); //osalise tššaja mŠŠr
+    OutString(158,0,"1070",true); //tššv›imetuspensionŠri osa, millelt maksab sotsiaalmaksu riik
+    OutString(180,0,"1090",true); //sotsiaalmaksuga maksustatava vŠljamakse suurendus seoses sotsiaalmaksu miinimum kohustusega
+    OutString(185,0,"VML",false); //VŠljamaske liik
+    OutString(225,0,"1030",true); //brutosumma
+    OutString(255,0,"1060",true); //sotsiaalmaksuga maksustatav vŠljamakse
+    OutString(285,0,"1100",true); //sotsiaalmaks
+    OutString(310,0,"1110",true); //kinnipeetud kohustusliku kogumispensioni makse
+    OutString(340,0,"1120",true); //tšštuskindlustusmaksega maksustatav vŠljamakse
+    OutString(365,0,"1130",true); //kinnipeetud tšštuskindlustusmakse
+    OutString(390,0,"1140",true); //tššandja tšštuskindlustusmakse
+    OutString(395,0,"MVTL",false); //tulumaksu kinnipidamisel maha arvatud maksuvaba tulu liik
+    OutString(450,0,"1160",true); //tulumaksu kinnipidamisel maha arvatud maksuvaba tulu summa
+    OutString(1,0,"1170",true); //kinnipeetud tulumaks
+    EndFormat;
+  end else begin
+    StartFormat(16);
+    OutString(0,0,"",false);
+    OutString(11,0,"Isikukood",false);
+    OutString(55,0,"Nimi",false);
+    OutString(105,0,"RR",false); // residendiriik
+    OutString(120,0,"MR",false); //maksustav riik
+    OutString(158,0,"OTM",true); //osalise tššaja mŠŠr
+    OutString(181,0,"2080",true); //tššv›imetuspensionŠri osa, millelt maksab sotsiaalmaksu riik
+    OutString(203,0,"2100",true); //sotsiaalmaksuga maksustatava vŠljamakse suurendus seoses sotsiaalmaksu miinimum kohustusega
+    OutString(208,0,"VML",false); //VŠljamaske liik
+    OutString(255,0,"2040",true); //brutosumma
+    OutString(285,0,"2070",true); //sotsiaalmaksuga maksustatav vŠljamakse
+    OutString(310,0,"2110",true); //sotsiaalmaks
+    OutString(340,0,"2120",true); //tšštuskindlustusmaksega maksustatav vŠljamakse
+    OutString(365,0,"2130",true); //kinnipeetud tšštuskindlustusmakse
+    OutString(390,0,"2140",true); //tššandja tšštuskindlustusmakse
+    OutString(425,0,"2150",true); //tulumaksuga maksustatav vŠljamakse
+    OutString(450,0,"2160",true); //Kinnipeetud tulumaksu mŠŠr
+    OutString(1,0,"2170",true); //kinnipeetud tulumaks
+    EndFormat;
+  end;
+  Gray_Divider(0,1);
+  return;
+end;
+
+global
+procedure DoPrintTSD_part2(boolean tsdadd1,record EmplVc Emplr,val coef,var integer rw)
+begin
+  string 255 tstr;
+  
+  if (rw>0) then begin
+    StartFormat(16);
+    EndFormat;
+    Gray_Divider(0,1);
+  end;
+  rw = rw + 1;
+  StartFormat(16);
+  OutString(0,0,rw,false);
+  OutString(11,0,Emplr.IDCode,false);
+  tstr=Emplr.Firstname & " " & Emplr.Surname;
+  OutString(55,0,tstr,false);
+  if (tsdadd1) then begin
+    OutString(105,0,Emplr.CountryCode1,false);
+    OutVal(135,0,coef,M4val,true);
+  end else begin
+    OutString(105,0,Emplr.CountryCode,false);
+    OutString(120,0,Emplr.CountryCode1,false);
+    OutVal(158,0,coef,M4val,true);
+  end; 
+  return;
+end;
+
+global
+procedure DoPrintTSD_part3(boolean tsdadd1,string tsdrwcode,val s1030,val s1060,val s1100,val s1110,val s1120,val s1130,val s1140,val s1160,val s1170,val s2150,val inctaxperc,string tsdrowspec)
+begin
+  
+  if (tsdadd1) then begin
+    OutString(185,0,tsdrwcode,false);
+    OutVal(225,0,s1030,M4val,true);
+    OutVal(255,0,s1060,M4val,true);
+    OutVal(285,0,s1100,M4val,true);
+    OutVal(310,0,s1110,M4val,true);
+    OutVal(340,0,s1120,M4val,true);
+    OutVal(365,0,s1130,M4val,true);
+    OutVal(390,0,s1140,M4val,true);
+    OutString(395,0,tsdrowspec,false);
+    OutVal(450,0,s1160,M4val,true);
+    OutVal(1,0,s1170,M4val,true);
+  end else begin
+    OutString(208,0,tsdrwcode,false);
+    OutVal(255,0,s1030,M4val,true); //2040
+    OutVal(285,0,s1060,M4val,true); //2070
+    OutVal(310,0,s1100,M4val,true); //2110
+    OutVal(340,0,s1120,M4val,true); //2120
+    OutVal(365,0,s1130,M4val,true); //2130
+    OutVal(390,0,s1140,M4val,true); //2140
+    OutVal(425,0,s2150,M4val,true); //2150
+    OutVal(450,0,inctaxperc,M4val,true); //2160
+    OutVal(1,0,s1170,M4val,true); //2170
+  end;
+  EndFormat;
+  return;
+end;
+
+global
+procedure DoPrintTSD_part4(boolean tsdadd1,val stot1030,val stot1060,val stot1070,val stot1090,val stot1100,val stot1110,val stot1120,val stot1130,val stot1140,val stot1160,val stot1170,val stot2150)
+begin
+  Black_Divider(120,1);
+  if (tsdadd1) then begin
+    StartFormat(16);
+    if (stot1070>stot1060) then begin
+      OutVal(158,0,stot1060,M4val,true);
+    end else begin
+      OutVal(158,0,stot1070,M4val,true);
+    end;
+    OutVal(180,0,stot1090,M4val,true);
+    OutVal(225,0,stot1030,M4val,true);
+    OutVal(255,0,stot1060,M4val,true);
+    OutVal(285,0,stot1100,M4val,true);
+    OutVal(310,0,stot1110,M4val,true);
+    OutVal(340,0,stot1120,M4val,true);
+    OutVal(365,0,stot1130,M4val,true);
+    OutVal(390,0,stot1140,M4val,true);
+    OutVal(450,0,stot1160,M4val,true);
+    OutVal(1,0,stot1170,M4val,true);
+    EndFormat;
+  end else begin
+    StartFormat(16);
+    OutVal(181,0,stot1070,M4val,true); //2080
+    OutVal(203,0,stot1090,M4val,true); //2100
+    OutVal(255,0,stot1030,M4val,true); //2040
+    OutVal(285,0,stot1060,M4val,true); //2070
+    OutVal(310,0,stot1100,M4val,true); //2110
+    OutVal(340,0,stot1120,M4val,true); //2120
+    OutVal(365,0,stot1130,M4val,true); //2130
+    OutVal(390,0,stot1140,M4val,true); //2140
+    OutVal(425,0,stot2150,M4val,true); //2150
+    OutVal(1,0,stot1170,M4val,true);  //2170
+    EndFormat;
+  end;
+  return;
+end;

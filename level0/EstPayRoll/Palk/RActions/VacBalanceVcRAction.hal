@@ -1,0 +1,178 @@
+external function boolean GetNextVacBalSerNr(var LongInt);
+external procedure SetMarkFlag(integer,var integer);
+
+global
+function LongInt VacBalanceVcRecordDefaults(var record VacBalanceVc VBr,record VacBalanceVc VB2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  
+  if (SingleUserMode) then begin
+    if (GetNextVacBalSerNr(VBr.SerNr)) then begin end;
+  end else begin
+    VBr.SerNr = -1;
+  end;
+
+  VacBalanceVcRecordDefaults = res; 
+  return;
+end;
+
+global
+function LongInt VacBalanceVcRecordDuplicate(var record VacBalanceVc VBr,record VacBalanceVc VB2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+ 
+  VBr.OKFlag=0;
+  SetMarkFlag(VBr.OKFlag,VBr.OKMark);
+  if (SingleUserMode) then begin
+    if (GetNextVacBalSerNr(VBr.SerNr)) then begin end;
+  end else begin
+    VBr.SerNr = -1;
+  end;
+  VacBalanceVcRecordDuplicate = res; 
+  return;
+end;
+
+global
+function LongInt VacBalanceVcRecordCheck(var record VacBalanceVc VBr,record VacBalanceVc VB2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  record VacBalanceVc VB3r;
+  row VacBalanceVc VBrw;
+  row VacBalanceVc VB2rw;
+  record ContractVc Contrr;
+  integer rwcnt,i,j;
+  string 255 tstr;
+  LongInt updatemode,insertmode;
+  
+  insertmode=1;
+  updatemode=2;
+  res = 0;
+
+  if (stat!=insertmode) then begin
+    if (VB2r.OKFlag!=0) then begin
+      goto LVacBalanceVcRecordCheck;
+    end;
+  end;
+  
+  if (stat==updatemode) then begin
+    if (VBr.SerNr<=0)  then begin
+      VBr.SerNr = VB2r.SerNr;
+    end;
+  end;
+  if (VBr.SerNr==-1) then begin
+      if (GetNextVacBalSerNr(VBr.SerNr)) then begin end;
+  end;
+
+  if (stat==insertmode) or (stat==updatemode and VBr.SerNr!=VB2r.SerNr) then begin
+    VB3r.SerNr = VBr.SerNr;
+    if (ReadFirstMain(VB3r,1,true)) then begin
+      RecordCheckError(1547," " & VBr.SerNr,-1,"SerNr");      
+      res = -1; 
+      goto LVacBalanceVcRecordCheck;
+    end;
+  end;   
+  if (len(VBr.SerNr)<=0 or (VBr.SerNr<=0)) then begin
+    RecordCheckError(1500329,"",-1,"SerNr");      
+    res = -1; 
+    goto LVacBalanceVcRecordCheck;
+  end;
+
+  rwcnt=MatRowCnt(VBr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(VBr,i,VBrw);
+    if (VBrw.Year<=0) then begin
+      RecordCheckError(1500337,"",i,"Year");      
+      res = -1; 
+      goto LVacBalanceVcRecordCheck;
+    end else begin
+      for (j=i;j<rwcnt;j=j+1) begin
+        if (j>i) then begin
+          MatRowGet(VBr,j,VB2rw);
+          if (VBrw.Year==VB2rw.Year) then begin
+            RecordCheckError(1500360,"",j,"Year");      
+            res = -1; 
+            goto LVacBalanceVcRecordCheck;
+          end;
+        end;
+      end;
+    end;
+    if blank(VBrw.SDate) then begin
+      RecordCheckError(1500321,"",i,"SDate");      
+      res = -1; 
+      goto LVacBalanceVcRecordCheck;
+    end;
+    if blank(VBrw.EDate) then begin
+      RecordCheckError(1500334,"",i,"EDate");      
+      res = -1; 
+      goto LVacBalanceVcRecordCheck;
+    end else begin
+      if (VBrw.EDate<VBrw.SDate) then begin
+        RecordCheckError(1500322,"",i,"EDate");      
+        res = -1; 
+        goto LVacBalanceVcRecordCheck;
+      end;
+    end;
+    if blank(VBrw.BestBeforeDate) then begin
+      RecordCheckError(1500335,"",i,"BestBeforeDate");      
+      res = -1; 
+      goto LVacBalanceVcRecordCheck;
+    end else begin
+      if (VBrw.BestBeforeDate<VBrw.EDate) then begin
+        RecordCheckError(1500336,"",i,"BestBeforeDate");      
+        res = -1; 
+        goto LVacBalanceVcRecordCheck;
+      end;
+    end;
+  end;
+  LVacBalanceVcRecordCheck:;
+  if (res==-1) then begin
+    VBr.OKFlag=0;
+    SetMarkFlag(VBr.OKFlag,VBr.OKMark);
+  end;
+  VacBalanceVcRecordCheck = res;
+  return;
+end;
+
+global
+function LongInt VacBalanceVcRecordSave(var record VacBalanceVc VBr,record VacBalanceVc VB2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+ 
+  SetMarkFlag(VBr.OKFlag,VBr.OKMark);
+  VacBalanceVcRecordSave = res; 
+  return;
+end;
+
+global
+function LongInt VacBalanceVcRecordUpdate(var record VacBalanceVc VBr,record VacBalanceVc VB2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+ 
+  SetMarkFlag(VBr.OKFlag,VBr.OKMark);
+  VacBalanceVcRecordUpdate = res; 
+  return;
+end;
+
+global
+function LongInt VacBalanceVcRecordRemoveTest(var record VacBalanceVc VBr,record VacBalanceVc VB2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+
+  res = 1;
+  if (VBr.OKFlag!=0) then begin
+    MessageBox(1560,"")
+    res = 0;
+  end;
+  VacBalanceVcRecordRemoveTest = res; 
+  return;
+end;
+
+global
+updating function LongInt VacBalanceVcRecordImport(var record VacBalanceVc VBr,record VacBalanceVc VB2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+ 
+  SetMarkFlag(VBr.OKFlag,VBr.OKMark);
+  VacBalanceVcRecordImport = res; 
+  return;
+end;

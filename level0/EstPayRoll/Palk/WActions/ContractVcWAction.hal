@@ -1,0 +1,123 @@
+external procedure PastePositionInContract(var record ContractVc,integer);
+external procedure PasteEmplInContract(var record ContractVc);
+
+global
+function boolean ContractDClassActiveEditField(integer wn,string fieldname,integer fn,integer wnst,integer rownr,integer changed)
+begin
+  boolean res;
+  record ContractVc Contrr;
+  
+  res = true;
+  GetWindowRecord(wn,Contrr);
+  if (Contrr.Status==3) then begin
+    res = false;
+  end else begin
+    switch (fieldname) begin
+      case "LastCalcDate": res = false;
+      case "LoadSum": res = false;
+      case "SerNr": 
+        if (wnst==Rs_update) then begin
+          res = false;
+        end;
+    end;
+  end;  
+  ContractDClassActiveEditField = res;
+  return;
+end;
+
+function boolean ContractDClassEmplCodeEFAfter(integer wn,integer rownr,integer changedf)
+  begin  
+  record ContractVc Contrr;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,Contrr);
+    DeselectWindow(wn,false);
+    PasteEmplInContract(Contrr);
+    PutWindowRecord(wn,Contrr);
+  end;
+  ContractDClassEmplCodeEFAfter = true;
+  return;
+end;
+
+function boolean ContractDClassPosCodeEFAfter(integer wn,integer rownr,integer changedf)
+  begin  
+  record ContractVc Contrr;
+  row ContractVc Contrrw;
+  integer tmp;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,Contrr);
+    DeselectWindow(wn,false);
+    PastePositionInContract(Contrr,rownr);
+    PutWindowRecord(wn,Contrr);
+  end;
+  ContractDClassPosCodeEFAfter = true;
+  return;
+end;
+
+function boolean ContractDClassWorkLoadEFAfter(integer wn,integer rownr,integer changedf)
+  begin  
+  record ContractVc Contrr;
+  row ContractVc Contrrw;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,Contrr);
+    DeselectWindow(wn,false);
+    MatRowGet(Contrr,rownr,Contrrw);
+    Contrrw.LoadSum = Contrrw.WorkLoad*Contrrw.Sum;
+    MatRowPut(Contrr,rownr,Contrrw);
+    PutWindowRecord(wn,Contrr);
+  end;
+  ContractDClassWorkLoadEFAfter = true;
+  return;
+end;
+
+function boolean ContractDClassSumEFAfter(integer wn,integer rownr,integer changedf)
+  begin  
+  record ContractVc Contrr;
+  row ContractVc Contrrw;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,Contrr);
+    DeselectWindow(wn,false);
+    MatRowGet(Contrr,rownr,Contrrw);
+    Contrrw.LoadSum = Contrrw.WorkLoad*Contrrw.Sum;
+    MatRowPut(Contrr,rownr,Contrrw);
+    PutWindowRecord(wn,Contrr);
+  end;
+  ContractDClassSumEFAfter = true;
+  return;
+end;
+
+function boolean ContractDClassVacDaysNormEFAfter(integer wn,integer rownr,integer changedf)
+  begin  
+  record ContractVc Contrr;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,Contrr);
+    DeselectWindow(wn,false);
+    if (Contrr.VacDaysNorm<0) or (Contrr.VacDaysNorm>366) then begin
+      Contrr.VacDaysNorm=0;
+      PutWindowRecord(wn,Contrr);
+    end;
+  end;
+  ContractDClassVacDaysNormEFAfter = true;
+  return;
+end;
+
+global
+function boolean ContractDClassAfterEditField(integer wn,string fieldname,integer fn, integer rownr,integer changed)
+begin
+  boolean res;
+
+  switch (fieldname) begin
+    case "EmplCode": res = ContractDClassEmplCodeEFAfter(wn,rownr,changed);
+    case "PosCode": res = ContractDClassPosCodeEFAfter(wn,rownr,changed);
+    case "WorkLoad": res = ContractDClassWorkLoadEFAfter(wn,rownr,changed);
+    case "Sum": res = ContractDClassSumEFAfter(wn,rownr,changed);
+    case "LoadSum": res = ContractDClassSumEFAfter(wn,rownr,changed);
+    case "VacDaysNorm": res = ContractDClassVacDaysNormEFAfter(wn,rownr,changed);
+  end;
+  ContractDClassAfterEditField = res;
+  return;
+end;

@@ -1,0 +1,81 @@
+external function LongInt DaysInYear(integer);
+external function roundmode SetRoundModeD(Integer);
+external function LongInt GetCalendarDays(date,date);
+external procedure GetFullYear(integer,var date,var date);
+external function val GetAbsenceFBDaysForPeriod(LongInt,string,date,date,var integer,var integer);
+external function val GetVacDaysFBDaysForPeriod(LongInt,LongInt,date,date);
+external function string 20 GetVacAbsTypeCode(LongInt);
+external function LongInt GetVacAbsDays(LongInt,integer,string);
+
+global
+function boolean GetNextVacBalSerNr(var LongInt vbsernr)
+begin
+  boolean res;
+  record VacBalanceVc VBr;
+  
+  VBr.SerNr = 99999999999;
+  if (ReadLastMain(VBr,1,false)) then begin
+    vbsernr = VBr.SerNr + 1;
+  end else begin
+    vbsernr = 1;
+  end;
+
+  GetNextVacBalSerNr = res;
+  return;
+end;
+
+global
+function integer CountVacDaysNorm(LongInt contrsernr,integer year,date sd,date ed)
+begin
+  integer res;
+  record ContractVc Contrr;
+  val vacdaysnorm,curdaysnorm,tmp;
+  
+  Contrr.SerNr = contrsernr;
+  if (ReadFirstMain(Contrr,1,true)) then begin
+    vacdaysnorm = Contrr.VacDaysNorm;
+    curdaysnorm = GetCalendarDays(sd,ed);
+    tmp = vacdaysnorm/DaysInYear(year);
+    res = round(tmp*curdaysnorm,SetRoundModeD(0));
+  end;
+  CountVacDaysNorm = res;
+  return;
+end;
+
+global
+procedure InsertVacBalRow(record VacBalanceVc VBr,var row VacBalanceVc VBrw,integer year,date sd,date ed,var integer rw)
+begin
+  string 20 vacabstype;
+  integer vacabsdays,abscalfbnoexcdays,abscalfbdays,tmpint;
+  
+  ClearRow(VBr,VBrw,1);
+  VBrw.Year = year;
+  VBrw.SDate = sd;
+  VBrw.EDate = ed;
+  VBrw.VacDaysNorm = CountVacDaysNorm(VBr.ContrSerNr,VBrw.Year,VBrw.SDate,VBrw.EDate);
+  //Algsaldod - Puudumised (puhkus)
+  vacabstype = GetVacAbsTypeCode(VBr.ContrSerNr);
+  abscalfbdays = GetAbsenceFBDaysForPeriod(VBr.ContrSerNr,vacabstype,VBrw.SDate,VBrw.EDate,tmpint,abscalfbnoexcdays);
+  VBrw.VacDaysUsed = abscalfbnoexcdays;
+  //Algsaldod - Kasutamata puhkusejŠŠk
+  VBrw.VacDaysToUse = GetVacDaysFBDaysForPeriod(VBr.ContrSerNr,VBrw.Year,VBrw.SDate,VBrw.EDate);
+  if (VBrw.VacDaysToUse>0) then begin
+    if (VBrw.VacDaysUsed>0) then begin
+      VBrw.VacDaysNorm = VBrw.VacDaysToUse + VBrw.VacDaysUsed;
+    end else begin
+      VBrw.VacDaysUsed = VBrw.VacDaysNorm - VBrw.VacDaysToUse;
+    end;
+  end else begin
+    VBrw.VacDaysToUse = VBrw.VacDaysNorm - VBrw.VacDaysUsed;
+  end;
+  //Puudumised
+  vacabsdays = GetVacAbsDays(VBr.ContrSerNr,year,vacabstype);                    
+  VBrw.VacDaysUsed = VBrw.VacDaysUsed  + vacabsdays;
+  VBrw.VacDaysToUse = VBrw.VacDaysNorm - VBrw.VacDaysUsed;
+
+  VBrw.BestBeforeDate = AddYear(ed,1);
+  VBrw.VacDaysStatus = 1;
+  MatRowInsert(VBr,rw,VBrw);
+  rw = rw + 1;
+end;
+

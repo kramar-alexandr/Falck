@@ -1,0 +1,448 @@
+//xml tools
+external procedure EstEInvBuildString2(string,string,var string);
+external procedure EstEInvEndTag(string,area);
+external procedure EstEInvStartTag(string,area);
+external procedure EstEInvStartTag2(string,var string,area);
+external procedure EstEInvTagValue(string,string,integer,area); 
+external function string 255 ConvertXml(string);
+//txt tools
+external procedure GetAreaFromFile(Area,string);
+external procedure ExtractObjWithSeparator(string,string,Boolean,var Integer,var string);
+external procedure LogAreaToFile(string,area);
+
+remote procedure DoSendAddrLookupRequestToPartner(string,string,string,string,var area,var Boolean,var Boolean);
+remote procedure DoSendAddrLookupRequestToPartnerIR(string,string,string,string,var area,var Boolean,var Boolean);
+remote function boolean IRServiceActivated(string); //cust KB 30.08.2017
+//external function boolean DoSendEstAddressLookupIR(string,string);
+remote updating procedure StoreCUServiceUsage(date,string,Integer,string,Integer,Integer);//cust, ts - 2018/04, e-service statistic
+
+function string 255 cutString(string namestr)
+begin
+  string 255 cutlist,cutlist2,newnamestr;
+
+  newnamestr = namestr;
+  cutlist = USetStr(34607);
+  cutlist2 = USetStr(34608);
+  if (SetInSet(right(namestr,2),cutlist)) then begin
+    newnamestr = Left(namestr,(len(namestr)-3));
+  end;
+  if (SetInSet(right(namestr,3),cutlist2)) then begin
+    newnamestr = Left(namestr,(len(namestr)-4));
+  end;
+  cutString = newnamestr;
+  return;
+end;
+
+global
+function Boolean DoSendEstAddressLookupIR(string regno,string namestr,var area reply)
+begin
+  Boolean res,noResult;
+  string 20 service;
+  string 255 newnamestr;
+  record CYBlock CYb;
+  Integer cnt;
+
+  res = false;
+  newnamestr = Uppercase(namestr);
+  service = "SENDESTADRLOOKUP";
+  DoSendAddrLookupRequestToPartnerIR(regno,URLEncode(newnamestr),service,"",reply,noResult,res);
+  if (noResult) then begin
+    newnamestr = cutString(Uppercase(namestr));
+    if (newnamestr != namestr) then begin
+      DoSendAddrLookupRequestToPartnerIR(regno,URLEncode(newnamestr),service,"",reply,noResult,res);
+    end;
+  end;
+  if (res) then begin
+    BlockLoad(CYb);
+    cnt = 1;
+    if (noResult) then begin cnt = 0; end;
+    queued.StoreCUServiceUsage(CurrentDate,CYb.OrgNr,8,"IRCUDATA",1,cnt);//cust, ts - 2018/04, e-service statistic
+  end;
+  DoSendEstAddressLookupIR = res;
+  return;
+end;
+
+global
+function boolean DoSendEstAddressLookup(string regno,string namestr,var area reply)
+begin
+  Boolean res,noResult;
+  string 20 service;
+  string 255 newnamestr;
+  record CYBlock CYb;
+  Integer cnt;
+  
+  newnamestr = Uppercase(namestr);
+  service = "SENDESTADRLOOKUP";
+  DoSendAddrLookupRequestToPartner(regno,ConvertXml(newnamestr),service,"ettevotja_rekvisiidid_paring",reply,noResult,res);
+  if (noResult) then begin
+    newnamestr = cutString(Uppercase(namestr));
+    if (newnamestr != namestr) then begin
+      DoSendAddrLookupRequestToPartner(regno,ConvertXml(newnamestr),service,"ettevotja_rekvisiidid_paring",reply,noResult,res);
+    end;
+  end;
+  if (res) then begin
+    BlockLoad(CYb);
+    cnt = 1;
+    if (noResult) then begin cnt = 0; end;
+    queued.StoreCUServiceUsage(CurrentDate,CYb.OrgNr,5,"ESTADRLOOKUP",1,cnt);//ts - 2018/04 , e-service statistic
+  end;
+  DoSendEstAddressLookup = res;
+  return;
+end;
+
+global
+procedure EstAddrLookupRn(record RcVc RepSpec)
+begin
+  xml xmlReply;
+  Boolean res,noResult;
+  string 255 xkey,subxkey,tstr,name,regnr,vatnr,addr1,addr2,addr3,status,link;
+  array string 255 aCUInf;
+  Integer i,aCnt,rw;
+  Area a_reply;
+
+  res = DoSendEstAddressLookup(RepSpec.f2,RepSpec.f3,a_reply);
+  
+  rw = 1;
+  StartReportJob(USetStr(34595));
+  if (nonblank(RepSpec.f2)) then begin 
+    tstr = USetStr(34597) & ": " & RepSpec.f2;
+    Header(rw,tstr,1);
+    rw = rw + 1;
+  end;
+  if (nonblank(RepSpec.f3)) then begin 
+    tstr = USetStr(34596) & ": " & RepSpec.f3;
+    Header(rw,tstr,1);
+    rw = rw + 1;
+  end;
+  EndHeader;
+
+  xmlReply = ParseXMLArea(a_reply);
+
+  aCnt = 0;
+  SetRepCol(2,110);
+  SetRepCol(3,152);
+  SetRepCol(4,209);
+  SetRepCol(5,275);
+  
+  if (res == false) then begin
+    goto LEstAddrLookupRn;
+  end;
+  
+  if (XmlNodeExists(xmlReply,"SOAP-ENV:Envelope/SOAP-ENV:Body/SOAP-ENV:Fault/faultstring")) then begin
+    tstr = XmlGet(xmlReply,"SOAP-ENV:Envelope/SOAP-ENV:Body/SOAP-ENV:Fault/faultstring");
+    StartFormat(15);
+     OutString(0,0,tstr,false);
+    EndFormat;
+    goto LEstAddrLookupRn;
+  end;
+
+  xkey = "SOAP-ENV:Envelope/SOAP-ENV:Body/ns1:ettevotja_rekvisiididResponse/keha/ettevotjad/";
+  for (i=0; XmlNodeExists(xmlReply,xkey & "Item[" & i & "]"); i=i+1) begin
+    subxkey = xkey & "Item[" & i & "]/";
+    name = XmlGet(xmlReply,subxkey & "nimi");
+    regnr = XmlGet(xmlReply,subxkey & "ariregistri_kood");
+    vatnr = XmlGet(xmlReply,subxkey & "kmkr_nr");
+    tstr = XmlGet(xmlReply,subxkey & "ettevotja_staatus");
+    status = XmlGet(xmlReply,subxkey & "ettevotja_staatus_tekstina");
+    addr1 = XmlGet(xmlReply,subxkey & "ettevotja_aadress/asukoht_ettevotja_aadressis");
+//    addr2 = XmlGet(xmlReply,subxkey & "ettevotja_aadress/asukoha_ehak_kood");
+    addr2 = XmlGet(xmlReply,subxkey & "ettevotja_aadress/asukoha_ehak_tekstina");
+    addr3 = XmlGet(xmlReply,subxkey & "ettevotja_aadress/indeks_ettevotja_aadressis");
+    link = XmlGet(xmlReply,subxkey & "teabesysteemi_link");
+    ACUInf[aCnt] = RepSpec.ArtMode & ";" & name & ";" & regnr & ";" & vatnr & ";" & addr1 & ";" & addr2 & ";" & addr3;
+    if (aCnt == 0) then begin
+      StartFormat(15);
+      OutString(0,0,USetStr(34596),false);
+      OutString(2,0,USetStr(34597),false);
+      OutString(3,0,USetStr(34598),false);
+      OutString(4,0,USetStr(34599),false);
+      OutString(5,0,USetStr(34600),false);
+      EndFormat;
+    end;
+    Gray_Divider(0,1);
+    StartFormat(15);
+    OutString(0,0,name,false);
+    OutString(2,0,regnr,false);
+    OutString(3,0,vatnr,false);
+    OutString(4,0,status,false);
+    OutString(5,0,addr1,false);
+    if (RepSpec.ArtMode > 0) then begin
+      if (RepSpec.flags[1] == 1) then begin
+        OutStringID(1,"DblAddrUpdCU",USetStr(34610),true,ACUInf[aCnt]);
+        EndFormat;
+        StartFormat(15);
+        OutString(5,0,addr3,false);
+        OutStringID(1,"DblAddrCreateCU",USetStr(34611),true,ACUInf[aCnt]);
+        EndFormat;
+      end else begin
+        OutStringID(1,"DblAddrUpdCU",USetStr(34602),true,ACUInf[aCnt]);
+        EndFormat;
+        StartFormat(15);
+        OutString(5,0,addr2,false);
+        OutStringID(1,"DblAddrUpdCUName",USetStr(34609),true,ACUInf[aCnt]);
+        EndFormat;
+        StartFormat(15);
+        OutString(5,0,addr3,false);
+        OutStringID(1,"DblAddrCreateCU",USetStr(34603),true,ACUInf[aCnt]);
+        EndFormat;
+      end;
+      StartFormat(15);
+      OutStringID(1,"DblOpenCUInfoInWeb",USetStr(34604),true,link);
+      EndFormat;
+    end else begin
+      OutStringID(1,"DblAddrCreateCU",USetStr(34603),true,ACUInf[aCnt]);
+      EndFormat;
+      StartFormat(15);
+      OutString(5,0,addr2,false);
+      OutStringID(1,"DblOpenCUInfoInWeb",USetStr(34604),true,link);
+      EndFormat;
+      if (nonblank(addr3)) then begin
+        StartFormat(15);
+        OutString(5,0,addr3,false);
+        EndFormat;
+      end;
+    end;
+    aCnt = aCnt + 1; 
+  end;
+  Black_Divider(0,1);
+  StartFormat(15);
+  if (aCnt >= 100) then begin
+    OutString(6,0,USetStr(34605),false);
+  end else begin
+    OutString(6,0,USetStr(34606) & aCnt,false);
+  end;
+  EndFormat;  
+LEstAddrLookupRn:;
+  if (res==false) or (aCnt==0) then begin
+    StartFormat(15);
+    OutString(0,0,USetStr(34601),false);
+    EndFormat;
+  end;
+  EndJob;
+  return;
+end;
+
+global
+procedure SendEstAddressLookup(Integer wn,string regno,string namestr,Integer stat)
+begin
+  record RcVc RepSpec;
+  
+  //cust KB 04.07.2017
+  if (IRServiceActivated("IRSENDESTADRLOOKUP")) then begin
+    ReportDefaults(RepSpec,"EstAddrLookupIRRClass");
+    RepSpec.repname = "EstAddrLookupIRRn";
+  end else begin
+    if (IRServiceActivated("SENDESTADRLOOKUP")) then begin
+      ReportDefaults(RepSpec,"EstAddrLookupRClass");
+      RepSpec.repname = "EstAddrLookupRn";
+    end else begin
+      MessageBox(1500005,"");
+      goto LSendEstAddressLookup;
+    end;
+  end;
+  //cust end
+  RepSpec.Media = mtScreen;
+  RepSpec.f2 = regno;
+  RepSpec.f3 = namestr;
+  RepSpec.flags[0] = 0;
+  RepSpec.flags[1] = stat;
+  RepSpec.ArtMode = wn;
+  RunReport(RepSpec,0);
+LSendEstAddressLookup:;
+  return;
+end;
+
+global
+function Boolean EstAddrLookupRClassOnOKWindow(Integer wn)
+begin
+  record RcVc RepSpec,OldRepSpec;
+
+  if (IRServiceActivated("SENDESTADRLOOKUP")) then begin
+    DeselectWindow(wn,true);
+    GetWindowRecord(wn,OldRepSpec);
+    ReportDefaults(RepSpec,"EstAddrLookupRClass");    
+    RepSpec.repname = "EstAddrLookupRn";
+    RepSpec.Media = mtScreen;
+    RepSpec.f2 = OldRepSpec.f2;
+    RepSpec.f3 = OldRepSpec.f3;
+    RepSpec.flags[0] = 0;
+    RepSpec.flags[1] = OldRepSpec.flags[1];
+    RepSpec.ArtMode = OldRepSpec.ArtMode;
+    RunReport(RepSpec,0);
+  end else begin
+    MessageBox(1500005,"");
+  end;
+  CloseWindow(wn);
+  EstAddrLookupRClassOnOKWindow = true;
+  return;
+end;
+
+updating procedure UpdCustomer(string CUCode,string tstr)
+begin
+  record CUVc CUr,oldCUr;
+  string 255 res;
+  string 255 name,regno,vatno,addr1,addr2,addr3,wnstr;
+  Integer pos;
+
+  CUr.Code = CUCode;
+  if (ReadFirstMain(CUr,1,true)) begin
+    RecordCopy(oldCUr,CUr);
+    pos = 0;
+    ExtractObjWithSeparator(";",tstr,true,pos,wnstr);
+    ExtractObjWithSeparator(";",tstr,true,pos,name);
+    ExtractObjWithSeparator(";",tstr,true,pos,regno);
+    ExtractObjWithSeparator(";",tstr,true,pos,vatno);
+    ExtractObjWithSeparator(";",tstr,true,pos,addr1);
+    ExtractObjWithSeparator(";",tstr,true,pos,addr2);
+    ExtractObjWithSeparator(";",tstr,true,pos,addr3);
+    CUr.Name = Name;
+    CUr.VATNr = vatno;
+    CUr.InvAddr0 = addr1;
+    CUr.InvAddr1 = addr2;
+    CUr.InvAddr2 = addr3;
+    if (RecordUpdate(oldCUr,CUr,false)==0) then begin
+    end;
+  end;
+  return;
+end;
+
+global
+procedure DblAddrUpdCU(string dblstr,string l,Integer currepwn)
+begin
+  record CUVc CUr;
+  record RcVc RepSpec;
+  string 255 tstr,res;
+  string 255 name,regno,vatno,addr1,addr2,addr3,wnstr;
+  Integer wn,nwn;
+  Integer pos;
+
+  tstr = l;
+  pos = 0;
+  ExtractObjWithSeparator(";",tstr,false,pos,wnstr);
+  wn = StringToInt(wnstr);
+  if (wn > 0 AND GetWindowClass(wn) == "CUDClass") then begin //cust fix KB 07.09.2017
+    DeselectWindow(wn,false); //cust KB 31.08.2017 - without it in some cases not all fields got updated
+    GetWindowRecord(wn,CUr);
+    ExtractObjWithSeparator(";",tstr,false,pos,name);
+    ExtractObjWithSeparator(";",tstr,false,pos,regno);
+    ExtractObjWithSeparator(";",tstr,false,pos,vatno);
+    ExtractObjWithSeparator(";",tstr,false,pos,addr1);
+    ExtractObjWithSeparator(";",tstr,false,pos,addr2);
+    ExtractObjWithSeparator(";",tstr,false,pos,addr3);
+    if (blank(CUr.Name)) then begin
+      CUr.Name = name;
+    end;
+    CUr.RegNr1 = regno;
+    CUr.VATNr = vatno;
+    if(nonblank(addr1) OR nonblank(addr2) OR nonblank(addr3)) then begin
+      CUr.InvAddr0 = addr1;
+      CUr.InvAddr1 = addr2;
+      CUr.InvAddr2 = addr3;
+    end;
+    PutWindowRecord(wn,CUr);
+  end;
+  return;
+end;
+
+global
+procedure DblAddrUpdCUName(string dblstr,string l,Integer currepwn)
+begin
+  record CUVc CUr;
+  record RcVc RepSpec;
+  string 255 tstr,res;
+  string 255 name,regno,vatno,addr1,addr2,addr3,wnstr;
+  Integer wn,nwn;
+  Integer pos;
+
+  tstr = l;
+  pos = 0;
+  ExtractObjWithSeparator(";",tstr,false,pos,wnstr);
+  wn = StringToInt(wnstr);
+  if (wn > 0 AND GetWindowClass(wn) == "CUDClass") then begin //cust fix KB 07.09.2017
+    DeselectWindow(wn,false); //cust KB 31.08.2017
+    GetWindowRecord(wn,CUr);
+    ExtractObjWithSeparator(";",tstr,false,pos,name);
+    CUr.Name = name;
+    PutWindowRecord(wn,CUr);
+  end;
+  return;
+end;
+
+global
+procedure DblAddrCreateCU(string dblstr,string l,Integer currepwn)
+begin
+  record CUVc CUr,lCUr;
+  record RcVc RepSpec;
+  string 255 tstr,res;
+  string 255 name,regno,vatno,addr1,addr2,addr3,wnstr;
+  Integer wn,nwn;
+  Integer pos;
+
+  tstr = l;
+  pos = 0;
+  ExtractObjWithSeparator(";",tstr,false,pos,wnstr);
+  ExtractObjWithSeparator(";",tstr,false,pos,name);
+  ExtractObjWithSeparator(";",tstr,false,pos,regno);
+  ExtractObjWithSeparator(";",tstr,false,pos,vatno);
+  ExtractObjWithSeparator(";",tstr,false,pos,addr1);
+  ExtractObjWithSeparator(";",tstr,false,pos,addr2);
+  ExtractObjWithSeparator(";",tstr,false,pos,addr3);
+  lCUr.RegNr1 = regno;
+  if (ReadFirstKey("RegNr1",lCUr,1,true)) then begin
+    nwn = OpenWindow("UpdEstAddrVcCancelDsmYesNoWClass",0,0,"","",RepSpec);
+    DeselectWindow(nwn,false);
+    RepSpec.f1 = lCUr.Code;
+    RepSpec.f2 = tstr;
+    PutWindowRecord(nwn,RepSpec);
+  end else begin
+    RecordNew(CUr);
+    CUr.Name = name;
+    CUr.RegNr1 = regno;
+    CUr.VATNr = vatno;
+    CUr.InvAddr0 = addr1;
+    CUr.InvAddr1 = addr2;
+    CUr.InvAddr2 = addr3;
+    CUr.CUType = 1;
+    CUr.VEType = 1;
+    nwn = OpenWindow("CUDClass",1,0,"","",CUr);
+  end;
+  return;
+end;
+
+global
+procedure DblOpenCUInfoInWeb(string dblstr,string l,Integer currepwn)
+begin
+  string 255 link;
+  string 255 element;
+  
+  if (nonblank(l)) then begin
+    link = l;
+  end;
+  if (nonblank(link)) then begin
+    OpenWebBrowser(link);
+  end;
+  return;
+end;
+
+global
+updating procedure UpdEstAddrVcCancelDsmYesNoWClassYES()
+begin
+  Integer wn;
+  record RcVc RepSpec;
+
+  wn = CurWindow;
+  GetWindowRecord(wn,RepSpec);
+  CloseWindow(wn);      
+  UpdCustomer(RepSpec.f1,RepSpec.f2);
+  return;
+end;
+
+global
+procedure UpdEstAddrVcCancelDsmYesNoWClassNO()
+begin
+  Integer wn;
+
+  wn = CurWindow;
+  CloseWindow(wn);      
+  return;
+end;

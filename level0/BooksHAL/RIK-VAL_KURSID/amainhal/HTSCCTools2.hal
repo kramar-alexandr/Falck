@@ -1,0 +1,152 @@
+external function Boolean CheckInternetEnabler();
+remote procedure RegisterForEstEInvoicing2(string,string,string);
+remote updating procedure DoStopSendingEstERecords2(record EInvoiceBlock,LongInt,string,string);
+external updating procedure EInvoiceRegisterTsm();
+external procedure GetUserEmail(string,var string);
+external function string 255 AddStr(string,string,string);
+remote updating procedure SendCloseInfoToHTS(string,string);//ts - 2018/04, added parameter for partner
+
+global
+procedure EstEInvoiceRegisterTsm()
+begin
+  record RcVc RepSpec;
+  Integer wn,nwn;
+  record EInvoiceBlock EIb;
+  
+  wn = CurWindow;
+  BlockLoad(EIb);
+  if (EIb.TestFlag==0) then begin
+    if (CheckInternetEnabler==false) then begin
+      MessageBox(20242,"");
+      CloseWindow(wn);
+      goto LEstEInvoiceRegisterTsm;
+    end;
+  end;
+  nwn = OpenWindow("ServiceSelectWClass",0,wn,"","",RepSpec);
+LEstEInvoiceRegisterTsm:;
+  return;
+end;
+
+global
+procedure EstEInvoiceCloseTsm()
+begin
+  record RcVc RepSpec;
+  Integer wn,nwn;
+  
+  wn = CurWindow;
+  nwn = OpenWindow("ClServiceSelectWClass",0,wn,"","",RepSpec);
+  return;
+end;
+
+global
+updating procedure ServiceSelectWClassSendMulti(string partner,string email)
+begin
+  if (nonblank(partner)) then begin
+    RegisterForEstEInvoicing2(partner,email,"");
+  end;
+  return;
+end;
+
+global
+updating procedure ServiceSelectWClassSend()
+begin
+  Boolean res;
+  Integer wn,mwn;
+  record RcVc RepSpec;
+  string 255 partner,email;
+  
+  wn = CurWindow;
+  mwn = MotherWindow(wn);
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  switch (RepSpec.flags[0]) begin
+    case 1:
+      CloseWindow(wn);
+      EInvoiceRegisterTsm;
+    case 2: partner = "EARVEKESKUS";
+    case 3: partner = "EARVEKESKUS2";
+    case 4: partner = "ESTCCLOOKUP";
+    case 5: partner = "ESTADRLOOKUP";
+    case 6: partner = "ESTCURRATELOOKUP";
+    case 7: partner = "FITEK";
+    case 8: partner = "FITEK2";
+    //cust KB 20.06.2017 added for Inforegister services
+    case 9: partner = "IRCREDSCORE";
+    case 10: partner = "IRCUDATA";
+    case 11: partner = "IRWEBLINK";
+    case 12: partner = "IRDEBTHANDLE";
+    //cust end
+    otherwise
+      MessageBox(33490,"");
+      WindowFieldGoto(wn,RepSpec,-1,"flags[0]",true);
+  end;
+  if (nonblank(partner)) then begin
+    GetUserEmail(CurrentUser,email);
+    RegisterForEstEInvoicing2(partner,email,"");
+    CloseWindow(wn);
+    CloseWindow(mwn);
+    MessageBox(33491,"");
+  end;
+  return;
+end;
+
+global
+updating procedure CloseServiceSelectWClassMulti(string servicelist,string partner)//ts - 2018/04, added parameter for partner
+begin
+  record EInvoiceBlock EIb;
+
+  if (nonblank(servicelist)) then begin
+    BlockLoad(EIb);
+    DoStopSendingEstERecords2(EIb,33507,"",servicelist);
+    SendCloseInfoToHTS(servicelist,partner);
+  end;
+  return;
+end;
+
+global
+updating procedure CloseServiceSelectWClass()
+begin
+  Integer wn,mwn;
+  record RcVc RepSpec;
+  record EInvoiceBlock EIb;
+  string 5 rtype;
+  string 20 partner;
+  
+  wn = CurWindow;
+  mwn = MotherWindow(wn);
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+
+  switch (RepSpec.flags[0]) begin
+    case 2: rtype = "0"; partner = EIb.EInvoicePartner;
+    case 3: rtype = "1"; partner = EIb.SuppInvoicePartner;
+    case 4: rtype = "4";
+    case 5: rtype = "5";
+    case 6: rtype = "6";
+    case 7: rtype = "0";
+    case 8: rtype = "1";
+    case 9: rtype = "7";
+    case 10: rtype = "8";
+    case 11: rtype = "9";
+    case 12: rtype = "10";
+    case 13: rtype = "11";
+    case 14: rtype = "12"; partner = EIb.EInInvoicePartner;
+    case 15: rtype = "13"; //cust 13 = tsekk.ee KB 09.01.2018
+  end;
+  CloseWindow(wn);
+  CloseWindow(mwn);
+  BlockLoad(EIb);
+  DoStopSendingEstERecords2(EIb,33507,"",rtype);
+  SendCloseInfoToHTS(rtype,partner);//ts - 2018/04, added parameter for partner
+  return;
+end;
+
+global
+procedure ServiceSelectWClassClose()
+begin
+  Integer wn;
+  
+  wn = CurWindow;
+  CloseWindow(wn);
+  return;
+end;

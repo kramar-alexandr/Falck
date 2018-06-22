@@ -1,0 +1,203 @@
+external function boolean GetNextVacBalSerNr(var LongInt);
+external procedure SetMarkFlag(integer,var integer);
+external procedure InsertVacBalRow(record VacBalanceVc,var row VacBalanceVc,integer,date,date,var integer);
+
+global
+procedure GetFullMonth(date d,var date sd,var date ed)
+begin
+  sd = d;
+  sd.day = 1;
+  ed = d;
+  ed.day = DaysInMonth(GetYear(d),GetMonth(d));
+  return;
+end;
+
+global
+procedure GetFullYear(integer year,var date sd,var date ed)
+begin
+  sd.day = 1;
+  sd.month = 1;
+  sd.year = year;
+  ed.day = 31;
+  ed.month = 12;
+  ed.year = year;
+  return;
+end;
+
+global
+procedure PastePositionInContract(var record ContractVc Contrr,integer rownr)
+begin
+  record PositionVc Posr;
+  row ContractVc Contrrw;
+  
+  MatRowGet(Contrr,rownr,Contrrw);
+  Posr.Code = Contrrw.PosCode;
+  Contrrw.PosCode = Posr.Code;
+  if (ReadFirstMain(Posr,1,true)) then begin
+    if nonblank(Contrrw.PaymTypeCode) then begin
+      Contrrw.PosName = Posr.Name;
+    end else begin
+      ClearRow(Contrr,Contrrw,1);
+      Contrrw.PosCode = Posr.Code;
+      Contrrw.PosName = Posr.Name;
+      Contrrw.SDate = Contrr.StartDate;
+      Contrrw.WorkLoad = 1;
+    end;
+  end;
+  MatRowPut(Contrr,rownr,Contrrw);
+  return;
+end;
+
+global
+procedure PasteEmplInContract(var record ContractVc Contrr)
+begin
+  record EmplVc Emplr;
+  
+  Contrr.Firstname = "";
+  Contrr.Surname = "";
+  Contrr.ObjCode = "";
+  Emplr.Code = Contrr.EmplCode;
+  if (ReadFirstMain(Emplr,1,true)) then begin
+    Contrr.Firstname = Emplr.Firstname;
+    Contrr.Surname = Emplr.Surname;
+    Contrr.ObjCode = Emplr.ObjCode;
+  end else begin
+    MessageBox(1500319,"");
+  end;
+  return;
+end;
+
+global
+function Boolean SerNrTestContractVc(LongInt sernr,Date tdp)
+begin
+  Boolean res;
+  record ContractSerBlock ContrSerr;
+  row ContractSerBlock ContrSerrw;
+  Integer i,rwcnt;
+
+  if (sernr==-1) then begin
+    res = false;
+    goto L1;
+  end;
+  BlockLoad(ContrSerr);
+  rwcnt = MatRowCnt(ContrSerr);
+  if (rwcnt==0) then begin
+    res = true;
+    goto L1;
+  end;
+  for (i=0; i<rwcnt ;i=i+1) begin
+    MatRowGet(ContrSerr,i,ContrSerrw);
+    if ((sernr<ContrSerrw.TSerStart) or (sernr>ContrSerrw.TSerEnd)) then begin
+      goto L2;
+    end;  
+    if (nonblankdate(ContrSerrw.StartDate)) then begin
+      if (tdp<ContrSerrw.StartDate) then begin goto L2; end;
+    end;  
+    if (nonblankdate(ContrSerrw.EndDate)) then begin
+      if (tdp>ContrSerrw.EndDate) then begin goto L2; end;
+    end;  
+    res = true;
+    goto L1;
+L2:;
+  end;
+L1:;
+  SerNrTestContractVc = res;
+  return;
+end;
+
+global
+updating function boolean CreateVacBalFromContrr(record ContractVc Contrr)
+begin
+  record VacBalanceVc VBr;
+  row VacBalanceVc VBrw;
+  boolean res,delflag;
+  date sd,ed;
+  integer year,curyear,rw,rwcnt,i;
+   
+  res = false;
+  delflag = false;
+  VBr.ContrSerNr = Contrr.SerNr;
+  if (ReadFirstKey("ContrSerNr",VBr,1,true)==false) then begin
+    RecordNew(VBr);
+    if (GetNextVacBalSerNr(VBr.SerNr)) then begin end;
+    VBr.ContrSerNr = Contrr.SerNr;
+    VBr.Firstname = Contrr.Firstname;
+    VBr.Surname = Contrr.Surname;
+    VBr.OKFlag = 0;
+    SetMarkFlag(VBr.OKFlag,VBr.OKMark);
+    if nonblank(Contrr.StartDate) then begin
+      curyear = GetYear(CurrentDate);
+      year = GetYear(Contrr.StartDate);
+      sd = Contrr.StartDate;
+      ed.day = 31;
+      ed.month = 12;
+      ed.year = year;
+      rw = 0;
+      while (year<=curyear) begin
+        InsertVacBalRow(VBr,VBrw,year,sd,ed,rw);
+        if ((VBrw.VacDaysUsed>0) and (VBrw.VacDaysToUse>0)) then begin delflag = true; end; //not all rows has zeroes
+        year = year + 1;
+        sd.day = 1;
+        sd.month = 1;
+        sd.year = year;
+        ed = AddYear(ed,1);
+      end;
+      //delete unnecessary first rows with zeroes only if  there is at least one without zeroes, if all rows has zeroes -> leave them all
+      if (delflag) then begin
+        rwcnt = MatRowCnt(VBr);
+        for (i=0 ;i<rwcnt;i=i+1) begin
+          MatRowGet(VBr,i,VBrw);
+          if (VBrw.VacDaysUsed==0) then begin
+            MatRowDelete(VBr,i);
+            i = i - 1;
+            rwcnt = MatRowCnt(VBr);
+          end else begin
+            i = rwcnt;
+          end;
+        end;
+      end;
+    end;
+    if (RecordInsert(VBr,false)) then begin 
+      CreateRecordLink(VBr,CurrentCompany,Contrr,CurrentCompany);  
+      CreateRecordLink(Contrr,CurrentCompany,VBr,CurrentCompany);  
+      res=true;
+    end;
+  end;
+  CreateVacBalFromContrr=res;
+  return;
+end;
+
+global
+procedure GetVacDaysData(var integer vacdaysnorm,var string vacabstypecode)
+begin
+  record SalSettingBlock SalSettingRec;
+  
+  BlockLoad(SalSettingRec);
+  vacabstypecode=SalSettingRec.VacAbsTypeCode;
+  vacdaysnorm=SalSettingRec.VacDaysNorm;
+  return;
+end;
+
+global
+function val GetWorkDaysNorm()
+begin
+  record SalSettingBlock SalSettingRec;
+  val res;
+  
+  BlockLoad(SalSettingRec);
+  res = SalSettingRec.WorkDaysNorm;
+  GetWorkDaysNorm = res;
+  return;
+end;
+
+global
+function string 20 GetAccGroupCode()
+begin
+  string 20 res;
+  record SalSettingBlock SalSettingRec;
+  
+  BlockLoad(SalSettingRec);
+  res=SalSettingRec.AccGroupCode;
+  GetAccGroupCode=res;
+  return;
+end;

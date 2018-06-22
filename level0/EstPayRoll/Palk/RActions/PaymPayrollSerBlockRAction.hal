@@ -1,0 +1,49 @@
+external function Integer SerBlockCheckOverlap(LongInt,LongInt,LongInt,LongInt);
+
+global
+updating function LongInt PaymPayrollSerBlockCheck(var record PaymPayrollSerBlock PPSerr,record PaymPayrollSerBlock PPSer2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  Integer j,i,rwcnt,pmrwcnt;
+  row PaymPayrollSerBlock PPSerrw;
+  row PaymPayrollSerBlock PPSer2rw;
+  record PMBlock PMRec;
+  row PMBlock PMrw;  
+  
+  res = 0;
+  BlockLoad(PMRec);
+  pmrwcnt = MatRowCnt(PMRec);
+  rwcnt = MatRowCnt(PPSerr);
+  for (i=0; i<rwcnt;i=i+1) begin
+    MatRowGet(PPSerr,i,PPSerrw);
+    if (PPSerrw.TSerStart<=0) then begin
+      RecordCheckError(2210,"",i,"TSerStart");   
+      res = -1;
+      goto LPaymPayrollSerBlockCheck;        
+    end;
+    if (PPSerrw.TSerEnd<=0) then begin
+      RecordCheckError(2210,"",i,"TSerEnd");   
+      res = -1;
+      goto LPaymPayrollSerBlockCheck;        
+    end;
+    if ((NonBlankDate(PPSerrw.StartDate)) and (NonBlankDate(PPSerrw.EndDate))) then begin
+      if (PPSerrw.StartDate>PPSerrw.EndDate) then begin
+        RecordCheckError(20851,"",i,"EndDate");   
+        res = -1;
+        goto LPaymPayrollSerBlockCheck;        
+      end;
+    end;
+    for (j=0;j<i;j=j+1) begin
+      MatRowGet(PPSerr,j,PPSer2rw);
+      res = SerBlockCheckOverlap(PPSerrw.TSerStart,PPSerrw.TSerEnd,PPSer2rw.TSerStart,PPSer2rw.TSerEnd);      
+      if (res!=0) then begin
+        RecordCheckError(res,"",i,"TSerStart");   
+        res = -1;
+        goto LPaymPayrollSerBlockCheck;        
+      end;
+    end;      
+  end;  
+LPaymPayrollSerBlockCheck:;  
+  PaymPayrollSerBlockCheck = res;
+  return;
+end;

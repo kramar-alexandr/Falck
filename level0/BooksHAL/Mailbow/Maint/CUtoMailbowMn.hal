@@ -1,0 +1,471 @@
+//debug
+external procedure LogAreaToFile(string,area);
+//
+external function Boolean CheckEmailStr(string);
+external function Boolean FindCustomerRelation(string,string,var record CUVc);
+external procedure GetUserName(string,var string);
+external function Integer CountObjects(string);
+external procedure ExtractElemFromSet(string,integer,var string);
+external procedure GetPayDealText(string,string,var string);
+external procedure GetShipDealText(string,string,var string);
+external procedure GetShipModeText(string,string,var string);
+external procedure SendOutMailbowContractRequest(area,string,Boolean);
+external updating procedure StoreCUServiceUsage(date,string,Integer,string,Integer,Integer);//ts - 2018/04, e-service statistic
+
+procedure GetClass(string ctype,string Classification,var string class,var string classname)
+begin
+  record CClassVc CClassr;
+  integer i,clam;
+  string 10 cclass;
+  
+  class = "";
+  clam = CountObjects(Classification); 
+  for (i=1;i<=clam;i=i+1) begin
+    ExtractElemFromSet(Classification,i,cclass);
+    ResetLoop(CClassr);
+    CClassr.Code = cclass;
+    if (ReadFirstMain(CClassr,1,true)) then begin
+      if (CClassr.CType==ctype) then begin
+        class = cclass;
+        classname = CClassr.Comment;
+        i = clam;
+      end;
+    end;
+  end;
+  return;
+end;
+
+procedure GetObject(string ctype,string Classification,var string class,var string classname)
+begin
+  record ObjVc Objr;
+  integer i,clam;
+  string 10 cclass;
+  
+  class = "";
+  clam = CountObjects(Classification); 
+  for (i=1;i<=clam;i=i+1) begin
+    ExtractElemFromSet(Classification,i,cclass);
+    ResetLoop(Objr);
+    Objr.Code = cclass;
+    if (ReadFirstMain(Objr,1,true)) then begin
+      if (Objr.OTCode==ctype) then begin
+        class = cclass;
+        classname = Objr.Comment;
+        i = clam;
+      end;
+    end;
+  end;
+  return;
+end;
+
+procedure GetCUName(string Code,var string FieldValue)
+begin
+  record CUVc CUr;
+  
+  CUr.Code = Code;
+  if (ReadFirstMain(CUr,1,true)) then begin
+    FieldValue = CUr.Name;
+  end;
+  return;
+end;
+
+procedure GetCatName(string Code,var string FieldValue)
+begin
+  record CCatVc CCatr;
+  
+  CCatr.Code = Code;
+  if (ReadFirstMain(CCatr,1,true)) then begin
+    FieldValue = CCatr.Comment;
+  end;
+  return;
+end;
+
+function string 255 CreateAuthenticationString(string user,string passwd)
+begin
+  string 255 result;
+  
+  result = "Authorization: Basic ";
+  result = result & base64encode(user & ":" & passwd);
+
+  CreateAuthenticationString = result;
+  return;
+end; 
+
+global
+procedure AddRequestHeader(record MailbowBlock MBb,var area a,boolean addheaderf)
+begin
+  string 255 tstr;
+
+  if (addheaderf) then begin
+    tstr = CreateAuthenticationString(MBb.dbUser,MBb.dbPasswd);
+    AddTextToArea(tstr,a);
+    AddTextToArea(chr(13) & chr(10),a);
+    AddTextToArea(chr(13) & chr(10),a);
+    AddTextToArea("[",a);
+    AddTextToArea(chr(13) & chr(10),a);
+ end;
+  return;
+end;
+
+global
+updating procedure CreateReportMail(area reply,string Conf,Boolean logf)
+begin
+  record MailSettingsBlock MSb;
+  record MailVc Mailr;
+  row MailVc Mailrw;
+  LongInt l,lines;
+  Integer i;
+  string 255 tstr;
+
+  BlockLoad(MSb);
+
+  RecordNew(Mailr);
+  Mailr.TransDate = CurrentDate;
+  ClearRow(Mailr,Mailrw,1);
+  Mailrw.RowTyp = kMailRowTypeFrom;
+  Mailrw.AddrCode = MSb.FromSystem;
+  MatRowPut(Mailr,0,Mailrw);
+
+  ClearRow(Mailr,Mailrw,1);
+  Mailrw.RowTyp = kMailRowTypeTo;
+  Mailrw.AddrCode = Conf;
+  MatRowPut(Mailr,1,Mailrw);
+  Mailr.SendFlag = 1;
+  Mailr.SerNr = NextSerNr("MailVc",Mailr.TransDate,-1,false,"");
+  Mailr.Header = "Reply from Mailbow:" & " " & CurrentDate & ":" & CurrentTime;
+
+  lines = CountLinesInArea(reply);  
+  for (l=0;l<lines;l=l+1) begin
+    tstr = GetLineFromArea(reply,l);
+    tstr = Left(tstr,len(tstr)-1);
+    LineTextPut(Mailr,LineTextCnt(Mailr),tstr);
+  end;          
+  if (Mailr.SerNr>0) then begin
+    if (RecordStore(Mailr,false)) then begin end;
+  end;
+  return;
+end;
+
+procedure AddLine(string tstr,var area a)
+begin
+  AddTextToArea(tstr,a);
+  AddTextToArea(chr(13) & chr(10),a);
+  return;
+end;
+
+procedure AddTextValue(string tag,string value,var area a)
+begin
+  string 255 tstr;
+  
+  tstr = " """ & tag & """: " & """" & value & """,";
+  AddLine(tstr,a);
+  return;
+end;
+
+procedure AddField(string nametag,string name,boolean isnumber,string valuetag,string value,var area a,boolean addseparator)
+begin
+  string 255 tstr;
+  
+  AddLine("{",a);
+  if (isnumber) then begin
+    tstr = """" & nametag & """: " & "" & name & ",";
+  end else begin
+    tstr = """" & nametag & """: " & """" & name & """,";
+  end;
+  AddLine(tstr,a);
+  tstr = """" & valuetag & """: " & """" & value & """";
+  AddLine(tstr,a);
+  if (addseparator) then begin
+    AddLine("},",a);
+  end else begin
+    AddLine("}",a);
+  end;  
+  return;
+end;
+
+global
+procedure AddRequestFooter(var area a)
+begin
+  AddTextToArea(chr(13) & chr(10),a);
+  AddLine("]",a);
+  return;
+end;
+
+procedure AddContactInRequest(record CUVc CUr,string email,string title,Integer actTitle,string tag,Integer actTag,record MailbowFieldsBlock MFb,Integer rwcnt,Boolean firstf,var area a)
+begin
+  row MailbowFieldsBlock MFrw;
+  Integer i,cnt;
+  string 100 tstr,Field,FieldValue,action;
+  
+  if (firstf == false) then begin
+    AddLine(",",a);
+  end;
+  AddLine("{",a);
+  AddTextValue("email",email,a);
+  AddTextValue("optin","yes",a);
+  AddLine("""fields"": [",a);
+  tstr = LowerCase(md5string(CUr.Code));
+  AddField("name","hash",false,"value",tstr,a,true);
+  for (i=0; i<rwcnt; i=i+1) begin
+    MatRowGet(MFb,i,MFrw);
+    switch (MFrw.dbField) begin
+        case "Code"        : FieldValue = CUr.Code;
+        case "Name"        : FieldValue = CUr.Name;
+        case "Person"      : FieldValue = CUr.Person;
+        case "WarnText1"   : FieldValue = CUr.WarnText1;
+        case "InvAddr0"    : FieldValue = CUr.InvAddr0;
+        case "InvAddr1"    : FieldValue = CUr.InvAddr1;
+        case "InvAddr2"    : FieldValue = CUr.InvAddr2;
+        case "InvoiceToCode": FieldValue = CUr.InvoiceToCode;
+        case "DelAddr0"    : FieldValue = CUr.DelAddr0;
+        case "DelAddr1"    : FieldValue = CUr.DelAddr1;
+        case "DelAddr2"    : FieldValue = CUr.DelAddr2;
+        case "Phone"       : FieldValue = CUr.Phone;
+        case "Fax"         : FieldValue = CUr.Fax;
+        case "CustCat"     : FieldValue = CUr.CustCat;
+        case "Comment"     : FieldValue = CUr.Comment;
+        case "PayDeal"     : FieldValue = CUr.PayDeal;
+        case "AccFlag"     : FieldValue = CUr.AccFlag;
+        case "Objects"     : if (nonblank(MFrw.Param)) then begin GetObject(MFrw.Param,CUr.Objects,FieldValue,tstr); end;
+        case "InterestFlag": FieldValue = CUr.InterestFlag;
+        case "VATNr"       : FieldValue = CUr.VATNr;
+        case "CountryCode" : FieldValue = CUr.CountryCode;
+        case "SearchKey"   : FieldValue = CUr.SearchKey;
+        case "RemndrFlag"  : FieldValue = CUr.RemndrFlag;
+        case "LangCode"    : FieldValue = CUr.LangCode;
+        case "CurncyCode"  : FieldValue = CUr.CurncyCode;
+        case "OnAccount"   : FieldValue = CUr.OnAccount;
+        case "SalesMan"    : FieldValue = CUr.SalesMan;
+        case "CreditLimit" : FieldValue = CUr.CreditLimit;
+        case "ShipDeal"    : FieldValue = CUr.ShipDeal;
+        case "ShipMode"    : FieldValue = CUr.ShipMode;
+        case "VATCode"     : FieldValue = CUr.VATCode;
+        case "Department"  : FieldValue = CUr.Department;
+        case "OrderComment": FieldValue = CUr.OrderComment;
+        case "FreightNr"   : FieldValue = CUr.FreightNr;
+        case "PLCode"      : FieldValue = CUr.PLCode;
+        case "RebCode"     : FieldValue = CUr.RebCode;
+        case "Classification": if (nonblank(MFrw.Param)) then begin GetClass(MFrw.Param,CUr.Classification,FieldValue,tstr); end;
+        case "blockedFlag" : FieldValue = CUr.blockedFlag;
+        case "DateChanged" : FieldValue = CUr.DateChanged;
+        case "AccOperator" : FieldValue = CUr.AccOperator;
+        case "BankAccount" : FieldValue = CUr.BankAccount;
+        case "CustType"    : FieldValue = CUr.CustType;
+        case "Sorting"     : FieldValue = CUr.Sorting;
+        case "RegNr1"      : FieldValue = CUr.RegNr1;
+        case "RegNr2"      : FieldValue = CUr.RegNr2;
+        case "wwwAddr"     : FieldValue = CUr.wwwAddr;
+        case "CompItemCode": FieldValue = CUr.CompItemCode;
+        case "ANACode"     : FieldValue = CUr.ANACode;
+        case "EDIFlag"     : FieldValue = CUr.EDIFlag;
+        case "eMail"       : FieldValue = CUr.eMail;
+        case "IntRate"     : FieldValue = CUr.IntRate;
+        case "TheirCode"   : FieldValue = CUr.TheirCode;
+        case "SalesGroup"  : FieldValue = CUr.SalesGroup;
+        case "SortCode"    : FieldValue = CUr.SortCode;
+        case "DateCreated" : FieldValue = CUr.DateCreated;
+        case "InvAddr3"    : FieldValue = CUr.InvAddr3;
+        case "InvAddr4"    : FieldValue = CUr.InvAddr4;
+        case "DelAddr3"    : FieldValue = CUr.DelAddr3;
+        case "DelAddr4"    : FieldValue = CUr.DelAddr4;
+        case "WebConf"     : FieldValue = CUr.WebConf;
+        case "WebStartPage": FieldValue = CUr.WebStartPage;
+        case "FreightCode" : FieldValue = CUr.FreightCode;
+        case "MainDispGroup" : FieldValue = CUr.MainDispGroup;
+        case "OnHoldFlag"  : FieldValue = CUr.OnHoldFlag;
+        case "LocationCode": FieldValue = CUr.LocationCode;
+        case "WebDisplays" : FieldValue = CUr.WebDisplays;
+        case "Mobile"      : FieldValue = CUr.Mobile;
+        case "NoLetterPosting" : FieldValue = CUr.NoLetterPosting;
+        case "FiscalFlag"  : FieldValue = CUr.FiscalFlag;
+        case "UserStr1"    : FieldValue = CUr.UserStr1;
+        case "UserStr2"    : FieldValue = CUr.UserStr2;
+        case "UserStr3"    : FieldValue = CUr.UserStr3;
+        case "UserStr4"    : FieldValue = CUr.UserStr4;
+        case "UserStr5"    : FieldValue = CUr.UserStr5;
+        case "UserVal1"    : FieldValue = CUr.UserVal1;
+        case "UserVal2"    : FieldValue = CUr.UserVal2;
+        case "UserVal3"    : FieldValue = CUr.UserVal3;
+        case "UserDate1"   : FieldValue = CUr.UserDate1;
+        case "UserDate2"   : FieldValue = CUr.UserDate2;
+        case "UserDate3"   : FieldValue = CUr.UserDate3;
+        case "AccAP"       : FieldValue = CUr.AccAP;
+        case "AccCost"     : FieldValue = CUr.AccCost;
+        case "Bank"        : FieldValue = CUr.Bank;
+        case "OnAccAccAP"  : FieldValue = CUr.OnAccAccAP;
+        case "MinOrdSum"   : FieldValue = CUr.MinOrdSum;
+        case "RefStr"      : FieldValue = CUr.RefStr;
+        case "NoMailPosting" : FieldValue = CUr.NoMailPosting;
+        case "VEType"      : FieldValue = CUr.VEType;
+        case "CUType"      : FieldValue = CUr.CUType;
+        case "IBANCode"    : FieldValue = CUr.IBANCode;
+        case "SkypeName"   : FieldValue = CUr.SkypeName;
+        case "Region"      : FieldValue = CUr.Region;
+        case "SIPCode"     : FieldValue = CUr.SIPCode;
+        case "AltPhone"    : FieldValue = CUr.AltPhone;
+        case "Comment0"    : FieldValue = CUr.Comment0;
+        case "Comment1"    : FieldValue = CUr.Comment1;
+        case "Comment2"    : FieldValue = CUr.Comment2;
+        case "Title"       : FieldValue = CUr.Title;
+        case "Salutation1" : FieldValue = CUr.Salutation1;
+        case "Salutation2" : FieldValue = CUr.Salutation2;
+        case "Salutation3" : FieldValue = CUr.Salutation3;
+    end;
+    if (MFrw.Type == 1) then begin
+      switch (MFrw.dbField) begin
+        case "InvoiceToCode": GetCUName(CUr.InvoiceToCode,FieldValue);
+        case "CustCat" : GetCatName(CUr.CustCat,FieldValue);
+        case "PayDeal" : GetPayDealText(CUr.PayDeal,CUr.LangCode,FieldValue);
+        case "ShipDeal": GetShipDealText(CUr.ShipDeal,CUr.LangCode,FieldValue);
+        case "ShipMode": GetShipModeText(CUr.ShipMode,CUr.LangCode,FieldValue);
+        case "SalesMan": GetUserName(CUr.SalesMan,FieldValue);
+        case "Classification": FieldValue = tstr;
+        case "Objects": FieldValue = tstr;
+      end;
+    end;    
+    if (i==rwcnt-1) then begin
+      AddField("name",MFrw.FieldName,false,"value",FieldValue,a,false);
+    end else begin
+      AddField("name",MFrw.FieldName,false,"value",FieldValue,a,true);
+    end;
+  end;
+  if (nonblank(title) or nonblank(tag)) then begin
+    AddLine("],",a);
+  end else begin
+    AddLine("]",a);
+  end;
+  if (nonblank(title)) then begin
+    switch (actTitle) begin
+      case 0: action = "lists";
+      case 1: action = "addLists";
+      case 2: action = "removeLists";
+    end;
+    AddLine("""" & action & """: [",a);
+    AddField("id","0",true,"title",title,a,false);
+    if (nonblank(tag)) then begin
+      AddLine("],",a);
+    end else begin
+      AddLine("]",a);
+    end;
+  end;
+  if (nonblank(tag)) then begin
+    switch (actTag) begin
+      case 0: action = "tags";
+      case 1: action = "addTags";
+      case 2: action = "removeTags";
+    end;
+    AddLine("""" & action & """: [",a);
+    AddField("id","0",true,"title",tag,a,false);
+    AddLine("]",a);
+  end;
+  AddTextToArea("}",a);
+  return;
+end;
+
+global
+function boolean GenerateContactRequest(var record RcVc RepSpec,record MailbowBlock MBb,record MailbowFieldsBlock MFb,record CYBlock CYb,Integer rwcnt)
+begin
+  record CUVc CUr;
+  record CUVc ContactCUr;
+  string 255 ckey,email,title;
+  Integer keys;
+  Boolean TrHs,testf,firstf;
+  Boolean res;
+  LongInt counter;
+  area a;
+
+  res = false;
+  counter = 1;
+
+  AddRequestHeader(MBb,a,true);
+  title = RepSpec.f4;
+  firstf = true;
+
+  SetLoopPosition(CUr,RepSpec.long1);
+  if (blank(RepSpec.f1)) then begin
+    CUr.Code = RepSpec.f3;
+    ckey = "Code";
+    keys = 1;
+  end else begin
+    CUr.CustCat = RepSpec.f1;
+    CUr.Code = RepSpec.f3;
+    ckey = "Group";
+    keys = 2;
+  end;
+  TrHs = true;
+  while (LoopKey(ckey,CUr,1,TrHs)) begin
+    if (TrHs) then begin
+      if (nonblank(RepSpec.f1)) then begin
+        if (CUr.CustCat != RepSpec.f1) then begin
+          TrHs = false;
+        end;
+      end;
+      if (nonblank(RepSpec.f3)) then begin
+        if (CUr.Code != RepSpec.f3) then begin
+          TrHs = false;
+        end;
+      end;
+      if (TrHs) then begin
+        testf = true;
+        if (nonblank(RepSpec.f2)) then begin
+          if (SetInSet(RepSpec.f2,CUr.Classification)==false) then begin testf = false; end;
+        end;
+        if (testf) then begin
+          email = CUr.eMail;
+          if (CheckEmailStr(email)==false) then begin
+            email = "";
+            if (FindCustomerRelation(CUr.Code,CUr.Person,ContactCUr)) then begin
+              email = ContactCUr.eMail;
+              if (CheckEmailStr(email)==false) then begin
+                email = "";
+              end;
+            end;
+          end;
+        end;
+        if (testf) and nonblank(email) then begin
+          AddContactInRequest(CUr,email,title,RepSpec.flags[0],RepSpec.f5,RepSpec.flags[1],MFb,rwcnt,firstf,a);
+          firstf = false;
+          counter = counter + 1;
+          if (counter > MBb.PackageSize) then begin
+            RepSpec.long1 = GetLoopPosition(CUr);
+            res = true;
+            goto LExtLoop;
+          end;
+        end; 
+      end;
+    end;  
+  end;
+LExtLoop:;
+  AddRequestFooter(a);
+  
+  if (firstf == false) then begin
+    threadasync.SendOutMailbowContractRequest(a,MBb.dbConf,false);//ts - 2018, do not wait for answer. Only way to solve slow web-call
+    queued.StoreCUServiceUsage(CurrentDate,CYb.OrgNr,11,"MAILBOW",1,counter);//ts - 2018/04, e-service statistic
+  end;
+
+  GenerateContactRequest = res;
+  return;
+end;
+
+global
+procedure CUtoMailbowMn(record RcVc RepSpec)
+begin
+  record MailbowBlock MBb;
+  record MailbowFieldsBlock MFb;
+  record CYBlock CYb;
+  Integer rwcnt,counter;
+
+  BlockLoad(MBb);
+  BlockLoad(CYb);
+  BlockLoad(MFb);
+  rwcnt = MatRowCnt(MFb);
+  if (rwcnt <= 0) then begin
+    goto LSkipContactRequest;
+  end;
+
+  while (GenerateContactRequest(RepSpec,MBb,MFb,CYb,rwcnt)) begin
+    //split packages
+  end;
+LSkipContactRequest:;
+  return;
+end;

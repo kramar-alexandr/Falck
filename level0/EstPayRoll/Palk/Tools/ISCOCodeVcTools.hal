@@ -1,0 +1,18 @@
+external procedure NextM4Number(string,var string);
+
+global
+function boolean GetNextISCONr(var string isconr)
+begin
+  boolean res;
+  record ISCOCodeVc ISCOr;
+  
+  ISCOr.Code = "ZZZZZZZZZZZZZZZZZZZ";
+  if (ReadLastMain(ISCOr,1,false)) then begin
+    NextM4Number(ISCOr.Code,isconr);
+  end else begin
+    isconr = "1";
+  end;
+  GetNextISCONr = res;
+  return;
+end;
+

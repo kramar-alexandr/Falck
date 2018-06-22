@@ -1,0 +1,32 @@
+global
+procedure DblVATInfEn(string dblstr,string l,Integer currepwn)
+begin
+  Integer wn;
+  record RcVc curRepSpec;
+  record RcVc RepSpec;
+
+  if (nonblank(dblstr)) then begin
+    GetWindowRecord(currepwn,curRepSpec);
+    ReportDefaults(RepSpec,"VATInfEClass");    
+    RepSpec.repname = "VATInfEn";
+    RepSpec.Media = mtFile;
+    RepSpec.flags[0] = curRepSpec.flags[0];
+    RepSpec.flags[1] = curRepSpec.flags[1];
+    RepSpec.flags[2] = curRepSpec.flags[2];
+    RepSpec.flags[3] = curRepSpec.flags[3];
+    RepSpec.flags[4] = curRepSpec.flags[4];
+    RepSpec.flags[5] = curRepSpec.flags[5];
+    RepSpec.flags[6] = curRepSpec.flags[6];
+    RepSpec.flags[7] = curRepSpec.flags[7];
+    RepSpec.flags[8] = curRepSpec.flags[8];
+    RepSpec.flags[9] = curRepSpec.flags[9];
+    RepSpec.flags[10] = curRepSpec.flags[10];//Bk
+    RepSpec.Comparison = curRepSpec.Comparison;
+    RepSpec.Period2Str = curRepSpec.Period2Str;
+    RepSpec.sStartDate = curRepSpec.sStartDate;
+    RepSpec.sEndDate = curRepSpec.sEndDate;
+    RunExport(RepSpec,true);   
+  end;
+  return;
+end;
+

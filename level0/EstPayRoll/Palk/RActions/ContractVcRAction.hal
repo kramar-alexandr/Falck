@@ -1,0 +1,475 @@
+external function integer CheckObjs(string,string,var string);
+external updating function boolean CreateVacBalFromContrr(record ContractVc);
+external procedure GetVacDaysData(var integer,var string);
+external function string 20 GetAccGroupCode();
+external function Boolean SerNrTestContractVc(LongInt,date);
+external function boolean PaymTypeExsists(string);
+external function boolean IsVacAbsTypeFlag(string);
+external function boolean AccGroupExsists(string);
+
+global 
+function Boolean ContractDClassDeleteRowTest(Integer wn,Integer rownr)
+begin
+  record ContractVc Contrr;
+  integer updatemode;
+  boolean res;
+
+  res = true;
+  updatemode = 2;
+  if (WindowState(wn)==updatemode) then begin
+    GetPrevWindowRecord(wn,Contrr);
+  end else begin
+    GetWindowRecord(wn,Contrr);
+  end;
+  if (Contrr.Status==3) then begin
+    res = false;
+  end;
+  ContractDClassDeleteRowTest = res;
+  return;
+end;
+
+global
+function LongInt ContractVcRecordDefaults(var record ContractVc Contrr,record ContractVc Contr2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  integer vacdaysnorm;
+  string 10 vacabstypecode;
+  date tmpdate;
+  
+  Contrr.SerNr=-1;
+  Contrr.StartDate=CurrentDate;
+  tmpdate.day=1;
+  tmpdate.month=GetMonth(CurrentDate);
+  tmpdate.year=GetYear(CurrentDate);
+  Contrr.ITFStartDate=tmpdate;
+  Contrr.DPDStartDate=tmpdate;
+  GetVacDaysData(vacdaysnorm,vacabstypecode);
+  Contrr.VacAbsTypeCode=vacabstypecode;
+  Contrr.VacDaysNorm=vacdaysnorm;
+  Contrr.IncTaxFreeMinFlag=1;
+  Contrr.AccGroupCode=GetAccGroupCode;
+
+  if (SingleUserMode) then begin
+    Contrr.SerNr = NextSerNr("ContractVc",Contrr.StartDate,-1,false,"");
+  end;
+
+  ContractVcRecordDefaults = res; 
+  return;
+end;
+
+global
+function LongInt ContractVcRecordDuplicate(var record ContractVc Contrr,record ContractVc Contr2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+ 
+  Contrr.SerNr=-1;
+  Contrr.StartDate=CurrentDate;
+  if (SingleUserMode) then begin
+    Contrr.SerNr = NextSerNr("ContractVc",Contrr.StartDate,-1,false,"");
+  end;
+  ContractVcRecordDuplicate = res; 
+  return;
+end;
+
+global
+function LongInt ContractVcRecordCheck(var record ContractVc Contrr,record ContractVc Contr2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  record ContractVc Contr3r;
+  row ContractVc Contrrw;
+  row ContractVc Contr2rw;
+  record PositionVc Posr;
+  record EmplVc Emplr;
+  record AccGroupVc AGr;
+  integer rwcnt,i,j;
+  string 255 tstr;
+  LongInt updatemode,insertmode,errcode;
+  boolean flag;
+  
+  insertmode=1;
+  updatemode=2;
+  res = 0;
+  
+  if (stat!=insertmode) then begin
+    if (Contrr.Status>1) then begin
+      goto LContractVcRecordCheck;
+    end;
+  end;
+  if (stat==updatemode) then begin
+    if (Contrr.SerNr<=0)  then begin
+      Contrr.SerNr = Contr2r.SerNr;
+    end;
+  end;
+  if (Contrr.SerNr==-1) then begin
+    Contrr.SerNr = NextSerNr("ContractVc",Contrr.StartDate,-1,false,"");
+  end;
+  if (SerNrTestContractVc(Contrr.SerNr,Contrr.StartDate)==false) then begin
+    RecordCheckError(1557,"",-1,"SerNr");      
+    res = -1; 
+    goto LContractVcRecordCheck;
+  end;
+
+  if (stat==insertmode) or (stat==updatemode and Contrr.SerNr!=Contr2r.SerNr) then begin
+    Contr3r.SerNr = Contrr.SerNr;
+    if (ReadFirstMain(Contr3r,1,true)) then begin
+      RecordCheckError(1547," " & Contrr.SerNr,-1,"SerNr");      
+      res = -1; 
+      goto LContractVcRecordCheck;
+    end;
+  end;   
+  if (len(Contrr.SerNr)<=0 or (Contrr.SerNr<=0)) then begin
+    RecordCheckError(1500318,"",-1,"SerNr");      
+    res = -1; 
+    goto LContractVcRecordCheck;
+  end;
+
+  if (blank(Contrr.EmplCode)) then begin
+    RecordCheckError(1500300,"",-1,"EmplCode");      
+      res = -1; 
+      goto LContractVcRecordCheck; 
+  end else begin
+    Emplr.Code = Contrr.EmplCode;
+    if (ReadFirstMain(Emplr,1,true)==false) then begin
+      RecordCheckError(1500319," " & Contrr.EmplCode,-1,"EmplCode");      
+      res = -1; 
+      goto LContractVcRecordCheck; 
+    end else begin
+      if ((Emplr.ClosedFlag==1) and (Contrr.Status<2)) then begin
+        RecordCheckError(1500320," " & Contrr.EmplCode,-1,"EmplCode");      
+        res = -1; 
+        goto LContractVcRecordCheck; 
+      end;
+    end;
+  end;
+
+  if (blank(Contrr.StartDate)) then begin
+    RecordCheckError(1500321,"",-1,"StartDate");      
+    res = -1; 
+    goto LContractVcRecordCheck;
+  end;
+
+  if (nonblank(Contrr.EndDate)) then begin
+    if (Contrr.EndDate<Contrr.StartDate) then begin
+      RecordCheckError(1500322,"",-1,"EndDate");      
+      res = -1; 
+      goto LContractVcRecordCheck;
+    end;
+  end;
+  if (Contrr.IncTaxFreeMinFlag!=0) then begin
+    if (blank(Contrr.ITFStartDate)) then begin
+      RecordCheckError(1500323,"",-1,"ITFStartDate");      
+      res = -1; 
+      goto LContractVcRecordCheck;
+    end else begin  
+      if (Contrr.ITFStartDate<Contrr.StartDate) then begin
+        RecordCheckError(1500498,"",-1,"ITFStartDate");      
+        res = -1; 
+        goto LContractVcRecordCheck;
+      end;
+    end;
+  end;
+  if (Contrr.DisPensFlag!=0) then begin
+    if (blank(Contrr.DPDStartDate)) then begin
+      RecordCheckError(1500496,"",-1,"DPDStartDate");      
+      res = -1; 
+      goto LContractVcRecordCheck;
+    end else begin
+      if (Contrr.DPDStartDate<Contrr.StartDate) then begin
+        RecordCheckError(1500497,"",-1,"DPDStartDate");      
+        res = -1; 
+        goto LContractVcRecordCheck;
+      end;
+    end;
+  end;  
+  if (nonblank(Contrr.ObjCode)) then begin
+    errcode = CheckObjs("",Contrr.ObjCode,tstr);
+    if (errcode!=0) then begin
+      RecordCheckError(errcode,tstr,-1,"ObjCode");      
+      res = -1; 
+      goto LContractVcRecordCheck;
+    end;
+  end;
+  if blank(Contrr.AccGroupCode) then begin
+    RecordCheckError(1500345,"",-1,"AccGroupCode");      
+    res = -1; 
+    goto LContractVcRecordCheck;
+  end else begin
+    if (AccGroupExsists(Contrr.AccGroupCode)==false) then begin
+      RecordCheckError(1500331," " & Contrr.AccGroupCode,-1,"AccGroupCode");      
+      res = -1; 
+      goto LContractVcRecordCheck;
+    end;
+  end;
+  if (blank(Contrr.VacAbsTypeCode)) then begin
+    RecordCheckError(1500340,"",-1,"VacAbsTypeCode");      
+    res = -1; 
+    goto LContractVcRecordCheck; 
+  end else begin
+    if (IsVacAbsTypeFlag(Contrr.VacAbsTypeCode)==false) then begin
+      RecordCheckError(1500499," ",-1,"VacAbsTypeCode");      
+      res = -1; 
+      goto LContractVcRecordCheck; 
+    end;
+  end;
+
+  if (stat==updatemode and Contrr.Status==0 and Contr2r.Status>0) then begin
+    Contr3r.SerNr = Contrr.SerNr;
+    if (ReadFirstMain(Contr3r,1,true)) then begin
+      RecordCheckError(1500330," ",-1,"Status");      
+      res = -1; 
+      goto LContractVcRecordCheck;
+    end;
+  end;   
+  
+  rwcnt=MatRowCnt(Contrr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(Contrr,i,Contrrw);
+    if blank(Contrrw.PosCode) then begin
+      RecordCheckError(1500307," " & Contrrw.PosCode,i,"PosCode");      
+      res = -1; 
+      goto LContractVcRecordCheck;
+    end else begin
+      Posr.Code=Contrrw.PosCode;
+      if (ReadFirstMain(Posr,1,true)==false) then begin
+        RecordCheckError(1500324," " & Contrrw.PosCode,i,"PosCode");      
+        res = -1; 
+        goto LContractVcRecordCheck;
+      end;
+    end;
+    if blank(Contrrw.SDate) then begin
+      RecordCheckError(1500321,"",i,"SDate");      
+      res = -1; 
+      goto LContractVcRecordCheck;
+    end;
+    if (nonblank(Contrrw.EDate)) then begin
+      if (Contrrw.EDate<Contrrw.SDate) then begin
+        RecordCheckError(1500322,"",i,"EDate");      
+        res = -1; 
+        goto LContractVcRecordCheck;
+      end;
+    end;
+    if blank(Contrrw.WorkLoad) then begin
+      RecordCheckError(1500325,"",i,"WorkLoad");      
+      res = -1; 
+      goto LContractVcRecordCheck;
+    end;
+    if (nonblank(Contrrw.ObjCode)) then begin
+      errcode = CheckObjs("",Contrrw.ObjCode,tstr);
+      if (errcode!=0) then begin
+        RecordCheckError(errcode,tstr,i,"ObjCode");      
+        res = -1; 
+        goto LContractVcRecordCheck;
+      end;
+    end;
+    if blank(Contrrw.PaymTypeCode) then begin
+      RecordCheckError(1500316,"",i,"PaymTypeCode");      
+      res = -1; 
+      goto LContractVcRecordCheck;
+    end;
+    if (PaymTypeExsists(Contrrw.PaymTypeCode)==false) then begin
+      RecordCheckError(1500326," " & Contrrw.PaymTypeCode,i,"PaymTypeCode");      
+      res = -1; 
+      goto LContractVcRecordCheck;
+    end;
+  end;
+  
+  rwcnt=MatRowCnt(Contrr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(Contrr,i,Contrrw);
+    if nonblank(Contrrw.PosCode) then begin
+      for (j=i+1;j<rwcnt;j=j+1) begin
+        MatRowGet(Contrr,j,Contr2rw);
+        if ((Contrrw.PosCode==Contr2rw.PosCode) and (Contrrw.PaymTypeCode==Contr2rw.PaymTypeCode)) then begin
+          if (DateInRange(Contr2rw.SDate,Contrrw.SDate,Contrrw.EDate)) then begin
+            flag=true;
+          end;
+          if (DateInRange(Contr2rw.EDate,Contrrw.SDate,Contrrw.EDate)) then begin
+            flag=true;
+          end;
+          if ((Contr2rw.SDate<Contrrw.SDate) and (Contrrw.EDate>Contrrw.EDate)) then begin
+            flag=true;
+          end;
+          if (flag) then begin
+            MessageBox(1500328,"");      
+            goto LContractVcRecordCheck;
+          end;
+        end;
+      end;
+    end;
+  end;
+LContractVcRecordCheck:;
+  ContractVcRecordCheck = res;
+  return;
+end;
+
+global
+function LongInt ContractVcRecordSave(var record ContractVc Contrr,record ContractVc Contr2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+
+  ContractVcRecordSave = res;
+  return;
+end;
+
+global
+updating function LongInt ContractVcRecordSaveAfter(var record ContractVc Contrr,record ContractVc Contr2r,LongInt stat,LongInt long4)
+begin
+  LongInt res,wn;
+  
+  if (Contrr.Status==1) then begin
+    CreateVacBalFromContrr(Contrr);
+  end;
+
+  ContractVcRecordSaveAfter = res;
+  return;
+end;
+
+global
+updating function LongInt ContractVcRecordUpdate(var record ContractVc Contrr,record ContractVc Contr2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  ContractVcRecordUpdate = res;
+  return;
+end;
+
+global
+updating function LongInt ContractVcRecordUpdateAfter(var record ContractVc Contrr,record ContractVc Contr2r,LongInt stat,LongInt long4)
+begin
+  LongInt res,wn;
+  
+  if (Contrr.Status==1 and Contr2r.Status!=1) then begin
+    CreateVacBalFromContrr(Contrr);
+  end;
+
+  ContractVcRecordUpdateAfter = res;
+  return;
+end;
+
+function boolean ContrInUse(LongInt contrsernr)
+begin
+  boolean res;
+  record AbsenceVc Absr;
+  record VacBalanceVc VBr;
+  record CalcPayrollVc CPr;
+  record  OpenTransVc OTr;
+  row OpenTransVc OTrw;  
+  record PieceWorkVc PWr;  
+  row PieceWorkVc PWrw;  
+  record PieceWorkTypeVc PWTr;  
+  row PieceWorkTypeVc PWTrw;  
+  record WorkedHoursVc WHr;
+  row WorkedHoursVc WHrw;  
+  integer rwcnt,i;
+ 
+//Puudumised
+  Absr.ContrSerNr = contrsernr;
+  if (ReadFirstKey("ContrSerNr",Absr,1,true)) then begin
+    res=true;
+    goto LContrInUse;
+  end;
+
+//Puhkuse saldod
+  VBr.ContrSerNr = contrsernr;
+  if (ReadFirstKey("ContrSerNr",VBr,1,true)) then begin
+    res=true;
+    goto LContrInUse;
+  end;
+
+//Arvestused
+  CPr.ContrSerNr = contrsernr;
+  if (ReadFirstKey("ContrSerNr",CPr,1,true)) then begin
+    res=true;
+    goto LContrInUse;
+  end;
+
+//Avatud kanded
+  ResetLoop(OTr);
+  OTr.SerNr = -1;
+  while (LoopMain(OTr,1,true)) begin  
+    rwcnt=MatRowCnt(OTr);
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(OTr,i,OTrw);
+      if (OTrw.ContrSerNr==contrsernr) then begin
+        res=true;
+        goto LContrInUse;
+      end;
+    end;
+  end;
+
+//TŸkitššd
+  ResetLoop(PWr);
+  PWr.SerNr = -1;
+  while (LoopMain(PWr,1,true)) begin  
+    rwcnt=MatRowCnt(PWr);
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(PWr,i,PWrw);
+      if (PWrw.ContrSerNr==contrsernr) then begin
+        res=true;
+        goto LContrInUse;
+      end;
+    end;
+  end;
+
+//TŸkitšš liigid
+  ResetLoop(PWTr);
+  PWTr.Code = "";
+  while (LoopMain(PWTr,1,true)) begin  
+    rwcnt=MatRowCnt(PWTr);
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(PWTr,i,PWTrw);
+      if (PWTrw.ContrSerNr==contrsernr) then begin
+        res=true;
+        goto LContrInUse;
+      end;
+    end;
+  end;
+
+//Tššajatabelid
+  ResetLoop(WHr);
+  WHr.SerNr = -1;
+  while (LoopMain(WHr,1,true)) begin  
+    rwcnt=MatRowCnt(WHr);
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(WHr,i,WHrw);
+      if (WHrw.ContrSerNr==contrsernr) then begin
+        res=true;
+        goto LContrInUse;
+      end;
+    end;
+  end;
+
+LContrInUse:;
+  ContrInUse = res; 
+  return;
+end;
+
+global
+function LongInt ContractVcRecordRemoveTest(var record ContractVc Contrr,record ContractVc Contr2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+  boolean testf;
+
+  res = 1;
+  testf = ContrInUse(Contrr.SerNr);
+  if (testf) then begin
+    MessageBox(1500327,"")
+    res = 0;
+  end;
+  ContractVcRecordRemoveTest = res; 
+  return;
+end;
+
+global
+function LongInt ContractVcRecordInIndex(record ContractVc Contrr,string indexname)
+begin
+  LongInt res;
+
+  res = 1;
+  if (Contrr.Status>1) then begin
+    if (indexname=="SerNrUnclosed")  then begin res = 0; end;
+    if (indexname=="EmplCodeUnclosed")  then begin res = 0; end;
+  end;
+
+  ContractVcRecordInIndex = res;
+  return;
+end;

@@ -1,0 +1,218 @@
+external function boolean GetNextAbsFBSerNr(var LongInt);
+external function boolean ContractExsists(LongInt);
+external function boolean AbsTypeExsists(string);
+external procedure SetMarkFlag(integer,var integer);
+external updating procedure UpdateVacBalFromAbsenceFBr(record AbsenceFBVc,boolean);
+
+global
+function LongInt AbsenceFBVcRecordDefaults(var record AbsenceFBVc AFBr,record AbsenceFBVc AFB2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+   
+  if (SingleUserMode) then begin
+    if (GetNextAbsFBSerNr(AFBr.SerNr)) then begin end;
+  end else begin
+    AFBr.SerNr = -1;
+  end;
+  
+  AbsenceFBVcRecordDefaults = res; 
+  return;
+end;
+
+global
+function LongInt AbsenceFBVcRecordDuplicate(var record AbsenceFBVc AFBr,record AbsenceFBVc AFB2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+ 
+  AFBr.OKFlag = 0;
+  SetMarkFlag(AFBr.OKFlag,AFBr.OKMark);
+  AFBr.Invalid = 0;
+  if (SingleUserMode) then begin
+    if (GetNextAbsFBSerNr(AFBr.SerNr)) then begin end;
+  end else begin
+    AFBr.SerNr =-1;
+  end;
+  AbsenceFBVcRecordDuplicate = res; 
+  return;
+end;
+
+global
+function LongInt AbsenceFBVcRecordCheck(var record AbsenceFBVc AFBr,record AbsenceFBVc AFB2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  record AbsenceFBVc AFB3r;
+  row AbsenceFBVc AFBrw;
+  row AbsenceFBVc AFB2rw;
+  integer rwcnt,i;
+  LongInt updatemode,insertmode;
+  
+  insertmode=1;
+  updatemode=2;
+  res = 0;
+ 
+  if (AFB2r.Invalid!=0) then begin
+    RecordCheckError(1282,"",0,"");      
+    res = -1; 
+    goto LAbsenceFBVcRecordCheck;
+  end;
+  if (stat!=insertmode) then begin
+    if (AFB2r.OKFlag!=0) then begin
+      goto LAbsenceFBVcRecordCheck;
+    end;
+  end;  
+
+  if (stat==updatemode) then begin
+    if (AFBr.SerNr<=0)  then begin
+      AFBr.SerNr = AFB2r.SerNr;
+    end;
+  end;
+  if (AFBr.SerNr==-1) then begin
+    if (GetNextAbsFBSerNr(AFBr.SerNr)) then begin end;
+  end;
+
+  if (stat==insertmode) or (stat==updatemode and AFBr.SerNr!=AFB2r.SerNr) then begin
+    AFB3r.SerNr = AFBr.SerNr;
+    if (ReadFirstMain(AFB3r,1,true)) then begin
+      RecordCheckError(1547," " & AFBr.SerNr,-1,"SerNr");      
+      res = -1; 
+      goto LAbsenceFBVcRecordCheck;
+    end;
+  end;   
+  if (len(AFBr.SerNr)<=0 or (AFBr.SerNr<=0)) then begin
+    RecordCheckError(1500343,"",-1,"SerNr");      
+    res = -1; 
+    goto LAbsenceFBVcRecordCheck;
+  end;
+ 
+  rwcnt=MatRowCnt(AFBr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(AFBr,i,AFBrw);
+    if (AFBrw.ContrSerNr<=0) then begin
+      RecordCheckError(1500318,"",i,"ContrSerNr");      
+      res = -1; 
+      goto LAbsenceFBVcRecordCheck; 
+    end else begin
+      if (ContractExsists(AFBrw.ContrSerNr)==false) then begin
+        RecordCheckError(1500332," v›i ei ole aktiivne " & AFBrw.ContrSerNr,i,"ContrSerNr");      
+        res = -1; 
+        goto LAbsenceFBVcRecordCheck; 
+      end;
+    end;
+    if (blank(AFBrw.AbsTypeCode)) then begin
+      RecordCheckError(1500340,"",i,"AbsTypeCode");      
+        res = -1; 
+        goto LAbsenceFBVcRecordCheck; 
+    end else begin
+      if (AbsTypeExsists(AFBrw.AbsTypeCode)==false) then begin
+        RecordCheckError(1500339," " & AFBrw.AbsTypeCode,i,"AbsTypeCode");      
+        res = -1; 
+        goto LAbsenceFBVcRecordCheck; 
+      end;
+    end;
+    if blank(AFBrw.SDate) then begin
+      RecordCheckError(1500321,"",i,"SDate");      
+      res = -1; 
+      goto LAbsenceFBVcRecordCheck;
+    end;
+    if (nonblank(AFBrw.EDate)) then begin
+      if (AFBrw.EDate<AFBrw.SDate) then begin
+        RecordCheckError(1500322,"",i,"EDate");      
+        res = -1; 
+        goto LAbsenceFBVcRecordCheck;
+      end;
+    end;
+  end;
+LAbsenceFBVcRecordCheck:;
+  if (res==-1) then begin
+    AFBr.OKFlag=0;
+    SetMarkFlag(AFBr.OKFlag,AFBr.OKMark);
+  end;
+  AbsenceFBVcRecordCheck = res;
+  return;
+end;
+
+global
+function LongInt AbsenceFBVcRecordSave(var record AbsenceFBVc AFBr,record AbsenceFBVc AFB2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+ 
+  SetMarkFlag(AFBr.OKFlag,AFBr.OKMark);
+  AbsenceFBVcRecordSave = res; 
+  return;
+end;
+
+global
+updating function LongInt AbsenceFBVcRecordSaveAfter(var record AbsenceFBVc AFBr,record AbsenceFBVc AFB2r,LongInt stat,LongInt long4)
+begin
+  LongInt res,wn;
+  
+  if (AFBr.OKFlag!=0) then begin
+    UpdateVacBalFromAbsenceFBr(AFBr,true);
+  end;
+  AbsenceFBVcRecordSaveAfter = res;
+  return;
+end;
+
+global
+function LongInt AbsenceFBVcRecordUpdate(var record AbsenceFBVc AFBr,record AbsenceFBVc AFB2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+ 
+  SetMarkFlag(AFBr.OKFlag,AFBr.OKMark);
+  AbsenceFBVcRecordUpdate = res; 
+  return;
+end;
+
+global
+updating function LongInt AbsenceFBVcRecordUpdateAfter(var record AbsenceFBVc AFBr,record AbsenceFBVc AFB2r,LongInt stat,LongInt long4)
+begin
+  LongInt res,wn;
+  
+  if ((AFBr.OKFlag!=0) and (AFB2r.OKFlag==0)) then begin
+    UpdateVacBalFromAbsenceFBr(AFBr,true);
+  end;
+  if ((AFBr.OKFlag==0) and (AFB2r.OKFlag!=0)) then begin
+    UpdateVacBalFromAbsenceFBr(AFBr,false);
+  end;
+  AbsenceFBVcRecordUpdateAfter = res;
+  return;
+end;
+
+global
+function LongInt AbsenceFBVcRecordRemoveTest(var record AbsenceFBVc AFBr,record AbsenceFBVc AFB2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+
+  res = 1;
+  if (AFBr.OKFlag!=0) then begin
+    MessageBox(1560,"")
+    res = 0;
+  end;
+  AbsenceFBVcRecordRemoveTest = res; 
+  return;
+end;
+
+global
+updating function LongInt AbsenceFBVcRecordInvalidateTest(var record AbsenceFBVc AFBr,record AbsenceFBVc AFB2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+
+  res = 0;
+  if (AFBr.Invalid==0) and (AFBr.OKFlag!=0) then begin
+    AFBr.Invalid = 1;
+    res = 1;
+  end;
+LAbsenceFBVcRecordInvalidateTest:;
+  AbsenceFBVcRecordInvalidateTest = res;  
+  return;
+end;
+
+global
+updating function LongInt AbsenceFBVcRecordImport(var record AbsenceFBVc AFBr,record AbsenceFBVc AFB2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+  
+  SetMarkFlag(AFBr.OKFlag,AFBr.OKMark);
+  AbsenceFBVcRecordImport = res; 
+  return;
+end;

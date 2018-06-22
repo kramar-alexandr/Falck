@@ -1,0 +1,17 @@
+external procedure NextM4Number(string,var string);
+
+global
+function boolean GetNextTaxNr(var string taxnr)
+begin
+  boolean res;
+  record TaxVc Taxr;
+  
+  Taxr.Code = "ZZZZZZZZZZZZZZZZZZZ";
+  if (ReadLastMain(Taxr,1,false)) then begin
+    NextM4Number(Taxr.Code,taxnr);
+  end else begin
+    taxnr = "1";
+  end;
+  GetNextTaxNr = res;
+  return;
+end;

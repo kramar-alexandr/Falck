@@ -1,0 +1,232 @@
+//cust KB 1.06.2017, IR new functions
+external function Boolean CheckInternetEnabler();
+external updating procedure ServiceSelectWClassSendMulti(string,string);
+external updating procedure CloseServiceSelectWClassMulti(string,string);//ts - 2018/04, added parameter for partner, due to new index in click server
+external function string 255 AddStr(string,string,string);
+external procedure GetUserEmail(string,var string);
+external procedure OpenMailbowActWindow();
+
+//ts - 2018/04, corrections in e-invoice services close or change
+//in case it was activated Omvina sending E-Invoice, changed to Fitek sending E-Invoice, receiving Supplier Invoices
+//changes to close proper Service Usage Status on Click server
+global
+updating procedure SendActivationRequestsEInv()
+begin
+  integer wn,mwn;
+  record RcVc RepSpec;
+  string 255 tstr,closelist,partner;
+  
+  wn = CurWindow;
+  mwn = MotherWindow(wn);
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  if (RepSpec.flags[1] <> 0) then begin
+    switch (RepSpec.flags[0]) begin
+      case 0: tstr = AddStr(tstr,"EARVEKESKUS",",");
+      case 1: tstr = AddStr(tstr,"FITEK",",");
+      case 2: tstr = AddStr(tstr,"ENVOICE",",");
+    end;
+    if (RepSpec.flags[4]!=RepSpec.flags[0]) then begin
+      if (nonblank(RepSpec.f2)) then begin
+        closelist = AddStr(closelist,"0",",");
+        partner = AddStr(partner,RepSpec.f2,",");
+      end;
+    end;
+  end else begin
+    if (nonblank(RepSpec.f2)) then begin
+      closelist = AddStr(closelist,"0",",");
+      partner = AddStr(partner,RepSpec.f2,",");
+    end;
+  end;
+  if (RepSpec.flags[2] <> 0) then begin
+    switch (RepSpec.flags[0]) begin
+      case 0: tstr = AddStr(tstr,"EARVEKESKUS2",",");
+      case 1: tstr = AddStr(tstr,"FITEK2",",");
+      case 2: tstr = AddStr(tstr,"ENVOICE2",",");
+    end;
+    if (RepSpec.flags[4]!=RepSpec.flags[0]) then begin
+      if (nonblank(RepSpec.f3)) then begin
+        closelist = AddStr(closelist,"1",",");
+        partner = AddStr(partner,RepSpec.f3,",");
+      end;
+    end;
+  end else begin
+    if (nonblank(RepSpec.f3)) then begin
+      closelist = AddStr(closelist,"1",",");
+      partner = AddStr(partner,RepSpec.f3,",");
+    end;
+  end;
+  if (RepSpec.flags[3] <> 0) then begin
+    switch (RepSpec.flags[0]) begin
+      case 2: tstr = AddStr(tstr,"ENVOICE3",",");
+    end;
+    if (RepSpec.flags[4]!=RepSpec.flags[0]) then begin
+      if (nonblank(RepSpec.f4)) then begin
+        closelist = AddStr(closelist,"12",",");
+        partner = AddStr(partner,RepSpec.f4,",");
+      end;
+    end;
+  end else begin
+    if (nonblank(RepSpec.f4)) then begin
+      closelist = AddStr(closelist,"12",",");
+      partner = AddStr(partner,RepSpec.f4,",");
+    end;
+  end;
+  ServiceSelectWClassSendMulti(tstr,RepSpec.f1);
+  CloseServiceSelectWClassMulti(closelist,partner);//ts - 2018/04, added parameter for partner, due to new index in click server
+  MessageBox(1500000,"");
+  CloseWindow(wn);
+  CloseWindow(mwn);
+  return;
+end;
+
+global
+updating procedure SendActivationRequestEInvOther(string service)
+begin
+  integer wn;
+  
+  wn = CurWindow;
+  ServiceSelectWClassSendMulti(service,"");
+  MessageBox(1500000,"");
+  CloseWindow(wn);
+  return;
+end;
+
+global
+updating procedure SendActivationRequestEInv4()
+begin
+  integer wn;
+  
+  wn = CurWindow;
+  SendActivationRequestEInvOther("ESTCCLOOKUP");
+  MessageBox(1500000,"");
+  CloseWindow(wn);
+  return;
+end;
+
+global
+updating procedure StopServiceRequestEInv4()
+begin
+  integer wn;
+  
+  wn = CurWindow;
+  CloseServiceSelectWClassMulti("4","");//ts - 2018/04, added parameter for partner, due to new index in click server
+  MessageBox(1500000,"");
+  CloseWindow(wn);
+  return;
+end;
+
+global
+updating procedure SendActivationRequestEInv5()
+begin
+  SendActivationRequestEInvOther("ESTADRLOOKUP");
+  return;
+end;
+
+global
+updating procedure StopServiceRequestEInv5()
+begin
+  integer wn;
+  
+  wn = CurWindow;
+  CloseServiceSelectWClassMulti("5","");//ts - 2018/04, added parameter for partner, due to new index in click server
+  MessageBox(1500000,"");
+  CloseWindow(wn);
+  return;
+end;
+
+global
+updating procedure SendActivationRequestEInv6()
+begin
+  SendActivationRequestEInvOther("ESTCURRATELOOKUP");
+  return;
+end;
+
+global
+updating procedure StopServiceRequestEInv6()
+begin
+  integer wn;
+  
+  wn = CurWindow;
+  CloseServiceSelectWClassMulti("6","");//ts - 2018/04, added parameter for partner, due to new index in click server
+  MessageBox(1500000,"");
+  CloseWindow(wn);
+  return;
+end;
+
+global
+updating procedure SendActivationRequestEInv11() //Mailbow
+begin
+  OpenMailbowActWindow;
+  return;
+end;
+
+global
+updating procedure StopServiceRequestEInv11()
+begin
+  integer wn;
+  
+  wn = CurWindow;
+  CloseServiceSelectWClassMulti("11","");//ts - 2018/04, added parameter for partner, due to new index in click server
+  MessageBox(1500000,"");
+  CloseWindow(wn);
+  return;
+end;
+
+global
+procedure OpenRegWindowEInv()
+begin
+  record RcVc RepSpec;
+  integer wn;
+  record EInvoiceBlock EIb;
+  string 100 tstr;
+
+  wn = CurWindow;
+  BlockLoad(EIb);
+  if (EIb.TestFlag==0) then begin
+    if (CheckInternetEnabler==false) then begin
+      MessageBox(1500007,"");
+      CloseWindow(wn);
+      goto LOpenTermsWindowEInv;
+    end;
+  end;
+  GetUserEmail(CurrentUser,tstr);
+  RepSpec.f1 = tstr;
+  RepSpec.flags[1] = EIb.OutEstEInvoices;
+  RepSpec.flags[2] = EIb.InEstEInvoices;
+  RepSpec.flags[3] = EIb.InIVEstEInvoices;
+//ts - 2018/04, operator should be selected by default according to previously activated operator
+  RepSpec.f2 = EIb.EInvoicePartner;
+  RepSpec.f3 = EIb.SuppInvoicePartner;
+  RepSpec.f4 = EIb.EInInvoicePartner;
+  if (RepSpec.flags[1]==1) then begin
+    tstr = RepSpec.f2;
+  end;
+  if (RepSpec.flags[2]==1) then begin
+    tstr = RepSpec.f3;
+  end;
+  if (RepSpec.flags[3]==1) then begin
+    tstr = RepSpec.f4;
+  end;
+  RepSpec.flags[0] = 0;
+  if (Left(tstr,7)=="ENVOICE") then begin
+    RepSpec.flags[0] = 2;
+  end;  
+  if (Left(tstr,5)=="FITEK") then begin
+    RepSpec.flags[0] = 1;
+  end;  
+  RepSpec.flags[4] = RepSpec.flags[0];//ts - 2018/04, in order to control if operator has changed
+  OpenWindow("EInvRegisterWClass",0,wn,"","",RepSpec);
+LOpenTermsWindowEInv:;
+  return;
+end;
+
+global
+procedure CloseActiveWindowEInv()
+begin
+  integer wn;
+
+  wn = CurWindow;
+  CloseWindow(wn); 
+  return;
+end;

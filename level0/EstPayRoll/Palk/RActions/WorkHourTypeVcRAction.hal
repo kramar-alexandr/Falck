@@ -1,0 +1,117 @@
+external function boolean GetNextWorkHourTypeNr(var string);
+external function boolean WHTrInUse(string);
+external function boolean PaymTypeExsists(string);
+
+global
+function LongInt WorkHourTypeVcRecordDefaults(var record WorkHourTypeVc WHTr,record WorkHourTypeVc WHT2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  
+  if (SingleUserMode) then begin
+    if (GetNextWorkHourTypeNr(WHTr.Code)) then begin end;
+  end else begin
+    WHTr.Code = "";
+  end;
+  WHTr.StartDate=CurrentDate;
+  
+  WorkHourTypeVcRecordDefaults = res; 
+  return;
+end;
+
+global
+function LongInt WorkHourTypeVcRecordDuplicate(var record WorkHourTypeVc WHTr,record WorkHourTypeVc WHT2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+ 
+  if (SingleUserMode) then begin
+    if (GetNextWorkHourTypeNr(WHTr.Code)) then begin end;
+  end else begin
+    WHTr.Code = "";
+  end;
+  WHTr.StartDate=CurrentDate;
+
+  WorkHourTypeVcRecordDuplicate = res; 
+  return;
+end;
+
+global
+function LongInt WorkHourTypeVcRecordCheck(var record WorkHourTypeVc WHTr,record WorkHourTypeVc WHT2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  record WorkHourTypeVc WHT3r;
+  LongInt updatemode,insertmode;
+  
+  insertmode=1;
+  updatemode=2;
+  res = 0;
+  if (blank(WHTr.Code)) then begin
+    if (stat==updatemode) and nonblank(WHT2r.Code) then begin
+      WHTr.Code=WHT2r.Code;
+    end else begin
+      if (GetNextWorkHourTypeNr(WHTr.Code)) then begin end;
+    end;
+  end;
+  if (stat==insertmode) or (stat==updatemode and WHTr.Code!=WHT2r.Code) then begin
+    WHT3r.Code = WHTr.Code;
+    if (ReadFirstMain(WHT3r,1,true)) then begin
+      RecordCheckError(1547," " & WHTr.Code,-1,"Code");      
+      res = -1; 
+      goto LWorkHourTypeVcRecordCheck;
+    end;
+  end;
+  
+  if (len(WHTr.Code)<=0) then begin
+    RecordCheckError(1500347,"",-1,"Code");      
+    res = -1; 
+    goto LWorkHourTypeVcRecordCheck;
+  end;
+/*
+  if blank(WHTr.Coefficient) then begin
+    RecordCheckError(1500348,"",-1,"Coefficient");      
+    res = -1; 
+    goto LWorkHourTypeVcRecordCheck;
+  end;
+*/
+  if blank(WHTr.PaymTypeCode) then begin
+    RecordCheckError(1500316,"",-1,"PaymTypeCode");      
+    res = -1; 
+    goto LWorkHourTypeVcRecordCheck;
+  end;
+  if (PaymTypeExsists(WHTr.PaymTypeCode)==false) then begin
+    RecordCheckError(1500326," " & WHTr.PaymTypeCode,-1,"PaymTypeCode");      
+    res = -1; 
+    goto LWorkHourTypeVcRecordCheck;
+  end;
+
+  if blank(WHTr.StartDate) then begin
+    RecordCheckError(1500321,"",-1,"StartDate");      
+    res = -1; 
+    goto LWorkHourTypeVcRecordCheck;
+  end;
+  if (nonblank(WHTr.EndDate)) then begin
+    if (WHTr.EndDate<WHTr.StartDate) then begin
+      RecordCheckError(1500322,"",-1,"EndDate");      
+      res = -1; 
+      goto LWorkHourTypeVcRecordCheck;
+    end;
+  end;
+LWorkHourTypeVcRecordCheck:;
+  WorkHourTypeVcRecordCheck = res;
+  return;
+end;
+
+
+global
+function LongInt WorkHourTypeVcRecordRemoveTest(var record WorkHourTypeVc WHTr,record WorkHourTypeVc WHT2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+  boolean testf;
+
+  testf = WHTrInUse(WHTr.Code);
+  if (testf) then begin
+    MessageBox(1500349,"")
+    res = 0;
+  end;
+  WorkHourTypeVcRecordRemoveTest = res; 
+  return;
+end;

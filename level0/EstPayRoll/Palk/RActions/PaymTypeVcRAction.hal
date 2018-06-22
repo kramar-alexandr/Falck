@@ -1,0 +1,91 @@
+external function boolean GetNextPaymTypeNr(var string);
+external function boolean PTrInUse(string);
+
+global
+function LongInt PaymTypeVcRecordDefaults(var record PaymTypeVc PTr,record PaymTypeVc PT2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  
+  if (SingleUserMode) then begin
+    if (GetNextPaymTypeNr(PTr.Code)) then begin end;
+  end else begin
+    PTr.Code = "";
+  end;
+  PaymTypeVcRecordDefaults = res; 
+  return;
+end;
+
+global
+function LongInt PaymTypeVcRecordDuplicate(var record PaymTypeVc PTr,record PaymTypeVc PT2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  
+  if (SingleUserMode) then begin
+    if (GetNextPaymTypeNr(PTr.Code)) then begin end;
+  end else begin
+    PTr.Code = "";
+  end;
+  PaymTypeVcRecordDuplicate = res; 
+  return;
+end;
+
+global
+function LongInt PaymTypeVcRecordCheck(var record PaymTypeVc PTr,record PaymTypeVc PT2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  record PaymTypeVc PT3r;
+  LongInt updatemode,insertmode;
+  
+  insertmode=1;
+  updatemode=2;
+  res = 0;
+
+  if (blank(PTr.Code)) then begin
+    if (stat==updatemode) and nonblank(PT2r.Code) then begin
+      PTr.Code=PT2r.Code;
+    end else begin
+      if (GetNextPaymTypeNr(PTr.Code)) then begin end;
+    end;
+  end;
+  if (stat==insertmode) or (stat==updatemode and PTr.Code!=PT2r.Code) then begin
+    PT3r.Code = PTr.Code;
+    if (ReadFirstMain(PT3r,1,true)) then begin
+      RecordCheckError(1547," " & PTr.Code,-1,"Code");      
+      res = -1; 
+      goto LPaymTypeVcRecordCheck;
+    end;
+  end;   
+  
+  if (len(PTr.Code)<=0) then begin
+    RecordCheckError(1500316,"",-1,"Code");      
+    res = -1; 
+    goto LPaymTypeVcRecordCheck;
+  end;
+
+  if blank(PTr.TSDRowCode) then begin
+    RecordCheckError(1500488,"",-1,"TSDRowCode");      
+    res = -1; 
+    goto LPaymTypeVcRecordCheck;
+  end;
+
+  LPaymTypeVcRecordCheck:;
+  PaymTypeVcRecordCheck = res;
+  return;
+end;
+
+global
+function LongInt PaymTypeVcRecordRemoveTest(var record PaymTypeVc PTr,record PaymTypeVc PT2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+  boolean testf;
+
+  res = 1;
+  testf = PTrInUse(PTr.Code);
+  
+  if (testf) then begin
+    MessageBox(1500317,"")
+    res = 0;
+  end;
+  PaymTypeVcRecordRemoveTest = res; 
+  return;
+end;

@@ -1,0 +1,35 @@
+global
+updating function LongInt IncTaxFreeMinBlockCheck(var record IncTaxFreeMinBlock ITFMr,record IncTaxFreeMinBlock CPSer2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  Integer i,rwcnt;
+  row IncTaxFreeMinBlock ITFMrw;
+  row IncTaxFreeMinBlock ITFM2rw;
+  
+  res = 0;
+  rwcnt = MatRowCnt(ITFMr);
+  for (i=0; i<rwcnt;i=i+1) begin
+    MatRowGet(ITFMr,i,ITFMrw);
+    if blank(ITFMrw.SDate) then begin
+      RecordCheckError(1500321,"",i,"SDate");      
+      res = -1; 
+      goto LIncTaxFreeMinBlockCheck;
+    end;
+    if (nonblank(ITFMrw.EDate)) then begin
+      if (ITFMrw.EDate<ITFMrw.SDate) then begin
+        RecordCheckError(1500322,"",i,"EDate");      
+        res = -1; 
+        goto LIncTaxFreeMinBlockCheck;
+      end;
+    end;
+    if blank(ITFMrw.IncTaxFMPerMonth) then begin
+      RecordCheckError(1500376,"",i,"IncTaxFMPerMonth");      
+      res = -1; 
+      goto LIncTaxFreeMinBlockCheck;
+    end;
+  end;  
+
+LIncTaxFreeMinBlockCheck:;  
+  IncTaxFreeMinBlockCheck = res;
+  return;
+end;

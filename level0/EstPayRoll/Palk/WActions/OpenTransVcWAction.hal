@@ -1,0 +1,232 @@
+external function roundmode GetSalaryRoundMode(string);
+external function val GetPieceWorkTypeTariff(string,string,LongInt,date);
+external procedure PasteOTrwsFromContrr(record OpenTransVc,var row OpenTransVc,record ContractVc,var integer);
+external function string 255 GetPaymTypeName(string);
+
+global 
+function Boolean OpenTransDClassDeleteRowTest(Integer wn,Integer rownr)
+begin
+  record OpenTransVc OTr;
+  integer updatemode;
+  boolean res;
+
+  res = true;
+  updatemode = 2;
+  if (WindowState(wn)==updatemode) then begin
+    GetPrevWindowRecord(wn,OTr);
+  end else begin
+    GetWindowRecord(wn,OTr);
+  end;
+  if (OTr.OKFlag!=0) then begin
+    res = false;
+  end;
+  OpenTransDClassDeleteRowTest = res;
+  return;
+end;
+
+global
+function boolean OpenTransDClassActiveEditField(integer wn,string fieldname,integer fn,integer wnst,integer rownr,integer changed)
+begin
+  boolean res;
+  record OpenTransVc OTr;
+  
+  res = true;
+  GetWindowRecord(wn,OTr);
+  if (OTr.OKFlag!=0) then begin
+    res = false;
+  end else begin
+    switch (fieldname) begin
+      case "Sum": res = false;
+      case "CalcSerNr": res = false;
+      case "SerNr": 
+        if (wnst==Rs_update) then begin
+          res = false;
+        end;
+    end;
+  end;  
+  OpenTransDClassActiveEditField = res;
+  return;
+end;
+
+global
+function boolean OpenTransDClassOKFlagButtonAction(integer wn,integer value)
+begin
+  boolean res;
+  record OpenTransVc OTr;
+  integer normalmode,updatemode;
+
+  res = true;
+  normalmode = 0;
+  updatemode = 2;
+  if (WindowState(wn)==normalmode) then begin
+    GetWindowRecord(wn,OTr);
+    if (OTr.OKFlag!=0) then begin
+      res = false;
+      if (UserCanAction("UnOKAll",false) and (OTr.CalcFlag==0)) then begin
+        res = true;
+      end;
+    end;
+  end;  
+  if (WindowState(wn)==updatemode) then begin
+    GetPrevWindowRecord(wn,OTr);
+    if (OTr.OKFlag!=0) then begin
+      res = false;
+    end;
+  end;  
+  OpenTransDClassOKFlagButtonAction = res;
+  return;
+end;
+
+global
+function boolean OpenTransDClassCalcFlagButtonAction(integer wn,integer value)
+begin
+  boolean res;
+ 
+  res = false;
+  OpenTransDClassCalcFlagButtonAction = res;
+  return;
+end;
+
+function boolean OpenTransDClassContrSerNrEFAfter(integer wn,integer rownr,integer changedf)
+  begin  
+  record OpenTransVc OTr;
+  row OpenTransVc OTrw;
+  record ContractVc Contrr;
+  row ContractVc Contrrw;
+  integer rwcnt,i;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,OTr);
+    DeselectWindow(wn,false);
+    MatRowGet(OTr,rownr,OTrw);
+    Contrr.SerNr = OTrw.ContrSerNr;
+    if (ReadFirstMain(Contrr,1,true)) then begin
+      MatRowDelete(OTr,rownr);
+      PasteOTrwsFromContrr(OTr,OTrw,Contrr,rownr);
+    end else begin
+      OTrw.Firstname = "";
+      OTrw.Surname = "";
+      OTrw.PosCode="";
+      OTrw.Tariff=blankval;
+      OTrw.Amount=blankval;
+      OTrw.Sum=blankval;
+      OTrw.ObjCode="";
+      OTrw.CalcSerNr=blankval;
+      MatRowPut(OTr,rownr,OTrw);
+    end;      
+    PutWindowRecord(wn,OTr);
+  end;
+  OpenTransDClassContrSerNrEFAfter = true;
+  return;
+end;
+
+function boolean OpenTransDClassTariffEFAfter(integer wn,integer rownr,integer changedf)
+  begin  
+  record OpenTransVc OTr;
+  row OpenTransVc OTrw;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,OTr);
+    DeselectWindow(wn,false);
+    MatRowGet(OTr,rownr,OTrw);
+    OTrw.Sum=round((OTrw.Tariff*OTrw.Amount),GetSalaryRoundMode("2"));
+    MatRowPut(OTr,rownr,OTrw);
+    PutWindowRecord(wn,OTr);
+  end;
+  OpenTransDClassTariffEFAfter = true;
+  return;
+end;
+
+function boolean OpenTransDClassPaymTypeCodeEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record OpenTransVc OTr;
+
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,OTr);
+    DeselectWindow(wn,false);
+    OTr.Comment=GetPaymTypeName(OTr.PaymTypeCode);
+    PutWindowRecord(wn,OTr);
+  end;
+
+  OpenTransDClassPaymTypeCodeEFAfter = true;
+  return;
+end;
+
+global
+function boolean OpenTransDClassAfterEditField(integer wn,string fieldname,integer fn, integer rownr,integer changed)
+begin
+  boolean res;
+
+  switch (fieldname) begin
+    case "PaymTypeCode": res = OpenTransDClassPaymTypeCodeEFAfter(wn,rownr,changed);
+    case "ContrSerNr": res = OpenTransDClassContrSerNrEFAfter(wn,rownr,changed);
+    case "Tariff": res = OpenTransDClassTariffEFAfter(wn,rownr,changed);
+    case "Amount": res = OpenTransDClassTariffEFAfter(wn,rownr,changed);
+  end;
+  OpenTransDClassAfterEditField = res;
+  return;
+end;
+
+global
+function Boolean OpenTransDClassOpenRecord(Integer wn,string fieldname,Integer fn,Integer rownr)
+begin
+  Boolean res;
+  record OpenTransVc OTr;
+  row OpenTransVc OTrw;
+  record CalcPayrollVc CPr;
+  record ContractVc Contrr;
+  record ObjVc Objr;
+  record PositionVc Posr;
+  record PaymTypeVc PTr;
+  Integer nwn;
+
+  GetWindowRecord(wn,OTr);  
+  DeselectWindow(wn,false);
+  if (rownr>=0) then begin
+    MatRowGet(OTr,rownr,OTrw);
+  end;
+  switch (fieldname) begin
+    case "PaymTypeCode":
+      if nonblank(OTr.PaymTypeCode) then begin
+        PTr.Code = OTr.PaymTypeCode;
+        if (ReadFirstMain(PTr,1,true)) then begin
+          nwn = OpenWindow("PaymTypeDClass",1,0,"","",PTr);    
+          res = true;
+        end;
+      end;
+    case "ObjCode":
+      if nonblank(OTrw.ObjCode) then begin
+        Objr.Code = OTrw.ObjCode;
+        if (ReadFirstMain(Objr,1,true)) then begin
+          nwn = OpenWindow("ObjDClass",1,0,"","",Objr);    
+          res = true;
+        end;
+      end;
+    case "ContrSerNr":
+      if (OTrw.ContrSerNr>0) then begin
+        Contrr.SerNr = OTrw.ContrSerNr;
+        if (ReadFirstMain(Contrr,1,true)) then begin
+          nwn = OpenWindow("ContractDClass",1,0,"","",Contrr);    
+          res = true;
+        end;
+      end;
+    case "PosCode":
+      if nonblank(OTrw.PosCode) then begin
+        Posr.Code = OTrw.PosCode;
+        if (ReadFirstMain(Posr,1,true)) then begin
+          nwn = OpenWindow("PositionDClass",1,0,"","",Posr);    
+          res = true;
+        end;
+      end;
+    case "CalcSerNr":
+      if (OTrw.CalcSerNr>0) then begin
+        CPr.SerNr = OTrw.CalcSerNr;
+        if (ReadFirstMain(CPr,1,true)) then begin
+          nwn = OpenWindow("CalcPayrollDClass",1,0,"","",CPr);    
+          res = true;
+        end;
+      end;
+  end;
+  OpenTransDClassOpenRecord = res;
+  return;
+end;

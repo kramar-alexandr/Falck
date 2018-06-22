@@ -1,0 +1,172 @@
+global
+function Boolean SerNrTestWorkedHoursVc(LongInt sernr,Date tdp)
+begin
+  Boolean res;
+  record WorkedHoursSerBlock WHSerr;
+  row WorkedHoursSerBlock WHSerrw;
+  Integer i,rwcnt;
+
+  if (sernr==-1) then begin
+    res = false;
+    goto L1;
+  end;
+  BlockLoad(WHSerr);
+  rwcnt = MatRowCnt(WHSerr);
+  if (rwcnt==0) then begin
+    res = true;
+    goto L1;
+  end;
+  for (i=0; i<rwcnt ;i=i+1) begin
+    MatRowGet(WHSerr,i,WHSerrw);
+    if ((sernr<WHSerrw.TSerStart) or (sernr>WHSerrw.TSerEnd)) then begin
+      goto L2;
+    end;  
+    if (nonblankdate(WHSerrw.StartDate)) then begin
+      if (tdp<WHSerrw.StartDate) then begin goto L2; end;
+    end;  
+    if (nonblankdate(WHSerrw.EndDate)) then begin
+      if (tdp>WHSerrw.EndDate) then begin goto L2; end;
+    end;  
+    res = true;
+    goto L1;
+L2:;
+  end;
+L1:;
+  SerNrTestWorkedHoursVc = res;
+  return;
+end;
+
+global
+procedure GetDaysAndHoursTotal(record WorkedHoursVc WHr,integer rownr,var val htot,var integer dtot)
+begin
+  row WorkedHoursVc WHrw;
+
+  MatRowGet(WHr,rownr,WHrw);
+  htot=0;
+  dtot=0;
+  if (WHrw.d1>0) then begin
+    htot=htot+WHrw.d1;
+    dtot=dtot+1;
+  end;
+  if (WHrw.d2>0) then begin
+    htot=htot+WHrw.d2;
+    dtot=dtot+1;
+  end;
+  if (WHrw.d3>0) then begin
+    htot=htot+WHrw.d3;
+    dtot=dtot+1;
+  end;
+  if (WHrw.d4>0) then begin
+    htot=htot+WHrw.d4;
+    dtot=dtot+1;
+  end;
+  if (WHrw.d5>0) then begin
+    htot=htot+WHrw.d5;
+    dtot=dtot+1;
+  end;
+  if (WHrw.d6>0) then begin
+    htot=htot+WHrw.d6;
+    dtot=dtot+1;
+  end;
+  if (WHrw.d7>0) then begin
+    htot=htot+WHrw.d7;
+    dtot=dtot+1;
+  end;
+  if (WHrw.d8>0) then begin
+    htot=htot+WHrw.d8;
+    dtot=dtot+1;
+  end;
+  if (WHrw.d9>0) then begin
+    htot=htot+WHrw.d9;
+    dtot=dtot+1;
+  end;
+  if (WHrw.d10>0) then begin
+    htot=htot+WHrw.d10;
+    dtot=dtot+1;
+  end;
+  if (WHrw.d11>0) then begin
+    htot=htot+WHrw.d11;
+    dtot=dtot+1;
+  end;
+  if (WHrw.d12>0) then begin
+    htot=htot+WHrw.d12;
+    dtot=dtot+1;
+  end;
+  if (WHrw.d13>0) then begin
+    htot=htot+WHrw.d13;
+    dtot=dtot+1;
+  end;
+  if (WHrw.d14>0) then begin
+    htot=htot+WHrw.d14;
+    dtot=dtot+1;
+  end;
+  if (WHrw.d15>0) then begin
+    htot=htot+WHrw.d15;
+    dtot=dtot+1;
+  end;
+  if (WHrw.d16>0) then begin
+    htot=htot+WHrw.d16;
+    dtot=dtot+1;
+  end;
+  if (WHrw.d17>0) then begin
+    htot=htot+WHrw.d17;
+    dtot=dtot+1;
+  end;
+  if (WHrw.d18>0) then begin
+    htot=htot+WHrw.d18;
+    dtot=dtot+1;
+  end;
+  if (WHrw.d19>0) then begin
+    htot=htot+WHrw.d19;
+    dtot=dtot+1;
+  end;
+  if (WHrw.d20>0) then begin
+    htot=htot+WHrw.d20;
+    dtot=dtot+1;
+  end;
+  if (WHrw.d21>0) then begin
+    htot=htot+WHrw.d21;
+    dtot=dtot+1;
+  end;
+  if (WHrw.d22>0) then begin
+    htot=htot+WHrw.d22;
+    dtot=dtot+1;
+  end;
+  if (WHrw.d23>0) then begin
+    htot=htot+WHrw.d23;
+    dtot=dtot+1;
+  end;
+  if (WHrw.d24>0) then begin
+    htot=htot+WHrw.d24;
+    dtot=dtot+1;
+  end;
+  if (WHrw.d25>0) then begin
+    htot=htot+WHrw.d25;
+    dtot=dtot+1;
+  end;
+  if (WHrw.d26>0) then begin
+    htot=htot+WHrw.d26;
+    dtot=dtot+1;
+  end;
+  if (WHrw.d27>0) then begin
+    htot=htot+WHrw.d27;
+    dtot=dtot+1;
+  end;
+  if (WHrw.d28>0) then begin
+    htot=htot+WHrw.d28;
+    dtot=dtot+1;
+  end;
+  if (WHrw.d29>0) then begin
+    htot=htot+WHrw.d29;
+    dtot=dtot+1;
+  end;
+  if (WHrw.d30>0) then begin
+    htot=htot+WHrw.d30;
+    dtot=dtot+1;
+  end;
+  if (WHrw.d31>0) then begin
+    htot=htot+WHrw.d31;
+    dtot=dtot+1;
+  end;
+  return;
+end;

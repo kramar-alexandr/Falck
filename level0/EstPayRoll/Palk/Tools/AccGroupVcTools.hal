@@ -1,0 +1,57 @@
+external procedure NextM4Number(string,var string);
+
+global
+function boolean GetNextAccGroupNr(var string posnr)
+begin
+  boolean res;
+  record AccGroupVc AGr;
+  
+  AGr.Code = "ZZZZZZZZZZZZZZZZZZZ";
+  if (ReadLastMain(AGr,1,false)) then begin
+    NextM4Number(AGr.Code,posnr);
+  end else begin
+    posnr = "1";
+  end;
+  GetNextAccGroupNr = res;
+  return;
+end;
+
+global
+function boolean AGrInUse(string agcode)
+begin
+  boolean res;
+  record AccGroupVc AGr;
+  record SalSettingBlock SalSettingRec;
+  record ContractVc Contrr;  
+  row ContractVc Contrrw;  
+  integer rwcnt,i;
+ 
+//Tššlepingud
+  ResetLoop(Contrr);
+  Contrr.SerNr = -1;
+  while (LoopMain(Contrr,1,true)) begin  
+    if (Contrr.AccGroupCode==agcode) then begin
+      res=true;
+      goto LAGrInUse;
+    end;
+    rwcnt=MatRowCnt(Contrr);
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(Contrr,i,Contrrw);
+      if (Contrrw.AccGroupCode==agcode) then begin
+        res=true;
+        goto LAGrInUse;
+      end;
+    end;
+  end;
+
+//Lausendamine, Palk
+  BlockLoad(SalSettingRec);
+  if (SalSettingRec.AccGroupCode==agcode) then begin
+    res=true;
+    goto LAGrInUse;
+  end;
+
+LAGrInUse:;
+  AGrInUse = res; 
+  return;
+end;

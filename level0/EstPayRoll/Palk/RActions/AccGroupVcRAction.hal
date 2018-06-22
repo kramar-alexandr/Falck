@@ -1,0 +1,163 @@
+external function integer CheckObjs(string,string,var string);
+external function boolean GetNextAccGroupNr(var string);
+external function boolean AGrInUse(string);
+external function boolean PaymTypeExsists(string);
+
+global
+function LongInt AccGroupVcRecordDefaults(var record AccGroupVc AGr,record AccGroupVc AG2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  
+  if (SingleUserMode) then begin
+    if (GetNextAccGroupNr(AGr.Code)) then begin end;
+  end else begin
+    AGr.Code = "";
+  end;
+
+  AccGroupVcRecordDefaults = res; 
+  return;
+end;
+
+global
+function LongInt AccGroupVcRecordDuplicate(var record AccGroupVc AGr,record AccGroupVc AG2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+ 
+  if (SingleUserMode) then begin
+    if (GetNextAccGroupNr(AGr.Code)) then begin end;
+  end else begin
+    AGr.Code = "";
+  end;
+
+  AccGroupVcRecordDuplicate = res; 
+  return;
+end;
+
+global
+function LongInt AccGroupVcRecordCheck(var record AccGroupVc AGr,record AccGroupVc AG2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  record AccGroupVc AG3r;
+  record AccVc Accr;
+  row AccGroupVc AGrw;
+  record TaxVc Taxr;
+  row TaxVc Taxrw;
+  LongInt updatemode,insertmode,errcode;
+  integer rwcnt,i;
+  string 255 tstr;
+  
+  insertmode=1;
+  updatemode=2;
+  res = 0;
+  if (blank(AGr.Code)) then begin
+    if (stat==updatemode) and nonblank(AG2r.Code) then begin
+      AGr.Code=AG2r.Code;
+    end else begin
+      if (GetNextAccGroupNr(AGr.Code)) then begin end;
+    end;
+  end;
+  if (stat==insertmode) or (stat==updatemode and AGr.Code!=AG2r.Code) then begin
+    AG3r.Code = AGr.Code;
+    if (ReadFirstMain(AG3r,1,true)) then begin
+      RecordCheckError(1547," " & AGr.Code,-1,"Code");      
+      res = -1; 
+      goto LAccGroupVcRecordCheck;
+    end;
+  end;
+  if (len(AGr.Code)<=0) then begin
+    RecordCheckError(1500345,"",-1,"Code");      
+    res = -1; 
+    goto LAccGroupVcRecordCheck;
+  end;
+
+  rwcnt=MatRowCnt(AGr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(AGr,i,AGrw);
+    if blank(AGrw.TaxCode) then begin
+      if blank(AGrw.PaymTypeCode) then begin
+        RecordCheckError(1500316,"",i,"PaymTypeCode");      
+        res = -1; 
+        goto LAccGroupVcRecordCheck;
+      end;
+    if (PaymTypeExsists(AGrw.PaymTypeCode)==false) then begin
+        RecordCheckError(1500326," " & AGrw.PaymTypeCode,i,"PaymTypeCode");      
+        res = -1; 
+        goto LAccGroupVcRecordCheck;
+      end;
+    end;
+    if blank(AGrw.PaymTypeCode) then begin
+      if blank(AGrw.TaxCode) then begin
+        RecordCheckError(1500312,"",i,"TaxCode");      
+        res = -1; 
+        goto LAccGroupVcRecordCheck;
+      end;
+      Taxr.Code=AGrw.TaxCode;
+      if (ReadFirstMain(Taxr,1,true)==false) then begin
+        RecordCheckError(1500303," " & AGrw.TaxCode,i,"TaxCode");      
+        res = -1; 
+        goto LAccGroupVcRecordCheck;
+      end;
+    end;
+    if blank(AGrw.DebitAccCode) then begin
+      RecordCheckError(1500387,"",i,"DebitAccCode");      
+      res = -1; 
+      goto LAccGroupVcRecordCheck;
+    end;
+    if (nonblank(AGrw.DebitAccCode)) then begin
+      Accr.AccNumber = AGrw.DebitAccCode;
+      if (ReadFirstMain(Accr,1,true)==false) then begin
+        RecordCheckError(1007,AGrw.DebitAccCode,i,"DebitAccCode");      
+        res = -1; 
+        goto LAccGroupVcRecordCheck;
+      end;    
+    end;
+    if blank(AGrw.CreditAccCode) then begin
+      RecordCheckError(1500437,"",i,"CreditAccCode");      
+      res = -1; 
+      goto LAccGroupVcRecordCheck;
+    end;
+    if (nonblank(AGrw.CreditAccCode)) then begin
+      Accr.AccNumber = AGrw.CreditAccCode;
+      if (ReadFirstMain(Accr,1,true)==false) then begin
+        RecordCheckError(1007,AGrw.CreditAccCode,i,"CreditAccCode");      
+        res = -1; 
+        goto LAccGroupVcRecordCheck;
+      end;    
+    end;
+    if (nonblank(AGrw.AccruedAccCode)) then begin
+      Accr.AccNumber = AGrw.AccruedAccCode;
+      if (ReadFirstMain(Accr,1,true)==false) then begin
+        RecordCheckError(1007,AGrw.AccruedAccCode,i,"AccruedAccCode");      
+        res = -1; 
+        goto LAccGroupVcRecordCheck;
+      end;    
+    end;
+    if (nonblank(AGrw.ObjCode)) then begin
+      errcode = CheckObjs("",AGrw.ObjCode,tstr);
+      if (errcode!=0) then begin
+        RecordCheckError(errcode,tstr,i,"ObjCode");      
+        res = -1; 
+        goto LAccGroupVcRecordCheck;
+      end;
+    end;
+  end;
+LAccGroupVcRecordCheck:;
+  AccGroupVcRecordCheck = res;
+  return;
+end;
+
+
+global
+function LongInt AccGroupVcRecordRemoveTest(var record AccGroupVc AGr,record AccGroupVc AG2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+  boolean testf;
+
+  testf = AGrInUse(AGr.Code);
+  if (testf) then begin
+    MessageBox(1500346,"")
+    res = 0;
+  end;
+  AccGroupVcRecordRemoveTest = res; 
+  return;
+end;

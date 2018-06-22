@@ -1,0 +1,219 @@
+external function roundmode GetSalaryRoundMode(string);
+external function val GetPieceWorkTypeTariff(string,string,LongInt,date);
+external procedure PastePosCodeAndPWTTariff(record PieceWorkVc);
+
+global 
+function Boolean PieceWorkDClassDeleteRowTest(Integer wn,Integer rownr)
+begin
+  record PieceWorkVc PWr;
+  integer updatemode;
+  boolean res;
+
+  res = true;
+  updatemode = 2;
+  if (WindowState(wn)==updatemode) then begin
+    GetPrevWindowRecord(wn,PWr);
+  end else begin
+    GetWindowRecord(wn,PWr);
+  end;
+  if (PWr.OKFlag!=0) then begin
+    res = false;
+  end;
+
+  PieceWorkDClassDeleteRowTest = res;
+  return;
+end;
+
+global
+function boolean PieceWorkDClassActiveEditField(integer wn,string fieldname,integer fn,integer wnst,integer rownr,integer changed)
+begin
+  boolean res;
+  record PieceWorkVc PWr;
+  row PieceWorkVc PWrw;
+  
+  res = true;
+  GetWindowRecord(wn,PWr);
+  if (PWr.OKFlag!=0) then begin
+    res = false;
+  end else begin
+    switch (fieldname) begin
+      case "SerNr": 
+        if (wnst==Rs_update) then begin
+          res = false;
+        end;
+      case "BrutoSum": res = false;
+      case "CalcSerNr": res = false;
+    end;
+    if (rownr>=0) then begin
+      MatRowGet(PWr,rownr,PWrw);
+      if (PWrw.CalcSerNr>0) then begin
+        switch (fieldname) begin
+          case "ContrSerNr": res = false;
+          case "PosCode": res = false;
+          case "Firstname": res = false;
+          case "Surname": res = false;
+          case "Tariff": res = false;
+          case "Amount": res = false;
+          case "ObjCode": res = false;
+        end;
+      end;
+    end;
+  end;  
+  PieceWorkDClassActiveEditField = res;
+  return;
+end;
+
+global
+function boolean PieceWorkDClassOKFlagButtonAction(integer wn,integer value)
+begin
+  boolean res;
+  record PieceWorkVc PWr;
+  integer normalmode,updatemode;
+  
+  res = true;
+  normalmode = 0;
+  updatemode = 2;
+  if (WindowState(wn)==normalmode) then begin
+    GetWindowRecord(wn,PWr);
+    if (PWr.OKFlag!=0) then begin
+      res = false;
+      if (UserCanAction("UnOKAll",false)) then begin
+        res = true;
+      end;
+    end;
+  end;  
+  if (WindowState(wn)==updatemode) then begin
+    GetPrevWindowRecord(wn,PWr);
+    if (PWr.OKFlag!=0) then begin
+      res = false;
+    end;
+  end;  
+  PieceWorkDClassOKFlagButtonAction = res;
+  return;
+end;
+
+function boolean PieceWorkDClassPieceWorkTypeCodeEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record PieceWorkVc PWr;
+  record PieceWorkTypeVc PWTr;
+
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,PWr);
+    DeselectWindow(wn,false);
+    PWTr.Code = PWr.PieceWorkTypeCode;
+    if (ReadFirstMain(PWTr,1,true)) then begin
+      PWr.Comment = PWTr.Name;
+    end;
+    PastePosCodeAndPWTTariff(PWr);
+    PutWindowRecord(wn,PWr);
+  end;
+  PieceWorkDClassPieceWorkTypeCodeEFAfter = true;
+  return;
+end;
+
+function boolean PieceWorkDClassTransDateEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record PieceWorkVc PWr;
+
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,PWr);
+    DeselectWindow(wn,false);
+    PastePosCodeAndPWTTariff(PWr);
+    PutWindowRecord(wn,PWr);
+  end;
+  PieceWorkDClassTransDateEFAfter = true;
+  return;
+end;
+
+function boolean PieceWorkDClassContrSerNrEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record PieceWorkVc PWr;
+  row PieceWorkVc PWrw;
+  record ContractVc Contrr;
+  row ContractVc Contrrw;
+  integer rwcnt,i;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,PWr);
+    DeselectWindow(wn,false);
+    MatRowGet(PWr,rownr,PWrw);
+    Contrr.SerNr = PWrw.ContrSerNr;
+    ClearRow(PWr,PWrw,1);
+    PWrw.ContrSerNr = Contrr.SerNr;
+    if (ReadFirstMain(Contrr,1,true)) then begin
+      PWrw.Firstname = Contrr.Firstname;
+      PWrw.Surname = Contrr.Surname;
+      rwcnt=MatRowCnt(Contrr);
+      for (i=0;i<rwcnt;i=i+1) begin
+        MatRowGet(Contrr,i,Contrrw);
+        if nonblank(Contrrw.PosCode) then begin
+          if (DateInRange(PWr.TransDate,Contrrw.SDate,Contrrw.EDate)) then begin
+            PWrw.PosCode=Contrrw.PosCode;
+            PWrw.Tariff=GetPieceWorkTypeTariff(PWr.PieceWorkTypeCode,PWrw.PosCode,PWrw.ContrSerNr,PWr.TransDate);
+            goto L1; 
+          end;
+        end;
+      end;
+    end;
+L1:;
+    MatRowPut(PWr,rownr,PWrw);
+    PutWindowRecord(wn,PWr);
+  end;
+  PieceWorkDClassContrSerNrEFAfter = true;
+  return;
+end;
+
+function boolean PieceWorkDClassPosCodeEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record PieceWorkVc PWr;
+  row PieceWorkVc PWrw;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,PWr);
+    DeselectWindow(wn,false);
+    MatRowGet(PWr,rownr,PWrw);
+    PWrw.Tariff=0;
+    PWrw.Tariff=GetPieceWorkTypeTariff(PWr.PieceWorkTypeCode,PWrw.PosCode,PWrw.ContrSerNr,PWr.TransDate);
+    MatRowPut(PWr,rownr,PWrw);
+    PutWindowRecord(wn,PWr);
+  end;
+
+  PieceWorkDClassPosCodeEFAfter = true;
+  return;
+end;
+
+function boolean PieceWorkDClassTariffEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record PieceWorkVc PWr;
+  row PieceWorkVc PWrw;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,PWr);
+    DeselectWindow(wn,false);
+    MatRowGet(PWr,rownr,PWrw);
+    PWrw.BrutoSum=round((PWrw.Tariff*PWrw.Amount),GetSalaryRoundMode("2"));
+    MatRowPut(PWr,rownr,PWrw);
+    PutWindowRecord(wn,PWr);
+  end;
+
+  PieceWorkDClassTariffEFAfter = true;
+  return;
+end;
+
+global
+function boolean PieceWorkDClassAfterEditField(integer wn,string fieldname,integer fn, integer rownr,integer changed)
+begin
+  boolean res;
+
+  switch (fieldname) begin
+    case "TransDate": res = PieceWorkDClassTransDateEFAfter(wn,rownr,changed);
+    case "PieceWorkTypeCode": res = PieceWorkDClassPieceWorkTypeCodeEFAfter(wn,rownr,changed);
+    case "ContrSerNr": res = PieceWorkDClassContrSerNrEFAfter(wn,rownr,changed);
+    case "PosCode": res = PieceWorkDClassPosCodeEFAfter(wn,rownr,changed);
+    case "Tariff": res = PieceWorkDClassTariffEFAfter(wn,rownr,changed);
+    case "Amount": res = PieceWorkDClassTariffEFAfter(wn,rownr,changed);
+  end;
+
+  PieceWorkDClassAfterEditField = res;
+  return;
+end;

@@ -1,0 +1,59 @@
+external function val MulRateToBase1(var string,val,val,val,val,val,val,roundmode);
+external function LongInt DateDiff(Date,Date);
+
+global
+function val GetInvoiceBalanceIR(record IVVc IVr)
+BEGIN
+  val bal;
+  record ARVc ARr;
+
+  bal = 0;
+  ARr.InvoiceNr = IVr.SerNr;
+  if(ReadFirstMain(ARr,1,true)) then begin
+    bal = ARr.RVal;
+  end;
+  GetInvoiceBalanceIR = bal;
+  RETURN;
+END;
+
+global
+function val GetOverDueSumIR(record CUVc CUp)
+begin
+  record IVVc IVr;
+  record ARVc ARr;
+  record RcVc RepSpec;
+  Boolean found;
+  val rs;
+  LongInt latedays;
+  val totdue;
+  val pstotduep;  
+
+  totdue = 0;
+  found = true;
+  
+  ARr.CustCode = CUp.Code;
+  found = true;
+  while (LoopBackKey("CustCode",ARr,1,found)) begin
+    if (ARr.CustCode!=CUp.Code) then begin
+      found = false;
+    end;
+    if (found) then begin
+      IVr.SerNr = ARr.InvoiceNr;
+      if (ReadFirstMain(IVr,1,true)) then begin    
+        if (IVr.Invalid!=0) then begin
+          goto LSKIPIV;
+        end;
+        rs = MulRateToBase1(IVr.CurncyCode,ARr.RVal,IVr.FrRate,IVr.ToRateB1,IVr.ToRateB2,IVr.BaseRate1,IVr.BaseRate2,DefaultCurRoundOff);
+        latedays = DateDiff(ARr.DueDate,CurrentDate);
+        if (latedays<0) then begin
+          totdue = totdue + rs;
+        end;
+LSKIPIV:;
+      end;
+    end;
+  end;
+  pstotduep = pstotduep + totdue;
+  if (pstotduep<0) then begin pstotduep = 0; end;
+  GetOverDueSumIR = pstotduep;
+  return;
+end;

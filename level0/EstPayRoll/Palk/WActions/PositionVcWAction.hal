@@ -1,0 +1,50 @@
+global
+function boolean PositionDClassActiveEditField(integer wn,string fieldname,integer fn,integer wnst,integer rownr,integer changed)
+begin
+  boolean res;
+  
+  res = true;
+  if (wnst==Rs_update) then begin
+    switch (fieldname) begin
+      case "Code": res = false;
+    end;
+  end;
+  PositionDClassActiveEditField = res;
+  return;
+end;
+
+function boolean PositionDClassISCOCodeEFAfter(integer wn,integer rownr,integer changedf)
+  begin  
+  record PositionVc Posr;
+  record ISCOCodeVc ISCOr;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,Posr);
+    DeselectWindow(wn,false);
+    Posr.ISCOPosition = "";
+    Posr.ISCOLevel = "";
+
+    ISCOr.Code = Posr.ISCOCode;
+    if (ReadFirstMain(ISCOr,1,true)) then begin
+      Posr.ISCOPosition = ISCOr.ISCOPosition;
+      Posr.ISCOLevel = ISCOr.ISCOLevel;
+    end;
+    PutWindowRecord(wn,Posr);
+  end;
+
+  PositionDClassISCOCodeEFAfter = true;
+  return;
+end;
+
+global
+function boolean PositionDClassAfterEditField(integer wn,string fieldname,integer fn, integer rownr,integer changed)
+begin
+  boolean res;
+
+  switch (fieldname) begin
+    case "ISCOCode": res = PositionDClassISCOCodeEFAfter(wn,rownr,changed);
+  end;
+
+  PositionDClassAfterEditField = res;
+  return;
+end;

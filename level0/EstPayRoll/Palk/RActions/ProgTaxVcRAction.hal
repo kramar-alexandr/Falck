@@ -1,0 +1,111 @@
+global
+function LongInt ProgTaxVcRecordDefaults(var record ProgTaxVc ProgTaxr,record ProgTaxVc ProgTax2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+
+  ProgTaxr.SerNr = -1;
+  if (SingleUserMode) then begin
+    ProgTaxr.SerNr = NextSerNr("ProgTaxVc",CurrentDate,-1,false,"");
+  end;
+  ProgTaxVcRecordDefaults = res; 
+  return;
+end;
+
+global
+function LongInt ProgTaxVcRecordDuplicate(var record ProgTaxVc ProgTaxr,record ProgTaxVc ProgTax2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+ 
+  ProgTaxr.SerNr = -1;
+  if (SingleUserMode) then begin
+    ProgTaxr.SerNr = NextSerNr("ProgTaxVc",CurrentDate,-1,false,"");
+  end;
+  ProgTaxVcRecordDuplicate = res; 
+  return;
+end;
+
+global
+function LongInt ProgTaxVcRecordCheck(var record ProgTaxVc ProgTaxr,record ProgTaxVc ProgTax2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  row ProgTaxVc ProgTaxrw;
+  row ProgTaxVc ProgTax2rw;
+  record ContractVc Contrr;
+  integer rwcnt,rwcnt1,i,j;
+  LongInt updatemode,insertmode;
+  
+  insertmode=1;
+  updatemode=2;
+  res = 0;
+  if (stat==updatemode) then begin
+    if (ProgTaxr.SerNr<=0)  then begin
+      ProgTaxr.SerNr = ProgTax2r.SerNr;
+    end;
+  end;
+  if (ProgTaxr.SerNr==-1) then begin
+    ProgTaxr.SerNr = NextSerNr("ProgTaxVc",CurrentDate,-1,false,"");
+  end;
+  if (ProgTaxr.ContrSerNr<=0) then begin
+    RecordCheckError(1500318,"",-1,"ContrSerNr");      
+    res = -1; 
+    goto LProgTaxVcRecordCheck; 
+  end;
+LProgTaxVcRecordCheck:;
+  ProgTaxVcRecordCheck = res;
+  return;
+end;
+
+global
+updating function LongInt ProgTaxVcRecordSave(var record ProgTaxVc ProgTaxr,record ProgTaxVc ProgTax2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  
+  ProgTaxVcRecordSave = res;
+  return;
+end;
+
+global
+updating function LongInt ProgTaxVcRecordSaveAfter(var record ProgTaxVc ProgTaxr,record ProgTaxVc ProgTax2r,LongInt stat,LongInt long4)
+begin
+  LongInt res,wn;
+  
+  ProgTaxVcRecordSaveAfter = res;
+  return;
+end;
+
+global
+updating function LongInt ProgTaxVcRecordUpdate(var record ProgTaxVc ProgTaxr,record ProgTaxVc ProgTax2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  
+  ProgTaxVcRecordUpdate = res;
+  return;
+end;
+
+global
+updating function LongInt ProgTaxVcRecordUpdateAfter(var record ProgTaxVc ProgTaxr,record ProgTaxVc ProgTax2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  
+  ProgTaxVcRecordUpdateAfter = res;
+  return;
+end;
+
+global
+function LongInt ProgTaxVcRecordRemoveTest(var record ProgTaxVc ProgTaxr,record ProgTaxVc ProgTax2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+
+  res = 1;
+  ProgTaxVcRecordRemoveTest = res; 
+  return;
+end;
+  
+global
+updating function LongInt ProgTaxVcRecordImport(var record ProgTaxVc ProgTaxr,record ProgTaxVc ProgTax2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+
+  ProgTaxVcRecordImport = res; 
+  return;
+end;

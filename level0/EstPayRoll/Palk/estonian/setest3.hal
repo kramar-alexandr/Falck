@@ -1,0 +1,31 @@
+//event startup
+begin
+
+  SetLangMode(LangEstonian,"EST",0);
+  
+  SetBegin(901); 
+  SetText(1,"");
+  SetText(2,"");
+  SetText(3,"");
+  EndSet;
+
+  SetBegin(902); 
+  SetText(1,"StatRow1");
+  SetText(2,"StatRow2");
+  SetText(3,"StatRow3");
+  EndSet;
+ 
+  SetBegin(903); 
+  SetText(1,"Aktiivne");
+  SetText(2,"Suletud");
+  EndSet;
+
+  SetBegin(904); 
+  SetText(0,"Avatud");
+  SetText(1,"Aktiivne");
+  SetText(2,"Peatatud");
+  SetText(3,"L›petatud");
+  EndSet;
+
+  return;
+end;

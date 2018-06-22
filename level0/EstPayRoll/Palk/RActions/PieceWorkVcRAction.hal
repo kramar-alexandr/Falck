@@ -1,0 +1,213 @@
+external function integer CheckObjs(string,string,var string);
+external function boolean PWTypeExsists(string);
+external function boolean ContractExsistsAndActive(LongInt);
+external function boolean PositionExsistsAndActive(string,LongInt,date);
+external function Boolean SerNrTestPieceWorkVc(LongInt,date);
+external procedure SetMarkFlag(integer,var integer);
+
+global
+function LongInt PieceWorkVcRecordDefaults(var record PieceWorkVc PWr,record PieceWorkVc PW2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+
+  PWr.SerNr = -1;
+  PWr.TransDate=CurrentDate;
+  if (SingleUserMode) then begin
+    PWr.SerNr = NextSerNr("PieceWorkVc",PWr.TransDate,-1,false,"");
+  end;
+  PieceWorkVcRecordDefaults = res; 
+  return;
+end;
+
+global
+function LongInt PieceWorkVcRecordDuplicate(var record PieceWorkVc PWr,record PieceWorkVc PW2r,LongInt stat,LongInt long4)
+begin
+  row PieceWorkVc PWrw;
+  LongInt res;
+  integer rwcnt,i;
+ 
+  PWr.SerNr = -1;
+  PWr.OKFlag=0;
+  SetMarkFlag(PWr.OKFlag,PWr.OKMark);
+  PWr.TransDate=CurrentDate;
+ 
+  if (SingleUserMode) then begin
+    PWr.SerNr = NextSerNr("PieceWorkVc",PWr.TransDate,-1,false,"");
+  end;
+  rwcnt=MatRowCnt(PWr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(PWr,i,PWrw);
+    PWrw.CalcSerNr=0;
+    MatRowPut(PWr,i,PWrw);
+  end;
+  PieceWorkVcRecordDuplicate = res; 
+  return;
+end;
+
+global
+function LongInt PieceWorkVcRecordCheck(var record PieceWorkVc PWr,record PieceWorkVc PW2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  record PieceWorkVc PW3r;
+  row PieceWorkVc PWrw;
+  LongInt updatemode,insertmode,errcode;
+  integer rwcnt,i;
+  string 255 tstr;
+
+  insertmode=1;
+  updatemode=2;
+  res = 0;
+
+  if (stat!=insertmode) then begin
+    if (PW2r.OKFlag!=0) then begin
+      goto LPieceWorkVcRecordCheck;
+    end;
+  end;
+  
+  if (stat==updatemode) then begin
+    if (PWr.SerNr<=0)  then begin
+      PWr.SerNr = PW2r.SerNr;
+    end;
+  end;
+  if (PWr.SerNr==-1) then begin
+      PWr.SerNr = NextSerNr("PieceWorkVc",PWr.TransDate,-1,false,"");
+  end;
+  if (SerNrTestPieceWorkVc(PWr.SerNr,PWr.TransDate)==false) then begin
+    RecordCheckError(1557,"",-1,"SerNr");      
+    res = -1; 
+    goto LPieceWorkVcRecordCheck;
+  end;
+
+  if (stat==insertmode) or (stat==updatemode and PWr.SerNr!=PW2r.SerNr) then begin
+    PW3r.SerNr = PWr.SerNr;
+    if (ReadFirstMain(PW3r,1,true)) then begin
+      RecordCheckError(1547," " & PWr.SerNr,-1,"SerNr");      
+      res = -1; 
+      goto LPieceWorkVcRecordCheck;
+    end;
+  end;   
+  if (len(PWr.SerNr)<=0 or (PWr.SerNr<=0)) then begin
+    RecordCheckError(1500356,"",-1,"SerNr");      
+    res = -1; 
+    goto LPieceWorkVcRecordCheck;
+  end;
+  if blank(PWr.TransDate) then begin
+    RecordCheckError(1500342,"",-1,"TransDate");      
+    res = -1; 
+    goto LPieceWorkVcRecordCheck;
+  end;
+  if (blank(PWr.PieceWorkTypeCode)) then begin
+    RecordCheckError(1500363,"",-1,"PieceWorkTypeCode");      
+      res = -1; 
+      goto LPieceWorkVcRecordCheck; 
+  end else begin
+    if (PWTypeExsists(PWr.PieceWorkTypeCode)==false) then begin
+      RecordCheckError(1500364," " & PWr.PieceWorkTypeCode,-1,"PieceWorkTypeCode");      
+      res = -1; 
+      goto LPieceWorkVcRecordCheck; 
+    end;
+  end;
+
+  rwcnt=MatRowCnt(PWr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(PWr,i,PWrw);
+    if (PWrw.ContrSerNr<=0) then begin
+      RecordCheckError(1500318,"",i,"ContrSerNr");      
+      res = -1; 
+      goto LPieceWorkVcRecordCheck; 
+    end else begin
+      if (ContractExsistsAndActive(PWrw.ContrSerNr)==false) then begin
+        RecordCheckError(1500332," või ei ole aktiivne " & PWrw.ContrSerNr,i,"ContrSerNr");      
+        res = -1; 
+        goto LPieceWorkVcRecordCheck; 
+      end;
+    end;
+    if (PWrw.ContrSerNr>0) then begin
+      if blank(PWrw.PosCode) then begin
+        RecordCheckError(1500307," " & PWrw.PosCode,i,"PosCode");      
+        res = -1; 
+        goto LPieceWorkVcRecordCheck;
+      end else begin
+        if (PositionExsistsAndActive(PWrw.PosCode,PWrw.ContrSerNr,PWr.TransDate)==false) then begin
+          RecordCheckError(1500324," või ei ole aktiivne antud kuupäeval " & PWrw.PosCode,i,"PosCode");      
+          res = -1; 
+          goto LPieceWorkVcRecordCheck; 
+        end;
+      end;
+      if blank(PWrw.Tariff) then begin
+        RecordCheckError(1500353,"",i,"Tariff");      
+        res = -1; 
+        goto LPieceWorkVcRecordCheck;
+      end;
+      if blank(PWrw.Amount) then begin
+        RecordCheckError(1500365,"",i,"Amount");      
+        res = -1; 
+        goto LPieceWorkVcRecordCheck;
+      end;
+      if blank(PWrw.BrutoSum) then begin
+        RecordCheckError(1500359,"",i,"BrutoSum");      
+        res = -1; 
+        goto LPieceWorkVcRecordCheck;
+      end;
+      if (nonblank(PWrw.ObjCode)) then begin
+        errcode = CheckObjs("",PWrw.ObjCode,tstr);
+        if (errcode!=0) then begin
+          RecordCheckError(errcode,tstr,i,"ObjCode");      
+          res = -1; 
+          goto LPieceWorkVcRecordCheck;
+        end;
+      end;
+    end;
+  end;
+LPieceWorkVcRecordCheck:;
+  if (res==-1) then begin
+    PWr.OKFlag=0;
+    SetMarkFlag(PWr.OKFlag,PWr.OKMark);
+  end;
+  PieceWorkVcRecordCheck = res;
+  return;
+end;
+
+global
+function LongInt PieceWorkVcRecordSave(var record PieceWorkVc PWr,record PieceWorkVc PW2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+
+  SetMarkFlag(PWr.OKFlag,PWr.OKMark);
+  PieceWorkVcRecordSave = res; 
+  return;
+end;
+
+global
+function LongInt PieceWorkVcRecordUpdate(var record PieceWorkVc PWr,record PieceWorkVc PW2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+
+  SetMarkFlag(PWr.OKFlag,PWr.OKMark);
+  PieceWorkVcRecordUpdate = res; 
+  return;
+end;
+
+global
+function LongInt PieceWorkVcRecordRemoveTest(var record PieceWorkVc PWr,record PieceWorkVc PW2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+
+  res = 1;
+  if (PWr.OKFlag!=0) then begin
+    MessageBox(1560,"")
+    res = 0;
+  end;
+  PieceWorkVcRecordRemoveTest = res; 
+  return;
+end;
+
+global
+updating function LongInt PieceWorkVcRecordImport(var record PieceWorkVc PWr,record PieceWorkVc PW2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+
+  SetMarkFlag(PWr.OKFlag,PWr.OKMark);
+  PieceWorkVcRecordImport = res; 
+  return;
+end;

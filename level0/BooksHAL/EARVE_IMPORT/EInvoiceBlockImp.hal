@@ -1,0 +1,185 @@
+global
+updating procedure ReadImportTagEServSYSCtrlBlock(string thetag)
+begin
+  record EInvQueryIntrvlBlock EInvQueryIntrvlr;
+  
+  if (NextImportLine(false)) then begin
+    EInvQueryIntrvlr.EInvReq = StringToInt(ImportField);
+    EInvQueryIntrvlr.EInvStatReq = StringToInt(ImportField);
+    EInvQueryIntrvlr.SupInvReq = StringToInt(ImportField);
+    EInvQueryIntrvlr.SupInvPdfReq = StringToInt(ImportField);
+    EInvQueryIntrvlr.StatusCheckReq = StringToInt(ImportField);
+    
+    BlockStore(EInvQueryIntrvlr);
+  end;
+  
+  return;
+end;
+
+global
+updating procedure ReadImportTagEServCtrlBlock(string thetag)
+begin
+  record EInvoiceBlock EInvoicer;
+  
+  if (NextImportLine(false)) then begin
+    BlockLoad(EInvoicer);
+    EInvoicer.CntOutEstEInvoices = StringToInt(ImportField);
+    EInvoicer.LastOutEstEInvoicesDate = StringToDate(ImportField);
+    EInvoicer.LastOutEstEInvoicesTime = StringToTime(ImportField);
+    EInvoicer.StopOutEstEInvoices = StringToInt(ImportField);
+    ImportField;
+    EInvoicer.LastOutEstEInvStatusDate = StringToDate(ImportField);
+    EInvoicer.LastOutEstEInvStatusTime = StringToTime(ImportField);
+    EInvoicer.StopOutEstEInvStatus = StringToInt(ImportField);
+    EInvoicer.CntInEstEInvoices = StringToInt(ImportField);
+    EInvoicer.LastInEstEInvoicesDate = StringToDate(ImportField);
+    EInvoicer.LastInEstEInvoicesTime = StringToTime(ImportField);
+    EInvoicer.StopInEstEInvoices = StringToInt(ImportField);
+    EInvoicer.CntInEstEInvPdf = StringToInt(ImportField);
+    EInvoicer.StopInEstEInvPdf = StringToInt(ImportField);
+    EInvoicer.DebugFlag = StringToInt(ImportField);
+    
+    BlockStore(EInvoicer);
+  end;
+  
+  return;
+end;
+
+global
+updating procedure ReadImportTagEInvoiceBlock(string thetag)
+begin
+  record EInvoiceBlock EInvoicer;
+  Boolean changef;
+  date blankd;
+  time blankt;
+  
+  if (NextImportLine(false)) then begin
+    EInvoicer.Header0 = ImportField;
+    EInvoicer.Header1 = ImportField;
+    EInvoicer.Header2 = ImportField;
+    EInvoicer.Footer0 = ImportField;
+    EInvoicer.Footer1 = ImportField;
+    EInvoicer.Footer2 = ImportField;
+    EInvoicer.Folder = ImportField;
+    EInvoicer.RcvInvoicePref = StringToInt(ImportField);
+    EInvoicer.OutEInvoices = StringToInt(ImportField);
+    EInvoicer.InEInvoices = StringToInt(ImportField);
+    EInvoicer.StopEInvoices = StringToInt(ImportField);
+    EInvoicer.WhomEInvoices = StringToInt(ImportField);
+    EInvoicer.StopReason = ImportField;
+    EInvoicer.OutEPayments = StringToInt(ImportField);
+    EInvoicer.RcvEInvoices = StringToInt(ImportField);
+    EInvoicer.TestFlag = StringToInt(ImportField);
+    EInvoicer.RegAtPartner = StringToInt(ImportField);
+    EInvoicer.OutEDirDebt = StringToInt(ImportField);
+    EInvoicer.UseOCRReference = StringToInt(ImportField);
+    EInvoicer.PrintLayout = ImportField;
+    EInvoicer.Postage = StringToInt(ImportField);
+    EInvoicer.CashNotes = StringToInt(ImportField);
+    EInvoicer.DblAcceptEPay = StringToInt(ImportField);
+    EInvoicer.DblAcceptMinSumEPay = StringToVal(ImportField,M4Val);
+    EInvoicer.DefaultEBehave = StringToInt(ImportField);
+    EInvoicer.NoLineswoItemonEInv = StringToInt(ImportField);
+    EInvoicer.Certificate = ImportField;
+    EInvoicer.PrivateKey = ImportField;
+    EInvoicer.Passphrase = ImportField;
+    EInvoicer.GMTOffset = StringToInt(ImportField);
+    EInvoicer.OutArgEInvoices = StringToInt(ImportField);
+    EInvoicer.AttachPDFtoElectronicInvoice = StringToInt(ImportField);
+    EInvoicer.VEIVRowTransfer = StringToInt(ImportField);
+    EInvoicer.EInvoiceStoragePath = ImportField;
+    EInvoicer.SendExportIV = StringToInt(ImportField);
+    EInvoicer.OutEVat = StringToInt(ImportField);
+    EInvoicer.ArgSelfBilling = StringToInt(ImportField);
+    EInvoicer.CAEA = ImportField;
+    EInvoicer.CAEAStartDate = StringToDate(ImportField);
+    EInvoicer.CAEAExpiryDate = StringToDate(ImportField);
+    EInvoicer.LastFortnightCAEA = ImportField;
+    EInvoicer.LastFortnightCAEAStartDate = StringToDate(ImportField);
+    EInvoicer.LastFortnightCAEAExpiryDate = StringToDate(ImportField);
+    EInvoicer.ScdLastFortnightCAEA = ImportField;
+    EInvoicer.ScdLastFortnightCAEAStartDate = StringToDate(ImportField);
+    EInvoicer.ScdLastFortnightCAEAExpiryDate = StringToDate(ImportField);
+    EInvoicer.EPayCertificate = ImportField;
+    EInvoicer.EPayPrivateKey = ImportField;
+    EInvoicer.EPayPassphrase = ImportField;
+    EInvoicer.EPaySignerRole = ImportField;
+    EInvoicer.EPayRecipient = ImportField;
+    EInvoicer.EPayRecipientCertificate = ImportField;
+    EInvoicer.EPayRequestCertificate = ImportField;
+    EInvoicer.EPayRequestPrivateKey = ImportField;
+    EInvoicer.CertificateNr = ImportField;
+    EInvoicer.LiveHostName = ImportField;
+    EInvoicer.LivePort = StringToInt(ImportField);
+    EInvoicer.TestHostName = ImportField;
+    EInvoicer.TestPort = StringToInt(ImportField);
+    EInvoicer.IVVcDefaultXML = ImportField;
+    EInvoicer.IVCashVcDefaultXML = ImportField;
+    EInvoicer.RestAccVcDefaultXML = ImportField;
+    EInvoicer.LivePath = ImportField;
+    EInvoicer.TestPath = ImportField;
+    EInvoicer.ExportIVSendPlainINasStockIN = StringToInt(ImportField);
+    EInvoicer.AssignOfficialSerNr = StringToInt(ImportField);
+    EInvoicer.MexEInvType = StringToInt(ImportField);
+    EInvoicer.DomesticInvoiceinBase1 = StringToInt(ImportField);
+    EInvoicer.ClearLoginTicketTime = StringToTime(ImportField);
+    EInvoicer.NoVATOnVEIVVcRow = StringToInt(ImportField);
+    EInvoicer.SaveXMLFlag = StringToInt(ImportField);
+    EInvoicer.OutEstEInvoices = StringToInt(ImportField);
+    EInvoicer.CntOutEstEInvoices = StringToInt(ImportField);
+    EInvoicer.LastOutEstEInvoicesDate = StringToDate(ImportField);
+    EInvoicer.LastOutEstEInvoicesTime = StringToTime(ImportField);
+    EInvoicer.StopOutEstEInvoices = StringToInt(ImportField);
+    EInvoicer.LastOutEstEInvStatusDate = StringToDate(ImportField);
+    EInvoicer.LastOutEstEInvStatusTime = StringToTime(ImportField);
+    EInvoicer.StopOutEstEInvStatus = StringToInt(ImportField);
+    EInvoicer.InEstEInvoices = StringToInt(ImportField);
+    EInvoicer.CntInEstEInvoices = StringToInt(ImportField);
+    EInvoicer.LastInEstEInvoicesDate = StringToDate(ImportField);
+    EInvoicer.LastInEstEInvoicesTime = StringToTime(ImportField);
+    EInvoicer.StopInEstEInvoices = StringToInt(ImportField);
+    EInvoicer.LastInEstEInvStatusDate = StringToDate(ImportField);
+    EInvoicer.LastInEstEInvStatusTime = StringToTime(ImportField);
+    EInvoicer.LastInEstEInvStatusSerial = StringToLongint(ImportField);
+    EInvoicer.StopInEstEInvStatus = StringToInt(ImportField);
+    EInvoicer.CntInEstEInvPdf = StringToInt(ImportField);
+    EInvoicer.StopInEstEInvPdf = StringToInt(ImportField);
+    EInvoicer.DebugFlag = StringToInt(ImportField);
+    EInvoicer.ServiceMessage = ImportField;
+//cust
+  changef = true;
+    if (EInvoicer.OutEstEInvoices > 0) or (EInvoicer.InEstEInvoices > 0) then begin
+      changef = false;
+    end;
+    if (EInvoicer.SendExportIV == 0) and (EInvoicer.ExportIVSendPlainINasStockIN == 0) then begin
+      changef = false;
+    end;
+    if (changef) then begin
+      EInvoicer.OutEstEInvoices = EInvoicer.SendExportIV;
+      EInvoicer.InEstEInvoices = EInvoicer.ExportIVSendPlainINasStockIN;
+      EInvoicer.LastInEstEInvStatusDate = EInvoicer.ScdLastFortnightCAEAExpiryDate;
+      EInvoicer.LastInEstEInvStatusTime = StringToTime(EInvoicer.CAEA);
+      EInvoicer.LastInEstEInvStatusSerial = EInvoicer.LastFortnightCAEA;
+      if (nonblankdate(EInvoicer.ScdLastFortnightCAEAStartDate) and (blankdate(EInvoicer.LastOutEstEInvStatusDate))) then begin
+        EInvoicer.LastOutEstEInvStatusDate = EInvoicer.ScdLastFortnightCAEAStartDate;
+        EInvoicer.LastOutEstEInvStatusTime = EInvoicer.ClearLoginTicketTime;
+        EInvoicer.ScdLastFortnightCAEAStartDate = blankd;
+        EInvoicer.ClearLoginTicketTime = blankt;
+      end;
+      if (nonblankdate(EInvoicer.LastFortnightCAEAExpiryDate) and (blankdate(EInvoicer.LastInEstEInvoicesDate))) then begin
+        EInvoicer.LastInEstEInvoicesDate = EInvoicer.LastFortnightCAEAExpiryDate;
+        EInvoicer.LastInEstEInvoicesTime = StringToTime(EInvoicer.ScdLastFortnightCAEA);
+        EInvoicer.LastFortnightCAEAExpiryDate = blankd;
+        EInvoicer.ScdLastFortnightCAEA = "";
+      end;
+      EInvoicer.SendExportIV = 0;
+      EInvoicer.ExportIVSendPlainINasStockIN = 0;
+      EInvoicer.ScdLastFortnightCAEAExpiryDate = blankd;
+      EInvoicer.CAEA = "";
+      EInvoicer.LastFortnightCAEA = "";
+    end;
+    BlockStore(EInvoicer);
+  end;
+  
+  return;
+end;

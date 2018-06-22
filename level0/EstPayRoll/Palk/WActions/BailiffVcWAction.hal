@@ -1,0 +1,286 @@
+global
+function boolean BailiffDClassOKFlagButtonAction(integer wn,integer value)
+begin
+  boolean res;
+  record BailiffVc Bailr;
+  integer normalmode,updatemode;
+  
+  res = true;
+  normalmode = 0;
+  updatemode = 2;
+  if (WindowState(wn)==normalmode) then begin
+    GetWindowRecord(wn,Bailr);
+    if (Bailr.OKFlag!=0) then begin
+      res = false;
+      if (UserCanAction("UnOKAll",false)) then begin
+        res = true;
+      end;
+    end;
+  end;  
+  if (WindowState(wn)==updatemode) then begin
+    GetPrevWindowRecord(wn,Bailr);
+    if (Bailr.OKFlag!=0) then begin
+      res = false;
+    end;
+  end;  
+  BailiffDClassOKFlagButtonAction = res;
+  return;
+end;
+
+global
+function boolean BailiffDClassActiveEditField(integer wn,string fieldname,integer fn,integer wnst,integer rownr,integer changed)
+begin
+  boolean res;
+  record BailiffVc Bailr;
+  integer updatemode;
+    
+  res=true;
+  GetWindowRecord(wn,Bailr);
+  if (Bailr.OKFlag!=0) then begin
+    res = false;
+  end else begin
+    if ((Bailr.BPaidSum1>0) or (Bailr.BPaidSum2>0) or (Bailr.BPaidSum3>0) or (Bailr.BPaidSum4>0) or (Bailr.BPaidSum5>0) or (Bailr.BPaidSum6>0) or (Bailr.BPaidSum7>0) or (Bailr.BPaidSum8>0) or (Bailr.BPaidSum9>0) or (Bailr.BPaidSum10>0)) then begin
+      if (fieldname=="ContrSerNr") then begin
+        res = false;
+      end;
+    end;
+    switch (fieldname) begin
+      case "PaymTypeCode1": 
+        if (Bailr.BPaidSum1>0) then begin
+          res = false;
+        end;
+      case "PaymTypeCode2": 
+        if (Bailr.BPaidSum2>0) then begin
+          res = false;
+        end;
+      case "PaymTypeCode3": 
+        if (Bailr.BPaidSum3>0) then begin
+          res = false;
+        end;
+      case "PaymTypeCode4": 
+        if (Bailr.BPaidSum4>0) then begin
+          res = false;
+        end;
+      case "PaymTypeCode5": 
+        if (Bailr.BPaidSum5>0) then begin
+          res = false;
+        end;
+      case "PaymTypeCode6": 
+        if (Bailr.BPaidSum6>0) then begin
+          res = false;
+        end;
+      case "PaymTypeCode7": 
+        if (Bailr.BPaidSum7>0) then begin
+          res = false;
+        end;
+      case "PaymTypeCode8": 
+        if (Bailr.BPaidSum8>0) then begin
+          res = false;
+        end;
+      case "PaymTypeCode9": 
+        if (Bailr.BPaidSum9>0) then begin
+          res = false;
+        end;
+      case "PaymTypeCode10": 
+        if (Bailr.BPaidSum10>0) then begin
+          res = false;
+        end;
+    end;
+  end;  
+  BailiffDClassActiveEditField = res;
+  return;
+end;
+
+function boolean BailiffDClassContrSerNrEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record BailiffVc Bailr;
+  row BailiffVc Bailrw;
+  record ContractVc Contrr;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,Bailr);
+    DeselectWindow(wn,false);
+    Bailr.Firstname = "";
+    Bailr.Surname = "";
+    Contrr.SerNr = Bailr.ContrSerNr;
+    if (ReadFirstMain(Contrr,1,true)) then begin
+      Bailr.Firstname = Contrr.Firstname;
+      Bailr.Surname = Contrr.Surname;
+    end;
+    PutWindowRecord(wn,Bailr);
+  end;
+  BailiffDClassContrSerNrEFAfter = true;
+  return;
+end;
+
+function boolean BailiffDClassBSum1EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record BailiffVc Bailr;
+  row BailiffVc Bailrw;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,Bailr);
+    DeselectWindow(wn,false);
+    Bailr.BUnpaidSum1 = Bailr.BSum1 - Bailr.BPaidSum1;
+    PutWindowRecord(wn,Bailr);
+  end;
+  BailiffDClassBSum1EFAfter = true;
+  return;
+end;
+
+function boolean BailiffDClassBSum2EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record BailiffVc Bailr;
+  row BailiffVc Bailrw;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,Bailr);
+    DeselectWindow(wn,false);
+    Bailr.BUnpaidSum2 = Bailr.BSum2 - Bailr.BPaidSum2;
+    PutWindowRecord(wn,Bailr);
+  end;
+  BailiffDClassBSum2EFAfter = true;
+  return;
+end;
+
+function boolean BailiffDClassBSum3EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record BailiffVc Bailr;
+  row BailiffVc Bailrw;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,Bailr);
+    DeselectWindow(wn,false);
+    Bailr.BUnpaidSum3 = Bailr.BSum3 - Bailr.BPaidSum3;
+    PutWindowRecord(wn,Bailr);
+  end;
+  BailiffDClassBSum3EFAfter = true;
+  return;
+end;
+
+function boolean BailiffDClassBSum4EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record BailiffVc Bailr;
+  row BailiffVc Bailrw;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,Bailr);
+    DeselectWindow(wn,false);
+    Bailr.BUnpaidSum4 = Bailr.BSum4 - Bailr.BPaidSum4;
+    PutWindowRecord(wn,Bailr);
+  end;
+  BailiffDClassBSum4EFAfter = true;
+  return;
+end;
+
+function boolean BailiffDClassBSum5EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record BailiffVc Bailr;
+  row BailiffVc Bailrw;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,Bailr);
+    DeselectWindow(wn,false);
+    Bailr.BUnpaidSum5 = Bailr.BSum5 - Bailr.BPaidSum5;
+    PutWindowRecord(wn,Bailr);
+  end;
+  BailiffDClassBSum5EFAfter = true;
+  return;
+end;
+
+function boolean BailiffDClassBSum6EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record BailiffVc Bailr;
+  row BailiffVc Bailrw;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,Bailr);
+    DeselectWindow(wn,false);
+    Bailr.BUnpaidSum6 = Bailr.BSum6 - Bailr.BPaidSum6;
+    PutWindowRecord(wn,Bailr);
+  end;
+  BailiffDClassBSum6EFAfter = true;
+  return;
+end;
+
+function boolean BailiffDClassBSum7EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record BailiffVc Bailr;
+  row BailiffVc Bailrw;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,Bailr);
+    DeselectWindow(wn,false);
+    Bailr.BUnpaidSum7 = Bailr.BSum7 - Bailr.BPaidSum7;
+    PutWindowRecord(wn,Bailr);
+  end;
+  BailiffDClassBSum7EFAfter = true;
+  return;
+end;
+
+function boolean BailiffDClassBSum8EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record BailiffVc Bailr;
+  row BailiffVc Bailrw;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,Bailr);
+    DeselectWindow(wn,false);
+    Bailr.BUnpaidSum8 = Bailr.BSum8 - Bailr.BPaidSum8;
+    PutWindowRecord(wn,Bailr);
+  end;
+  BailiffDClassBSum8EFAfter = true;
+  return;
+end;
+
+function boolean BailiffDClassBSum9EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record BailiffVc Bailr;
+  row BailiffVc Bailrw;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,Bailr);
+    DeselectWindow(wn,false);
+    Bailr.BUnpaidSum9 = Bailr.BSum9 - Bailr.BPaidSum9;
+    PutWindowRecord(wn,Bailr);
+  end;
+  BailiffDClassBSum9EFAfter = true;
+  return;
+end;
+
+function boolean BailiffDClassBSum10EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record BailiffVc Bailr;
+  row BailiffVc Bailrw;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,Bailr);
+    DeselectWindow(wn,false);
+    Bailr.BUnpaidSum10 = Bailr.BSum10 - Bailr.BPaidSum10;
+    PutWindowRecord(wn,Bailr);
+  end;
+  BailiffDClassBSum10EFAfter = true;
+  return;
+end;
+
+global
+function boolean BailiffDClassAfterEditField(integer wn,string fieldname,integer fn, integer rownr,integer changed)
+begin
+  boolean res;
+
+  switch (fieldname) begin
+    case "ContrSerNr": res = BailiffDClassContrSerNrEFAfter(wn,rownr,changed);
+    case "BSum1": res = BailiffDClassBSum1EFAfter(wn,rownr,changed);
+    case "BSum2": res = BailiffDClassBSum2EFAfter(wn,rownr,changed);
+    case "BSum3": res = BailiffDClassBSum3EFAfter(wn,rownr,changed);
+    case "BSum4": res = BailiffDClassBSum4EFAfter(wn,rownr,changed);
+    case "BSum5": res = BailiffDClassBSum5EFAfter(wn,rownr,changed);
+    case "BSum6": res = BailiffDClassBSum6EFAfter(wn,rownr,changed);
+    case "BSum7": res = BailiffDClassBSum7EFAfter(wn,rownr,changed);
+    case "BSum8": res = BailiffDClassBSum8EFAfter(wn,rownr,changed);
+    case "BSum9": res = BailiffDClassBSum9EFAfter(wn,rownr,changed);
+    case "BSum10": res = BailiffDClassBSum10EFAfter(wn,rownr,changed);
+  end;
+  BailiffDClassAfterEditField = res;
+  return;
+end;

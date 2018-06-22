@@ -1,0 +1,91 @@
+external function string 255 GetPaymTypeName(string);
+
+global
+function boolean AccGroupDClassActiveEditField(integer wn,string fieldname,integer fn,integer wnst,integer rownr,integer changed)
+begin
+  boolean res;
+  record AccGroupVc AGr;
+  row AccGroupVc AGrw;
+
+  res = true;
+  GetWindowRecord(wn,AGr);
+  if (wnst==Rs_update) then begin
+    switch (fieldname) begin
+      case "Code": 
+        res = false;
+      case "PaymTypeCode": 
+        if (rownr>=0) then begin
+          MatRowGet(AGr,rownr,AGrw);
+          if nonblank(AGrw.TaxCode) then begin
+            res = false;
+          end; 
+        end;
+      case "TaxCode": 
+        if (rownr>=0) then begin
+          MatRowGet(AGr,rownr,AGrw);
+          if nonblank(AGrw.PaymTypeCode) then begin
+            res = false;
+          end; 
+        end;
+    end;
+  end;
+  AccGroupDClassActiveEditField = res;
+  return;
+end;
+
+function boolean AccGroupDClassPaymTypeCodeEFAfter(integer wn,integer rownr,integer changedf)
+  begin  
+  record AccGroupVc AGr;
+  row AccGroupVc AGrw;
+  string 20 ptcode;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,AGr);
+    DeselectWindow(wn,false);
+    MatRowGet(AGr,rownr,AGrw);
+    ptcode=AGrw.PaymTypeCode;
+    ClearRow(AGr,AGrw,1);
+    AGrw.PaymTypeCode=ptcode;
+    AGrw.Name=GetPaymTypeName(ptcode);
+    MatRowPut(AGr,rownr,AGrw);
+    PutWindowRecord(wn,AGr);
+  end;
+  AccGroupDClassPaymTypeCodeEFAfter = true;
+  return;
+end;
+
+function boolean AccGroupDClassTaxCodeEFAfter(integer wn,integer rownr,integer changedf)
+  begin  
+  record AccGroupVc AGr;
+  row AccGroupVc AGrw;
+  record TaxVc Taxr;
+
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,AGr);
+    DeselectWindow(wn,false);
+    MatRowGet(AGr,rownr,AGrw);
+    Taxr.Code = AGrw.TaxCode;
+    ClearRow(AGr,AGrw,1);
+    AGrw.TaxCode = Taxr.Code;
+    if (ReadFirstMain(Taxr,1,true)) then begin
+      AGrw.Name = Taxr.Name;
+    end;
+    MatRowPut(AGr,rownr,AGrw);
+    PutWindowRecord(wn,AGr);
+  end;
+  AccGroupDClassTaxCodeEFAfter = true;
+  return;
+end;
+
+global
+function boolean AccGroupDClassAfterEditField(integer wn,string fieldname,integer fn, integer rownr,integer changed)
+begin
+  boolean res;
+
+  switch (fieldname) begin
+    case "PaymTypeCode": res = AccGroupDClassPaymTypeCodeEFAfter(wn,rownr,changed);
+    case "TaxCode": res = AccGroupDClassTaxCodeEFAfter(wn,rownr,changed);
+  end;
+  AccGroupDClassAfterEditField = res;
+  return;
+end;

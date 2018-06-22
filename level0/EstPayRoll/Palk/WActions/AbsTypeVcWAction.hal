@@ -1,0 +1,14 @@
+global
+function boolean AbsTypeDClassActiveEditField(integer wn,string fieldname,integer fn,integer wnst,integer rownr,integer changed)
+begin
+  boolean res;
+  
+  res = true;
+  if (wnst==Rs_update) then begin
+    switch (fieldname) begin
+      case "Code": res = false;
+    end;
+  end;
+  AbsTypeDClassActiveEditField = res;
+  return;
+end;

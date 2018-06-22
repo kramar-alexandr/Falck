@@ -1,0 +1,153 @@
+external function boolean GetNextPieceWorkTypeNr(var string);
+external function boolean PWTrInUse(string);
+external function boolean PositionExsistsAndActive(string,LongInt,date);
+external function boolean PaymTypeExsists(string);
+
+global
+function LongInt PieceWorkTypeVcRecordDefaults(var record PieceWorkTypeVc PWTr,record PieceWorkTypeVc PWT2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  
+  if (SingleUserMode) then begin
+    if (GetNextPieceWorkTypeNr(PWTr.Code)) then begin end;
+  end else begin
+    PWTr.Code = "";
+  end;
+  
+  PieceWorkTypeVcRecordDefaults = res; 
+  return;
+end;
+
+global
+function LongInt PieceWorkTypeVcRecordDuplicate(var record PieceWorkTypeVc PWTr,record PieceWorkTypeVc PWT2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+ 
+  if (SingleUserMode) then begin
+    if (GetNextPieceWorkTypeNr(PWTr.Code)) then begin end;
+  end else begin
+    PWTr.Code = "";
+  end;
+
+  PieceWorkTypeVcRecordDuplicate = res; 
+  return;
+end;
+
+global
+function LongInt PieceWorkTypeVcRecordCheck(var record PieceWorkTypeVc PWTr,record PieceWorkTypeVc PWT2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  record PieceWorkTypeVc PWT3r;
+  row PieceWorkTypeVc PWTrw;
+  record ContractVc Contrr;
+  row ContractVc Contrrw;
+  record PositionVc Posr;
+  LongInt updatemode,insertmode;
+  integer rwcnt,i;
+  
+  insertmode=1;
+  updatemode=2;
+  res = 0;
+  if (blank(PWTr.Code)) then begin
+    if (stat==updatemode) and nonblank(PWT2r.Code) then begin
+      PWTr.Code=PWT2r.Code;
+    end else begin
+      if (GetNextPieceWorkTypeNr(PWTr.Code)) then begin end;
+    end;
+  end;
+  if (stat==insertmode) or (stat==updatemode and PWTr.Code!=PWT2r.Code) then begin
+    PWT3r.Code = PWTr.Code;
+    if (ReadFirstMain(PWT3r,1,true)) then begin
+      RecordCheckError(1547," " & PWTr.Code,-1,"Code");      
+      res = -1; 
+      goto LPieceWorkTypeVcRecordCheck;
+    end;
+  end;
+  if (len(PWTr.Code)<=0) then begin
+    RecordCheckError(1500350,"",-1,"Code");      
+    res = -1; 
+    goto LPieceWorkTypeVcRecordCheck;
+  end;
+
+  if blank(PWTr.PaymTypeCode) then begin
+    RecordCheckError(1500316,"",-1,"PaymTypeCode");      
+    res = -1; 
+    goto LPieceWorkTypeVcRecordCheck;
+  end;
+  if (PaymTypeExsists(PWTr.PaymTypeCode)==false) then begin
+    RecordCheckError(1500326," " & PWTr.PaymTypeCode,-1,"PaymTypeCode");      
+    res = -1; 
+    goto LPieceWorkTypeVcRecordCheck;
+  end;
+
+  rwcnt=MatRowCnt(PWTr);
+  for (i=0;i<rwcnt;i=i+1) begin
+   MatRowGet(PWTr,i,PWTrw);
+    if (PWTrw.ContrSerNr<=0) then begin
+      RecordCheckError(1500318,"",i,"ContrSerNr");      
+      res = -1; 
+      goto LPieceWorkTypeVcRecordCheck;
+    end else begin
+      Contrr.SerNr=PWTrw.ContrSerNr;
+      if (ReadFirstMain(Contrr,1,true)==false) then begin
+        RecordCheckError(1500332," " & PWTrw.ContrSerNr,i,"ContrSerNr");      
+        res = -1; 
+        goto LPieceWorkTypeVcRecordCheck;
+      end;
+    end;
+    if blank(PWTrw.SDate) then begin
+      RecordCheckError(1500321,"",i,"SDate");      
+      res = -1; 
+      goto LPieceWorkTypeVcRecordCheck;
+    end;
+    if (nonblank(PWTrw.EDate)) then begin
+      if (PWTrw.EDate<PWTrw.SDate) then begin
+        RecordCheckError(1500322,"",i,"EDate");      
+        res = -1; 
+        goto LPieceWorkTypeVcRecordCheck;
+      end;
+    end;
+    if blank(PWTrw.PosCode) then begin
+      RecordCheckError(1500307," " & PWTrw.PosCode,i,"PosCode");      
+      res = -1; 
+      goto LPieceWorkTypeVcRecordCheck;
+    end else begin
+      if (PositionExsistsAndActive(PWTrw.PosCode,PWTrw.ContrSerNr,PWTrw.SDate)==false) then begin
+        RecordCheckError(1500324," v›i ei ole aktiivne antud perioodil " & PWTrw.PosCode,i,"PosCode");      
+        res = -1; 
+        goto LPieceWorkTypeVcRecordCheck;
+      end;
+      if nonblank(PWTrw.EDate) then begin
+        if (PositionExsistsAndActive(PWTrw.PosCode,PWTrw.ContrSerNr,PWTrw.EDate)==false) then begin
+          RecordCheckError(1500324," v›i ei ole aktiivne antud perioodil " & PWTrw.PosCode,i,"PosCode");      
+          res = -1; 
+          goto LPieceWorkTypeVcRecordCheck;
+        end;
+      end;
+    end;
+    if blank(PWTrw.Tariff) then begin
+      RecordCheckError(1500353,"",i,"Tariff");      
+      res = -1; 
+      goto LPieceWorkTypeVcRecordCheck;
+    end;
+  end;
+LPieceWorkTypeVcRecordCheck:;
+  PieceWorkTypeVcRecordCheck = res;
+  return;
+end;
+
+
+global
+function LongInt PieceWorkTypeVcRecordRemoveTest(var record PieceWorkTypeVc PWTr,record PieceWorkTypeVc PWT2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+  boolean testf;
+
+  testf = PWTrInUse(PWTr.Code);
+  if (testf) then begin
+    MessageBox(1500351,"")
+    res = 0;
+  end;
+  PieceWorkTypeVcRecordRemoveTest = res; 
+  return;
+end;

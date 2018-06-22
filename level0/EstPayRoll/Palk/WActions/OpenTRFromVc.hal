@@ -1,0 +1,50 @@
+procedure OpenTRFromVc(string filename,LongInt sernr)
+begin
+  record TRVc TRr;
+  record TRVc TR2r;
+  Boolean openf,flag;
+  Integer nwn,nwn2;
+
+  if (UserCanAction("OpenTRFromSpec",true)) then begin
+    TRr.Number = sernr;
+    switch (filename) begin
+      case "CalcPayrollVc": TRr.IntYc = SalaryCalcYc; openf = true; flag=true;       
+      case "PaymPayrollVc": TRr.IntYc = SalaryPaymentYc; openf = true;        
+    end;
+    if (openf) then begin
+      if (ReadFirstMain(TRr,2,true)) then begin
+        nwn = OpenWindow("TRDClass",1,0,"","",TRr);
+      end;
+      if (flag) then begin
+        TR2r.Number = sernr;
+        TR2r.IntYc = SalaryPayment2Yc;
+        if (ReadFirstMain(TR2r,2,true)) then begin
+          nwn2 = OpenWindow("TRDClass",1,0,"","",TR2r);
+        end;
+      end;
+    end;
+  end else begin
+    Beep;
+  end;
+  return;
+end;
+
+global
+procedure OpenTRFromCPr()
+begin  
+  record CalcPayrollVc CPr;
+  
+  GetWindowRecord(CurWindow,CPr);
+  OpenTRFromVc("CalcPayrollVc",CPr.SerNr);
+  return;
+end;
+
+global
+procedure OpenTRFromPPr()
+begin  
+  record PaymPayrollVc PPr;
+  
+  GetWindowRecord(CurWindow,PPr);
+  OpenTRFromVc("PaymPayrollVc",PPr.SerNr);
+  return;
+end;

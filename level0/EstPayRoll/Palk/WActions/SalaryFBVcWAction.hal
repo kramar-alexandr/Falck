@@ -1,0 +1,137 @@
+global 
+function Boolean SalaryFBDClassDeleteRowTest(Integer wn,Integer rownr)
+begin
+  record SalaryFBVc SFBr;
+  integer updatemode;
+  boolean res;
+
+  res = true;
+  updatemode = 2;
+  if (WindowState(wn)==updatemode) then begin
+    GetPrevWindowRecord(wn,SFBr);
+  end else begin
+    GetWindowRecord(wn,SFBr);
+  end;
+  if (SFBr.OKFlag!=0) then begin
+    res = false;
+  end;
+
+  SalaryFBDClassDeleteRowTest = res;
+  return;
+end;
+
+global
+function boolean SalaryFBDClassActiveEditField(integer wn,string fieldname,integer fn,integer wnst,integer rownr,integer changed)
+begin
+  boolean res;
+  record SalaryFBVc SFBr;
+  
+  res = true;
+  GetWindowRecord(wn,SFBr);
+  if (SFBr.OKFlag!=0) then begin
+    res = false;
+  end;  
+  if (wnst==Rs_update) then begin
+    switch (fieldname) begin
+      case "SerNr": res = false;
+    end;
+  end;
+  SalaryFBDClassActiveEditField = res;
+  return;
+end;
+
+global
+function boolean SalaryFBDClassOKFlagButtonAction(integer wn,integer value)
+begin
+  boolean res;
+  record SalaryFBVc SFBr;
+  integer normalmode,updatemode;
+  
+  res = true;
+  normalmode = 0;
+  updatemode = 2;
+  if (WindowState(wn)==normalmode) then begin
+    GetWindowRecord(wn,SFBr);
+    if (SFBr.OKFlag!=0) then begin
+      res = false;
+      if (UserCanAction("UnOKAll",false)) then begin
+        res = true;
+      end;
+    end;
+  end;  
+  if (WindowState(wn)==updatemode) then begin
+    GetPrevWindowRecord(wn,SFBr);
+    if (SFBr.OKFlag!=0) then begin
+      res = false;
+    end;
+  end;  
+  SalaryFBDClassOKFlagButtonAction = res;
+  return;
+end;
+
+function boolean SalaryFBDClassContrSerNrEFAfter(integer wn,integer rownr,integer changedf)
+  begin  
+  record SalaryFBVc SFBr;
+  row SalaryFBVc SFBrw;
+  record ContractVc Contrr;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,SFBr);
+    DeselectWindow(wn,false);
+    MatRowGet(SFBr,rownr,SFBrw);
+    Contrr.SerNr = SFBrw.ContrSerNr;
+    ClearRow(SFBr,SFBrw,1);
+    SFBrw.ContrSerNr = Contrr.SerNr;
+    if (ReadFirstMain(Contrr,1,true)) then begin
+      SFBrw.Firstname = Contrr.Firstname;
+      SFBrw.Surname = Contrr.Surname;
+    end;
+    MatRowPut(SFBr,rownr,SFBrw);
+    PutWindowRecord(wn,SFBr);
+  end;
+
+  SalaryFBDClassContrSerNrEFAfter = true;
+  return;
+end;
+
+global
+function boolean SalaryFBDClassAfterEditField(integer wn,string fieldname,integer fn, integer rownr,integer changed)
+begin
+  boolean res;
+
+  switch (fieldname) begin
+    case "ContrSerNr": res = SalaryFBDClassContrSerNrEFAfter(wn,rownr,changed);
+  end;
+
+  SalaryFBDClassAfterEditField = res;
+  return;
+end;
+
+global
+function Boolean SalaryFBDClassOpenRecord(Integer wn,string fieldname,Integer fn,Integer rownr)
+begin
+  Boolean res;
+  record SalaryFBVc SFBr;
+  row SalaryFBVc SFBrw;
+  record ContractVc Contrr;
+  Integer nwn;
+
+  GetWindowRecord(wn,SFBr);  
+  DeselectWindow(wn,false);
+  if (rownr>=0) then begin
+    MatRowGet(SFBr,rownr,SFBrw);
+  end;
+  switch (fieldname) begin
+    case "ContrSerNr":
+      if (SFBrw.ContrSerNr>0) then begin
+        Contrr.SerNr = SFBrw.ContrSerNr;
+        if (ReadFirstMain(Contrr,1,true)) then begin
+          nwn = OpenWindow("ContractDClass",1,0,"","",Contrr);    
+          res = true;
+        end;
+      end;
+  end;
+  SalaryFBDClassOpenRecord = res;
+  return;
+end;
+

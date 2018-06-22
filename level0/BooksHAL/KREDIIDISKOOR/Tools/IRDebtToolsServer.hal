@@ -1,0 +1,24 @@
+external function boolean PostDataFromAreaToIR(string, integer, string, area, var area);
+
+global
+function boolean SendDebtToIR(area areaToSend, var area replyArea, var string errDescr)
+begin
+  record ServiceCacheVc SCr;
+  boolean TrHs, res;
+  string 255 funcName;
+
+  res = false;
+  TrHs = true;
+  SCr.Code = "SENDDEBTINFO";
+  funcName = "/debts";
+  if (ReadFirstMain(SCr,1,true)) then begin
+    res = PostDataFromAreaToIR(SCr.ServiceHost,SCr.ServicePort,funcName,areaToSend,replyArea);
+    WriteAreaToFile(areaToSend,"debt_request.txt",0); //TODO remove
+    WriteAreaToFile(replyArea,"debt_response.txt",0); //TODO remove
+  end;
+  if(res == false) then begin
+    errDescr = USetStr(1500156);
+  end;
+  SendDebtToIR = res;
+  return;
+end;

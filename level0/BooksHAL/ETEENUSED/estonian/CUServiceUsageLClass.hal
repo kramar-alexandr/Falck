@@ -1,0 +1,17 @@
+window CUServiceUsageLClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("E-teenuste statistika",CUServiceUsageLClass,CGmlist,-);
+  SetWRect(20,80,650,291);
+  Sizeable(-1,-1,0,0);
+  UseView(CUServiceUsageVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,2,"KuupŠev",ServiceDate,false,ServiceDate);
+  RlColKey(82,82,"Reg.nr.1",RegNr1,false,RegNr1);
+  RlColKey(150,150,"Teenus",ContractType,false,ContractType);
+  RlColKey(230,230,"Partner",Partner,false,Partner);
+  RlCol(380,380,"Pššrdumised",ServiceReq,true);
+  RlCol(475,475,"Maht",Volume,true);
+  SearchField("Otsi");
+  EndWindow;
+end;

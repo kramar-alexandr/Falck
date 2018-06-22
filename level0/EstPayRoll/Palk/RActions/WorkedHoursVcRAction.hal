@@ -1,0 +1,225 @@
+external function integer CheckObjs(string,string,var string);
+external function boolean ContractExsistsAndActive(LongInt);
+external function boolean PositionExsistsAndActive(string,LongInt,date);
+external function boolean WHTypeCodeExsistsAndActive(string,date);
+external function Boolean SerNrTestWorkedHoursVc(LongInt,date);
+external procedure SetMarkFlag(integer,var integer);
+
+global
+function LongInt WorkedHoursVcRecordDefaults(var record WorkedHoursVc WHr,record WorkedHoursVc WH2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  date whdate;
+
+  WHr.SerNr = -1;
+  whdate.day=01;
+  WHr.Month=GetMonth(CurrentDate);
+  WHr.Year=GetYear(CurrentDate);
+  whdate.month=WHr.Month;
+  whdate.year=WHr.Year;
+
+  if (SingleUserMode) then begin
+    WHr.SerNr = NextSerNr("WorkedHoursVc",whdate,-1,false,"");
+  end;
+
+  WorkedHoursVcRecordDefaults = res; 
+  return;
+end;
+
+global
+function LongInt WorkedHoursVcRecordDuplicate(var record WorkedHoursVc WHr,record WorkedHoursVc WH2r,LongInt stat,LongInt long4)
+begin
+  row WorkedHoursVc WHrw;
+  LongInt res;
+  integer rwcnt,i;
+  date whdate;
+  
+  WHr.SerNr=-1;
+  WHr.OKFlag=0;
+  SetMarkFlag(WHr.OKFlag,WHr.OKMark);
+  whdate.day=01;
+  whdate.month=WHr.Month;
+  whdate.year=WHr.Year;
+
+  if (SingleUserMode) then begin
+    WHr.SerNr = NextSerNr("WorkedHoursVc",whdate,-1,false,"");
+  end;
+  rwcnt=MatRowCnt(WHr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(WHr,i,WHrw);
+    WHrw.CalcSerNr=0;
+    MatRowPut(WHr,i,WHrw);
+  end;
+  WorkedHoursVcRecordDuplicate = res; 
+  return;
+end;
+
+global
+function LongInt WorkedHoursVcRecordCheck(var record WorkedHoursVc WHr,record WorkedHoursVc WH2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  record WorkedHoursVc WH3r;
+  row WorkedHoursVc WHrw;
+  LongInt updatemode,insertmode,errcode;
+  date whdate;
+  integer rwcnt,i;
+  string 255 tstr;
+  
+  insertmode=1;
+  updatemode=2;
+  res = 0;
+  whdate.day=01;
+  whdate.month=WHr.Month;
+  whdate.year=WHr.Year;
+
+  if (stat!=insertmode) then begin
+    if (WH2r.OKFlag!=0) then begin
+      goto LWorkedHoursVcRecordCheck;
+    end;
+  end;
+  
+  if (stat==updatemode) then begin
+    if (WHr.SerNr<=0)  then begin
+      WHr.SerNr = WH2r.SerNr;
+    end;
+  end;
+  if (WHr.SerNr==-1) then begin
+      WHr.SerNr = NextSerNr("WorkedHoursVc",whdate,-1,false,"");
+  end;
+  if (SerNrTestWorkedHoursVc(WHr.SerNr,whdate)==false) then begin
+    RecordCheckError(1557,"",-1,"SerNr");      
+    res = -1; 
+    goto LWorkedHoursVcRecordCheck;
+  end;
+
+  if (stat==insertmode) or (stat==updatemode and WHr.SerNr!=WH2r.SerNr) then begin
+    WH3r.SerNr = WHr.SerNr;
+    if (ReadFirstMain(WH3r,1,true)) then begin
+      RecordCheckError(1547," " & WHr.SerNr,-1,"SerNr");      
+      res = -1; 
+      goto LWorkedHoursVcRecordCheck;
+    end;
+  end;   
+  if (len(WHr.SerNr)<=0 or (WHr.SerNr<=0)) then begin
+    RecordCheckError(1500357,"",-1,"SerNr");      
+    res = -1; 
+    goto LWorkedHoursVcRecordCheck;
+  end;
+  if (WHr.Year<=0) then begin
+    RecordCheckError(1500337,"",-1,"Year");      
+    res = -1; 
+    goto LWorkedHoursVcRecordCheck;
+  end;
+  if (WHr.Month<=0) then begin
+    RecordCheckError(1500366,"",-1,"Month");      
+    res = -1; 
+    goto LWorkedHoursVcRecordCheck;
+  end;
+
+  rwcnt=MatRowCnt(WHr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(WHr,i,WHrw);
+    if (WHrw.ContrSerNr<=0) then begin
+      RecordCheckError(1500318,"",i,"ContrSerNr");      
+      res = -1; 
+      goto LWorkedHoursVcRecordCheck; 
+    end else begin
+      if (ContractExsistsAndActive(WHrw.ContrSerNr)==false) then begin
+        RecordCheckError(1500332," või ei ole aktiivne " & WHrw.ContrSerNr,i,"ContrSerNr");      
+        res = -1; 
+        goto LWorkedHoursVcRecordCheck; 
+      end;
+    end;
+    if (WHrw.ContrSerNr>0) then begin
+      if blank(WHrw.PosCode) then begin
+        RecordCheckError(1500307," " & WHrw.PosCode,i,"PosCode");      
+        res = -1; 
+        goto LWorkedHoursVcRecordCheck;
+      end else begin
+        whdate.day=0;
+        if (PositionExsistsAndActive(WHrw.PosCode,WHrw.ContrSerNr,whdate)==false) then begin
+          RecordCheckError(1500324," või ei ole aktiivne antud kuupäeval " & WHrw.PosCode,i,"PosCode");      
+          res = -1; 
+          goto LWorkedHoursVcRecordCheck; 
+        end;
+      end;
+      if blank(WHrw.WorkHourTypeCode) then begin
+        RecordCheckError(1500347," " & WHrw.WorkHourTypeCode,i,"WorkHourTypeCode");      
+        res = -1; 
+        goto LWorkedHoursVcRecordCheck;
+      end else begin
+        if (WHTypeCodeExsistsAndActive(WHrw.WorkHourTypeCode,whdate)==false) then begin
+          RecordCheckError(1500367," või ei ole aktiivne antud kuupäeval " & WHrw.WorkHourTypeCode,i,"WorkHourTypeCode");      
+          res = -1; 
+          goto LWorkedHoursVcRecordCheck; 
+        end;
+      end;
+/*
+      if blank(WHrw.Coefficient) then begin
+        RecordCheckError(1500348,"",i,"Coefficient");      
+        res = -1; 
+        goto LWorkedHoursVcRecordCheck;
+      end;
+*/      
+      if (nonblank(WHrw.ObjCode)) then begin
+        errcode = CheckObjs("",WHrw.ObjCode,tstr);
+        if (errcode!=0) then begin
+          RecordCheckError(errcode,tstr,i,"ObjCode");      
+          res = -1; 
+          goto LWorkedHoursVcRecordCheck;
+        end;
+      end;
+    end;
+  end;
+LWorkedHoursVcRecordCheck:;
+  if (res==-1) then begin
+    WHr.OKFlag=0;
+    SetMarkFlag(WHr.OKFlag,WHr.OKMark);
+  end;
+  WorkedHoursVcRecordCheck = res;
+  return;
+end;
+
+global
+function LongInt WorkedHoursVcRecordSave(var record WorkedHoursVc WHr,record WorkedHoursVc WH2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  
+  SetMarkFlag(WHr.OKFlag,WHr.OKMark);
+  WorkedHoursVcRecordSave = res; 
+  return;
+end;
+
+global
+function LongInt WorkedHoursVcRecordUpdate(var record WorkedHoursVc WHr,record WorkedHoursVc WH2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  
+  SetMarkFlag(WHr.OKFlag,WHr.OKMark);
+  WorkedHoursVcRecordUpdate = res; 
+  return;
+end;
+
+global
+function LongInt WorkedHoursVcRecordRemoveTest(var record WorkedHoursVc WHr,record WorkedHoursVc WH2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+
+  res = 1;
+  if (WHr.OKFlag!=0) then begin
+    MessageBox(1560,"")
+    res = 0;
+  end;
+  WorkedHoursVcRecordRemoveTest = res; 
+  return;
+end;
+
+global
+updating function LongInt WorkedHoursVcRecordImport(var record WorkedHoursVc WHr,record WorkedHoursVc WH2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+
+  SetMarkFlag(WHr.OKFlag,WHr.OKMark);
+  WorkedHoursVcRecordImport = res; 
+  return;
+end;

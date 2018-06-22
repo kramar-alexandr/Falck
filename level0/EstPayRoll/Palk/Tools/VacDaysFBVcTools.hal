@@ -1,0 +1,16 @@
+global
+function boolean GetNextVacDaysFBSerNr(var LongInt vdfbsernr)
+begin
+  boolean res;
+  record VacDaysFBVc VDFBr;
+  
+  VDFBr.SerNr = 99999999999;
+  if (ReadLastMain(VDFBr,1,false)) then begin
+    vdfbsernr = VDFBr.SerNr + 1;
+  end else begin
+    vdfbsernr = 1;
+  end;
+
+  GetNextVacDaysFBSerNr = res;
+  return;
+end;
