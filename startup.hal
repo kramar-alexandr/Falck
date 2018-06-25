@@ -3,7 +3,7 @@ begin
 
   SetLangMode(LangEstonian,"EST",0);
 	
-	Setting("Falck - Automatically Created Objects",AutoCrObjTClass,modSL);// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 25 June 2018 14:31:58
+	Setting("Falck - Automatically Created Objects",AutoCrObjTClass,modNL);// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 25 June 2018 14:31:58
 	
 //sepa import
   Setting("SEPA Pangafaili Import",SEPABankFileTClass,modSL); //Bk HAL //##ii

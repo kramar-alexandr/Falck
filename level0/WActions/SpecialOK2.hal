@@ -24,7 +24,7 @@ external function val GetAcceptanceSum_SDVc(record SDVc);
 external updating function Boolean CreateFYIAcceptanceTasks(Integer,string,string,string,val,string,string,record AcceptanceRulesVc,row AcceptanceRulesVc,string,string);
 external function string 60 UserDefined_BPI(integer,string,string);// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 25 June 2018 15:26:14
 external function string 60 UserDefined(string,string);// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 25 June 2018 15:26:14
-external updating procedure CheckAndCreateObject(string,string);// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 25 June 2018 15:30:31
+remote updating procedure CheckAndCreateObject(string,string);// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 25 June 2018 15:30:31
 
 procedure RemoveExistingClassifications(string classifications,var string res)
 BEGIN
