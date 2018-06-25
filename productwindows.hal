@@ -72,6 +72,9 @@ remote inner procedure GetCredScoreAndDateFor(string, var val, var date); //cust
 external inner function boolean CredScoreCanExist(record CUVc); //cust KB 18.04.2018
 external inner function Boolean HasLimitedAccess();
 external inner function Boolean HasEInvoicing();
+external inner function Boolean HasAdvancedPricing();
+external inner function Boolean HasContactClassification();
+external inner function Boolean HasPriceLists();
 
 begin
 
@@ -3444,6 +3447,107 @@ begin
   CheckBox(h,v+=16,0,"Vahetuskursi #VAT# seadus",VATLawExchangeRate);
   //EditFieldTL(h+50,v+=25, 70,"Aeg",M4Time,Normal,0,ERTime,false,PasteCurTime);//cust KB 06.02.2018 disabled, now PeriodicTask
   EditFieldTL(h+50,v+=20, 70,"B2 Val. kood",M4Code,Normal,5,B2CurCode,false,CurncyCodeSClass);
+
+  EndWindow;
+end;
+
+window CCatDClass:2
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h2,v,vs;
+  WindowBegin("Kliendiklass",CCatDClass,CGview,-);
+  SetWRect(64,80,600,330);
+  UseView(CCatVc);
+  v = 6; vs = 20; h = 100;
+  if (IsEnterprise or IsBooks) then begin //##cc
+  Tile(0,90,false,"",Code);
+  EditField(h,v, 70,"Kood",Normal,Code,false,0);
+  EditField(h,v+=vs,-40,"Nimetus",Normal,Comment,false,0);
+    if (StandardHansa==false) then begin
+  EditField(h,v+=vs,-40,"N›ua klassif. tŸŸpe",Normal,ClassType,false,CTypeSClass);
+    end;
+  TileButton(1,"Hinnakujundus");
+  TileButton(2,"Kontod");
+    if (StandardHansa==false) then begin
+  TileButton(3,"Veeb");
+    end;
+    if (HasCharts) then begin
+    TileButton(4,"BI");
+    end;
+  Tile(1,110,false,"1",PLCode);  
+  v = 6; h = 200;
+  EditField(h,v,70,"Hinnakiri",Normal,PLCode,false,PLDefSClass);
+  if (HasAdvancedPricing) then begin
+  EditField(h,v+=vs,70,"Hinnaalandusmaatriks",Normal,RebCode,false,RebSClass);
+  end;
+  EditField(h,v+=vs,55,"Ettemaksu protsent",Normal,DownPayPerc,false,0);
+  if (HasItemClassification) then begin
+  EditField(h,v+=vs,55,"Peamine artikli klassifikaator",Normal,MainDispGroup,false,DISClass);
+  end;
+    if (StandardHansa==false) then begin
+  EditField(h,v+=vs,55,"Veebitellimuste klass",Normal,WebOrderClass,false,OrderClassSClass);
+    end;
+  EditField(h,v+=vs ,150,"Objekt",Normal,BPIObjects,false,ObjSClass);// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 25 June 2018 13:59:39
+
+//##  EditField(h,v+=vs ,70, "Commission Matrix",Normal,ComCode,false,ComSClass);
+  Tile(2,130,false,"2",ARAcc);  
+  v = 6; h = 200;
+  EditField(h,v,55,"MŸŸgiv›lakonto",Normal,ARAcc,false,AccSClass);
+  EditField(h,v+=vs,55,"VŠhet›en.laek. mŸŸgiv›la konto",Normal,BadARAcc,false,AccSClass);
+  EditField(h,v+=vs,55,"MŸŸgi ettemaksu konto",Normal,OnAccAcc,false,AccSClass);
+  EditField(h,v+=vs,55,"Ostuv›lakonto",Normal,AccAP,false,AccSClass);
+  EditField(h,v+=vs,55,"Ostu ettemaksu konto",Normal,OnAccAccAP,false,AccSClass);
+  EditField(h,v+=vs,55,"Kinnipidamiste konto",Normal,RetainAcc,false,AccSClass);
+    if (StandardHansa==false) then begin
+  Tile(3,50,false,"3",WebDisplays);
+  v = 6;
+  EditField(h,v,55,"NŠita veebis",Normal,WebDisplays,false,WebDisplaySClass);
+      EditField(h,v+=vs,55,"Veebi objektitŸŸp",Normal,WebOTCode,false,OTSClass);
+    end;
+    if (HasCharts) then begin
+    Tile(4,400,false,"4",-);
+    ChartArea(10,6,-10,390,"$CCATDCLass_BIChart");
+    end;
+  end else begin
+  SetWRect(64,80,509,200);
+  UseView(CCatVc);
+    v = 10; vs = 20; h = 130; h2 = 320;
+  EditField(h,v, 70,"Kood",Normal,Code,false,0);
+  EditField(h,v+=vs ,-40,"Kirjeldus",Normal,Comment,false,0);
+    if (HasContactClassification) then begin
+  EditField(h,v+=vs ,-40,"Klassif. tŸŸbid",Normal,ClassType,false,CTypeSClass);
+    end;
+    if (HasPriceLists) then begin
+  EditField(h,v+=vs ,70, "Hinnakiri",Normal,PLCode,false,PLDefSClass);
+end;
+  if (HasModNL) then begin
+  EditField(h,v+=vs ,70,"MŸŸgiv›lakonto",Normal,ARAcc,false,AccSClass);
+      if (HasRussianPrepayment or HasPrepayments) then begin
+        if (HasModSL) then begin
+          EditField(h,v+=vs,70,"MŸŸgi ettemaksu konto",Normal,OnAccAcc,false,AccSClass);
+        end;
+        if (HasModPL) then begin
+          EditField(h,v+=vs,70,"Ostu ettemaksukonto",Normal,OnAccAccAP,false,AccSClass);
+        end;
+      end;
+end;
+  if (HasAdvancedPricing) then begin
+  EditField(h,v+=vs ,70, "Maksumaatriks",Normal,RebCode,false,RebSClass);
+    end;
+  end;
+  EndWindow;
+end;
+
+window AutoCrObjTClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h1,h2,l,v,vm,vs;
+  WindowBegin("Falck - Automatically Created Objects",AutoCrObjTClass,CGSbl,-);
+  SetBlid(AutoCrObjBlock);
+  SetWRect(20,80,480,330);
+  vs = 20; h = 140; h1 = 20; h2 = 315; l = 70;
+  v=v+vs;
+  EditField(h,v,-20,"Objekti tŸŸp",Normal,ObjTypes,false,OTSClass);// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 25 June 2018 14:30:22
 
   EndWindow;
 end;

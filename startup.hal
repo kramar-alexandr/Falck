@@ -2,7 +2,9 @@ event startup
 begin
 
   SetLangMode(LangEstonian,"EST",0);
-
+	
+	Setting("Falck - Automatically Created Objects",AutoCrObjTClass,modSL);// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 25 June 2018 14:31:58
+	
 //sepa import
   Setting("SEPA Pangafaili Import",SEPABankFileTClass,modSL); //Bk HAL //##ii
   Import("Pangafail, SEPA",SEPAIn,SEPAIn,modSL); //Bk HAL //##ii

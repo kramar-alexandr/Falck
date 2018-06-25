@@ -1,0 +1,24 @@
+global updating procedure CheckAndCreateObject(string object, string OBType)
+begin
+	record ObjVc Objr;
+	record AutoCrObjBlock ACOb;
+			
+	if(nonblank(OBType) and nonblank(object))then begin
+		blockload(ACOb);
+		if(nonblank(ACOb.ObjTypes))then begin
+			if(setinset(OBType,ACOb.ObjTypes))then begin
+	
+				Objr.Code = uppercase(trim(object));
+				if(readfirstmain(Objr,1,true)==false)then begin
+					recordnew(Objr);
+					Objr.Code = uppercase(trim(object));
+					Objr.Comment = Objr.Code;
+					Objr.OTCode = uppercase(trim(OBType));
+					recordstore(Objr,true);
+				end;
+			end;
+		end;
+	end;
+
+return;
+end;

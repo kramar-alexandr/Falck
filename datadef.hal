@@ -54,6 +54,7 @@ begin
   SourceFile("halcust\\level0\\EstPayRoll\\Palk\\WActions",0);
   SourceFile("halcust\\level0\\Tools",0);
   SourceFile("halcust\\level0\\WActions",0);
+  SourceFile("halcust\\RActions",3);// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 25 June 2018 13:55:52
 
 //Old Salary Module start
   RecordBegin(EmployeeVc,-,"");
@@ -2800,6 +2801,14 @@ begin
   KeySegment(IVSerNr);
   KeySegment(SerNr);    
   EndRecord;
+  
+  RecordAddBegin(CCatVc,"BPICCatVc2");
+  	RecordField(BPIObjects,M4UStr,100,ObjVc);// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 25 June 2018 13:48:21
+  EndRecordAdd;
+	
+	BlockBegin(AutoCrObjBlock,-,"");// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 25 June 2018 14:21:12
+	  RecordField(ObjTypes,M4UStr,250,0);
+  EndBlock;
 
   return;
 end;

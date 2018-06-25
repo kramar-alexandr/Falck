@@ -1,0 +1,28 @@
+external inner function Integer CheckObjs(string,string,var string);
+
+global
+function LongInt CCatVcRecordCheck(var record CCatVc CCatr,record CCatVc CCat2r,LongInt stat,LongInt long4)
+BEGIN
+  LongInt res;
+  record AccVc Accr;
+  Integer errcode;
+  string 255 tstr;
+
+  res = 0;
+  
+  res = inner.CCatVcRecordCheck(CCatr,CCat2r,stat,long4);
+  if(res==0)then begin
+  	if (nonblank(CCatr.BPIObjects)) then begin
+    errcode = CheckObjs("",CCatr.BPIObjects,tstr);
+    if (errcode!=0) then begin
+      RecordCheckError(errcode,tstr,-1,"BPIObjects");      
+      res = -1; 
+      goto LCCatVcRecordCheck;
+    end;
+  end;
+  end;
+ 
+LCCatVcRecordCheck:;  
+  CCatVcRecordCheck = res;
+  RETURN;
+END;
