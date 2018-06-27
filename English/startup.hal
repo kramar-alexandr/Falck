@@ -1,0 +1,7 @@
+event startup
+begin
+
+		Setting("Falck - Automatically Created Objects",AutoCrObjTClass,modNL);// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 25 June 2018 14:31:58
+
+	  return;
+end;
