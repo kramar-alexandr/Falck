@@ -53,6 +53,7 @@ begin
   SourceFile("halcust\\level0\\EstPayRoll\\Palk\\Tools",0);
   SourceFile("halcust\\level0\\EstPayRoll\\Palk\\WActions",0);
   SourceFile("halcust\\level0\\Tools",0);
+  SourceFile("halcust\\level0\\Documents",0);
   SourceFile("halcust\\level0\\WActions",0);
   SourceFile("halcust\\RActions",3);// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 25 June 2018 13:55:52
   SourceFile("halcust\\English",3);// Edit ************************** BPI Ukraine - KramarAlexandr - Wednesday, 27 June 2018 09:37:36
