@@ -699,13 +699,13 @@ begin
     l = l + 1;
   end;
   
-  res = "Ã‹";
+  res = "è";
   for (i=0;i<l;i=i+2) begin
     tstr2 = Mid(tstr,i,2);
     c = StringToInt(tstr2);
     res = res & Chr(c + 33);
   end;
-  res = res & "ÃŒ";
+  res = res & "í";
   
   EncodeCAEBarcode = res;
 end;
