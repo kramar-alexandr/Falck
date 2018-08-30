@@ -1,0 +1,756 @@
+// <halrule>server-only</halrule>
+
+external function LongInt HansaMailHTTPPort();
+external updating procedure CloudServicesStoppedAlert(string);
+remote updating procedure LiveDBBlessWClassRemote();
+external updating function Boolean ServiceRequestAsync(string,string,Boolean,area,string);
+external procedure ReadTXServiceReply(var record TXServiceReplyVc,var Area,Boolean);
+external function LongInt HansaMailSSLPort();
+external function string 255 HansaMailAddress();
+external function Boolean IsLiveHTS();
+external updating procedure SendAsyncServiceRequestNew(string,area,string,Boolean);
+external function Boolean IsHansaWorldCustomer(string);
+external procedure WSLogLength(string,LongInt);
+external procedure SendFunctionVersion(string,string,var Area);
+external updating procedure StoreERecordStatus(record ERecordStatusVc);
+external procedure SendDateParameter(Date,var Area);
+external procedure SendEOLParameter(var Area);
+external function Boolean ReceiveRequestHeader(Area,var string,var string,var Integer,var string,var LongInt,var string,var record TXServiceReplyVc);
+external procedure EndDataTransfer(var Area);
+external procedure StartDataTransfer(string,var Area);
+external procedure SendTextParameter(string,var Area);
+external function LongInt XmlGetLong(var xml,string);
+external function Integer XmlGetInt(var xml,string);
+external function Date DateFromString(string,string);
+external function Integer GetCompanyCodeFromCode(Integer);
+external function Integer GetCodeFromCompanyCode(Integer);
+external function string 255 ProductIdentifier();
+
+
+global
+function string 100 CreateCompID()
+BEGIN
+  string 100 res;
+  record InternetEnablerBlock IEb;
+
+  BlockLoad(IEb);
+  res = IEb.EnablerRegistration;
+  res = res & ":";//is : ok?
+  res = res & CurrentCompany;
+  CreateCompID = res;
+  RETURN;
+END;
+
+procedure CloudServiceSendError(LongInt errorcode,string errordesc,var Area a_reply)
+begin
+  SendTextParameter(errorcode,a_reply);
+  SendTextParameter(errordesc,a_reply);
+  SendEOLParameter(a_reply);
+  return;
+end;
+
+global
+procedure CloudServiceReply(LongInt errorcode,string errordesc,var Area a_reply,string headerversion,var record TXServiceReplyVc TXSrvReplyr)
+begin
+  Area a_tmp;
+  
+//StopAlert(" errorcode " & errorcode & " errordesc " & errordesc);  
+  switch (headerversion) begin
+    case "53.0":
+      TXSrvReplyr.SerNr = 1;
+      TXSrvReplyr.ErrorCode = errorcode;
+      TXSrvReplyr.ErrorDescription = errordesc;
+      TXSrvReplyr.Version = "53.0";
+      AddRecordToArea(TXSrvReplyr,"TXServiceReplyVc",a_tmp);
+    otherwise
+      CloudServiceSendError(errorcode,errordesc,a_tmp);
+  end;
+  InsertAreaBeforeArea(a_tmp,a_reply);
+  return;
+end;
+
+global
+procedure CloudServiceSendReply(LongInt errorcode,string errordesc,var Area a_reply,string headerversion,var record TXServiceReplyVc TXSrvReplyr)
+begin
+  
+//StopAlert(" errorcode " & errorcode & " errordesc " & errordesc);  
+  CloudServiceReply(errorcode,errordesc,a_reply,headerversion,TXSrvReplyr);
+  WebOutArea(a_reply);
+  
+//  CreateFile("jCloudServiceSendReply.txt");
+//  CloseFile;
+//  WriteAreaToFile(a_reply,"jCloudServiceSendReply.txt",0);
+  
+  return;
+end;
+
+global
+function Boolean CheckInternetEnabler()
+BEGIN
+  record InternetEnablerBlock IEb;
+  record ModuleBlock Mb;
+  Boolean res;
+  
+  BlockLoad(Mb);
+  BlockLoad(IEb);
+  if (IEb.RegInCountry==0) then begin 
+    goto LCheckInternetEnabler;
+  end;
+  if (blank(IEb.CustomerCode)) then begin 
+    goto LCheckInternetEnabler;
+  end;
+  if (IEb.Contract<=0) then begin 
+    goto LCheckInternetEnabler;
+  end;
+  if (IEb.EnablerRegistration<=0) then begin 
+    goto LCheckInternetEnabler;
+  end;
+  if (blank(Mb.TheKeyStr)) then begin
+    goto LCheckInternetEnabler;
+  end;
+  res = true;
+LCheckInternetEnabler:;  
+  if (IsLiveHTS==false) then begin
+    res = true;
+  end;
+  if (IsHansaWorldCustomer(IEb.CustomerCode)) then begin
+    res = true;
+  end;
+  if (IsStandardProduct) then begin
+    res = true;
+  end;
+/*
+  if (res==false and (SystemMode==kSystemModeNormal) or (SystemMode==kSystemModeDemo)) then begin
+    res = UseAppStoreEnabler;
+  end;
+*/
+//  res = true;//jjtmp   
+  if (res==false) then begin
+    LogText(0,"CheckInternetEnabler failed");
+  end;
+  CheckInternetEnabler = res;
+  RETURN;
+END;
+
+//global //ts - 2018/04
+//updating
+procedure StopSendingERecords(LongInt rerror,string errordesc)
+BEGIN
+  record EInvoiceBlock EIb;
+
+  LogText(0,"StopSendingERecords(): rerror=" & USetStr(rerror) & ", errordesc=" & errordesc);
+/*//ts - 2018/04
+  BlockLoad(EIb);
+  if (EIb.StopEInvoices==0) then begin
+    EIb.StopReason = "";
+    EIb.StopEInvoices = 1;
+    if (rerror>0) then begin
+      EIb.StopReason = USetStr(rerror);
+    end;
+    if (nonblank(errordesc)) then begin
+      EIb.StopReason = EIb.StopReason & errordesc;
+    end;
+    LogText(0,EIb.StopReason);
+    BlockStore(EIb);
+    CloudServicesStoppedAlert(USetStr(20285));
+  end;
+*/
+  RETURN;
+END;
+
+global
+updating procedure AddServiceToCache(string service,string hostname,LongInt port,LongInt httpport,string funcname,date validuntil,string partner)
+begin
+  record ServiceCacheVc SCr;
+  Boolean storef;
+  
+  SCr.Code = service;  
+  SCr.Partner = partner;  
+  if (ReadFirstMain(SCr,2,true)) then begin
+    if (SCr.ServiceHost!=hostname) or (SCr.ServicePort!=port) or (SCr.ServiceHTTPPort!=httpport) or (SCr.FuncName!=funcname) or (SCr.ValidUntilDate!=validuntil) or (SCr.Partner!=partner) then begin
+      storef = true;
+    end;
+  end else begin 
+    storef = true;
+  end;
+  if (storef) then begin
+    SCr.Code = service;
+    SCr.ServiceHost = hostname;
+    SCr.ServicePort = port;
+    SCr.ServiceHTTPPort = httpport;
+    SCr.FuncName = funcname;
+    SCr.ValidUntilDate = validuntil;
+    SCr.Partner = partner;
+    if (nonblank(SCr.Code)) then begin
+      if (RecordStore(SCr,true)) then begin 
+        if (SCr.Code=="BLESSDATABASE") then begin//if LookupServiceAsync fixes no needs for this 
+          LiveDBBlessWClassRemote;
+        end;
+      end;
+    end;
+  end;
+  return;
+end;
+
+global 
+updating procedure ToolWebRequestLookupIPOnIdle50(Area msgarea)
+begin
+  record EnabServerBlock ESb;
+  string 255 host,funcname,service,partner;
+  LongInt port,httpport;
+
+  host = GetTabTextFromArea(1,0,msgarea);
+  port = StringToLongInt(GetTabTextFromArea(1,1,msgarea));
+  httpport = StringToLongInt(GetTabTextFromArea(1,2,msgarea));
+  if (nonblank(host)) and (port>0) then begin
+    BlockLoad(ESb);
+    if (host!=ESb.LookupServIP) or (port!=ESb.LookupServPort) then begin    
+      ESb.LookupServIP = host;
+      ESb.LookupServPort = port;
+      ESb.LookupServHTTPPort = httpport;
+      BlockStore(ESb);
+//emptycache        
+      goto LWebRequestLookupIPOnIdle;
+    end;
+  end;
+  service = GetTabTextFromArea(2,0,msgarea);
+  host = GetTabTextFromArea(2,1,msgarea);
+  port = StringToLongInt(GetTabTextFromArea(2,2,msgarea));
+  funcname = GetTabTextFromArea(2,3,msgarea);
+  partner = GetTabTextFromArea(2,4,msgarea);
+  httpport = StringToLongInt(GetTabTextFromArea(2,5,msgarea));
+  if (nonblank(service)) then begin
+    AddServiceToCache(service,host,port,httpport,funcname,AddDay(CurrentDate,30),partner);    
+  end;
+LWebRequestLookupIPOnIdle:;  
+  return;
+end;
+
+global
+procedure HTSTheServiceAddress(Area msgarea)
+begin
+  Area a_reply;
+  string 255 custcode,service,headerversion,partner,productcode,countrycode;
+  Integer regincountry;
+  record WebServiceVc WSr;
+  record WebServiceServerVc WSSr;  
+  record TXServiceReplyVc TXSrvReplyr;
+
+  service  = GetTabTextFromArea(0,0,msgarea);
+  regincountry = StringToInt(GetTabTextFromArea(0,1,msgarea));
+  headerversion  = GetTabTextFromArea(0,2,msgarea);
+  partner  = GetTabTextFromArea(0,3,msgarea);
+  productcode  = GetTabTextFromArea(0,4,msgarea);
+  countrycode  = GetTabTextFromArea(0,5,msgarea);
+  
+  if (regincountry!=0) then begin
+    countrycode = regincountry;
+  end;
+  
+  RecordClear(WSr);
+  WSr.Code    = service;
+  WSr.Country = countrycode;
+  WSr.Version = headerversion;    
+  WSr.Partner = partner;  
+  if (ReadFirstMain(WSr,4,true)) then begin
+    goto l_theservicefound;
+  end;
+  
+  RecordClear(WSr);
+  WSr.Code    = service;
+  WSr.Country = "";
+  WSr.Version = headerversion;  
+  WSr.Partner = partner;  
+  if (ReadFirstMain(WSr,4,true)) then begin
+    goto l_theservicefound;
+  end;
+
+  RecordClear(WSr);
+  WSr.Code    = service;
+  WSr.Country = countrycode;
+  WSr.Partner = partner;  
+  if (ReadFirstKey("CodeCP",WSr,3,true)) then begin
+    goto l_theservicefound;
+  end;
+
+  RecordClear(WSr);
+  WSr.Code    = service;
+  WSr.Country = "";
+  WSr.Partner = partner;  
+  if (ReadFirstKey("CodeCP",WSr,3,true)) then begin
+    goto l_theservicefound;
+  end;
+
+  RecordClear(WSr);
+  WSr.Code    = service;
+  WSr.Country = countrycode;
+    
+  if (ReadFirstMain(WSr,2,true)) then begin
+    goto l_theservicefound;
+  end;
+  
+  RecordClear(WSr);
+  WSr.Code    = service;
+  WSr.Country = "";
+  
+  if (ReadFirstMain(WSr,2,true)) then begin
+    goto l_theservicefound;
+  end;
+
+  RecordClear(WSr);
+  WSr.Code    = service;
+  
+  if (ReadFirstMain(WSr,1,true)) then begin
+    goto l_theservicefound;
+  end;
+
+  CloudServiceSendReply(20239,"unable to find service " & service,a_reply,headerversion,TXSrvReplyr);
+  LogText(20239,"unable to find service " & service);
+  goto LHTSTheServiceAddress;
+  
+l_theservicefound:;  
+  if (WSr.Closed!=0) then begin
+    CloudServiceSendReply(20239,"service temporalely closed " & service,a_reply,headerversion,TXSrvReplyr);
+    LogText(20239,"service temporalely closed " & service);
+    goto LHTSTheServiceAddress;
+  end;
+
+  WSSr.Code = WSr.ServiceServer;
+  if (ReadFirstMain(WSSr,1,true)) then begin
+    if (WSSr.Closed!=0) then begin
+      CloudServiceSendReply(20239,"service temporalely closed " & service,a_reply,headerversion,TXSrvReplyr);
+      LogText(20239,"service temporalely closed " & service);
+      goto LHTSTheServiceAddress;
+    end;
+  end;
+  
+  SendTextParameter(service,a_reply);
+  SendTextParameter(WSr.Host,a_reply);
+  SendTextParameter(WSr.Port,a_reply);
+  SendTextParameter(WSr.FuncName,a_reply);
+  SendTextParameter(WSr.Partner,a_reply);
+  SendTextParameter(WSr.HTTPPort,a_reply);
+  SendEOLParameter(a_reply);
+  CloudServiceSendReply(0,"",a_reply,headerversion,TXSrvReplyr);  
+LHTSTheServiceAddress:;  
+
+  return;
+end;
+
+global
+procedure HTSLookupPing(Area msgarea)
+begin
+  WebOutString("<ping></ping>");
+  return;
+end;
+
+//ts-tmp
+global
+updating procedure StoreESb(var record EnabServerBlock ESb)
+begin
+  BlockStore(ESb);
+  return;
+end;
+
+global
+function Boolean GetLookupAddress(Boolean reportf,var string host,var LongInt port,var LongInt httpport)
+begin
+  Boolean res;
+  record EnabServerBlock ESb;
+  area request;
+  area replyarea;
+  xml reply;
+  record InternetEnablerBlock IEr;
+
+  BlockLoad(IEr);  
+  BlockLoad(ESb);
+  host = ESb.LookupServIP;
+  port = ESb.LookupServPort;
+  httpport = ESb.LookupServHTTPPort;
+
+  if (nonblank(host)) and (port>0) then begin 
+    res = SendWebRequest(host,port,httpport,true,"POST","/HTSLookupPing.hal","text/xml; charset=""utf-8""","",false,request,replyarea,10);
+    if (res) then begin
+      goto LGetLookupAddress;
+    end;
+  end;
+  SetAreaZeroSize(request);
+  
+  SendTextParameter(IEr.RegInCountry,request);
+  SendTextParameter(IEr.CustomerCode,request);
+  SendEOLParameter(request);
+
+  SetAreaZeroSize(replyarea);
+  if (IsHansaWorldCustomer(IEr.CustomerCode)==false) then begin//not for ourselves
+    if (IsLiveHTS) then begin
+      res = SendWebRequest(HansaMailAddress,HansaMailSSLPort,HansaMailHTTPPort,true,"POST","/HTSLookupAddress.hal","text/xml; charset=""utf-8""","",reportf,request,replyarea,20); 
+    end;
+  end;
+
+  if (res==false) then begin
+    if (reportf==false) then begin
+      StopSendingERecords(20244," or " & USetStr(20247));
+    end;
+    goto LGetLookupAddress;
+  end;
+  host  = GetTabTextFromArea(1,0,replyarea);
+  port  = StringToLongInt(GetTabTextFromArea(1,1,replyarea));
+  httpport = StringToLongInt(GetTabTextFromArea(1,2,replyarea));
+
+  if (blank(host)) or (port<=0) then begin 
+    if (reportf==false) then begin
+      StopSendingERecords(20244," " & USetStr(20248));
+    end;
+    res = false;
+    goto LGetLookupAddress;
+  end else begin
+    res = SendWebRequest(host,port,httpport,true,"POST","/HTSLookupPing.hal","text/xml; charset=""utf-8""","",false,request,replyarea,10);//HTSLookupPing
+    if (res==false) then begin
+      if (reportf==false) then begin
+        StopSendingERecords(20245,host & ":" & port);
+      end;
+      goto LGetLookupAddress;
+    end;
+  end;
+  if (reportf==false) then begin
+    ESb.LookupServIP = host;
+    ESb.LookupServPort = port;
+    ESb.LookupServHTTPPort = httpport;
+    qupdating.StoreESb(ESb);
+//emptycache  
+  end;
+  
+//  host = "services.hansaworld.com";
+//  port = 443;  
+//  host = "192.168.16.239";
+//  port = 8443;
+//  host = "127.0.0.1";
+//  port = 9443;
+//  host = "213.115.26.239";
+//  port = 443;
+LGetLookupAddress:;
+  GetLookupAddress = res;
+  return;
+end;
+
+global
+function boolean FindServiceInCache(string service,string partner,Boolean clientcompf,var string hostname,var longint port,var longint httpport,var string funcname)
+begin
+  record ServiceCacheVc SCr;
+  Boolean res,found;
+  Area request,replyarea;
+
+/*
+  if (service=="FINDNEWERVERSION") then begin
+    hostname = "bart.hansaworld.net";
+    port = 444;
+    funcname = "HTSFindNewerVersion.hal";
+    res = true;
+    goto LFindServiceInCache;
+  end;
+*/
+
+  res = false;  
+  hostname = "";
+  funcname = "";
+  port = -1;
+  if (clientcompf) then begin goto LFindServiceInCache; end;  //something better  
+LFindServiceCache:;  
+  SCr.Code = service;  
+  SCr.Partner = partner;  
+  found = ReadFirstMain(SCr,2,true);
+  if (!found) then begin
+//    SCr.Code = service;  
+//    found = ReadFirstMain(SCr,1,true);
+  end;
+  if (found) then begin
+    if (CurrentDate<=SCr.ValidUntilDate) or (blankdate(SCr.ValidUntilDate)) then begin
+      hostname = SCr.ServiceHost;
+      port = SCr.ServicePort;
+      httpport = SCr.ServiceHTTPPort;
+      funcname = SCr.FuncName;
+      if (nonblank(hostname)) and (nonblank(funcname)) and (port>0) then begin
+        res = true;
+      end;
+      goto LFindServiceInCache;
+    end;
+  end;  
+LFindServiceInCache:;
+  FindServiceInCache = res;
+  return;
+end;
+
+function string 255 GetLocalCustCode(var Integer RegInCountry)
+begin
+  string 255 res;
+  record InternetEnablerBlock IEr;
+  
+  BlockLoad(IEr);
+  RegInCountry = IEr.RegInCountry;
+  res = IEr.CustomerCode;  
+  GetLocalCustCode = res;
+  return;
+end;
+
+global
+procedure PutRequestHeader_Old(var area request)
+begin
+  area rheader;
+  Integer RegInCountry;
+  
+  AddTextToArea("<stdheader>",rheader);
+  AddTextToArea("<custcode>" & GetLocalCustCode(RegInCountry) & "</custcode>",rheader);
+  AddTextToArea("<regincountry>" & RegInCountry & "</regincountry>",rheader);
+  AddTextToArea("</stdheader>",rheader);
+  InsertAreaBeforeArea(rheader,request);
+  return;
+end;
+
+global
+procedure PutRequestHeader(string service,string partner,Boolean nopassf,var area request)
+begin
+  area rheader;
+  Integer RegInCountry;
+  record InternetEnablerBlock IEr;
+  record ModuleBlock MOr;
+  
+  BlockLoad(IEr);
+  BlockLoad(MOr);
+  
+  StartDataTransfer(partner,rheader);  
+  
+  SendTextParameter(service,rheader);
+  SendTextParameter(IEr.CustomerCode,rheader);
+  SendTextParameter(MOr.ControlString,rheader);
+  SendTextParameter(MOr.ControlCode,rheader);
+  SendTextParameter(DateToString(MOr.ValidUntil,"YYYY-MM-DD"),rheader);
+  SendTextParameter(MOr.TheKeyStr,rheader);
+  if (IsHansaWorldCustomer(IEr.CustomerCode)) then begin
+    SendTextParameter(GetCodeFromCompanyCode(CurrentCompany),rheader);
+  end else begin
+    SendTextParameter(IEr.RegInCountry,rheader);
+  end;
+  SendTextParameter(IEr.Contract,rheader);
+  SendTextParameter(IEr.ChildSerNr,rheader);
+  SendTextParameter(IEr.EnablerRegistration,rheader);
+  SendTextParameter(CurrentUser,rheader);
+  if (nopassf) then begin
+    SendTextParameter("1",rheader);
+  end else begin
+    SendTextParameter("0",rheader);
+  end;
+  SendTextParameter(CreateCompID,rheader);
+  SendTextParameter(ProductIdentifier,rheader);
+  AddTextToArea(chr(13) & chr(10),rheader);
+  InsertAreaBeforeArea(rheader,request);
+
+  EndDataTransfer(request);
+    
+  return;
+end;
+
+// **************    WARNING      *************
+// ***    This function is called from C    ***
+// ***   do NOT change parameters without   ***
+// ***     adjusting SendServiceCall in     ***
+// ***             vmint.cpp                ***
+// **************    WARNING      *************
+updating
+function Boolean FindService(string service,string partner,Boolean reportf,Boolean nopassf,var string hostname,var longint port,var longint httpport,var string funcname,var string errordesc,Boolean servincachef,Boolean clientcompf)
+begin
+  area request;
+  area a_reply;
+  boolean res;
+  LongInt rerror;
+  string 255 x_hostname,lpartner;
+  longint x_port,x_httpport;
+  LongInt l;
+  record TXServiceReplyVc TXSrvReplyr;
+  
+  if (servincachef) then begin
+    if (FindServiceInCache(service,partner,clientcompf,hostname,port,httpport,funcname)==true) then begin
+      res = true;
+      goto LFindService;
+    end;
+  end;
+    
+  PutRequestHeader(service,partner,nopassf,request);
+
+  if (GetLookupAddress(reportf,x_hostname,x_port,x_httpport)==false) then begin 
+    goto LFindService;
+  end;
+ 
+  res = SendWebRequest(x_hostname,x_port,x_httpport,true,"POST","/HTSLookupService.hal","text/xml; charset=""utf-8""","",reportf,request,a_reply,20);
+   
+  if (res==false) then begin
+    goto LFindService;
+  end;
+
+  ReadTXServiceReply(TXSrvReplyr,a_reply,true);
+  rerror = TXSrvReplyr.ErrorCode;  
+
+  if (rerror>0) then begin
+    res = false;
+    errordesc = USetStr(rerror) & errordesc;
+    goto LFindService;
+  end;
+    
+//  service  = GetTabTextFromArea(0,0,a_reply);
+  hostname  = GetTabTextFromArea(0,1,a_reply);
+  port  = StringToLongInt(GetTabTextFromArea(0,2,a_reply));
+  funcname  = GetTabTextFromArea(0,3,a_reply);    
+  lpartner  = GetTabTextFromArea(0,4,a_reply);    
+  httpport  = StringToLongInt(GetTabTextFromArea(0,5,a_reply));
+
+  if (reportf==false) then begin
+    AddServiceToCache(service,hostname,port,httpport,funcname,AddDay(CurrentDate,30),lpartner);
+  end;
+LFindService:;
+//StopAlert("hostname " & hostname & " port " & port & " funcname " & funcname);
+  FindService = res;
+  return;
+end;
+
+updating
+function boolean SendServiceRequestCall2(string service,Boolean reportf,Boolean nopassf,area request,var Area a_reply,Boolean servincachef,Boolean clientcompf,Boolean callagainf,LongInt timeout)
+begin
+  boolean res;
+  string 255 hostname;
+  string 255 funcname,partner;
+  string 255 errordesc;
+  longint port,httpport;
+  xml reply;
+  LongInt rerror;
+  LongInt l;
+  record TXServiceReplyVc TXSrvReplyr;
+  
+  partner = GetTabTextFromArea(0,1,request);
+  res = FindService(service,partner,reportf,nopassf,hostname,port,httpport,funcname,errordesc,servincachef,clientcompf);
+      
+  if (res==false) then begin
+    CloudServiceReply(20239,errordesc,a_reply,"53.0",TXSrvReplyr);
+    if (reportf==false) then begin
+      StopSendingERecords(20239,service & " " & errordesc);
+    end;
+    goto LSendServiceRequestCall2;
+  end;  
+  PutRequestHeader(service,partner,nopassf,request);
+    
+  res = SendWebRequest(hostname,port,httpport,true,"POST","/" & funcname,"text/xml; charset=""utf-8""","",false,request,a_reply,timeout);  
+  if (res) then begin
+    ReadTXServiceReply(TXSrvReplyr,a_reply,false);
+    rerror = TXSrvReplyr.ErrorCode;
+    errordesc = TXSrvReplyr.ErrorDescription;
+
+    switch (rerror) begin
+      case 20232: 
+        if (callagainf) then begin
+          res = SendServiceRequestCall2(service,reportf,nopassf,request,a_reply,false,clientcompf,false,timeout);
+        end;
+      case 20239: 
+        if (reportf==false) then begin
+          if (nonblank(errordesc)) then begin   
+            StopSendingERecords(20239,errordesc);
+          end else begin
+            StopSendingERecords(20231,"");
+          end;
+        end;
+      otherwise 
+        if (rerror>1000) then begin
+          if (reportf==false) then begin
+            StopSendingERecords(rerror,errordesc);
+          end;
+        end;
+    end;
+  end else begin
+    if (callagainf) then begin
+      res = SendServiceRequestCall2(service,reportf,nopassf,request,a_reply,false,clientcompf,false,timeout);
+    end;
+    if (res==false) then begin
+      if (reportf==false) then begin
+        StopSendingERecords(0,"host " & hostname & ":" & port & " not responding");
+      end;
+    end;
+  end;
+LSendServiceRequestCall2:;  
+  SendServiceRequestCall2 = res;
+  return;
+end;
+
+updating function boolean SendServiceRequestCall(string service,Boolean reportf,Boolean nopassf,area request,var Area a_reply,Boolean servincachef,Boolean clientcompf,Boolean callagainf)
+begin
+  boolean res;
+  
+  res = SendServiceRequestCall2(service,reportf,nopassf,request,a_reply,servincachef,clientcompf,callagainf,20);
+  
+LSendServiceRequestCall:;  
+  SendServiceRequestCall = res;
+  return;
+end;
+
+global
+updating function boolean SendServiceRequest2(string service,Boolean reportf,area request,var Area a_reply,LongInt timeout)
+begin
+  boolean res;
+  record TXServiceReplyVc TXSrvReplyr;
+  
+  if (CheckInternetEnabler==false) then begin
+    CloudServiceReply(20242,"",a_reply,"53.0",TXSrvReplyr);
+    if (reportf==false) then begin
+      StopSendingERecords(20242,""); //cust - ts 2018/04
+    end;
+    res = false;
+  end else begin
+    res = SendServiceRequestCall2(service,reportf,false,request,a_reply,true,false,true,timeout);
+  end;
+  SendServiceRequest2 = res;
+  return;
+end;
+
+global
+updating function boolean SendServiceRequest(string service,Boolean reportf,area request,var Area a_reply)
+begin
+  boolean res;
+
+  res = SendServiceRequest2(service,reportf,request,a_reply,20);
+  SendServiceRequest = res;
+  return;
+end;
+
+global
+updating function boolean SendServiceRequest_NoPassport(string service,Boolean clientcompf,area request,var Area a_reply)
+begin
+  boolean res;
+  
+  res = SendServiceRequestCall(service,false,true,request,a_reply,true,clientcompf,true);
+  SendServiceRequest_NoPassport = res;
+  return;
+end;
+
+global
+updating function boolean SendAsyncServiceRequest(string service,area request,string callback)
+begin
+  Boolean res;
+  area replyarea;
+  string 255 hostname;
+  string 255 funcname;
+  string 255 errordesc,partner;
+  longint port,httpport;
+  
+  partner  = GetTabTextFromArea(0,1,request);
+  res = FindService(service,partner,false,false,hostname,port,httpport,funcname,errordesc,true,false);
+  
+  if (res==false) then begin
+//    CloudServiceSendReply(20242,"",a_reply,"53.0",TXSrvReplyr);
+//    CloudServiceSendError(20239,errordesc,a_reply);
+//    if (reportf==false) then begin
+//      StopSendingERecords(20239,service & " " & errordesc);
+//    end;
+    goto LSendAsyncServiceRequest;
+  end;
+  PutRequestHeader(service,partner,false,request);
+  
+  SendAsyncWebRequest(hostname,port,httpport,true,"POST","/" & funcname,"text/xml; charset=""utf-8""","",request,callback,0);  
+LSendAsyncServiceRequest:;
+  return;
+end;

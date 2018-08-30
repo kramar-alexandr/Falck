@@ -1,0 +1,61 @@
+// <halrule>server-only</halrule>
+
+external updating procedure StoreCUServiceUsage(date,string,Integer,string,Integer,Integer);//ts - 2018/04, e-service statistic
+
+global
+function Boolean DoSendCCRequestToPartner(string usercode,string regnr,string service,var LongInt response,var date sd,var date ed) 
+begin
+  record ServiceCacheVc SCr;
+  Boolean res,found;
+  string 150 arg,tstr;
+  Area a,reply;
+  xml xmlReply;
+
+  response = -1;
+  SCr.Code = service;
+  found = ReadFirstMain(SCr,1,true);
+  if (found) then begin   
+    arg = "?PERSON_CODE="&regnr;
+    res = SendWebRequest(SCr.ServiceHost,SCr.ServicePort,-1,false,"GET",SCr.FuncName & "" & arg,"text/xml; charset=utf-8","",false,a,reply,10);
+    if (res) then begin
+      response = 0;
+      xmlReply = ParseXmlArea(reply);
+      if (XmlNodeExists(xmlReply,"FIND_CONTRIBUTION_TERMS/PERSON")) then begin
+        tstr = XmlGetAttribute(xmlReply,"FIND_CONTRIBUTION_TERMS/PERSON","ERROR_CODE");
+        if (nonblank(tstr)) then begin
+          response = StringToLongInt(tstr);
+        end;
+        tstr = XmlGetAttribute(xmlReply,"FIND_CONTRIBUTION_TERMS/PERSON","CONTRIBUTION_BEGIN_DATE");
+        if (nonblank(tstr)) then begin
+          sd.Year = StringToLongInt(Left(tstr,4));
+          sd.Month = StringToInt(Mid(tstr,4,2));
+          sd.Day = StringToInt(Right(tstr,2));
+        end;
+        tstr = XmlGetAttribute(xmlReply,"FIND_CONTRIBUTION_TERMS/PERSON","CONTRIBUTION_END_DATE");
+        if (nonblank(tstr)) then begin
+          ed.Year = StringToLongInt(Left(tstr,4));
+          ed.Month = StringToInt(Mid(tstr,4,2));
+          ed.Day = StringToInt(Right(tstr,2));
+        end;
+      end;
+    end else begin
+      LogText(0,"DoSendContrContrRequestToPartner: Sending HALTED.");
+    end;
+ // Debug
+ //     LogAreaToFile("debug/reply/gc_initialize."&CountFilesInDir("debug/reply/")&".reply.xml",reply); //TODO: remove
+  end;
+  DoSendCCRequestToPartner = res;
+  return;
+end;
+
+global
+procedure SendCCRequestToPartner(string usercode,string regnr,string service,var LongInt response,var date sd,var date ed) 
+begin
+  record CYBlock CYb;
+
+  if (DoSendCCRequestToPartner(usercode,regnr,service,response,sd,ed)) then begin
+    BlockLoad(CYb);
+    queued.StoreCUServiceUsage(CurrentDate,CYb.OrgNr,4,"ESTCCLOOKUP",1,1);//ts - 2018/04, e-service statistic
+  end;
+  return;
+end;
