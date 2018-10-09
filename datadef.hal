@@ -58,6 +58,7 @@ begin
   SourceFile("halcust\\RActions",3);// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 25 June 2018 13:55:52
   SourceFile("halcust\\English",3);// Edit ************************** BPI Ukraine - KramarAlexandr - Wednesday, 27 June 2018 09:37:36
   SourceFile("halcust\\Lithuanian",3);// Edit ************************** BPI Ukraine - KramarAlexandr - Wednesday, 27 June 2018 09:37:35
+  SourceFile("halcust\\WActions",3);// Edit ************************** BPI Ukraine - KramarAlexandr - Tuesday, 9 October 2018 10:35:08
 
 //Old Salary Module start
   RecordBegin(EmployeeVc,-,"");
@@ -2812,6 +2813,10 @@ begin
 	BlockBegin(AutoCrObjBlock,-,"");// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 25 June 2018 14:21:12
 	  RecordField(ObjTypes,M4UStr,250,0);
   EndBlock;
-
+	
+	RecordAddBegin(FormDefVc,"BPIFormDefVc");
+  	ArrayField(LegalRecNo,M4Long,0,0);// Edit ************************** BPI Ukraine - KramarAlexandr - Tuesday, 9 October 2018 09:59:07
+  EndRecordAdd;
+	
   return;
 end;

@@ -76,6 +76,7 @@ external inner function Boolean HasAdvancedPricing();
 external inner function Boolean HasContactClassification();
 external inner function Boolean HasPriceLists();
 
+
 begin
 
 
@@ -180,5 +181,59 @@ begin
   v=v+vs;
   EditField(h,v,-20,"Object types",Normal,ObjTypes,false,OTSClass);// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 25 June 2018 14:30:22
 
+  EndWindow;
+end;
+
+window FormDefDClass:1
+  wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  WindowBegin("Form Definition",FormDefDClass,CGview,-);
+  SetWRect(20,80,730,410);
+  UseView(FormDefVc);
+  v = 6; vs = 20; h = 100;
+  if (IsEnterprise) then begin
+    EditField(h,v ,80,"Form Template",ViewOnly,repname,false,0);
+    EditField(h+=160,v,80,"Specification",ViewOnly,critname,false,0);
+    EditField(h+=160,v,80,"Definition",ViewOnly,defname,false,0);
+    EditField(h+=160,v,80,"Module",ViewOnly,modname,false,0);
+  end;
+//  FORMDEF_ENG;
+  MatrixBegin(6,v+=40,-24,-20,FormDefRowType,99);
+  h = 24;
+  MatCol(1,h,"Seq.",0,intdocnr,false,0);
+  h = h + 30;
+  if (HasLanguages) then begin
+    MatCol(1,h,"Lang.",0,LangCode,false,LangSClass);
+    h = h + 40;
+  end;
+  if (IsEnterprise) then begin
+    MatCol(1,h,"Acss. Gr.",0,UserGroup,false,AccessSClass);
+    h = h + 60;
+  end;
+  if (HasNumberSeries) then begin
+    MatCol(1,h,"No. Series",0,SerNr,false,0);
+    h = h + 70;
+  end;
+  MatCol(1,h,"Form Template",0,FPCode,false,DocSClass);
+  h = h + 160;
+/* No code behind this */
+//  MatCol(1,324,"E-Form",0,EformCode,false,0);
+  if (IsEnterprise) then begin
+    MatCol(1,h,"Printer",0,PrintGroupCode,false,PrintGroupSClass);
+  end;
+  MatCol(1,-170,"Legal record No. row",0,LegalRecNo,false,BPILegalInvNrSClass);// Edit ************************** BPI Ukraine - KramarAlexandr - Tuesday, 9 October 2018 10:19:01
+  MatCol(1,-60,"Status",0,Typ,false,SetSClass);
+  EndMatrix;
+  EndWindow;
+end;
+
+window BPILegalInvNrSClass:1
+  wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")// Edit ************************** BPI Ukraine - KramarAlexandr - Tuesday, 9 October 2018 10:24:25
+begin
+  WindowBegin("Paste Legal Record Numbers",BPILegalInvNrSClass,CGother,HBlRecType);
+  SetWRect(240,80,600,298);
+  Sizeable(0,-1,0,0);
+  StringList(9,9,-25,-10);
   EndWindow;
 end;

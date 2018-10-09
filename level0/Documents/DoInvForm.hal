@@ -1,3 +1,4 @@
+//<halrule>server-only</halrule>
 external procedure PrintSignature(string);
 external outer procedure DoInvFormCustomizedFields(record IVVc,record DocVc,record SysFormatBlock,record RoundBlock,record LangNrVc,Boolean);
 
