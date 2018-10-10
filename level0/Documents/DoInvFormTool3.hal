@@ -949,7 +949,7 @@ BEGIN
 	  	//end;
 		end; 
   end;
-  
+  logtext(0,"bpi****************************DoInvForm LegalRowNo" & LegalRowNo);
 	// Edit End ---------------------------------------------- Edit End
 	
   realIVr.SerNr = IVr.SerNr;
@@ -974,7 +974,7 @@ BEGIN
   intdocnr = 1;
   printf = true;
   if (IVr.Prntdf!=0) then begin
-    if (UserCanAction("DisallowPrintCopy",false)) then begin
+    if (UserCanAction("bpi****************************DisallowPrintCopy",false)) then begin
       MessageBox(1274,StringFromStringSet(3,"DisallowPrintCopy"));
       printf = false;
     end;
@@ -984,16 +984,20 @@ LFINDFORMCOCEInv:;
     formcode = "";
     // Edit Start ---------------------------------------------- Edit Start
 	//Tuesday, 9 October 2018 11:01:48
+		
 		if(LegalRowNo>-1)then begin
 			for (i=rwcnt-1;i>=0;i=i-1) begin
 				MatRowGet(FDr,i,FDrw);
 				if(FDrw.LegalRecNo==LegalRowNo)then begin
+					logtext(0,"bpi****************************DoInvForm rowformfound " & i);
 					if (FindFormcode(realIVr.OKFlag,FDrw.Typ)) then begin
 						if (Getformcode(i,FDrw.intdocnr,FDrw.FPCode,FDrw.UserGroup,FDrw.LangCode,FDrw.SerNr,IVr.SerNr,FDrw.PrintGroupCode,
 														langcode,intdocnr,"IVVc",formcode)) then
 						begin
 							goto LInvBREAK;
 						end;
+					end else begin
+						logtext(0,"bpi****************************FindFormcode false");
 					end;
 				end;
 			end;
