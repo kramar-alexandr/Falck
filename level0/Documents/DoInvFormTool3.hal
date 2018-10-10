@@ -935,11 +935,13 @@ BEGIN
   // Edit Start ---------------------------------------------- Edit Start
 	//Tuesday, 9 October 2018 11:02:15
 	
+	logtext(0,"bpi****************************DoInvForm OfficialSerNr" & IVr.OfficialSerNr);
   if(nonblank(IVr.OfficialSerNr))then begin
   	blockload(LegalInvNrRec);
   	rwcnt = matrowcnt(LegalInvNrRec);
   	For(i=0;i<rwcnt;i=i+1) begin
 	  	matrowget(LegalInvNrRec,i,LINrbrw);
+	  		logtext(0,"bpi****************************from - to " & LINrbrw.Serie & LINrbrw.TSerStart & " " & LINrbrw.Serie & LINrbrw.TSerStart & " " & i);
 	  	//if(DateInRange(IVr.InvDate,LINrbrw.PurchDate,LINrbrw.EndDate))then begin
 	  		if(IVr.OfficialSerNr>=LINrbrw.Serie & LINrbrw.TSerStart)then begin
 	  			if(IVr.OfficialSerNr<=LINrbrw.Serie & LINrbrw.TSerEnd)then begin
@@ -974,7 +976,7 @@ BEGIN
   intdocnr = 1;
   printf = true;
   if (IVr.Prntdf!=0) then begin
-    if (UserCanAction("bpi****************************DisallowPrintCopy",false)) then begin
+    if (UserCanAction("DisallowPrintCopy",false)) then begin
       MessageBox(1274,StringFromStringSet(3,"DisallowPrintCopy"));
       printf = false;
     end;
