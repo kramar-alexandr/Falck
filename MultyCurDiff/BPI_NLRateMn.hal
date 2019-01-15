@@ -1,0 +1,405 @@
+external inner function Integer GetIntYc(Date);
+external inner procedure CheckFlush(var Integer,Integer);
+external inner function val MulRateToBase2(var string,val,val,val,val,val,val,roundmode);
+external inner procedure AddEuroCurncyNomARTrRow(record TRVc,string,string,string,string,val,val,Boolean,Boolean,var val,string,val,val,val,val,val,val,val,string,LongInt,Integer,val,Date,LongInt,Boolean,string,string,string);
+external inner function val MulRateToBase1(var string,val,val,val,val,val,val,roundmode);
+external inner procedure AddEuroTrRow(record TRVc,string,string,string,string,val,val,val,Boolean,Boolean,var val,Boolean,string,string,string);
+external inner function Boolean GetAccName(string,var string,Integer);
+external inner procedure AddEuroCurncyNomTrRow(record TRVc,string,string,string,string,val,Boolean,Boolean,var val,string,val,val,val,val,val,val,val,val,LongInt,Boolean,string,string,string,Integer);
+external inner procedure GetAccBalance(string,string,Date,record ObjBalVc,Integer,Integer,Integer,string,Integer,var val);
+external inner function Boolean GetObjBal(string,string,var record ObjBalVc);
+external inner updating procedure SaveTrans(record TRVc);
+external inner procedure TRSumup(var record TRVc,var val);
+external inner procedure MockObjFromVATCode(string,var string);
+external inner function Boolean AccInRange(string,string);
+external inner procedure GetFullCurncyRate (var string,Date,var val,var val,var val,var val,var val);
+
+updating procedure SaveNLRateTrans(Date d1,record TRVc gTRp,LongInt nrseries,var Integer flushcnt)
+BEGIN
+  Integer rwcnt;
+  val v;
+  
+  rwcnt = MatRowCnt(gTRp);
+  if (rwcnt>0) then begin
+    if (nonblankdate(d1)) then begin
+      gTRp.TransDate = d1;
+    end else begin
+      gTRp.TransDate = CurrentDate;
+    end;
+    gTRp.Comment = USetStr(36300);
+    gTRp.IntYc = GetIntYc(gTRp.TransDate);
+    gTRp.RegDate = CurrentDate;
+    gTRp.Number = NextSerNr("TRVc",gTRp.TransDate,nrseries,false,"");
+    TRSumup(gTRp,v);
+    SaveTrans(gTRp);
+    CheckFlush(flushcnt,10);
+    RecordNew(gTRp);
+  end;
+  RETURN;
+END;
+
+
+global
+procedure MultiCurAccCalc(record RcVc RepSpec,var vector val vcurbal)
+begin
+  record MainVc mainr;
+  record FBVc FBr;
+  record FBVc FB2r;
+  record ERVc ERr;
+  record ObjVc OBr;
+  record TRVc TRr;
+  row FBVc FBrw;
+  row FBVc FB2rw;
+  row TRVc TRrw;
+  Boolean TrHs,testf;
+  String 255 tstr;
+  Integer i,j,rwcnt,rwcnt2,rw;
+  Val RateFrom,RateTo,SumCurrency,BookBase,CurrentBase;  //if one currency specified
+  Date rated;
+  Array Date arated;
+	
+	ClearVector(vcurbal);
+	
+  if nonblank(RepSpec.CurncyCode) then begin    //  if one currency is specified
+    ERr.CurncyCode = RepSpec.CurncyCode;
+    ERr.Date = RepSpec.d1;
+    if (ReadFirstMain(ERr,2,true)==true) then begin
+      if (RepSpec.basecurncy==0) then begin
+        if nonblank(ERr.ToRate1) then begin
+          RateFrom = ERr.FrRate;
+          RateTo = ERr.ToRate1;
+        end;
+        rated = RepSpec.d1;
+      end else begin  // will be finished
+
+      end;
+    end else begin
+      ERr.CurncyCode = RepSpec.CurncyCode;
+      ERr.Date = RepSpec.d1;
+      if (ReadLastMain(ERr,2,false)) then begin
+        if (ERr.CurncyCode==RepSpec.CurncyCode) then begin
+          RateFrom = ERr.FrRate;
+          RateTo = ERr.ToRate1;
+          rated = ERr.Date;
+        end;
+      end;
+    end;
+  end;
+
+  rwcnt2 = 0;
+  TrHs = true;
+  mainr.AccNumber = RepSpec.AccStr;
+  while (LoopMain(mainr,1,TrHs)) begin
+		if (mainr.AccNumber <> RepSpec.AccStr) then begin
+			 TrHs = false;
+		end;
+		if ((TrHs==true) and (mainr.TransDate <= RepSpec.d1)) then begin
+			 if (mainr.FileName == "TRVc") then begin
+					TRr.Number = mainr.TransNr;
+					TRr.TransDate = mainr.TransDate;
+					TRr.IntYc = mainr.IntYc;
+					if (ReadFirstKey("TransDate",TRr,3,true)) then begin
+							rwcnt = MatRowCnt(TRr);
+							if (rwcnt > 0) then begin
+								 For (i=0;i<rwcnt;i=i+1) begin
+										 MatRowGet(TRr,i,TRrw);
+										 //----------------------------------------------------------------------------
+										 if ((TRrw.stp == 1) and (TRrw.ovst == 0) and (TRrw.AccNumber == RepSpec.AccStr)) then begin
+												testf = true;
+												if (nonblank(RepSpec.ObjStr) and SetInSet(RepSpec.ObjStr,TRrw.Objects)==false) then begin
+													 testf = false;
+												end;
+													 
+												if testf then begin
+													 if blank(RepSpec.CurncyCode) then begin
+																testf = false;
+																for (j=0;j<rwcnt2;j=j+1) begin
+																	MatRowGet(FB2r,j,FB2rw);
+																	if (FB2rw.CurncyCode==TRrw.Curncy) then begin
+																		FB2rw.DebVal = FB2rw.DebVal + TRrw.CurDebVal - TRrw.CurCredVal;
+																		FB2rw.CredVal = FB2rw.CredVal + TRrw.DebVal - TRrw.CredVal;
+																		MatRowPut(FB2r,j,FB2rw);
+																		testf = true;
+																	end;
+																end;
+																if (testf == false) then begin
+//GetFullCurncyRate                                    
+																	ERr.CurncyCode = TRrw.Curncy;
+																	ERr.Date = RepSpec.d1;
+																	if (ReadFirstMain(ERr,2,true)==true) then begin
+																		if (RepSpec.basecurncy==0) then begin
+																			if nonblank(ERr.ToRate1) then begin
+																				FB2rw.CurDebVal = ERr.FrRate;
+																				FB2rw.CurCredVal = ERr.ToRate1;
+																			end;
+																		end else begin  // will be finished
+																		end;
+																	end else begin
+//                                        FB2rw.CurDebVal = 100;
+//                                        FB2rw.CurCredVal = 100;
+																		ERr.CurncyCode = TRrw.Curncy;
+																		ERr.Date = RepSpec.d1;
+																		if (ReadLastMain(ERr,2,false)) then begin
+																			if (ERr.CurncyCode==TRrw.Curncy) then begin
+																				FB2rw.CurDebVal = ERr.FrRate;
+																				FB2rw.CurCredVal = ERr.ToRate1;
+																				arated[rwcnt2] = ERr.Date;
+																			end;
+																		end;
+																	end;
+																	FB2rw.CurncyCode = TRrw.Curncy;
+																	FB2rw.DebVal = TRrw.CurDebVal - TRrw.CurCredVal;
+																	FB2rw.CredVal = TRrw.DebVal - TRrw.CredVal;
+																	MatRowPut(FB2r,rwcnt2,FB2rw);
+																	rwcnt2 = rwcnt2 + 1;
+																end;
+															end else begin  //  if one currency is specified
+																if (TRrw.Curncy==RepSpec.CurncyCode) then begin
+																	SumCurrency = SumCurrency + TRrw.CurDebVal - TRrw.CurCredVal;
+																	BookBase = BookBase + TRrw.DebVal - TRrw.CredVal;
+																end;
+															end;
+												end;
+										 end;
+										 //----------------------------------------------------------------------------
+								 end; // For
+							end;
+					end;
+			 end;
+			 if (mainr.FileName == "FBVc") then begin
+					FBr.SerNr = mainr.TransNr;
+					if (ReadFirstmain(FBr,1,true)) then begin
+							rwcnt = MatRowCnt(FBr);
+							if (rwcnt > 0) then begin
+								 For (i=0;i<rwcnt;i=i+1) begin
+										 MatRowGet(FBr,i,FBrw);
+										 if (FBrw.AccNumber == RepSpec.AccStr) then begin
+												//----------------------------------------------------------------------------
+												testf = true;
+												if (nonblank(RepSpec.ObjStr) and SetInSet(RepSpec.ObjStr,FBr.Objects)==false) then begin
+													 testf = false;
+												end;
+													 
+												if testf then begin
+													 if blank(RepSpec.CurncyCode) then begin
+																testf = false;
+																for (j=0;j<rwcnt2;j=j+1) begin
+																		MatRowGet(FB2r,j,FB2rw);
+																		if (FB2rw.CurncyCode==FBrw.CurncyCode) then begin
+																			 FB2rw.DebVal = FB2rw.DebVal + FBrw.CurDebVal - FBrw.CurCredVal;
+																			 FB2rw.CredVal = FB2rw.CredVal + FBrw.DebVal - FBrw.CredVal;
+																			 MatRowPut(FB2r,j,FB2rw);
+																			 testf = true;
+																		end;
+																end;
+																if (testf == false) then begin
+//GetFullCurncyRate                                    
+																			 ERr.CurncyCode = FBrw.CurncyCode;
+																			 ERr.Date = RepSpec.d1;
+																			 if (ReadFirstMain(ERr,2,true)==true) then begin
+																				 if (RepSpec.basecurncy==0) then begin
+																					 if nonblank(ERr.ToRate1) then begin
+																							FB2rw.CurDebVal = ERr.FrRate;
+																							FB2rw.CurCredVal = ERr.ToRate1;
+																					 end;
+																				 end else begin  // will be finished
+																				 end;
+																			 end else begin
+//                                               FB2rw.CurDebVal = 100;
+//                                               FB2rw.CurCredVal = 100;
+																				 ERr.CurncyCode = TRrw.Curncy;
+																				 ERr.Date = RepSpec.d1;
+																				 if (ReadLastMain(ERr,2,false)) then begin
+																					 if (ERr.CurncyCode==TRrw.Curncy) then begin
+																						 FB2rw.CurDebVal = ERr.FrRate;
+																						 FB2rw.CurCredVal = ERr.ToRate1;
+																						 arated[rwcnt2] = ERr.Date;
+																					 end;
+																				 end;
+																			 end;
+																			 FB2rw.CurncyCode = FBrw.CurncyCode;
+																			 FB2rw.DebVal = FBrw.CurDebVal - FBrw.CurCredVal;
+																			 FB2rw.CredVal = FBrw.DebVal - FBrw.CredVal;
+																			 MatRowPut(FB2r,rwcnt2,FB2rw);
+																			 rwcnt2 = rwcnt2 + 1;
+																end;
+															end else begin //  if one currency is specified
+																if (FBrw.CurncyCode==RepSpec.CurncyCode) then begin
+																	 SumCurrency =  SumCurrency + FBrw.CurDebVal - FBrw.CurCredVal;
+																	 BookBase = BookBase + FBrw.DebVal - FBrw.CredVal;
+																end;
+													 end;
+												end;
+											 //----------------------------------------------------------------------------
+										 end;
+								 end;
+							end;
+					end;
+			 end;
+		end;
+  end;
+  
+  
+  if blank(RepSpec.CurncyCode) then begin
+    for (i=0;i<rwcnt2;i=i+1) begin
+    	MatRowGet(FB2r,i,FB2rw);
+			vcurbal[FB2rw.CurncyCode] = FB2rw.CredVal;
+		end;
+  end;
+
+  return;
+end;
+
+updating procedure BPINLRateMnOld(record RcVc RepSpec,record AccVc Accr,var record TRVc gTRp,vector val acurbals)
+BEGIN
+  Integer rwcnt;
+  val Bb,Cb,Db,Diff,Diff2;
+  val fr,to1,to2,br1,br2;
+  Boolean Vws;
+  Boolean testf;
+  string 255 RU,tstr;
+  record ObjBalVc ObjBalr;
+  record ObjBalVc CurObjBalr;
+  Boolean Objbals;
+  Boolean CurObjbals;
+  record NLRateBlock NLRb;
+  val DiffSum;
+  val totsum,d,bv;
+  val temp,baserate1,baserate2;
+  string 20 curncy;
+  Date nild;
+  record BaseCurBlock BCb;
+  Integer flushcnt;
+  
+  testf = true;
+  bv = blankval;
+  BlockLoad(BCb);
+  BlockLoad(NLRb);
+  if (blankdate(RepSpec.d1)) then begin
+    RepSpec.d1 = CurrentDate;
+  end;
+  GetFullCurncyRate(curncy,RepSpec.d1,temp,temp,temp,baserate1,baserate2);  
+	if (nonblank(RepSpec.AccStr)) then begin
+		if (AccInRange(Accr.AccNumber,RepSpec.AccStr)==false) then begin
+			testf = false;
+			goto LB77;
+		end;
+	end;
+	if(testf)then begin
+		
+		Accr.Curncy = RepSpec.CurncyCode;
+		if (Accr.GroupAcc!=0) then begin goto LB77; end;
+		if (blank(Accr.Curncy)) then begin goto LB77; end;
+		if (Accr.Curncy==BCb.BaseCur1) then begin goto LB77; end;
+		if (Accr.Curncy==BCb.BaseCur2) then begin goto LB77; end;
+		if (Accr.AccType>=3) then begin goto LB77; end;
+		MockObjFromVATCode(Accr.Curncy,RU);
+		Objbals = GetObjBal(Accr.AccNumber,"",ObjBalr);
+		//CurObjbals = GetObjBal(Accr.AccNumber,RU,CurObjBalr);
+		/*
+		//CurObjbals = GetObjBal(Accr.AccNumber,RU,CurObjBalr);// Edit ************************** Thursday, 29 December 2016 12:59:04
+    CurObjBalr.AccNumber = Accr.AccNumber;// Edit ************************** Thursday, 29 December 2016 13:01:11
+    CurObjBalr.Object = "";// Edit ************************** Thursday, 29 December 2016 12:59:15
+    Objbals = ReadFirstMain(ObjBalr,2,true);
+    CurObjBalr.AccNumber = Accr.AccNumber;// Edit ************************** Thursday, 29 December 2016 13:01:11
+    CurObjBalr.Object = Accr.AccNumber;// Edit ************************** Thursday, 29 December 2016 12:59:15
+		*/
+		if ((Accr.AccType==0) or (Accr.AccType==1) or (Accr.AccType==2)) then begin
+			//GetAccBalance(Accr.AccNumber,"",RepSpec.d1,ObjBalr,RepSpec.SimVerf,RepSpec.basecurncy,0,RepSpec.CurncyCode,0,Bb);
+			Bb = acurbals[Accr.Curncy];
+			GetAccBalance(Accr.AccNumber,"",RepSpec.d1,CurObjBalr,RepSpec.SimVerf,RepSpec.basecurncy,2,RepSpec.CurncyCode,0,Cb);
+		end;
+		if (testf) then begin
+			GetFullCurncyRate(Accr.Curncy,RepSpec.d1,fr,to1,to2,br1,br2);
+			Db = MulRateToBase1(Accr.Curncy,Cb,fr,to1,to2,br1,br2,DefaultCurRoundOff);
+			Diff = Db - Bb;
+			if (NLRb.Limit!=0) then begin          
+				d = Diff;
+				if (d<0) then begin d = -d; end;
+				if (d<NLRb.Limit) then begin goto LB40; end;
+			end;
+			DiffSum = DiffSum + Diff;        
+			rwcnt = MatRowCnt(gTRp);
+			if (rwcnt>=199) then begin
+				SaveNLRateTrans(RepSpec.d1,gTRp,-1,flushcnt);
+			end;
+			if (Diff>=0) then begin
+				AddEuroCurncyNomTrRow(gTRp,Accr.AccNumber,"","",Accr.Comment,Diff,false,true,totsum, Accr.Curncy,bv,bv,bv,baserate1,baserate2,0,bv,bv,-1,false,"","","",0);
+				if (GetAccName(NLRb.RateGainAcc,tstr,60)==false) then begin goto LB40; end;
+				AddEuroTrRow(gTRp,NLRb.RateGainAcc,"","",tstr,Diff,baserate1,baserate2,false,false,totsum,false,"","","");
+			end else begin
+				Diff = -Diff;
+				AddEuroCurncyNomTrRow(gTRp,Accr.AccNumber,"","",Accr.Comment,Diff,false,false,totsum,Accr.Curncy,bv,bv,bv,baserate1,baserate2,0,bv,bv,-1,false,"","","",0);
+
+	//        Diff2 = MulRateToBase2(BCb.BaseCur1,Diff,bv,bv,bv,baserate1,baserate2,DefaultCurRoundOff);
+	//        AddEuroCurncyNomARTrRow(gTRp,Accr.AccNumber,"","",Accr.Comment,Diff,Diff2,false,false,totsum,Accr.Curncy,bv,bv,bv,baserate1,baserate2,Diff,bv,"",-1,0,bv,nild,-1,"","","");
+			
+				if (GetAccName(NLRb.RateLossAcc,tstr,60)==false) then begin goto LB40; end;
+				AddEuroTrRow(gTRp,NLRb.RateLossAcc,"","",tstr,Diff,baserate1,baserate2,false,true,totsum,false,"","","");
+			end;
+	LB40:;
+		end;
+	end;
+LB77:;
+	UserTrace(Accr.AccNumber,M4Code);            
+  RETURN;
+END;
+
+global updating procedure BPI_NLRateMn(record RcVc RepSpec)
+BEGIN
+  Integer rwcnt;
+  val Bb,Cb,Db,Diff,Diff2;
+  val fr,to1,to2,br1,br2;
+  record AccVc Accr;
+  Boolean Vws;
+  Boolean testf;
+  string 255 RU,tstr;
+  record ObjBalVc ObjBalr;
+  record ObjBalVc CurObjBalr;
+  Boolean Objbals;
+  Boolean CurObjbals;
+  record NLRateBlock NLRb;
+  val DiffSum;
+  val totsum,d,bv;
+  val temp,baserate1,baserate2;
+  string 20 curncy;
+  record TRVc gTRp;
+  Date nild;
+  record BaseCurBlock BCb;
+  Integer flushcnt;
+  record CurncyCodeVc CCr;
+  record RcVc newRepSpec;
+  vector val acurbals;
+    
+  bv = blankval;
+  BlockLoad(BCb);
+  BlockLoad(NLRb);
+  if (blankdate(RepSpec.d1)) then begin
+    RepSpec.d1 = CurrentDate;
+  end;
+  GetFullCurncyRate(curncy,RepSpec.d1,temp,temp,temp,baserate1,baserate2);
+  RecordNew(gTRp);
+  Accr.AccNumber = "";
+  Vws = true;
+  while (LoopMain(Accr,1,Vws)) begin
+  	if(blank(Accr.Curncy))then begin
+    	CCr.CurncyCode = "";    	
+    	newRepSpec.CurncyCode = "";
+			newRepSpec.d1 = RepSpec.d1;
+			newRepSpec.AccStr = Accr.AccNumber;
+			if (AccInRange(Accr.AccNumber,RepSpec.AccStr) or (blank(RepSpec.AccStr) and blank(Accr.Curncy))) then begin
+				MultiCurAccCalc(newRepSpec,acurbals);
+				while(loopmain(CCr,1,true))begin
+					Accr.Curncy = CCr.CurncyCode;
+					RepSpec.CurncyCode = CCr.CurncyCode;
+					BPINLRateMnOld(RepSpec,Accr,gTRp,acurbals);
+				end;
+				resetloop(CCr);
+    	end;    	
+    end;
+    UserTrace(Accr.AccNumber,M4Code);            
+  end;  
+  SaveNLRateTrans(RepSpec.d1,gTRp,-1,flushcnt);
+  RETURN;
+END;
+

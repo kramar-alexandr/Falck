@@ -1,0 +1,11 @@
+window BpiNLRateVClass:1
+  wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  WindowBegin("Specify Rate Gain/Loss",BpiNLRateVClass,CGMnt,RcType);
+  SetWRect(20,80,420,230);
+  vs=20;
+  EditFieldTL(h=120,v=6,150,"Date",M4Date,Normal,0,d1,false,PasteCurDate);
+  EditFieldTL(h,v+=vs,150,"Accounts",M4UStr,Normal,20 ,AccStr,false,AccSClass);
+  EndWindow;
+end;

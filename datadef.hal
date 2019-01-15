@@ -55,6 +55,7 @@ begin
   SourceFile("halcust\\level0\\Tools",0);
   SourceFile("halcust\\level0\\Documents",0);
   SourceFile("halcust\\level0\\WActions",0);
+  SourceFile("halcust\\MultyCurDiff",3);
   SourceFile("halcust\\RActions",3);// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 25 June 2018 13:55:52
   SourceFile("halcust\\English",3);// Edit ************************** BPI Ukraine - KramarAlexandr - Wednesday, 27 June 2018 09:37:36
   SourceFile("halcust\\Lithuanian",3);// Edit ************************** BPI Ukraine - KramarAlexandr - Wednesday, 27 June 2018 09:37:35

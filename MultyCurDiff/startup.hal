@@ -1,0 +1,7 @@
+event startup
+begin
+  	
+  	Maintenance("Multicurrency Rate Gain/Loss",BpiNLRateVClass,BPI_NLRateMn,modNL);// Edit ************************** BPI Ukraine - KramarAlexandr - Tuesday, 15 January 2019 14:24:10
+	  
+	  return;
+end;
