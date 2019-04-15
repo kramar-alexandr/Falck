@@ -138,6 +138,9 @@ begin
       OutString(345,0, "-1",true);
     end;  
   end;
+  if(RepSpec.Media==mtExcel)then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 15 04 2019 y. at 2:04:46 PM
+  	OutString(345,0, "",true);
+  end;
   if (RepSpec.flags[2]==1) then begin
     OutValBiDi(450,0,rval,M4Val,true,490);
     OutString(480,0,VIr.CurncyCode,true);
@@ -162,13 +165,15 @@ begin
   
   BlockLoad(Ab);
    StartFormat(15);
-    if (RepSpec.flags[23]!=0) then begin
-      OutStringID(15,"DblAR",IVr.OfficialSerNr,false,IVr.SerNr);
-//      OutString(100,"DblAR",IVr.SerNr,false);
-    end else begin
-      tstr = CreateInvoiceNumberDisputedMark(IVr.SerNr,"",IVr.DisputedFlag);
-      tstr = USetStr(1150) & ":" & tstr;
-      OutString(15,"DblLiquid",tstr,false);
+    if(RepSpec.Media!=mtExcel)then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 15 04 2019 y. at 2:04:03 PM
+			if (RepSpec.flags[23]!=0) then begin
+				OutStringID(15,"DblAR",IVr.OfficialSerNr,false,IVr.SerNr);
+	//      OutString(100,"DblAR",IVr.SerNr,false);
+			end else begin
+				tstr = CreateInvoiceNumberDisputedMark(IVr.SerNr,"",IVr.DisputedFlag);
+				tstr = USetStr(1150) & ":" & tstr;
+				OutString(15,"DblLiquid",tstr,false);
+			end;
     end;
 		OutStringID(80,"DblAR",IVr.OfficialSerNr,false,false);// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 01 04 2019 y. at 5:51:38 PM
     OutDate(160,0,IVr.InvDate,false);
