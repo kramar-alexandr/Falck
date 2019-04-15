@@ -1223,6 +1223,9 @@ begin
        OutString(2,0,USetStr(2707),false);
        OutString(3,0,USetStr(2422),false);
        OutString(4,0,USetStr(2428),true);
+        if(RepSpec.Media==mtExcel)then begin
+        	OutString(4,0,"",true);
+        end;
        OutStringAdjust(5,0,USetStr(2434),true,M4Val);
       EndFormat;       
     case 1:
