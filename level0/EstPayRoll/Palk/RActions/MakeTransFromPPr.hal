@@ -23,7 +23,7 @@ begin
   val frrate,to1,to2,br1,br2;
   val sumtot;
   date calcdate;
-  string 255 ftxt,tstr,accgroup,debitacc,creditacc,accruedacc,objcode;
+  string 255 ftxt,tstr,accgroup,debitacc,creditacc,accruedacc,objcode,rwobjcode;
   array string 64 TRrwacc,TRrwobj,TR2rwacc,TR2rwobj;
   array val TRrwdsum,TRrwcsum,TR2rwdsum,TR2rwcsum;
 
@@ -74,12 +74,15 @@ begin
     prevcontrnr=-1;
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(PPr,i,PPrw);
-      if (PPrw.ContrSerNr!=prevcontrnr) then begin
+      if (PPrw.ContrSerNr!=prevcontrnr) or (PPrw.ObjCode!=rwobjcode) then begin
         GetCPrRowInfo(PPrw.CalcSerNr,PPrw.CalcRowNr,poscode,calcdate);
-        if nonblank(PPrw.ObjCode) then begin
-          objcode=PPrw.ObjCode;
-        end else begin
-          objcode=PPr.ObjCode;
+        rwobjcode = PPrw.ObjCode;
+        objcode = PPrw.ObjCode;
+        if (nonblank(PPr.ObjCode)) then begin
+          if (nonblank(objcode)) then begin
+            objcode = objcode & ",";        
+          end;
+          objcode = objcode & PPr.ObjCode;          
         end;
         accgroup="";
         debitacc="";

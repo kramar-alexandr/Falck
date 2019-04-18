@@ -2725,7 +2725,7 @@ begin
   SpecialMenu("Kontakt",' ',1,"CUFromVEIVDsm");
   SpecialMenu("Ostutellimusest ostuarve",' ',3,"VIFromPO_VEIVDsm");
 //cust KB 04.12.2017 tsekk.ee
-  SpecialMenu("Kulutus",'',4,"ExpFromVEIVDsm")
+  SpecialMenu("Kulutus",'',4,"ExpFromVEIVDsm");
 //cust end
   EndWindow;
 end;

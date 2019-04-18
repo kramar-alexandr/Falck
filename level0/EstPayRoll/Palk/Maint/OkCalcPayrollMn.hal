@@ -18,7 +18,7 @@ begin
     if (testf) then begin
        RecordCopy(oldCPr,CPr);
        CPr.OKFlag = 1;
-       SetMarkFlag(CPr.OKFlag,CPr.OKMark);
+       //SetMarkFlag(CPr.OKFlag,CPr.OKMark);//ts, done in recordupdate
        if (RecordUpdate(oldCPr,CPr,true)==0) then begin
        end;
     end;
@@ -72,7 +72,7 @@ begin
     if (testf) then begin
        RecordCopy(oldCPr,CPr);
        CPr.OKFlag = 1;
-       SetMarkFlag(CPr.OKFlag,CPr.OKMark);
+       //SetMarkFlag(CPr.OKFlag,CPr.OKMark); //ts, done in recordupdate
        if (RecordUpdate(oldCPr,CPr,true)==0) then begin end;
     end;
   end;

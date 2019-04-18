@@ -1,6 +1,6 @@
 external updating procedure UpdateCPUnpaidVc(LongInt,string,string,longint,integer,string,var val,var val,var val,var val,var val,var val,var val,var val,var val,var val,boolean,string,LongInt,integer,var val);
-external updating procedure CalcPaymTypeSumsAndTaxes(record PaymTypeVc,val,var val,var val,var val,var val,val,val,var val,var val,var val,var val,var val,var val,var val,LongInt,integer,string,string,date,integer,var val,var val,var val,date,date,LongInt,integer,integer,integer,integer);
-external procedure CalculateTaxes(val,var val,var val,var val,var val,val,val,val,var val,var val,var val,var val,var val,var val,string,string,date,integer,var val);
+external procedure CalcPaymTypeSumsAndTaxes(record PaymTypeVc,val,var val,var val,var val,var val,val,val,var val,var val,var val,var val,var val,var val,var val,LongInt,integer,string,string,date,integer,var val,var val,var val,date,date,LongInt,integer,integer,integer,integer,var val,var LongInt,var LongInt,var LongInt);
+external procedure CalculateTaxes(val,var val,var val,var val,var val,val,val,val,var val,var val,var val,var val,var val,var val,string,string,date,integer,var val,var val);
 external procedure IncTaxFreeMinToUse(LongInt,LongInt,date,string,val,val,var val,var val,var val,var val);
 external function val DPDiscToUse(LongInt,LongInt,date,date,string,val,Boolean);
 external updating procedure UpdateITFMUsedVc(LongInt,date,var val,var val,boolean,boolean);
@@ -110,53 +110,38 @@ L1:;
 end;
 
 global
-updating procedure RemoveRowCPAbsVc(LongInt calcsernr,integer calcrownr)
+updating procedure RemoveCPAbsVc(LongInt AbsSerNr)
 begin
   record CPAbsVc CPAbsr;
-  record AbsenceVc Absr;
-  record AbsenceVc oldAbsr;
-  boolean TrHs;
-
-  ResetLoop(CPAbsr);
-  TrHs = true;
-  CPAbsr.CalcSerNr=calcsernr;
-  CPAbsr.CalcRowNr=calcrownr;
-  while (LoopMain(CPAbsr,2,TrHs)) begin
-    if (CPAbsr.CalcSerNr!=calcsernr) then begin
-      TrHs=false;
-    end;
-    if (CPAbsr.CalcRowNr!=calcrownr) then begin
-      TrHs=false;
-    end;
-    if (TrHs) then begin
-      Absr.SerNr=CPAbsr.AbsSerNr;
-      if (ReadFirstMain(Absr,1,true)) then begin
-        RecordCopy(oldAbsr,Absr);    
-        Absr.CalcSerNr=blankval;
-        RecordUpdate(oldAbsr,Absr,false);
-      end;  
-      RecordDelete(CPAbsr);
-      StepBack(CPAbsr);
-    end;
+  
+  CPAbsr.AbsSerNr = AbsSerNr;
+  if (ReadFirstKey("AbsSerNr",CPAbsr,1,true)) then begin
+    RecordDelete(CPAbsr);
   end;
   return;
 end;
 
 global
-updating procedure RemoveCPAbsVc(record CalcPayrollVc CPr)
+updating function Boolean RemoveCPAbsVcOld(LongInt CalcSerNr)
 begin
-  row CalcPayrollVc CPrw;
   record CPAbsVc CPAbsr;
-  record AbsenceVc Absr;
-  record AbsenceVc oldAbsr;
-  boolean TrHs;
-  integer rwcnt,i;
+  record AbsenceVc Absr,oldAbsr;  
+  Boolean res;
 
-  rwcnt=MatRowCnt(CPr);
-  for (i=0;i<rwcnt;i=i+1) begin
-    MatRowGet(CPr,i,CPrw);
-    RemoveRowCPAbsVc(CPr.SerNr,i);
+  CPAbsr.CalcSerNr = CalcSerNr;
+  if (ReadFirstMain(CPAbsr,1,true)) then begin
+    Absr.SerNr = CPAbsr.AbsSerNr;
+    if (ReadFirstMain(Absr,1,true)) then begin
+      RecordCopy(oldAbsr,Absr);
+      if (Absr.CalcSerNr==CPAbsr.CalcSerNr) then begin
+        Absr.CalcSerNr = -1;
+      end;
+      RecordUpdate(oldAbsr,Absr,false);
+      res = true;
+    end;
+    RecordDelete(CPAbsr);
   end;
+  RemoveCPAbsVcOld = res;
   return;
 end;
 
@@ -170,38 +155,6 @@ begin
   CPAbsr.CalcRowNr=calcrownr;
   CPAbsr.AbsSerNr=abssernr;
   if (RecordInsert(CPAbsr,false)) then begin end;
-  return;
-end;
-
-global
-function boolean IsAbsenceRow(LongInt calcsernr,integer calcrownr)
-begin
-  record CPAbsVc CPAbsr;
-  boolean res;
-
-  res=false;
-  CPAbsr.CalcSerNr=calcsernr;
-  CPAbsr.CalcRowNr=calcrownr;
-  if (ReadFirstMain(CPAbsr,2,true)) then begin
-    res=true;
-  end;
-  IsAbsenceRow = res;
-  return;
-end;
-
-global
-function boolean IsOpenTransRow(LongInt calcsernr,integer calcrownr)
-begin
-  record CPOTVc CPOTr;
-  boolean res;
-
-  res=false;
-  CPOTr.CalcSerNr=calcsernr;
-  CPOTr.CalcRowNr=calcrownr;
-  if (ReadFirstMain(CPOTr,2,true)) then begin
-    res=true;
-  end;
-  IsOpenTransRow=res;
   return;
 end;
 
@@ -232,55 +185,43 @@ begin
 end;
 
 global
-updating procedure RemoveRowCPOTVc(LongInt calcsernr,integer calcrownr)
+updating procedure RemoveCPOTVc(LongInt OTNr,LongInt OTRow)
 begin
   record CPOTVc CPOTr;
-  record OpenTransVc OTr;
-  record OpenTransVc oldOTr;
-  row OpenTransVc OTrw;
-  boolean TrHs;
-
-  ResetLoop(CPOTr);
-  TrHs = true;
-  CPOTr.CalcSerNr=calcsernr;
-  CPOTr.CalcRowNr=calcrownr;
-  while (LoopMain(CPOTr,2,TrHs)) begin
-    if (CPOTr.CalcSerNr!=calcsernr) then begin
-      TrHs=false;
-    end;
-    if (CPOTr.CalcRowNr!=calcrownr) then begin
-      TrHs=false;
-    end;
-    if (TrHs) then begin
-      OTr.SerNr=CPOTr.OTSerNr;
-      if (ReadFirstMain(OTr,1,true)) then begin
-        RecordCopy(oldOTr,OTr);    
-        MatRowGet(OTr,CPOTr.OTRowNr,OTrw);
-        OTrw.CalcSerNr=blankval;
-        MatRowPut(OTr,CPOTr.OTRowNr,OTrw);
-         OTr.CalcFlag=0;
-         SetMarkFlag(OTr.CalcFlag,OTr.CalcMark);
-         RecordUpdate(oldOTr,OTr,false);
-      end;  
-      RecordDelete(CPOTr);
-      StepBack(CPOTr);
-    end;
+  
+  CPOTr.OTSerNr = OTNr;
+  CPOTr.OTRowNr = OTRow;
+  if (ReadFirstKey("OTSerNr",CPOTr,2,true)) then begin
+    RecordDelete(CPOTr);
   end;
   return;
 end;
 
 global
-updating procedure RemoveCPOTVc(record CalcPayrollVc CPr)
+updating function Boolean RemoveCPOTVcOld(LongInt CalcSerNr,LongInt CalcRow)
 begin
-  row CalcPayrollVc CPrw;
-  integer rwcnt,i;
-  rwcnt=MatRowCnt(CPr);
-  for (i=0;i<rwcnt;i=i+1) begin
-    MatRowGet(CPr,i,CPrw);
-    if nonblank(CPrw.PosCode) then begin
-      RemoveRowCPOTVc(CPr.SerNr,i);
+  record CPOTVc CPOTr;
+  record OpenTransVc OTr,oldOTr;  
+  row OpenTransVc OTrw;
+  Boolean res;
+
+  CPOTr.CalcSerNr = CalcSerNr;
+  CPOTr.CalcRowNr = CalcRow;
+  if (ReadFirstMain(CPOTr,2,true)) then begin
+    OTr.SerNr = CPOTr.OTSerNr;
+    if (ReadFirstMain(OTr,1,true)) then begin
+      RecordCopy(oldOTr,OTr);
+      MatRowGet(OTr,CPOTr.OTRowNr,OTrw); 
+      if (OTrw.CalcSerNr==CPOTr.CalcSerNr) then begin
+        OTrw.CalcSerNr = -1;
+        MatRowPut(OTr,CPOTr.OTRowNr,OTrw); 
+      end;
+      RecordUpdate(oldOTr,OTr,false);
+      res = true;
     end;
+    RecordDelete(CPOTr);
   end;
+  RemoveCPOTVcOld = res;
   return;
 end;
 
@@ -298,53 +239,43 @@ begin
 end;
 
 global
-updating procedure RemoveRowCPWHVc(LongInt calcsernr,integer calcrownr)
+updating procedure RemoveCPWHVc(LongInt WHSerNr,LongInt WHRow)
 begin
   record CPWHVc CPWHr;
-  record WorkedHoursVc WHr;
-  record WorkedHoursVc oldWHr;
-  row WorkedHoursVc WHrw;
-  boolean TrHs;
 
-  ResetLoop(CPWHr);
-  TrHs = true;
-  CPWHr.CalcSerNr=calcsernr;
-  CPWHr.CalcRowNr=calcrownr;
-  while (LoopMain(CPWHr,2,TrHs)) begin
-    if (CPWHr.CalcSerNr!=calcsernr) then begin
-      TrHs=false;
-    end;
-    if (CPWHr.CalcRowNr!=calcrownr) then begin
-      TrHs=false;
-    end;
-    if (TrHs) then begin
-      WHr.SerNr=CPWHr.WHSerNr;
-      if (ReadFirstMain(WHr,1,true)) then begin
-        RecordCopy(oldWHr,WHr);    
-        MatRowGet(WHr,CPWHr.WHRowNr,WHrw);
-        WHrw.CalcSerNr=blankval;
-        MatRowPut(WHr,CPWHr.WHRowNr,WHrw);
-        RecordUpdate(oldWHr,WHr,false);
-      end;  
-      RecordDelete(CPWHr);
-      StepBack(CPWHr);
-    end;
+  CPWHr.WHSerNr = WHSerNr;
+  CPWHr.WHRowNr = WHRow;
+  if (ReadFirstKey("WHSerNr",CPWHr,2,true)) then begin
+    RecordDelete(CPWHr);
   end;
   return;
 end;
 
 global
-updating procedure RemoveCPWHVc(record CalcPayrollVc CPr)
+updating function Boolean RemoveCPWHVcOld(LongInt CalcSerNr,LongInt CalcRow)
 begin
-  row CalcPayrollVc CPrw;
-  integer rwcnt,i;
-  rwcnt=MatRowCnt(CPr);
-  for (i=0;i<rwcnt;i=i+1) begin
-    MatRowGet(CPr,i,CPrw);
-    if nonblank(CPrw.PosCode) then begin
-      RemoveRowCPWHVc(CPr.SerNr,i);
+  record CPWHVc CPWHr;
+  record WorkedHoursVc WHr,oldWHr;
+  row WorkedHoursVc WHrw;
+  Boolean res;
+
+  CPWHr.CalcSerNr = CalcSerNr;
+  CPWHr.CalcRowNr = CalcRow;
+  if (ReadFirstMain(CPWHr,2,true)) then begin
+    WHr.SerNr = CPWHr.WHSerNr;
+    if (ReadFirstMain(WHr,1,true)) then begin
+      RecordCopy(oldWHr,WHr);
+      MatRowGet(WHr,CPWHr.WHRowNr,WHrw); 
+      if (WHrw.CalcSerNr==CPWHr.CalcSerNr) then begin
+        WHrw.CalcSerNr = -1;
+        MatRowPut(WHr,CPWHr.WHRowNr,WHrw); 
+      end;
+      RecordUpdate(oldWHr,WHr,false);
+      res = true;
     end;
+    RecordDelete(CPWHr);
   end;
+  RemoveCPWHVcOld = res;
   return;
 end;
 
@@ -363,53 +294,43 @@ begin
 end;
 
 global
-updating procedure RemoveRowCPPWVc(LongInt calcsernr,integer calcrownr)
+updating procedure RemoveCPPWVc(LongInt PWSerNr,LongInt PWRow)
 begin
   record CPPWVc CPPWr;
-  record PieceWorkVc PWr;
-  record PieceWorkVc oldPWr;
-  row PieceWorkVc PWrw;
-  boolean TrHs;
 
-  ResetLoop(CPPWr);
-  TrHs = true;
-  CPPWr.CalcSerNr=calcsernr;
-  CPPWr.CalcRowNr=calcrownr;
-  while (LoopMain(CPPWr,2,TrHs)) begin
-    if (CPPWr.CalcSerNr!=calcsernr) then begin
-      TrHs=false;
-    end;
-    if (CPPWr.CalcRowNr!=calcrownr) then begin
-      TrHs=false;
-    end;
-    if (TrHs) then begin
-      PWr.SerNr=CPPWr.PWSerNr;
-      if (ReadFirstMain(PWr,1,true)) then begin
-        RecordCopy(oldPWr,PWr);    
-        MatRowGet(PWr,CPPWr.PWRowNr,PWrw);
-        PWrw.CalcSerNr=blankval;
-        MatRowPut(PWr,CPPWr.PWRowNr,PWrw);
-        RecordUpdate(oldPWr,PWr,false);
-      end;  
-      RecordDelete(CPPWr);
-      StepBack(CPPWr);
-    end;
+  CPPWr.PWSerNr = PWSerNr;
+  CPPWr.PWRowNr = PWRow;
+  if (ReadFirstKey("PWSerNr",CPPWr,2,true)) then begin
+    RecordDelete(CPPWr);
   end;
   return;
 end;
 
 global
-updating procedure RemoveCPPWVc(record CalcPayrollVc CPr)
+updating function Boolean RemoveCPPWVcOld(LongInt CalcSerNr,LongInt CalcRow)
 begin
-  row CalcPayrollVc CPrw;
-  integer rwcnt,i;
-  rwcnt=MatRowCnt(CPr);
-  for (i=0;i<rwcnt;i=i+1) begin
-    MatRowGet(CPr,i,CPrw);
-    if nonblank(CPrw.PosCode) then begin
-      RemoveRowCPPWVc(CPr.SerNr,i);
+  record CPPWVc CPPWr;
+  record PieceWorkVc PWr,oldPWr;
+  row PieceWorkVc PWrw;
+  Boolean res;
+
+  CPPWr.CalcSerNr = CalcSerNr;
+  CPPWr.CalcRowNr = CalcRow;
+  if (ReadFirstMain(CPPWr,2,true)) then begin
+    PWr.SerNr = CPPWr.PWSerNr;
+    if (ReadFirstMain(PWr,1,true)) then begin
+      RecordCopy(oldPWr,PWr);
+      MatRowGet(PWr,CPPWr.PWRowNr,PWrw); 
+      if (PWrw.CalcSerNr==CPPWr.CalcSerNr) then begin
+        PWrw.CalcSerNr = -1;
+        MatRowPut(PWr,CPPWr.PWRowNr,PWrw); 
+      end;
+      RecordUpdate(oldPWr,PWr,false);
+      res = true;
     end;
+    RecordDelete(CPPWr);
   end;
+  RemoveCPPWVcOld = res;
   return;
 end;
 
@@ -720,18 +641,22 @@ begin
 end;
 
 global
-updating procedure PasteCPrTaxes(record CalcPayrollVc CPr,integer maintflag,integer pwflag,integer whflag,integer contrflag,integer itfm,var val previtfmin,Boolean Sumf)
+procedure PasteCPrTaxes(var record CalcPayrollVc CPr,integer maintflag,integer pwflag,integer whflag,integer contrflag,integer itfm,var val previtfmin,Boolean Sumf)
 begin  
   row CalcPayrollVc CPrw;
   record ContractVc Contrr;
   record PaymTypeVc PTr;
   val bruto,neto,calcbruto,addtaxsum,inctax,inctaxfreemin,unemplins,pension,soctax,emplunemplins,itfmintouse,amount,tariff,tmpval,emplneto,paiditneto,cpitneto;
-  val totbruto,lastcalctax,fixedmin;
+  val totbruto,lastcalctax,fixedmin,addtomintouse;
   integer rwcnt,i,brwcnt,paymtypeflag,inctaxfreeminflag;
   boolean otflag,absflag,updflag;
   array string 20 bptcode;
   array val bunpaid;
-
+//
+  LongInt whnr,pwnr,docrw;
+  string 10 tmpstr;
+  val percent;
+  
   updflag = true;
   itfmintouse=0;
   Contrr.SerNr = CPr.ContrSerNr;
@@ -745,15 +670,25 @@ begin
         if (ReadFirstMain(PTr,1,true)) then begin end;
         if (PTr.IncomeTaxFlag==1) then begin //Tulumaksuga maksustatav
           CPr.BrutoTotal = CPr.BrutoTotal + CPrw.BrutoSum;
+          if (PTr.PaymTypeFlag==1) then begin //Kinnipidamine (bruto)
+            if (PTr.UnemplInsFlag==1) then begin //Tšštaja tšštuskindlustusuga maksustatav
+              percent=GetEmplTaxPercent(Contrr.EmplCode,CPr.PaymDate,1,bruto,tmpstr,tmpstr,tmpstr);
+              CPrw.UnemplInsSum=round((CPrw.BrutoSum*percent/100),GetSalaryRoundMode("2"));
+            end;
+            if (PTr.PensionFlag==1) then begin //Kogumispensioniga maksustatav
+              percent=GetEmplTaxPercent(Contrr.EmplCode,CPr.PaymDate,2,bruto,tmpstr,tmpstr,tmpstr);
+              CPrw.PensionSum=round((CPrw.BrutoSum*percent/100),GetSalaryRoundMode("2"));
+            end;
+            addtomintouse =  addtomintouse + CPrw.BrutoSum - CPrw.UnemplInsSum - CPrw.PensionSum;
+          end;
         end;
       end;
     end;
     IncTaxFreeMinToUse(CPr.SerNr,CPr.ContrSerNr,CPr.PaymDate,"CalcPayrollVc",tmpval,CPr.BrutoTotal,itfmintouse,totbruto,lastcalctax,fixedmin);
-    itfmintouse=itfmintouse-previtfmin;
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(CPr,i,CPrw);
-      otflag=IsOpenTransRow(CPr.SerNr,i);
-      absflag=IsAbsenceRow(CPr.SerNr,i);
+      otflag=(CPrw.OTNr!=-1);
+      absflag=(CPrw.AbsNr!=-1);
       paymtypeflag=GetPaymTypeFlag(CPrw.PaymTypeCode);
       PTr.Code=CPrw.PaymTypeCode;
       if (ReadFirstMain(PTr,1,true)) then begin end;
@@ -793,11 +728,14 @@ begin
       bruto=(tariff*amount);
       neto=0;
       if ((maintflag>0) and (otflag==false) and (absflag==false)) then begin
-        CalcPaymTypeSumsAndTaxes(PTr,CPr.BrutoTotal,bruto,neto,calcbruto,addtaxsum,totbruto,lastcalctax,fixedmin,inctax,inctaxfreemin,unemplins,pension,soctax,emplunemplins,CPr.SerNr,i,CPrw.PosCode,Contrr.EmplCode,CPr.PaymDate,inctaxfreeminflag,itfmintouse,amount,tariff,CPrw.SDate,CPrw.EDate,CPr.ContrSerNr,pwflag,whflag,contrflag,paymtypeflag);
+        CalcPaymTypeSumsAndTaxes(PTr,CPr.BrutoTotal,bruto,neto,calcbruto,addtaxsum,totbruto,lastcalctax,fixedmin,inctax,inctaxfreemin,unemplins,pension,soctax,emplunemplins,CPr.SerNr,i,CPrw.PosCode,Contrr.EmplCode,CPr.PaymDate,inctaxfreeminflag,itfmintouse,amount,tariff,CPrw.SDate,CPrw.EDate,CPr.ContrSerNr,pwflag,whflag,contrflag,paymtypeflag,addtomintouse,whnr,pwnr,docrw);
         CPrw.Tariff=tariff;
         CPrw.Amount=amount;
+        CPrw.WHNr=whnr;
+        CPrw.PWNr=pwnr;
+        CPrw.RowNr=docrw;
       end else begin
-        CalculateTaxes(CPr.BrutoTotal,bruto,neto,calcbruto,addtaxsum,totbruto,lastcalctax,fixedmin,inctax,inctaxfreemin,unemplins,pension,soctax,emplunemplins,CPrw.PaymTypeCode,Contrr.EmplCode,CPr.PaymDate,inctaxfreeminflag,itfmintouse);
+        CalculateTaxes(CPr.BrutoTotal,bruto,neto,calcbruto,addtaxsum,totbruto,lastcalctax,fixedmin,inctax,inctaxfreemin,unemplins,pension,soctax,emplunemplins,CPrw.PaymTypeCode,Contrr.EmplCode,CPr.PaymDate,inctaxfreeminflag,itfmintouse,addtomintouse);
       end;
       CPrw.NetoSum=neto;
       CPrw.BrutoSum=bruto;
@@ -851,7 +789,7 @@ begin
   return;
 end;
 
-procedure PasteCPrwsFromPWr(record CalcPayrollVc CPr,var row CalcPayrollVc CPrw,var integer calcrownr,var boolean saveflag)
+procedure PasteCPrwsFromPWr(var record CalcPayrollVc CPr,var row CalcPayrollVc CPrw,var integer calcrownr)
 begin
   record PieceWorkVc PWr;
   row PieceWorkVc PWrw;
@@ -894,12 +832,9 @@ begin
               CPrw.NetoSum=0;
               if nonblank(PWrw.ObjCode) then begin
                 CPrw.ObjCode=PWrw.ObjCode;
-              end else begin
-                CPrw.ObjCode=CPr.ObjCode;
               end;
               MatRowInsert(CPr,calcrownr,CPrw);
               calcrownr=calcrownr+1;
-              saveflag=true;
             end;  
           end;  
         end;
@@ -909,7 +844,7 @@ begin
   return;
 end;
 
-procedure PasteCPrwsFromWHr(record CalcPayrollVc CPr,var row CalcPayrollVc CPrw,var integer calcrownr,var boolean saveflag)
+procedure PasteCPrwsFromWHr(var record CalcPayrollVc CPr,var row CalcPayrollVc CPrw,var integer calcrownr)
 begin
   record WorkedHoursVc WHr;
   row WorkedHoursVc WHrw;
@@ -956,12 +891,9 @@ begin
             CPrw.NetoSum=0;
             if nonblank(WHrw.ObjCode) then begin
               CPrw.ObjCode=WHrw.ObjCode;
-            end else begin
-              CPrw.ObjCode=CPr.ObjCode;
             end;
             MatRowInsert(CPr,calcrownr,CPrw);
             calcrownr=calcrownr+1;
-            saveflag=true;
           end;  
         end;
       end;
@@ -971,12 +903,13 @@ begin
 end;
 
 global
-procedure PasteCPrwFromContrrw(record CalcPayrollVc CPr,var row CalcPayrollVc CPrw,record ContractVc Contrr,row ContractVc Contrrw,var integer rownr,integer pwflag,integer whflag,integer contrflag,boolean maintflag,var boolean saveflag)
+procedure PasteCPrwFromContrrw(var record CalcPayrollVc CPr,var row CalcPayrollVc CPrw,record ContractVc Contrr,row ContractVc Contrrw,var integer rownr,integer pwflag,integer whflag,integer contrflag,boolean maintflag)
 begin  
   record PaymTypeVc PTr;
   boolean testf,pastepw,pastewh;
   
   testf=false;
+  ClearRow(CPr,CPrw,1);
   CPrw.PosCode=Contrrw.PosCode;
   CPrw.PosName=Contrrw.PosName;
   CPrw.PaymTypeCode=Contrrw.PaymTypeCode;
@@ -1027,14 +960,13 @@ begin
         CPrw.NetoSum = 0;
         CPrw.ObjCode = Contrrw.ObjCode;
         if (pastepw) then begin
-          PasteCPrwsFromPWr(CPr,CPrw,rownr,saveflag);
+          PasteCPrwsFromPWr(CPr,CPrw,rownr);
         end else begin
           if (pastewh) then begin
-            PasteCPrwsFromWHr(CPr,CPrw,rownr,saveflag);
+            PasteCPrwsFromWHr(CPr,CPrw,rownr);
           end else begin
             MatRowInsert(CPr,rownr,CPrw);
             rownr = rownr + 1;
-            saveflag = true;
           end;
         end;
       end;

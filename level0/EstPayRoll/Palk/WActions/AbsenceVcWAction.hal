@@ -167,12 +167,6 @@ function boolean AbsenceDClassContrSerNrEFAfter(integer wn,integer rownr,integer
       end;
       if nonblank(Contr.ObjCode) then begin
         Absr.ObjCode=Contr.ObjCode;
-      end else begin
-        rwcnt=MatRowCnt(Contr);
-        if (rwcnt>0) then begin
-          MatRowGet(Contr,0,Contrrw);
-          Absr.ObjCode=Contrrw.ObjCode;
-        end;
       end;
     end;  
     PasteVacDates(Absr);

@@ -1,5 +1,5 @@
 external updating procedure UpdateCPUnpaidVc(LongInt,string,string,longint,integer,string,var val,var val,var val,var val,var val,var val,var val,var val,var val,var val,boolean,string,LongInt,integer,var val);
-external procedure CalculateTaxes(val,var val,var val,var val,var val,val,val,val,var val,var val,var val,var val,var val,var val,string,string,date,integer,var val);
+external procedure CalculateTaxes(val,var val,var val,var val,var val,val,val,val,var val,var val,var val,var val,var val,var val,string,string,date,integer,var val,var val);
 external procedure IncTaxFreeMinToUse(LongInt,LongInt,date,string,val,val,var val,var val,var val,var val);
 external function val DPDiscToUse(LongInt,LongInt,date,date,string,val,Boolean);
 external updating procedure UpdateITFMUsedVc(LongInt,date,var val,var val,boolean,boolean);
@@ -153,13 +153,16 @@ begin
   record PaymTypeVc PTr;
   record EmplVc Emplr;
   val bruto,neto,calcbruto,addtaxsum,inctax,inctaxfreemin,unemplins,pension,soctax,emplunemplins,itfmintouse,amount,tariff,notpaidneto,deductneto;
-  val totbruto,lastcalctax,fixedmin,brutototal;
+  val totbruto,lastcalctax,fixedmin,brutototal,addtomintouse;
   val newpercent,cpbruto,cpsoctax,cpdpdisc,cpitfmin,dpdtouse,dpdisc;
   integer paymtypeflag,inctaxfreeminflag;
   integer i,rwcnt;
   date paymdate,calcdate;
   boolean advpaymflag;
   LongInt contractnr,actcalcsernr;
+//
+  string 10 tmpstr;
+  val percent;
   
 //find selected row contractnr
   MatRowGet(PPr,rownr,PPrw);
@@ -177,6 +180,17 @@ begin
       if (ReadFirstMain(PTr,1,true)) then begin end;
       if (PTr.IncomeTaxFlag==1) then begin //Tulumaksuga maksustatav
         brutototal = brutototal + PPrw.BrutoSum;
+        if (PTr.PaymTypeFlag==1) then begin //Kinnipidamine (bruto)
+          if (PTr.UnemplInsFlag==1) then begin //Tšštaja tšštuskindlustusuga maksustatav
+            percent=GetEmplTaxPercent(Contrr.EmplCode,paymdate,1,bruto,tmpstr,tmpstr,tmpstr);
+            PPrw.UnemplInsSum=round((PPrw.BrutoSum*percent/100),GetSalaryRoundMode("2"));
+          end;
+          if (PTr.PensionFlag==1) then begin //Kogumispensioniga maksustatav
+            percent=GetEmplTaxPercent(Contrr.EmplCode,paymdate,2,bruto,tmpstr,tmpstr,tmpstr);
+            PPrw.PensionSum=round((PPrw.BrutoSum*percent/100),GetSalaryRoundMode("2"));
+          end;
+          addtomintouse =  addtomintouse + PPrw.BrutoSum - PPrw.UnemplInsSum - PPrw.PensionSum;
+        end;
       end;
     end;
   end;
@@ -225,7 +239,7 @@ begin
     deductneto=round(neto,GetSalaryRoundMode("2")); 
     bruto=PPrw.BrutoSum;
     neto=PPrw.NetoSum;
-    CalculateTaxes(brutototal,bruto,neto,calcbruto,addtaxsum,totbruto,lastcalctax,fixedmin,inctax,inctaxfreemin,unemplins,pension,soctax,emplunemplins,PPrw.PaymTypeCode,Contrr.EmplCode,paymdate,inctaxfreeminflag,itfmintouse);
+    CalculateTaxes(brutototal,bruto,neto,calcbruto,addtaxsum,totbruto,lastcalctax,fixedmin,inctax,inctaxfreemin,unemplins,pension,soctax,emplunemplins,PPrw.PaymTypeCode,Contrr.EmplCode,paymdate,inctaxfreeminflag,itfmintouse,addtomintouse);
     if (soctax>0) then begin
       PPrSocTaxCheck(Contrr.EmplCode,paymdate,cpbruto,newpercent,cpsoctax,cpdpdisc);
       if (newpercent!=0) then begin //minimaalne sotsmaksu summa
@@ -291,7 +305,13 @@ begin
       PPrw.CalcSerNr = calcsernr;
       PPrw.CalcRowNr = i;
       PPrw.PDate = pdate;
-      PPrw.ObjCode = CPrw.ObjCode;
+      PPrw.ObjCode = CPr.ObjCode;
+      if (nonblank(CPrw.ObjCode)) then begin
+        if (nonblank(PPrw.ObjCode)) then begin
+          PPrw.ObjCode = PPrw.ObjCode & ",";      
+        end;
+        PPrw.ObjCode = PPrw.ObjCode & CPrw.ObjCode;      
+      end;
       PPrw.Firstname = CPr.Firstname;
       PPrw.Surname = CPr.Surname;
       PPrw.PaymTypeCode=CPrw.PaymTypeCode;

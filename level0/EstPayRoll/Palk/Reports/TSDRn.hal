@@ -29,7 +29,7 @@ begin
   string 255 tstr,emplcode,tmpstr,tsdrowspec;
   integer year,month,inctaxfreeminflag,dispensflag,rw,i,j,tsdrwcnt,rwcnt,calcvalue;
   boolean TrHs,TrHs1,testf,printemplflag,tsdadd1,repflag;
-  val s1030,s1060,s1070,s1090,s1100,s1110,s1120,s1130,s1140,s1160,s1170,s2150,s2160,coef,inctaxperc,minsoctax,minsoctaxpaymsum;
+  val s1030,s1060,s1070,s1090,s1100,s1110,s1120,s1130,s1140,s1160,s1170,s2150,s2160,s1160_chk,s1160_max,percent,coef,inctaxperc,minsoctax,minsoctaxpaymsum;
   val stot1030,stot1060,stot1070,stot1090,stot1100,stot1110,stot1120,stot1130,stot1140,stot1160,stot1170,stot2150,stotSUPP,checksum,minsum,diff,roundup;
   date transdate;
   LongInt ContractNr;
@@ -136,6 +136,7 @@ begin
           stot1130=tsdrwsumtot[emplcode & ":" & "1130"];
           stot1140=tsdrwsumtot[emplcode & ":" & "1140"];
           stot1160=tsdrwsumtot[emplcode & ":" & "1160"];
+          s1160_chk=tsdrwsumtot[emplcode & ":" & "1160"];//ts, tmp
           stot1170=tsdrwsumtot[emplcode & ":" & "1170"];
           stot2150=tsdrwsumtot[emplcode & ":" & "2150"];
          //cust - begin, ts - 2018/02
@@ -220,6 +221,21 @@ begin
             if (s1120<=0) then begin s1120=0; end;
             if (s1130<=0) then begin s1130=0; end;
             if (s1140<=0) then begin s1140=0; end;
+            //ts, tmp
+            if (s1160 < 0) or (s1160 > s1160_chk) then begin
+              s1160_max = s1030 - s1110 - s1130;
+              percent = round(s1170*100/(s1160_max-s1160),GetSalaryRoundMode("2"));
+              if (s1160_chk <= s1160_max) then begin
+                s1160 = s1160_chk;
+                s1160_chk = 0;
+                s1170 = round((s1160_max - s1160)*percent/100,GetSalaryRoundMode("2"));
+              end else begin
+                s1160 = s1160_max;
+                s1160_chk = s1160_chk - s1160_max;
+                s1170 = round((s1160_max - s1160)*percent/100,GetSalaryRoundMode("2"));
+              end;
+            end;
+            //ts, tmp - end          
             if (s1160<=0) then begin s1160=0; end;
             if (s1170<=0) then begin s1170=0; end;
             if (s2150<=0) then begin s2150=0; end;

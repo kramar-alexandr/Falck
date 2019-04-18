@@ -3,6 +3,7 @@ external function Boolean IsHolliday(Date,record ExceptDatesVc,Boolean);
 external function Boolean GetExceptDates(record ExceptDatesVc,integer);
 external procedure GetDaysAndHoursTotal(record WorkedHoursVc,integer,var val,var integer);
 
+global
 function string 20 GetWHTTypeCode(string ptcode,date whdate)
 begin
   string 20 res;
@@ -76,8 +77,8 @@ begin
   record ExceptDatesVc EDr;
   integer rwcnt,rwcnt1,i,j,d,year,month,rw,days,dtot;
   LongInt frcontr,tocontr;
-  date whdate,thedate;
-  boolean testf,testf1,TrHs,saveflag,excflag;
+  date whdate,thedate,contrSDate;
+  boolean testf,testf1,TrHs,excflag;
   val hours,htot;
   
   year = RepSpec.flags[1];
@@ -85,14 +86,10 @@ begin
   frcontr = FirstInRange(RepSpec.f1,20);
   tocontr = LastInRange(RepSpec.f1,20);
   hours = RepSpec.vals0;
-  whdate.day = 01;
-  whdate.month = month;
-  whdate.year = year;
   thedate.year = year;
   thedate.month = month;
 
   rw = 0;
-  saveflag = false;
   RecordNew(WHr);
   WHr.Year = year;
   WHr.Month = month;
@@ -115,6 +112,14 @@ begin
         for (i=0;i<rwcnt;i=i+1) begin
           testf1 = true;
           MatRowGet(Contrr,i,Contrrw);
+          contrSDate = Contrrw.SDate;
+          if (contrSDate.month == month) then begin
+            whdate.day = contrSDate.day;
+          end else begin
+            whdate.day = 01;
+          end;
+          whdate.month = month;
+          whdate.year = year;
           if (nonblank(Contrrw.PosCode)) then begin
             if (nonblank(RepSpec.f2)) then begin
               if (Contrrw.PaymTypeCode!=RepSpec.f2) then begin testf1 = false;
@@ -140,16 +145,7 @@ begin
                     WHrw.Firstname = Contrr.Firstname;
                     WHrw.Surname = Contrr.Surname;
                     WHrw.WorkHourTypeCode = GetWHTTypeCode(Contrrw.PaymTypeCode,whdate);            
-                    if nonblank(Contrr.ObjCode) then begin
-                      WHrw.ObjCode = Contrr.ObjCode;
-                    end;
-                    if nonblank(WHrw.ObjCode) then begin
-                      if nonblank(Contrrw.ObjCode) then begin
-                        WHrw.ObjCode = WHrw.ObjCode & ", " & Contrrw.ObjCode;
-                      end;
-                    end else begin
-                      WHrw.ObjCode = Contrrw.ObjCode;
-                    end;
+                    WHrw.ObjCode = Contrrw.ObjCode;
                     days = DaysInMonth(year,month);
                     for (d=1;d<=days;d=d+1) begin
                       thedate.day = d;                    
@@ -169,7 +165,6 @@ begin
                     WHrw.HoursTotal=htot;
                     MatRowPut(WHr,rw,WHrw);
                     rw = rw + 1;
-                    saveflag = true;
                   end;
                 end;
               end;
@@ -179,7 +174,7 @@ begin
       end;
     end;
   end;
-  if (saveflag) then begin
+  if (MatRowCnt(WHr)>0) then begin
     WHr.SerNr = NextSerNr("WorkedHoursVc",whdate,-1,false,"");//Bk fix, ts - 2018/05
     if (WHr.SerNr > 0) then begin
       if (RecordInsert(WHr,false)) then begin end;

@@ -52,11 +52,10 @@ begin
   threadremote.SendCCRequestToPartner(Emplr.Code,Emplr.IDCode,"SENDESTCCLOOKUP",responsecode,sdate,edate);
   switch (responsecode) begin
     case -1: Messagebox(1500600,"");
-    case 100: MessageBox(1500601,"");
-    case 20130: MessageBox(1500602,"");//success
-    case 20251: MessageBox(1500603,Emplr.IDCode);
-    case 20256: MessageBox(1500604,"");
-    case 20300: MessageBox(1500605,"");
+    case 40520: MessageBox(1500603,"");
+    case 40521: MessageBox(1500604,"");
+    case 41132: MessageBox(1500602,"");
+    case 40552: MessageBox(1500605,"");
     case 0:
       CollectCodeForContributory(tstr,tcode,tname);
       rwcnt = MatRowCnt(Emplr);

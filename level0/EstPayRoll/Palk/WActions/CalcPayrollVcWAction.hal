@@ -1,15 +1,7 @@
-external procedure PasteCPrwFromContrrw(record CalcPayrollVc,var row CalcPayrollVc,record ContractVc,row ContractVc,var integer,integer,integer,integer,boolean,var boolean);
+external procedure PasteCPrwFromContrrw(var record CalcPayrollVc,var row CalcPayrollVc,record ContractVc,row ContractVc,var integer,integer,integer,integer,boolean);
 external procedure CPrSumUp(var record CalcPayrollVc);
-external updating procedure PasteCPrTaxes(record CalcPayrollVc,integer,integer,integer,integer,integer,var val,Boolean);
+external procedure PasteCPrTaxes(var record CalcPayrollVc,integer,integer,integer,integer,integer,var val,Boolean);
 external function boolean GetRightPeriod(var date,var date,date,date);
-external updating procedure RemoveRowCPWHVc(LongInt,integer);
-external updating procedure RemoveRowCPPWVc(LongInt,integer);
-external updating procedure RemoveRowCPOTVc(LongInt,integer);
-external updating procedure RemoveRowCPAbsVc(LongInt,integer);
-external updating procedure RemoveCPWHVc(record CalcPayrollVc);
-external updating procedure RemoveCPPWVc(record CalcPayrollVc);
-external updating procedure RemoveCPOTVc(record CalcPayrollVc);
-external updating procedure RemoveCPAbsVc(record CalcPayrollVc);
 external updating procedure UpdateCPUnFromCPr(record CalcPayrollVc,boolean);
 external updating procedure UpdateITFMUsedFromCPr(record CalcPayrollVc,boolean);
 external updating procedure UpdateCPPPHistFromCPr(record CalcPayrollVc,boolean);
@@ -37,10 +29,9 @@ begin
 end;
 
 global
-updating function boolean CalcPayrollDClassOnOverStrike(integer wn,integer rownr)
+function boolean CalcPayrollDClassOnOverStrike(integer wn,integer rownr)
 begin
   record CalcPayrollVc CPr;
-  record CalcPayrollVc oldCPr;
   row CalcPayrollVc CPrw;
   Integer i,rwcnt;
   boolean res;
@@ -48,7 +39,6 @@ begin
 
   res = true;
   GetWindowRecord(wn,CPr);
-  RecordCopy(oldCPr,CPr);    
   rwcnt=MatRowCnt(CPr);
 /*
   CPr.BrutoTotal = 0;
@@ -61,11 +51,6 @@ begin
   PasteCPrTaxes(CPr,0,0,0,0,0,tmpval,true);
   CPrSumUp(CPr);
   PutWindowRecord(wn,CPr);
-  RemoveRowCPWHVc(CPr.SerNr,rownr);
-  RemoveRowCPPWVc(CPr.SerNr,rownr);
-  RemoveRowCPOTVc(CPr.SerNr,rownr);
-  RemoveRowCPAbsVc(CPr.SerNr,rownr);
-  RecordUpdate(oldCPr,CPr,false);
   CalcPayrollDClassOnOverStrike = true;
   return;
 end;
@@ -143,7 +128,7 @@ begin
   return;
 end;
 
-updating function boolean CalcPayrollDClassContrSerNrEFAfter(integer wn,integer rownr,integer changedf)
+function boolean CalcPayrollDClassContrSerNrEFAfter(integer wn,integer rownr,integer changedf)
 begin  
   record CalcPayrollVc CPr;
   row CalcPayrollVc CPrw;
@@ -151,25 +136,19 @@ begin
   record PaymTypeVc PTr;
   row ContractVc Contrrw;
   integer rwcnt,rwcnt1,j,i;
-  boolean testf,tmp;
+  boolean testf;
   date tmpdate;
   val tmpval;
   
   if (changedf!=0) then begin
     GetWindowRecord(wn,CPr);
     DeselectWindow(wn,false);
-    RemoveCPWHVc(CPr);
-    RemoveCPPWVc(CPr);
-    RemoveCPOTVc(CPr);
-    RemoveCPAbsVc(CPr);
-    
     rwcnt1=MatRowCnt(CPr);
     for (j=0;j<rwcnt1;j=j+1) begin
       MatRowDelete(CPr,j);
       j = j - 1;
       rwcnt1 = MatRowCnt(CPr);
     end;
-
     j=0;
     Contrr.SerNr = CPr.ContrSerNr;
     if (ReadFirstMain(Contrr,1,true)) then begin
@@ -182,7 +161,7 @@ begin
         for (i=0;i<rwcnt;i=i+1) begin
           MatRowGet(Contrr,i,Contrrw);
           if nonblank(Contrrw.PosCode) then begin
-            PasteCPrwFromContrrw(CPr,CPrw,Contrr,Contrrw,j,0,0,1,false,tmp);
+            PasteCPrwFromContrrw(CPr,CPrw,Contrr,Contrrw,j,0,0,1,false);
           end;
         end;
 //        PasteCPrTaxes(CPr,1,1,1,1,0); //hoolduse funktsionaalsus
@@ -196,7 +175,7 @@ begin
   return;
 end;
 
-updating function boolean CalcPayrollDClassPosCodeEFAfter(integer wn,integer rownr,integer changedf)
+function boolean CalcPayrollDClassPosCodeEFAfter(integer wn,integer rownr,integer changedf)
 begin  
   record CalcPayrollVc CPr;
   row CalcPayrollVc CPrw;
@@ -244,7 +223,7 @@ begin
   return;
 end;
 
-updating function boolean CalcPayrollDClassPaymTypeCodeEFAfter(integer wn,integer rownr,integer changedf)
+function boolean CalcPayrollDClassPaymTypeCodeEFAfter(integer wn,integer rownr,integer changedf)
 begin  
   record CalcPayrollVc CPr;
   row CalcPayrollVc CPrw;
@@ -269,7 +248,7 @@ begin
   return;
 end;
 
-updating function boolean CalcPayrollDClassTariffEFAfter(integer wn,integer rownr,integer changedf)
+function boolean CalcPayrollDClassTariffEFAfter(integer wn,integer rownr,integer changedf)
 begin  
   record CalcPayrollVc CPr;
   row CalcPayrollVc CPrw;
@@ -293,7 +272,7 @@ begin
   return;
 end;
 
-updating function boolean CalcPayrollDClassCalcDateEFAfter(integer wn,integer rownr,integer changedf)
+function boolean CalcPayrollDClassCalcDateEFAfter(integer wn,integer rownr,integer changedf)
 begin  
   record CalcPayrollVc CPr;
   date tmpdate;
@@ -316,7 +295,7 @@ begin
   return;
 end;
 
-updating function boolean CalcPayrollDClassStartDateEFAfter(integer wn,integer rownr,integer changedf)
+function boolean CalcPayrollDClassStartDateEFAfter(integer wn,integer rownr,integer changedf)
 begin  
   record CalcPayrollVc CPr;
   date tmpdate;
@@ -339,7 +318,7 @@ begin
   return;
 end;
 
-updating function boolean CalcPayrollDClassEndDateEFAfter(integer wn,integer rownr,integer changedf)
+function boolean CalcPayrollDClassEndDateEFAfter(integer wn,integer rownr,integer changedf)
 begin  
   record CalcPayrollVc CPr;
   date tmpdate;
@@ -363,7 +342,7 @@ begin
   return;
 end;
 
-updating function boolean CalcPayrollDClassPaymDateEFAfter(integer wn,integer rownr,integer changedf)
+function boolean CalcPayrollDClassPaymDateEFAfter(integer wn,integer rownr,integer changedf)
 begin  
   record CalcPayrollVc CPr;
   date tmpdate;
@@ -383,7 +362,7 @@ begin
 end;
 
 global
-updating function boolean CalcPayrollDClassAfterEditField(integer wn,string fieldname,integer fn, integer rownr,integer changed)
+function boolean CalcPayrollDClassAfterEditField(integer wn,string fieldname,integer fn, integer rownr,integer changed)
 begin
   boolean res;
 

@@ -193,10 +193,12 @@ begin
       debitacc="";
       creditacc="";
       accruedacc="";
+      objcode = CPr.ObjCode;
       if nonblank(CPrw.ObjCode) then begin
-        objcode=CPrw.ObjCode;
-      end else begin
-        objcode=CPr.ObjCode;
+        if (nonblank(objcode)) then begin
+          objcode = objcode & ",";
+        end;  
+        objcode = objcode & CPrw.ObjCode;
       end;
       //arvestuse rea konteerimisgrupp
       accgroup=GetContrAccGroupCode(CPr.ContrSerNr,CPrw.PosCode,CPrw.PaymTypeCode,CPr.CalcDate,emplcode);

@@ -212,7 +212,7 @@ begin
           if nonblank(tstr) then begin 
             IVrw.VATCode = tstr;
             MatRowPut(IVr,rownr,IVrw);
-            IVVc_PasteVATCode(IVr,rownr,"",chsum)
+            IVVc_PasteVATCode(IVr,rownr,"",chsum);
             MatRowGet(IVr,rownr,IVrw);
           end;
         end;

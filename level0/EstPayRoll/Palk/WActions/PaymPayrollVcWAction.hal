@@ -199,7 +199,7 @@ begin
     if (ReadFirstMain(CPr,1,true)) then begin
       if (CPr.ContrSerNr!=PPrw.ContrSerNr) then begin
         MessageBox(1500374,PPrw.CalcSerNr);
-        PPrw.CalcSerNr=blankval;
+        PPrw.CalcSerNr=-1;
         goto LPaymPayrollDClassCalcSerNrEFAfter;
       end;
       MatRowDelete(PPr,rownr);

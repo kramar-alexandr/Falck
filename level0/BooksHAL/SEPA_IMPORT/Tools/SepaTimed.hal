@@ -89,18 +89,20 @@ begin
   Integer i,rwcnt;
   Integer compnr,curcomp;
 
-  curcomp = CurrentCompany;  
-  BlockLoad(CompaniesRec);
-  rwcnt = MatRowCnt(CompaniesRec);
-  for (i=0;i<rwcnt;i=i+1) begin
-    MatRowGet(CompaniesRec,i,comprw);
-    if (SetCompanyCode(comprw.CompCode,false)) then begin
-      SepaTimed2;
+  //otherwise executed on client as well, where SetCompanyCode fails for local users KB
+  if (ServerMode or SingleUserMode) then begin
+    curcomp = CurrentCompany;  
+    BlockLoad(CompaniesRec);
+    rwcnt = MatRowCnt(CompaniesRec);
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(CompaniesRec,i,comprw);
+      if (SetCompanyCode(comprw.CompCode,false)) then begin
+        SepaTimed2;
+      end;
+      ResetCompany(curcomp);
     end;
     ResetCompany(curcomp);
   end;
-  ResetCompany(curcomp);
-
   return;
 end; 
 

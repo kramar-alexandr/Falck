@@ -10,7 +10,9 @@ external procedure ReadTXServiceReply(var record TXServiceReplyVc,var Area,Boole
 external procedure ReverseString(string,var string);
 external function LongInt NumberOfJunkLeadingCharactersInArea(Area);
 external function Boolean IsDigit(string);
-external procedure PasteFromTRObjS(Integer,Integer);
+//cust start KB 12.09.2018 - updating, following the BPI Ukraine change
+external updating procedure PasteFromTRObjS(Integer,Integer);
+//cust end
 external procedure SendTextParameter(string,var Area);
 external procedure SendFunctionVersion(string,string,var Area);
 external updating procedure RecordActionProfile_Print(var record CUVc,string,Boolean);
@@ -2038,7 +2040,9 @@ BEGIN
   RETURN;
 END;
 
-global
+//cust start KB 12.09.2018 - updating, following the BPI Ukraine change
+global updating
+//cust end
 procedure CUClassReplace()
 begin
   Integer wn,mwn;
@@ -2061,7 +2065,9 @@ begin
   return;
 end;
 
-global
+//cust start KB 12.09.2018 - updating, following the BPI Ukraine change
+global updating
+//cust end
 procedure INClassReplace()
 begin
   Integer wn,mwn;

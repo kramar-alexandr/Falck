@@ -2,6 +2,7 @@ external function roundmode GetSalaryRoundMode(string);
 external function val GetPieceWorkTypeTariff(string,string,LongInt,date);
 external procedure PasteOTrwsFromContrr(record OpenTransVc,var row OpenTransVc,record ContractVc,var integer);
 external function string 255 GetPaymTypeName(string);
+external procedure OTSumup(var record OpenTransVc);
 
 global 
 function Boolean OpenTransDClassDeleteRowTest(Integer wn,Integer rownr)
@@ -21,6 +22,22 @@ begin
     res = false;
   end;
   OpenTransDClassDeleteRowTest = res;
+  return;
+end;
+
+global
+function Boolean OpenTransDClassOnOverStrike(Integer wn,Integer rownr)
+begin
+  record OpenTransVc OTr;
+  Boolean res;
+
+  if (rownr>=0) then begin
+    GetWindowRecord(wn,OTr);    
+    OTSumup(OTr);
+    PutWindowRecord(wn,OTr);    
+  end;
+  res = true;
+  OpenTransDClassOnOverStrike = true;
   return;
 end;
 
@@ -103,6 +120,7 @@ function boolean OpenTransDClassContrSerNrEFAfter(integer wn,integer rownr,integ
     if (ReadFirstMain(Contrr,1,true)) then begin
       MatRowDelete(OTr,rownr);
       PasteOTrwsFromContrr(OTr,OTrw,Contrr,rownr);
+      OTSumup(OTr);
     end else begin
       OTrw.Firstname = "";
       OTrw.Surname = "";
@@ -111,7 +129,7 @@ function boolean OpenTransDClassContrSerNrEFAfter(integer wn,integer rownr,integ
       OTrw.Amount=blankval;
       OTrw.Sum=blankval;
       OTrw.ObjCode="";
-      OTrw.CalcSerNr=blankval;
+      OTrw.CalcSerNr=-1;
       MatRowPut(OTr,rownr,OTrw);
     end;      
     PutWindowRecord(wn,OTr);
@@ -131,6 +149,7 @@ function boolean OpenTransDClassTariffEFAfter(integer wn,integer rownr,integer c
     MatRowGet(OTr,rownr,OTrw);
     OTrw.Sum=round((OTrw.Tariff*OTrw.Amount),GetSalaryRoundMode("2"));
     MatRowPut(OTr,rownr,OTrw);
+    OTSumup(OTr);
     PutWindowRecord(wn,OTr);
   end;
   OpenTransDClassTariffEFAfter = true;

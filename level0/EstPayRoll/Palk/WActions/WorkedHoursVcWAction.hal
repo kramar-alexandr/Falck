@@ -1,5 +1,7 @@
 external procedure GetDaysAndHoursTotal(record WorkedHoursVc,integer,var val,var integer);
 external procedure YearCheck(var LongInt);
+external function boolean IsWHPaymType(string);
+external function string 20 GetWHTTypeCode(string,date);
 
 global 
 function Boolean WorkedHoursDClassDeleteRowTest(Integer wn,Integer rownr)
@@ -175,45 +177,42 @@ begin
   row WorkedHoursVc WHrw;
   record ContractVc Contrr;
   row ContractVc Contrrw;
-  integer rwcnt,i;
-  date whdate;
+  integer rwcnt,i,pos;
+  date whdate,contrSDate;
   
   if (changedf!=0) then begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
-    whdate.day=01;
-    whdate.month=WHr.Month;
-    whdate.year=WHr.Year;
     MatRowGet(WHr,rownr,WHrw);
+    pos = rownr;
     Contrr.SerNr = WHrw.ContrSerNr;
-    ClearRow(WHr,WHrw,1);
-    WHrw.ContrSerNr = Contrr.SerNr;
     if (ReadFirstMain(Contrr,1,true)) then begin
-      WHrw.Firstname = Contrr.Firstname;
-      WHrw.Surname = Contrr.Surname;
       rwcnt=MatRowCnt(Contrr);
       for (i=0;i<rwcnt;i=i+1) begin
         MatRowGet(Contrr,i,Contrrw);
-        if nonblank(Contrrw.PosCode) then begin
+        contrSDate = Contrrw.SDate;
+        if (contrSDate.month == WHr.Month) then begin
+          whdate.day = contrSDate.day;
+        end else begin
+          whdate.day = 01;
+        end;
+        whdate.month=WHr.Month;
+        whdate.year=WHr.Year;
+        if (IsWHPaymType(Contrrw.PaymTypeCode)) then begin
           if (DateInRange(whdate,Contrrw.SDate,Contrrw.EDate)) then begin
-            WHrw.PosCode=Contrrw.PosCode;
-            if nonblank(Contrr.ObjCode) then begin
-              WHrw.ObjCode = Contrr.ObjCode;
-            end;
-            if nonblank(WHrw.ObjCode) then begin
-              if nonblank(Contrrw.ObjCode) then begin
-                WHrw.ObjCode = WHrw.ObjCode & ", " & Contrrw.ObjCode;
-              end;
-            end else begin
-              WHrw.ObjCode = Contrrw.ObjCode;
-            end;
-            goto L1; 
+            ClearRow(WHr,WHrw,1);
+            WHrw.ContrSerNr = Contrr.SerNr;
+            WHrw.Firstname = Contrr.Firstname;
+            WHrw.Surname = Contrr.Surname;
+            WHrw.PosCode = Contrrw.PosCode;
+            WHrw.WorkHourTypeCode = GetWHTTypeCode(Contrrw.PaymTypeCode,whdate);
+            WHrw.ObjCode = Contrrw.ObjCode;
+            MatRowPut(WHr,pos,WHrw);
+            pos = pos + 1;
           end;
         end;
       end;
     end;
-L1:;
-    MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
   WorkedHoursDClassContrSerNrEFAfter = true;

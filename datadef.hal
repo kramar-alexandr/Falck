@@ -14,6 +14,11 @@ begin
 end;
 
 begin
+
+  SourceFile("halcust\\estonian",3); //NK 12.04.2019
+  SourceFile("halcust\\russian",3);  //NK 12.04.2019
+  SourceFile("halcust\\latvian",3);  //NK 12.04.2019
+   
   SourceFile("halcust\\level0\\BooksHAL\\EARVE_IMPORT",0);
   SourceFile("halcust\\level0\\BooksHAL\\ETEENUSED\\amainhal",0);
   SourceFile("halcust\\level0\\BooksHAL\\ETEENUSED\\estonian",0);
@@ -56,7 +61,7 @@ begin
   SourceFile("halcust\\level0\\Documents",0);
   SourceFile("halcust\\level0\\WActions",0);
   SourceFile("halcust\\level0\\Reports",0);// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 01 04 2019 y. at 4:28:52 PM
-  SourceFile("halcust\\level0\\Exports",0);// Edit ************************** BPI Ukraine - KramarAlexandr - 04, 18 04 2019 y. at 10:05:27 AM
+  SourceFile("halcust\\level0\\Exports",0);// Edit ************************** BPI Ukraine - KramarAlexandr - 04, 18 04 2019 y. at 4:39:10 PM
   SourceFile("halcust\\MultyCurDiff",3);
   SourceFile("halcust\\RActions",3);// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 25 June 2018 13:55:52
   SourceFile("halcust\\English",3);// Edit ************************** BPI Ukraine - KramarAlexandr - Wednesday, 27 June 2018 09:37:36
@@ -1578,6 +1583,7 @@ begin
   FieldIsInvalid(Invalid);  
   RecordField(OKMark,M4Mark,0,0);
   RecordField(CalcMark,M4Mark,0,0);
+  RecordField(Total,M4Val,0,0);
   ArrayBegin(Math,-,1);
   ArrayField(ContrSerNr,M4Long,0,0);
   ArrayField(PosCode,M4Code,10,PositionVc);
@@ -1857,6 +1863,12 @@ begin
 //ts - 2017/11
   ArrayField(CalcBrutoSum,M4Val,0,0);
   ArrayField(AddTaxSum,M4Val,0,0);
+//ts - 2018/08
+  ArrayField(OTNr,M4Long,0,0);
+  ArrayField(AbsNr,M4Long,0,0);
+  ArrayField(PWNr,M4Long,0,0);
+  ArrayField(WHNr,M4Long,0,0);
+  ArrayField(RowNr,M4Long,0,0);
   EndArray;
   MainKeyBegin(SerNr,0);
   KeySegment(SerNr);
@@ -2728,8 +2740,8 @@ begin
   KeySegment(InvoiceNr);
   KeySegment(CredRegCode);
   KeySegment(DebtRegCode);
-  KeyBegin(CredRegCode)
-  KeySegment(CredRegCode)
+  KeyBegin(CredRegCode);
+  KeySegment(CredRegCode);
   KeySegment(DebtRegCode);
   KeySegment(InvoiceNr);
   EndRecord;

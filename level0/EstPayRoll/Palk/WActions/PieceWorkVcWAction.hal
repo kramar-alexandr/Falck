@@ -150,6 +150,7 @@ begin
           if (DateInRange(PWr.TransDate,Contrrw.SDate,Contrrw.EDate)) then begin
             PWrw.PosCode=Contrrw.PosCode;
             PWrw.Tariff=GetPieceWorkTypeTariff(PWr.PieceWorkTypeCode,PWrw.PosCode,PWrw.ContrSerNr,PWr.TransDate);
+            PWrw.ObjCode=Contrrw.ObjCode;
             goto L1; 
           end;
         end;

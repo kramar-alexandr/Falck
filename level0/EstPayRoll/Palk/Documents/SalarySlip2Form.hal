@@ -1,0 +1,240 @@
+external procedure CommonDocumentFields(record RcVc);
+external function Boolean Getformcode(Integer,Integer,string,string,string,LongInt,LongInt,string,string,Integer,string,var string);
+external function Integer NumberofDocumentPages(string,Integer);
+external procedure GetLangNr(string,var record LangNrVc);
+external procedure PrintValue(string,val,Integer,record LangNrVc,record SysFormatBlock,Boolean);
+external procedure PrintValueInclZero(string,val,Integer,record LangNrVc,record SysFormatBlock,Boolean);
+external procedure EmplSalarySlip(record RcVc,record EmplVc,var date,var date,var array string,var array string ,var array string,
+						var array string,var array string,var array string,var array string,
+						var array val,var array val,var array val,var array val,var array val,var array val,
+						var array val,var array val,var array val,var array val,var array val,
+						var Integer,var Integer,var Integer,var Integer,var  Integer,
+						var val,var val,var val,var val,var val,var val,var LongInt,var LongInt,var string);
+
+global
+procedure DoPrintSalarySlip2Form(record RcVc RepSpec,record EmplVc Emplr,date sdate,date edate,array string paymcode,array string deductcode,array string emplpaymcode,
+						array string paymname,array string deductname,array string emplpaymname,array string cpstr,
+						array val paymtariff,array val deducttariff,array val emplpaymtariff,array val paymamount,array val deductamount,array val emplpaymamount,
+						array val paymsum,array val paymsumnet,array val paymsumdet,array val deductsum,array val emplpaymsum,
+						Integer acnt1,Integer acnt2,Integer acnt3,Integer pgcnt,Integer cpcnt,
+						val sumtot1,val sumtot2,val sumtot3,val TaxFreeMin,val sumtot4,val sumtot5,LongInt workdays,LongInt workeddays,var string cptstr,string formcode)
+begin
+  record SysFormatBlock SFb;
+  record LangNrVc LangNrr;
+  record DocVc Docr;
+  string 100 tstr;
+  Integer k,acnt;
+
+  GetLangNr("",LangNrr);  
+  BlockLoad(SFb);
+  CommonDocumentFields(RepSpec);
+  acnt = acnt1 + acnt2 + acnt3;
+  NumberofDocumentPages(formcode,acnt);
+  Docr.Code = formcode;
+  if (ReadFirstMain(Docr,1,true)) then begin
+  end;
+  OUTFORMFIELD("F_SS_EMPCODE",Emplr.Code);
+  OUTFORMFIELD("F_SS_EMPLNAME",Emplr.Firstname & " " & Emplr.Surname);
+  OUTFORMFIELD("F_SS_IDCODE",Emplr.IDCode);
+  OUTFORMFIELD("F_SS_PERIOD",sdate & ":" & edate);
+  OUTFORMFIELD("F_SS_CALCPAYM",cptstr);
+  PrintValueInclZero("F_SS_WORKDAYS",workdays,M4UVal,LangNrr,SFb,false);
+  PrintValueInclZero("F_SS_WORKEDDAYS",workeddays,M4UVal,LangNrr,SFb,false);
+  PrintValueInclZero("F_SS_SUMTOTAL",sumtot1,M4Val,LangNrr,SFb,false);
+  PrintValueInclZero("F_SS_SUMDEDUCT",sumtot2,M4Val,LangNrr,SFb,false);
+  PrintValueInclZero("F_SS_SUMBRUTODEDUCT",sumtot4,M4Val,LangNrr,SFb,false);
+  PrintValueInclZero("F_SS_SUMNETODEDUCT",sumtot5,M4Val,LangNrr,SFb,false);
+  PrintValueInclZero("F_SS_PAYMENTSUM",sumtot3,M4Val,LangNrr,SFb,false);
+
+//tasud
+  if (acnt1>0) then begin
+    tstr = USetStr(1500422);
+    OUTFORMFIELD("F_SS_HEADER",tstr);
+    tstr = USetStr(1500419);
+    OUTFORMFIELD("F_SS_HEAD1",tstr);
+    tstr = USetStr(1500420);
+    OUTFORMFIELD("F_SS_HEAD2",tstr);
+    tstr = USetStr(1500502);
+    OUTFORMFIELD("F_SS_HEAD3",tstr);
+    tstr = USetStr(1500503);
+    OUTFORMFIELD("F_SS_HEAD4",tstr);
+    EndFormRow;
+  end;
+  
+  for (k=1;k<=acnt1;k=k+1) begin
+    OUTFORMFIELD("F_SS_PAYMENTCODE",paymcode[k]);
+    OUTFORMFIELD("F_SS_PAYMENTNAME",paymname[k]);
+    PrintValue("F_SS_TARIFF",paymtariff[k],M4Val,LangNrr,SFb,false);
+    PrintValue("F_SS_AMOUNT",paymamount[k],M4Val,LangNrr,SFb,false);
+    PrintValue("F_SS_SUMNET",paymsumnet[k],M4Val,LangNrr,SFb,false);
+    PrintValue("F_SS_SUM",paymsum[k],M4Val,LangNrr,SFb,false);
+    EndFormRow;
+  end;
+
+//kinnipidamised
+  if (acnt2>0) then begin
+    tstr = USetStr(1500423);
+    OUTFORMFIELD("F_SS_HEADER",tstr);
+    tstr = USetStr(1500419);
+    OUTFORMFIELD("F_SS_HEAD1",tstr);
+    tstr = USetStr(1500473);
+    OUTFORMFIELD("F_SS_HEAD2",tstr);
+    tstr = USetStr(1500421);
+    OUTFORMFIELD("F_SS_HEAD4",tstr);
+    EndFormRow;
+  end;
+
+  for (k=1;k<=acnt2;k=k+1) begin
+    OUTFORMFIELD("F_SS_PAYMENTCODE",deductcode[k]);
+    OUTFORMFIELD("F_SS_PAYMENTNAME",deductname[k]);
+    PrintValue("F_SS_TARIFF",deducttariff[k],M4Val,LangNrr,SFb,false);
+    PrintValue("F_SS_AMOUNT",deductamount[k],M4Val,LangNrr,SFb,false);
+    PrintValue("F_SS_SUM",deductsum[k],M4Val,LangNrr,SFb,false);
+    EndFormRow;
+  end;
+
+  OUTFORMFIELD("F_SS_PAYMENTNAME",USetStr(1500553));
+  PrintValue("F_SS_SUM",TaxFreeMin,M4Val,LangNrr,SFb,false);
+  EndFormRow;
+
+//tššandja maksud
+  if (acnt3>0) then begin
+    tstr = USetStr(1500424);
+    OUTFORMFIELD("F_SS_HEADER",tstr);
+    tstr = USetStr(1500419);
+    OUTFORMFIELD("F_SS_HEAD1",tstr);
+    tstr = USetStr(1500473);
+    OUTFORMFIELD("F_SS_HEAD2",tstr);
+    tstr = USetStr(1500421);
+    OUTFORMFIELD("F_SS_HEAD4",tstr);
+   EndFormRow;
+  end;
+
+  for (k=1;k<=acnt3;k=k+1) begin
+    OUTFORMFIELD("F_SS_PAYMENTCODE",emplpaymcode[k]);
+    OUTFORMFIELD("F_SS_PAYMENTNAME",emplpaymname[k]);
+    PrintValue("F_SS_TARIFF",emplpaymtariff[k],M4Val,LangNrr,SFb,false);
+    PrintValue("F_SS_AMOUNT",emplpaymamount[k],M4Val,LangNrr,SFb,false);
+    PrintValue("F_SS_SUM",emplpaymsum[k],M4Val,LangNrr,SFb,false);
+    EndFormRow;
+  end;
+  return;
+end;
+
+procedure PrintSalarySlip2Form(record RcVc RepSpec,record EmplVc Emplr,date sdate,date edate,array string paymcode,array string deductcode,array string emplpaymcode,
+						array string paymname,array string deductname,array string emplpaymname,array string cpstr,
+						array val paymtariff,array val deducttariff,array val emplpaymtariff,array val paymamount,array val deductamount,array val emplpaymamount,
+						array val paymsum,array val paymsumnet,array val paymsumdet,array val deductsum,array val emplpaymsum,
+						Integer acnt1,Integer acnt2,Integer acnt3,Integer pgcnt,Integer cpcnt,
+						val sumtot1,val sumtot2,val sumtot3,val TaxFreeMin,val sumtot4,val sumtot5,LongInt workdays,LongInt workeddays,var string cptstr)
+begin
+  Integer i,rwcnt;
+  Boolean printf,langf;
+  Integer intdocnr;
+  string 30 formcode,langcode;
+  record FormDefVc FDr;
+  row FormDefVc FDrw;
+
+  FDr.repname = RepSpec.repname;
+  FDr.shortname = RepSpec.shortname;
+  if (ReadFirstMain(FDr,1,true)==false) then begin
+    MessageBox(1624, " " & USetStr(1623));
+    goto LPrintSalarySlip2Form;
+  end;
+  rwcnt = MatRowCnt(FDr);
+  langcode = "";
+  for (i=rwcnt-1;i>=0;i=i-1) begin
+    MatRowGet(FDr,i,FDrw);
+    if (FDrw.LangCode==langcode) then begin
+      i = -1;
+      langf = true;
+    end;
+  end;
+  if (langf==false) then begin langcode = ""; end;
+  intdocnr = 1;
+  printf = true;
+  while (printf) begin  
+    formcode = "";
+    for (i=rwcnt-1;i>=0;i=i-1) begin
+      MatRowGet(FDr,i,FDrw);
+      if (Getformcode(i,FDrw.intdocnr,FDrw.FPCode,FDrw.UserGroup,FDrw.LangCode,FDrw.SerNr,-1,FDrw.PrintGroupCode,
+                      langcode,intdocnr,"",formcode)) then
+      begin
+        goto LBREAKSalarySlip2;
+      end;
+    end;
+LBREAKSalarySlip2:;
+    if (nonblank(formcode)) then begin
+      if (OpenForm(formcode)) then begin
+        DoPrintSalarySlip2Form(RepSpec,Emplr,sdate,edate,paymcode,deductcode,emplpaymcode,paymname,deductname,emplpaymname,cpstr,
+          				paymtariff,deducttariff,emplpaymtariff,paymamount,deductamount,emplpaymamount,
+          				paymsum,paymsumnet,paymsumdet,deductsum,emplpaymsum,
+          				acnt1,acnt2,acnt3,pgcnt,cpcnt,
+          				sumtot1,sumtot2,sumtot3,TaxFreeMin,sumtot4,sumtot5,workdays,workeddays,cptstr,formcode);
+        CloseForm;
+      end else begin
+        printf = false;
+        MessageBox(1546,formcode);
+      end;
+  end else begin
+      printf = false;
+      if (intdocnr==1) then begin
+        MessageBox(1624, " " & USetStr(1623));
+      end;
+    end;
+    intdocnr = intdocnr + 1;
+  end;
+LPrintSalarySlip2Form:;  
+  RETURN;
+END;
+
+global
+procedure DoSalarySlip2Form(record RcVc Dummyr,record RcVc RepSpec)
+begin
+  record EmplVc Emplr;
+  record ContractVc Contrr;
+  date sdate,edate;
+  array string 10 paymcode,deductcode,emplpaymcode;
+  array string 100 paymname,deductname,emplpaymname,cpstr;
+  array val paymtariff,deducttariff,emplpaymtariff;
+  array val paymamount,deductamount,emplpaymamount;
+  array val paymsum,paymsumnet,paymsumdet,deductsum,emplpaymsum;
+  string 255 cptstr;
+  integer acnt1,acnt2,acnt3,pgcnt,cpcnt;
+  val sumtot1,sumtot2,sumtot3,TaxFreeMin,sumtot4,sumtot5;
+  LongInt workdays,workeddays;
+  
+  if (nonblank(RepSpec.f1)) then begin
+    Emplr.Code = RepSpec.f1;
+    if (ReadFirstMain(Emplr,1,true)) then begin end;
+  end else begin
+    Contrr.SerNr = RepSpec.f2;
+    if (ReadFirstMain(Contrr,1,true)) then begin
+      Emplr.Code = Contrr.EmplCode;
+      if (ReadFirstMain(Emplr,1,true)) then begin end;  
+    end;
+  end;
+  EmplSalarySlip(RepSpec,Emplr,sdate,edate,paymcode,deductcode,emplpaymcode,
+						paymname,deductname,emplpaymname,cpstr,
+						paymtariff,deducttariff,emplpaymtariff,paymamount,deductamount,emplpaymamount,
+						paymsum,paymsumnet,paymsumdet,deductsum,emplpaymsum,
+						acnt1,acnt2,acnt3,pgcnt,cpcnt,
+						sumtot1,sumtot2,sumtot3,TaxFreeMin,sumtot4,sumtot5,workdays,workeddays,cptstr);
+
+  PrintSalarySlip2Form(RepSpec,Emplr,sdate,edate,paymcode,deductcode,emplpaymcode,paymname,deductname,emplpaymname,cpstr,
+  						paymtariff,deducttariff,emplpaymtariff,paymamount,deductamount,emplpaymamount,
+          				paymsum,paymsumnet,paymsumdet,deductsum,emplpaymsum,
+          				acnt1,acnt2,acnt3,pgcnt,cpcnt,
+          				sumtot1,sumtot2,sumtot3,TaxFreeMin,sumtot4,sumtot5,workdays,workeddays,cptstr);
+  return;
+end;
+
+global
+procedure SalarySlip2Form(record RcVc RepSpec)
+begin
+  Boolean tmpf;
+  
+  tmpf = PrintDocument(RepSpec,"SalarySlip2Form",false);
+
+  return;
+end;

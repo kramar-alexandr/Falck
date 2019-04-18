@@ -20,7 +20,7 @@ begin
     MatRowGet(PMRec,i,pmrw);
     if (pmrw.Code==macc) then begin
       banknr = pmrw.BankNr;
-      bankname = pmrw.BankName;
+      bankname = pmrw.Comment;
       goto LGetPMBankAccName;
     end;
   end;

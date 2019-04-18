@@ -1,10 +1,9 @@
 external procedure CPrSumUp(var record CalcPayrollVc);
-external updating procedure PasteCPrTaxes(record CalcPayrollVc,integer,integer,integer,integer,integer,var val,Boolean);
+external procedure PasteCPrTaxes(var record CalcPayrollVc,integer,integer,integer,integer,integer,var val,Boolean);
 external function boolean GetRightPeriod(var date,var date,date,date);
 external function val GetCPSumForPeriod(LongInt,date,date);
 external function LongInt GetWorkingDays(Date,Date);
 external function LongInt GetExceptDays(date,var date);
-external updating procedure InsertCPAbsVc(LongInt,integer,LongInt);
 external function boolean GetBackXMonthsPeriod(var date,var date,integer);
 external function LongInt GetAbsenceDays(LongInt,string,date,date,var LongInt,var LongInt);
 external function LongInt GetCalendarDays(date,date);
@@ -13,7 +12,7 @@ external function val GetAbsenceFBDaysForPeriod(LongInt,string,date,date,var int
 external function val GetSalaryFBSumForPeriod(LongInt,date,date);
 external function boolean GetNextCalcPayrollSerNr(date,var LongInt);
 external function LongInt GetMonthDiff(Date,Date);
-external procedure PasteCPrwFromContrrw(record CalcPayrollVc,var row CalcPayrollVc,record ContractVc,row ContractVc,var integer,integer,integer,integer,boolean,var boolean);
+external procedure PasteCPrwFromContrrw(var record CalcPayrollVc,var row CalcPayrollVc,record ContractVc,row ContractVc,var integer,integer,integer,integer,boolean);
 external function integer GetPaymTypeFlag(string);
 external function roundmode GetSalaryRoundMode(string);
 
@@ -44,9 +43,8 @@ begin
   return;
 end;
 
-updating procedure PasteVacCPrwFromAbsr(record CalcPayrollVc CPr,record AbsenceVc Absr,record ContractVc Contrr,date sd,date ed,string paymtypecode,var boolean saveflag,date paymdate,Integer vacperstart)
+procedure PasteVacCPrwFromAbsr(record CalcPayrollVc CPr,record AbsenceVc Absr,record ContractVc Contrr,date sd,date ed,string paymtypecode,date paymdate,Integer vacperstart)
 begin  
-  record AbsenceVc oldAbsr;  
   record PaymTypeVc PTr;
   row CalcPayrollVc CPrw;
   row ContractVc Contrrw;
@@ -56,7 +54,6 @@ begin
   val sumtot,sumperday,sumtmp,sum1tmp,minsalary,ttt;
   LongInt caldays,absworkdays,abscaldays,workdaysnorm,workdays,vacdays,daystmp,abscalnoexcdays,absfbdays;
   
-  RecordCopy(oldAbsr,Absr);    
   CPrw.PosCode = "";
   CPrw.PaymTypeCode = paymtypecode;
   PTr.Code = CPrw.PaymTypeCode;
@@ -66,12 +63,12 @@ begin
     paymflag = PTr.PaymFlag;
   end;
   if (paymflag!=0) then begin //ei kuulu vŠljamaksmisele
-    saveflag = false;
     goto L1;
   end;
   CPrw.SDate = CPr.StartDate;
   CPrw.EDate = CPr.EndDate;
   CPrw.ObjCode = Absr.ObjCode;
+  CPrw.AbsNr = Absr.SerNr;
 //cust - begin: ts 2018/05
 /*
   if (paymdate>Absr.StartDate) then begin
@@ -146,10 +143,6 @@ begin
     CPrw.NetoSum = 0;  
   end;
   MatRowInsert(CPr,0,CPrw);
-  saveflag = true;
-  Absr.CalcSerNr = CPr.SerNr;
-  RecordUpdate(oldAbsr,Absr,false);
-  InsertCPAbsVc(CPr.SerNr,0,Absr.SerNr);
 L1:;
   return;
 end;
@@ -157,7 +150,6 @@ end;
 global
 updating procedure CreateVacCalcPayrollMn(record RcVc RepSpec)
 begin
-  record CalcPayrollVc CP1r;
   record CalcPayrollVc CPr;
   row CalcPayrollVc CPrw;
   record EmplVc Emplr;
@@ -167,9 +159,9 @@ begin
   record AbsTypeVc ATr;
   string 20 frempl,toempl,paymtypecode;
   LongInt frcontr,tocontr;
-  boolean TrHs,TrHs1,TrHs2,testf,testf1,saveflag;
+  boolean TrHs,TrHs1,TrHs2,testf,testf1;
   integer rwcnt,rwcnt1,i,j,cprwnr,monthcnt,vacdays;
-  date sdate,edate,cdate,sd,ed,paymdate;
+  date contrsdate,contredate,sdate,edate,cdate,sd,ed,paymdate;
   val tmpval,previtfmin;
   
   frempl = FirstInRange(RepSpec.f1,20);
@@ -213,25 +205,17 @@ begin
               end;
               if (testf) then begin                
                 //previtfmin=0;//cust, moved up
-                saveflag=false;
                 cprwnr=0;
-                RecordNew(CP1r);
-                CP1r.SerNr=-1;
-                CP1r.ContrSerNr=Contrr.SerNr;
-                CP1r.CalcDate=RepSpec.sEndDate;
-                CP1r.StartDate=RepSpec.sStartDate;
-                CP1r.EndDate=RepSpec.sEndDate;
-                CP1r.PaymDate=paymdate;
-                CP1r.Firstname = Contrr.Firstname;
-                CP1r.Surname = Contrr.Surname;
-                testf1=GetRightPeriod(CP1r.StartDate,CP1r.EndDate,Contrr.StartDate,Contrr.EndDate);
+                contrsdate=RepSpec.sStartDate;
+                contredate=RepSpec.sEndDate;
+                testf1=GetRightPeriod(contrsdate,contredate,Contrr.StartDate,Contrr.EndDate);
                 if (testf1) then begin
                   //Puhkused
                   TrHs2=true;
                   ResetLoop(Absr);
                   Absr.ContrSerNr=Contrr.SerNr;
                   Absr.OKFlag=1;
-                  Absr.StartDate=CP1r.StartDate;
+                  Absr.StartDate=contrsdate;
                   while (LoopKey("ContrSerNrSDate",Absr,3,TrHs2)) begin
                     if (Absr.ContrSerNr!=Contrr.SerNr) then begin
                       TrHs2=false;
@@ -241,7 +225,7 @@ begin
                     end;
                     if (TrHs2) then begin
                       testf1=true;
-                      if (Absr.StartDate>CP1r.EndDate) then begin
+                      if (Absr.StartDate>contredate) then begin
                         testf1=false;
                       end;
                       if (Absr.CalcSerNr>0) then begin
@@ -258,14 +242,21 @@ begin
                             testf1=false; 
                           end;
                           if (testf1) then begin
-                            sdate=CP1r.StartDate;
+                            sdate=contrsdate;
                             edate=sdate;
                             edate.day=DaysInMonth(GetYear(sdate),GetMonth(sdate));
                             sd=Absr.StartDate;
                             ed=Absr.EndDate;
                             monthcnt=GetMonthDiff(Absr.StartDate,Absr.EndDate);
                             for (i=1;i<=monthcnt;i=i+1) begin
-                              RecordCopy(CPr,CP1r);    
+                              RecordNew(CPr);   
+                              CPr.ContrSerNr=Contrr.SerNr;
+                              CPr.CalcDate=RepSpec.sEndDate;
+                              CPr.StartDate=contrsdate;
+                              CPr.EndDate=contredate;
+                              CPr.PaymDate=paymdate;
+                              CPr.Firstname=Contrr.Firstname;
+                              CPr.Surname=Contrr.Surname;
                               if (monthcnt>1) then begin
                                 CPr.CalcDate=edate;
                                 CPr.StartDate=sdate;
@@ -277,7 +268,7 @@ begin
                                 end;
                               end;
                               if (GetNextCalcPayrollSerNr(CPr.CalcDate,CPr.SerNr)) then begin end;
-                              PasteVacCPrwFromAbsr(CPr,Absr,Contrr,sd,ed,paymtypecode,saveflag,paymdate,RepSpec.flags[0]);
+                              PasteVacCPrwFromAbsr(CPr,Absr,Contrr,sd,ed,paymtypecode,paymdate,RepSpec.flags[0]);
                               //Kontroll, kas on KohtutŠituri summad
                               cprwnr = cprwnr + 1;
                               rwcnt1=MatRowCnt(Contrr);
@@ -285,14 +276,14 @@ begin
                                 MatRowGet(Contrr,j,Contrrw);
                                 if (nonblank(Contrrw.PosCode)) then begin
                                   if (GetPaymTypeFlag(Contrrw.PaymTypeCode)==3) then begin //Tasuliigi tŸŸp: KohtutŠitur (kinnip.neto)
-                                    PasteCPrwFromContrrw(CPr,CPrw,Contrr,Contrrw,cprwnr,0,0,1,true,saveflag);
+                                    PasteCPrwFromContrrw(CPr,CPrw,Contrr,Contrrw,cprwnr,0,0,1,true);
                                   end;                                         
                                 end;
                               end; 
                               PasteCPrTaxes(CPr,2,0,0,0,RepSpec.flags[0],tmpval,false);
                               PasteCPrTaxes(CPr,0,0,0,0,0,previtfmin,true);
                               CPrSumUp(CPr);
-                              if (saveflag) then begin
+                              if (MatRowCnt(CPr)>0) then begin
                                 if (RecordInsert(CPr,true)) then begin end; 
                               end; 
                               edate=AddMonth(edate,1);

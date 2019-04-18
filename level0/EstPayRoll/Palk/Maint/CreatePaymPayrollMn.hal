@@ -84,8 +84,10 @@ begin
           if (GetNextPaymPayrollSerNr(PPr.PaymDate,PPr.SerNr)) then begin end;
           if (grouppaym) then begin
             newrecord = false;
+         /* //ts 2018/09, ühel väljamaksel võib olla mitu arvestust
           end else begin
             PPr.ObjCode=CPr.ObjCode;
+          */
           end;
         end;
         PastePPrwsFromCPr(PPr,PPrw,CPr,pprwnr);

@@ -79,11 +79,11 @@ begin
           OTrw.ObjCode=Contrrw.ObjCode;
           MatRowInsert(OTr,rownr,OTrw);
           rownr=rownr+1;
-          goto L1;
+          goto L3;
         end;
       end;  
     end;  
-L1:;    
+L3:;    
   end;
   if (rownr==rw) then begin
     OTrw.ContrSerNr = Contrr.SerNr;
@@ -94,7 +94,7 @@ L1:;
     OTrw.Amount=blankval;
     OTrw.Sum=blankval;
     OTrw.ObjCode="";
-    OTrw.CalcSerNr=blankval;
+    OTrw.CalcSerNr=-1;
     MatRowInsert(OTr,rownr,OTrw);
     rownr=rownr+1;
   end;

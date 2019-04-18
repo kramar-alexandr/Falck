@@ -8,24 +8,32 @@ external updating procedure UpdateCPUnFromCPr(record CalcPayrollVc,boolean);
 external updating procedure UpdateITFMUsedFromCPr(record CalcPayrollVc,boolean);
 external updating procedure UpdateDPDUsedFromCPr(record CalcPayrollVc,boolean);
 external updating procedure UpdateContractFromCPr(record CalcPayrollVc);
-external updating procedure RemoveCPWHVc(record CalcPayrollVc);
-external updating procedure RemoveCPPWVc(record CalcPayrollVc);
-external updating procedure RemoveCPOTVc(record CalcPayrollVc);
-external updating procedure RemoveCPAbsVc(record CalcPayrollVc);
-external function boolean IsOpenTransRow(LongInt,integer);
-external function boolean IsAbsenceRow(LongInt,integer);
 external function LongInt MakeTransFromCalcPayroll(record TRVc,record TRVc,record CalcPayrollVc,boolean,boolean);
 external function boolean GetNextCalcPayrollSerNr(date,var LongInt);
 external updating procedure UpdateCPPPHistFromCPr(record CalcPayrollVc,boolean);
-external updating procedure UpdateCPPWFromCPr(record CalcPayrollVc,integer);
-external updating procedure UpdateCPWHFromCPr(record CalcPayrollVc,integer,var boolean);
-external updating procedure UpdateCPAbsFromCPr(record CalcPayrollVc,integer,var boolean);
-external updating procedure UpdateCPOTFromCPr(record CalcPayrollVc,integer,var boolean);
 external function Boolean SerNrTestCalcPayrollVc(LongInt,date,var boolean);
 external function string 255 CheckTrans(var record TRVc,Integer,Boolean);
 external function boolean PaymTypeExsists(string);
 external procedure SetMarkFlag(integer,var integer);
 external updating procedure UpdateBailiffFromCPr(record CalcPayrollVc,boolean);
+//update calcpayroll related registers
+external updating procedure InsertCPWHVc(LongInt,integer,LongInt,integer);
+external updating procedure InsertCPPWVc(LongInt,integer,LongInt,integer);
+external updating procedure InsertCPAbsVc(LongInt,integer,LongInt);
+external updating procedure InsertCPOTVc(LongInt,integer,LongInt,integer);
+external updating procedure RemoveCPWHVc(LongInt,LongInt);
+external updating procedure RemoveCPPWVc(LongInt,LongInt);
+external updating procedure RemoveCPAbsVc(LongInt);
+external updating procedure RemoveCPOTVc(LongInt,LongInt);
+external updating function Boolean RemoveCPWHVcOld(LongInt,LongInt);
+external updating function Boolean RemoveCPPWVcOld(LongInt,LongInt);
+external updating function Boolean RemoveCPAbsVcOld(LongInt);
+external updating function Boolean RemoveCPOTVcOld(LongInt,LongInt);
+//old code
+external updating procedure UpdateCPPWFromCPr(record CalcPayrollVc,integer);
+external updating procedure UpdateCPWHFromCPr(record CalcPayrollVc,integer,var boolean);
+external updating procedure UpdateCPAbsFromCPr(record CalcPayrollVc,integer,var boolean);
+external updating procedure UpdateCPOTFromCPr(record CalcPayrollVc,integer,var boolean);
 
 global
 function LongInt CalcPayrollVcRecordDefaults(var record CalcPayrollVc CPr,record CalcPayrollVc CP2r,LongInt stat,LongInt long4)
@@ -34,18 +42,24 @@ begin
   date tmpdate;
   
   CPr.SerNr = -1;
-  CPr.CalcDate=CurrentDate;
+  CPr.CalcDate = CurrentDate;
+  CPr.OKFlag = 0;
+  SetMarkFlag(CPr.OKFlag,CPr.OKMark);
+  CPr.PaymFlag = 0;
+  SetMarkFlag(CPr.PaymFlag,CPr.PaymMark);
+  CPr.ContrSerNr = -1;
+  tmpdate.day = 1;
+  tmpdate.month = GetMonth(CPr.CalcDate);
+  tmpdate.year = GetYear(CPr.CalcDate);
+  CPr.StartDate = tmpdate;
+  tmpdate.day = DaysInMonth(GetYear(tmpdate),GetMonth(tmpdate));
+  CPr.EndDate = tmpdate;
+  CPr.PaymDate = tmpdate;
+  CPr.Invalid = 0;
+  CPr.Mailf = 0;
   if (SingleUserMode) then begin
     if (GetNextCalcPayrollSerNr(CPr.CalcDate,CPr.SerNr)) then begin end;
   end;
-  tmpdate.day=1;
-  tmpdate.month=GetMonth(CPr.CalcDate);
-  tmpdate.year=GetYear(CPr.CalcDate);
-  CPr.StartDate=tmpdate;
-  tmpdate.day=DaysInMonth(GetYear(tmpdate),GetMonth(tmpdate));
-  CPr.EndDate=tmpdate;
-  CPr.PaymDate=tmpdate;
-
   CalcPayrollVcRecordDefaults = res; 
   return;
 end;
@@ -54,19 +68,17 @@ global
 function LongInt CalcPayrollVcRecordDuplicate(var record CalcPayrollVc CPr,record CalcPayrollVc CP2r,LongInt stat,LongInt long4)
 begin
   LongInt res;
+  row CalcPayrollVc CPrw;
+  Integer rwcnt,i;
   date tmpdate;
   val tmpval;
  
   CPr.SerNr = -1;
+  CPr.CalcDate = CurrentDate;
   CPr.OKFlag = 0;
   SetMarkFlag(CPr.OKFlag,CPr.OKMark);
   CPr.PaymFlag = 0;
   SetMarkFlag(CPr.PaymFlag,CPr.PaymMark);
-  CPr.Invalid = 0;
-  CPr.CalcDate=CurrentDate;
-  if (SingleUserMode) then begin
-    if (GetNextCalcPayrollSerNr(CPr.CalcDate,CPr.SerNr)) then begin end;
-  end;
   tmpdate.day=1;
   tmpdate.month=GetMonth(CPr.CalcDate);
   tmpdate.year=GetYear(CPr.CalcDate);
@@ -74,6 +86,21 @@ begin
   tmpdate.day=DaysInMonth(GetYear(tmpdate),GetMonth(tmpdate));
   CPr.EndDate=tmpdate;
   CPr.PaymDate=tmpdate;
+  CPr.Invalid = 0;
+  CPr.Mailf = 0;
+  if (SingleUserMode) then begin
+    if (GetNextCalcPayrollSerNr(CPr.CalcDate,CPr.SerNr)) then begin end;
+  end;
+  rwcnt = MatRowCnt(CPr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(CPr,i,CPrw);
+    CPrw.OTNr = -1;
+    CPrw.AbsNr = -1;
+    CPrw.PWNr = -1;
+    CPrw.WHNr = -1;
+    CPrw.RowNr = -1;
+    MatRowPut(CPr,i,CPrw);
+  end;
   CalcPayrollVcRecordDuplicate = res; 
   return;
 end;
@@ -190,14 +217,14 @@ begin
   rwcnt=MatRowCnt(CPr);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(CPr,i,CPrw);
-    absflag=IsAbsenceRow(CPr.SerNr,i);
+    absflag=(CPrw.AbsNr!=-1);
     if (absflag==false) then begin 
       if blank(CPrw.PosCode) then begin
         RecordCheckError(1500307," " & CPrw.PosCode,i,"PosCode");      
         res = -1; 
         goto LCalcPayrollVcRecordCheck;
       end else begin
-        otflag=IsOpenTransRow(CPr.SerNr,i);
+        otflag=(CPrw.OTNr!=-1);
         if (otflag) then begin
           Posr.Code=CPrw.PosCode;
           if (ReadFirstMain(Posr,1,true)==false) then begin
@@ -310,10 +337,187 @@ begin
 end;
 
 global
+updating procedure UpdateCPHistory(record CalcPayrollVc CPr,LongInt rownr,Boolean addf,Boolean importf,Integer otf,Integer absf,Integer whf,Integer pwf)
+begin
+  row CalcPayrollVc CPrw;
+  Integer i,rwcnt,j,rwcnt2;
+  record OpenTransVc OTr,oldOTr;  
+  row OpenTransVc OTrw;
+  record AbsenceVc Absr,oldAbsr;  
+  record WorkedHoursVc WHr,oldWHr;
+  row WorkedHoursVc WHrw;
+  record PieceWorkVc PWr,oldPWr;
+  row PieceWorkVc PWrw;
+  Boolean handled,checkrowflag,okf;
+  
+  rwcnt = MatRowCnt(CPr);
+  for (i=rownr; i<rwcnt; i=i+1) begin
+    MatRowGet(CPr,i,CPrw);
+    handled = false;
+    if (CPrw.OTNr!=-1) and (otf) then begin
+      OTr.SerNr = CPrw.OTNr;
+      if (ReadFirstMain(OTr,1,true)) then begin
+        RecordCopy(oldOTr,OTr);
+        MatRowGet(OTr,CPrw.RowNr,OTrw); 
+        if (addf) then begin
+          OTrw.CalcSerNr = CPr.SerNr;
+        end else begin
+          OTrw.CalcSerNr = -1;
+          OTr.CalcFlag = 0;
+          SetMarkFlag(OTr.CalcFlag,OTr.CalcMark);
+        end;
+        MatRowPut(OTr,CPrw.RowNr,OTrw);
+        if (addf) then begin
+          okf = true;
+          rwcnt2 = MatRowCnt(OTr);
+          for (j=0; j<rwcnt2; j=j+1) begin
+            MatRowGet(OTr,j,OTrw);
+            if (OTrw.CalcSerNr<=0) then begin
+              okf = false;
+              j = rwcnt2;
+            end;
+          end;
+          if (okf) then begin
+            OTr.CalcFlag = 1;          
+            SetMarkFlag(OTr.CalcFlag,OTr.CalcMark);
+          end;
+        end;
+        RecordUpdate(oldOTr,OTr,false);
+        if (addf) then begin
+          InsertCPOTVc(CPr.SerNr,i,OTr.SerNr,CPrw.RowNr);
+        end else begin
+          RemoveCPOTVc(OTr.SerNr,CPrw.RowNr);
+        end;
+      end;
+      handled = true;
+    end;
+    if (CPrw.AbsNr!=-1) and (absf) then begin
+      Absr.SerNr = CPrw.AbsNr;
+      if (ReadFirstMain(Absr,1,true)) then begin
+        RecordCopy(oldAbsr,Absr);    
+        if (addf) then begin
+          Absr.CalcSerNr = CPr.SerNr;
+        end else begin
+          Absr.CalcSerNr = -1;
+        end;
+        RecordUpdate(oldAbsr,Absr,false);
+        if (addf) then begin
+          InsertCPAbsVc(CPr.SerNr,0,Absr.SerNr);
+        end else begin
+          RemoveCPAbsVc(Absr.SerNr);
+        end;
+      end;
+      handled = true;
+    end;
+    if (CPrw.PWNr!=-1) and (pwf) then begin
+      PWr.SerNr = CPrw.PWNr;
+      if (ReadFirstMain(PWr,1,true)) then begin
+        RecordCopy(oldPWr,PWr);
+        MatRowGet(PWr,CPrw.RowNr,PWrw); 
+        if (addf) then begin
+          PWrw.CalcSerNr = CPr.SerNr;
+        end else begin
+          PWrw.CalcSerNr = -1;
+        end;
+        MatRowPut(PWr,CPrw.RowNr,PWrw);
+        RecordUpdate(oldPWr,PWr,false);
+        if (addf) then begin
+          InsertCPPWVc(CPr.SerNr,i,PWr.SerNr,CPrw.RowNr);
+        end else begin
+          RemoveCPPWVc(PWr.SerNr,CPrw.RowNr);
+        end;
+      end;
+      handled = true;
+    end;
+    if (CPrw.WHNr!=-1) and (whf) then begin
+      WHr.SerNr = CPrw.WHNr;
+      if (ReadFirstMain(WHr,1,true)) then begin
+        RecordCopy(oldWHr,WHr);
+        MatRowGet(WHr,CPrw.RowNr,WHrw); 
+        if (addf) then begin
+          WHrw.CalcSerNr = CPr.SerNr;
+        end else begin
+          WHrw.CalcSerNr = -1;
+        end;
+        MatRowPut(WHr,CPrw.RowNr,WHrw);
+        RecordUpdate(oldWHr,WHr,false);
+        if (addf) then begin
+          InsertCPWHVc(CPr.SerNr,i,WHr.SerNr,CPrw.RowNr);
+        end else begin
+          RemoveCPWHVc(WHr.SerNr,CPrw.RowNr);
+        end;
+      end;
+      handled = true;
+    end;
+    if (handled==false) and (addf==false) then begin//old code
+      handled = RemoveCPOTVcOld(CPr.SerNr,i);
+      if (handled==false) then begin
+        handled = RemoveCPAbsVcOld(CPr.SerNr);
+      end;
+      if (handled==false) then begin
+        handled = RemoveCPPWVcOld(CPr.SerNr,i);
+      end;
+      if (handled==false) then begin
+        handled = RemoveCPWHVcOld(CPr.SerNr,i);
+      end;
+    end;
+    if (handled==false) and (importf) then begin//updating support register, old code
+      checkrowflag = true;
+      if (otf==1) then begin
+        UpdateCPOTFromCPr(CPr,i,checkrowflag); //Avatud kannete abiregister
+      end; 
+      if (absf==1) and (checkrowflag) then begin
+        UpdateCPAbsFromCPr(CPr,i,checkrowflag); //Puudumiste abiregister
+      end;
+      if (whf==1) and (checkrowflag) then begin
+        UpdateCPWHFromCPr(CPr,i,checkrowflag); //Tššajatabeli abiregister
+      end;
+      if (pwf==1) and (checkrowflag) then begin
+        UpdateCPPWFromCPr(CPr,i); //TŸkitšš abiregister
+      end;
+    end;
+  end;
+  return;
+end;
+
+updating procedure CheckIfUpdateHistoryNeeded(record CalcPayrollVc CPr,record CalcPayrollVc CP2r)
+begin
+  row CalcPayrollVc CPrw,CP2rw;
+  Integer i,rwcnt,rwcnt2,loopcnt;
+  Boolean updf;
+  
+  rwcnt = MatRowCnt(CPr);
+  rwcnt2 = MatRowCnt(CP2r);
+  loopcnt = rwcnt;
+  if (rwcnt2 < rwcnt) then begin
+    loopcnt = rwcnt2;
+  end;
+  for (i=0;i<loopcnt;i=i+1) begin
+    MatRowGet(CPr,i,CPrw);
+    MatRowGet(CP2r,i,CP2rw);
+    if (CPrw.OTNr!=CP2rw.OTNr) or (CPrw.AbsNr!=CP2rw.AbsNr) or (CPrw.PWNr!=CP2rw.PWNr) or (CPrw.WHNr!=CP2rw.RowNr) or (CPrw.WHNr!=CP2rw.RowNr) then begin
+      UpdateCPHistory(CP2r,i,false,false,1,1,1,1);
+      UpdateCPHistory(CPr,i,true,false,1,1,1,1);
+      updf = true;
+      i = rwcnt;  
+    end;
+  end;
+  if (updf==false) and (rwcnt!=rwcnt2) then begin
+    if (rwcnt>rwcnt2) then begin
+      UpdateCPHistory(CPr,rwcnt2,true,false,1,1,1,1);    
+    end else begin
+      UpdateCPHistory(CP2r,rwcnt,false,false,1,1,1,1);    
+    end;
+  end;
+  return;
+end;
+
+global
 updating function LongInt CalcPayrollVcRecordSaveAfter(var record CalcPayrollVc CPr,record CalcPayrollVc CP2r,LongInt stat,LongInt long4)
 begin
   LongInt res;
 
+  UpdateCPHistory(CPr,0,true,false,1,1,1,1);
   if (CPr.OKFlag!=0) then begin
     UpdateCPUnFromCPr(CPr,true);
     UpdateITFMUsedFromCPr(CPr,true);
@@ -343,6 +547,10 @@ updating function LongInt CalcPayrollVcRecordUpdateAfter(var record CalcPayrollV
 begin
   LongInt res;
 
+  if (CPr.Invalid==0) then begin
+    CheckIfUpdateHistoryNeeded(CPr,CP2r);
+  end;
+  
   if ((CPr.OKFlag!=0) and (CP2r.OKFlag==0)) then begin
     UpdateCPUnFromCPr(CPr,true);
     UpdateITFMUsedFromCPr(CPr,true);
@@ -353,6 +561,7 @@ begin
   end;
   
   if ((CPr.Invalid!=0) and (CP2r.Invalid==0)) then begin
+    UpdateCPHistory(CPr,0,false,false,1,1,1,1);
     UpdateCPUnFromCPr(CPr,false);
     UpdateITFMUsedFromCPr(CPr,false);
     UpdateDPDUsedFromCPr(CPr,false);
@@ -384,7 +593,7 @@ begin
 
   res = 1;
   if ((CPr.OKFlag!=0) or (CPr.PaymFlag!=0)) then begin
-    MessageBox(1560,"")
+    MessageBox(1560,"");
     res = 0;
   end;
   CalcPayrollVcRecordRemoveTest = res; 
@@ -397,10 +606,7 @@ begin
   LongInt res;
 
   if ((CPr.OKFlag==0) and (CPr.PaymFlag==0)) then begin
-    RemoveCPWHVc(CPr);
-    RemoveCPPWVc(CPr);
-    RemoveCPOTVc(CPr);
-    RemoveCPAbsVc(CPr);  
+    UpdateCPHistory(CPr,0,false,false,1,1,1,1);
   end;
   CalcPayrollVcRecordRemoveAfter = res; 
   return;
@@ -415,10 +621,7 @@ begin
   if (CPr.Invalid==0) and (CPr.OKFlag!=0) and (CPr.PaymFlag==0) then begin
     CPr.Invalid = 1;
     UpdateContractFromCPr(CPr);
-    RemoveCPWHVc(CPr);
-    RemoveCPPWVc(CPr);
-    RemoveCPOTVc(CPr);
-    RemoveCPAbsVc(CPr);
+    UpdateCPHistory(CPr,0,false,false,1,1,1,1);
     res = 1;
   end;
 LCalcPayrollVcRecordInvalidateTest:;
@@ -440,31 +643,16 @@ end;
 global
 updating function LongInt CalcPayrollVcRecordImportAfter(var record CalcPayrollVc CPr,record CalcPayrollVc CP2r,LongInt stat,LongInt long4)
 begin
-  LongInt res,rwcnt,i;
-  row CalcPayrollVc CPrw;
-  boolean checkrowflag;
+  LongInt res;
   
+  if (CPr.Invalid==0) then begin //k.a. kinnitamata arvestused
+    UpdateCPHistory(CPr,0,true,true,1,1,1,1);
+  end;
   if ((CPr.OKFlag!=0) and (CPr.Invalid==0)) then begin
     UpdateCPUnFromCPr(CPr,true); //Arvestuse abiregister
     UpdateITFMUsedFromCPr(CPr,true); //TM vaba miinimumi abiregister
     UpdateDPDUsedFromCPr(CPr,true); //Tššv›imetuspensionŠri soodustuse abiregister
     UpdateCPPPHistFromCPr(CPr,false); //Arvestuste/VŠljamaksete ajalugu - testimiseks
-  end;
-  if (CPr.Invalid==0) then begin //k.a. kinnitamata arvestused
-    rwcnt = MatRowCnt(CPr);
-    for (i=0;i<rwcnt;i=i+1) begin
-      checkrowflag=true;
-      UpdateCPOTFromCPr(CPr,i,checkrowflag); //Avatud kannete abiregister
-      if (checkrowflag) then begin
-        UpdateCPAbsFromCPr(CPr,i,checkrowflag); //Puudumiste abiregister
-      end;
-      if (checkrowflag) then begin
-        UpdateCPWHFromCPr(CPr,i,checkrowflag); //Tššajatabeli abiregister
-      end;
-      if (checkrowflag) then begin
-        UpdateCPPWFromCPr(CPr,i); //TŸkitšš abiregister
-      end;
-    end;
   end;
   CalcPayrollVcRecordImportAfter=res;
   return;

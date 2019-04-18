@@ -14,6 +14,7 @@ external function boolean IsAbsPaymType(string);
 external function boolean IsWHPaymType(string);
 external function boolean IsPWPaymType(string);
 external function boolean CalcPayrollExsists(LongInt);
+external updating procedure UpdateCPHistory(record CalcPayrollVc,LongInt,Boolean,Boolean,Integer,Integer,Integer,Integer);
 
 global
 updating procedure UpdateCPOTFromCPr(record CalcPayrollVc CPr,integer cprownr,var boolean checkrowflag)
@@ -105,11 +106,12 @@ begin
   record WorkedHoursVc WHr;
   row WorkedHoursVc WHrw;
   row CalcPayrollVc CPrw;
+  record WorkHourTypeVc WHTr;
   integer rwcnt,j;
   boolean TrHs,testf;
 
   MatRowGet(CPr,cprownr,CPrw);
-  if (IsWHPaymType(CPrw.PaymTypeCode)) then begin
+  if (IsWHPaymType(CPrw.PaymTypeCode)) then begin //tššajatabel
     testf=true;
     TrHs=true;
     ResetLoop(WHr);
@@ -130,11 +132,14 @@ begin
           rwcnt=MatRowCnt(WHr);
           for (j=0;j<rwcnt;j=j+1) begin
             MatRowGet(WHr,j,WHrw);
-            if (WHrw.CalcSerNr>0) then begin
-              if (WHrw.CalcSerNr==CPr.SerNr) then begin
+            if (WHrw.CalcSerNr==CPr.SerNr) then begin
+              WHTr.Code = WHrw.WorkHourTypeCode;
+              if (ReadFirstMain(WHTr,1,true)) then begin end;
+              if (WHTr.PaymTypeCode==CPrw.PaymTypeCode) then begin
                 InsertCPWHVc(CPr.SerNr,cprownr,WHr.SerNr,j);
                 checkrowflag=false;
                 TrHs=false;
+                j=rwcnt;//ts, fix 2018/08
               end;
             end;   
           end;
@@ -282,6 +287,9 @@ begin
   ResetLoop(CPr);
   CPr.SerNr=-1;
   while (LoopMain(CPr,1,true)) begin
+    if (CPr.Invalid==0) then begin //k.a. kinnitamata arvestused
+      UpdateCPHistory(CPr,0,true,true,RepSpec.flags[2],RepSpec.flags[3],RepSpec.flags[5],RepSpec.flags[6]);
+    end;
     if ((CPr.OKFlag!=0) and (CPr.Invalid==0)) then begin //ainult kinnitatud arvestused
       //Arvestuse abiregister
       if (RepSpec.flags[0]!=0) then begin
@@ -298,28 +306,6 @@ begin
       //Tššv›imetuspensionŠri soodustuse abiregister
       if (RepSpec.flags[7]!=0) then begin
         UpdateDPDUsedFromCPr(CPr,true);
-      end;
-    end;
-    if (CPr.Invalid==0) then begin //k.a. kinnitamata arvestused
-      rwcnt = MatRowCnt(CPr);
-      for (i=0;i<rwcnt;i=i+1) begin
-        checkrowflag=true;
-        //Avatud kannete abiregister
-        if (RepSpec.flags[2]!=0) then begin
-          UpdateCPOTFromCPr(CPr,i,checkrowflag);
-        end; 
-        //Puudumiste abiregister
-        if ((checkrowflag) and (RepSpec.flags[3]!=0)) then begin
-          UpdateCPAbsFromCPr(CPr,i,checkrowflag);
-        end;
-        //Tššajatabeli abiregister
-        if ((checkrowflag) and (RepSpec.flags[5]!=0)) then begin
-          UpdateCPWHFromCPr(CPr,i,checkrowflag);
-        end;
-        //TŸkitšš abiregister
-        if ((checkrowflag) and (RepSpec.flags[6]!=0)) then begin
-          UpdateCPPWFromCPr(CPr,i);
-        end;
       end;
     end;
   end;

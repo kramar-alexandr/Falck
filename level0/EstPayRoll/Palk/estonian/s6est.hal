@@ -253,15 +253,22 @@ begin
   SString(1500547,"Minimaalne tasu"); 
   SString(1500548,"Selles perioodis on juba puudumine registreeritud. Kontrolli kuupäeva!"); 
   SString(1500549,"Muuta saab bruto summat"); 
+  SString(1500550,"Kõik puudumised"); 
+  SString(1500551,"Kinnitatud"); 
+  SString(1500552,"Kinnitamata"); 
+  SString(1500553,"Tulumaksuvaba miinimum"); 
+  SString(1500554,"Brutopalgast kinnipidamised:"); 
+  SString(1500555,"Netopalgast kinnipidamised:"); 
+  SString(1500556,"Palun ava lisatud fail palgasedeli vaatamiseks");
 
  //EstCCLookup//Contribution Contract Lookup
-  SString(1500600,"Päringu saatmisel esines tõrkeid !");
+  SString(1500600,"Päringu saatmisel esines tõrkeid!");
   SString(1500601,"Andmeid ei leitud.");
-  SString(1500602,"Isik ei ole kogumispensioniga liitunud.");
-  SString(1500603,"Vigane isikukood");
-  SString(1500604,"Vale väärtus!");
-  SString(1500605,"Juurdepääs keelatud");
-  SString(1500606,"Kaarti uuendati.");
+  SString(1500602,"Isik ei ole liitunud pensioni II sambaga");
+  SString(1500603,"Isikukoodi pikkus on vale");
+  SString(1500604,"Isikukood ei ole korrektne");
+  SString(1500605,"Sisendparameetrid on puudulikud");
+  SString(1500606,"Kaarti uuendati");
 
   SString(1630,"PA"); //IntYc = 240, SalaryCalcYc 
   SString(1631,"PV"); //IntYc = 242, SalaryPaymentYc

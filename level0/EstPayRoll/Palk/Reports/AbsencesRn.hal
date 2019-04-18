@@ -109,8 +109,24 @@ begin
     Header(rw,tstr,1);
     rw = rw + 1; 
   end;
-  EndHeader;
-
+  tstr = "";
+  if (RepSpec.flags[3]!=0) and (RepSpec.flags[4]!=0) then begin
+    tstr = USetStr(1500550);
+  end;
+  if (blank(tstr)) then begin
+    if (RepSpec.flags[3]!=0) then begin
+      tstr = USetStr(1500551);
+    end;
+    if (RepSpec.flags[4]!=0) then begin
+      tstr = USetStr(1500552);
+    end;
+  end;
+  if (nonblank(tstr)) then begin
+    Header(rw,tstr,1);
+    rw = rw + 1; 
+    EndHeader;
+  end;
+  
   SetRepCol(2,50);
   SetRepCol(3,100);
   SetRepCol(4,150);
@@ -175,12 +191,8 @@ begin
                 TrHs2=true;
                 ResetLoop(Absr);
                 Absr.ContrSerNr=Contrr.SerNr;
-                Absr.OKFlag=1;
-                while (LoopKey("ContrSerNr",Absr,2,TrHs2)) begin
+                while (LoopKey("ContrSerNr",Absr,1,TrHs2)) begin
                   if (Absr.ContrSerNr!=Contrr.SerNr) then begin
-                    TrHs2=false;
-                  end;
-                  if (Absr.OKFlag!=1) then begin
                     TrHs2=false;
                   end;
                   if (TrHs2) then begin
@@ -189,6 +201,15 @@ begin
                     if (nonblank(RepSpec.f4)) then begin
                       if (Absr.AbsTypeCode!=RepSpec.f4) then begin
                         testf1=false;
+                      end;
+                    end;
+                    if (testf1) then begin
+                      testf1=false;
+                      if (RepSpec.flags[3]==1) and (Absr.OKFlag==1) then begin
+                        testf1=true;
+                      end;
+                      if (RepSpec.flags[4]==1) and (Absr.OKFlag==0) then begin
+                        testf1=true;
                       end;
                     end;
                     if (testf1) then begin

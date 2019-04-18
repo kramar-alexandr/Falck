@@ -32,7 +32,7 @@ begin
   if (SingleUserMode) then begin
     Absr.SerNr = NextSerNr("AbsenceVc",Absr.StartDate,-1,false,"");
   end;
-  Absr.CalcSerNr=0;
+  Absr.CalcSerNr=-1;
 
   AbsenceVcRecordDuplicate = res; 
   return;

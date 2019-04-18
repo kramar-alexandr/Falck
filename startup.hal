@@ -111,13 +111,16 @@ begin
   Report("Vorm TSD",TSDRClass,TSDRn,0,modSAL);
 
   Document("Arvestused",CPayrollRClass,CPayrollForm,CPayrollFClass,modSAL);
+  Document("Palgasedel",SalarySlip2RClass,SalarySlip2Form,SalarySlip2FClass,modSAL);
   Document("Väljamaksed",PPayrollRClass,PPayrollForm,PPayrollFClass,modSAL);
 
   Maintenance("Kinnita palgaarvestuse kaardid",OkCalcPayrollVClass,OkCalcPayrollMn,modSAL);
+  Maintenance("Kinnita puhkuse saldo kaardid",OkVacBalanceVClass,OkVacBalanceMn,modSAL);
   Maintenance("Kinnita väljamakse kaardid",OkPaymPayrollVClass,OkPaymPayrollMn,modSAL);
   Maintenance("Konverteerimine, Püsiandmed",ConvertOldPayrollDataVClass,ConvertOldPayrollDataMn,modSAL);
   Maintenance("Koosta e-mailid palgaarvestustest",CalcPayrollToMailVClass,CalcPayrollToMailMn,modSAL);
   Maintenance("Koosta palgaarvestuse kaardid",CreateCalcPayrollVClass,CreateCalcPayrollMn,modSAL);
+  Maintenance("Koosta palgasedeli e-mailid",SalarySlipToMailVClass,SalarySlipToMailMn,modSAL);
   Maintenance("Koosta palgaväljamakse kaardid",CreatePaymPayrollVClass,CreatePaymPayrollMn,modSAL);
   Maintenance("Koosta puhkusearvestuse kaardid",CreateVacCalcPayrollVClass,CreateVacCalcPayrollMn,modSAL);
   Maintenance("Koosta puhkuse saldod",CreateVacBalanceVClass,CreateVacBalanceMn,modSAL);

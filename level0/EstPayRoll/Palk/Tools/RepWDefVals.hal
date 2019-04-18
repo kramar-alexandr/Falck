@@ -337,3 +337,18 @@ begin
   SelectWindow(wn);
   return;
 end;
+
+global
+procedure AbsencesRClassReportDefaults(integer wn)
+begin
+  record RcVc RepSpec;
+  date sdate,edate;
+
+  DeSelectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"AbsencesRClass");
+  RepSpec.flags[3] = 1;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
