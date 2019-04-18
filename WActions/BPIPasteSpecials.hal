@@ -58,3 +58,68 @@ begin
   BPILegalInvNrSClassOnOKWindow = false;
   return;
 end;
+
+global procedure VIOBNEXT()
+begin
+	record VIVc VIr;
+	row VIVc VIrw;
+	integer wn,rownr,rwcnt,i;
+	string 100 obj;
+
+	
+	wn = curwindow;
+	rownr = WindowActiveRow(wn) + 1;
+	deselectwindow(wn,true);
+	getwindowrecord(wn,VIr);
+	
+	obj = GetWindowString(wn,"ObjSearch");
+	if(nonblank(obj))then begin
+		rwcnt = matrowcnt(VIr);
+		if(rownr<rwcnt)then begin
+			for(i=rownr;i<rwcnt;i=i+1)begin
+				matrowget(VIr,i,VIrw);
+				if(setinset(obj,VIrw.Objects))then begin
+					WindowFieldGoto(wn,VIr,i,"Objects",true);
+					goto lVIOBNEXT;
+				end;
+			end;
+		end;
+	end;
+	
+lVIOBNEXT:;
+return;
+end;
+
+global procedure VIOBPREV()
+begin
+	record VIVc VIr;
+	row VIVc VIrw;
+	integer wn,rownr,rwcnt,i;
+	string 100 obj;
+
+	
+	wn = curwindow;
+	rownr = WindowActiveRow(wn)-1;
+	deselectwindow(wn,true);
+	getwindowrecord(wn,VIr);
+	
+	obj = GetWindowString(wn,"ObjSearch");
+	if(nonblank(obj))then begin
+		rwcnt = matrowcnt(VIr);
+		if(rownr<0)then begin
+			rownr = rwcnt-1;
+		end;
+		if(rownr<rwcnt)then begin
+			for(i=rownr;i>-1;i=i-1)begin
+				matrowget(VIr,i,VIrw);
+				if(setinset(obj,VIrw.Objects))then begin
+					WindowFieldGoto(wn,VIr,i,"Objects",true);
+					goto lVIOBPREV;
+				end;
+			end;
+		end;
+	end;
+	
+lVIOBPREV:;
+return;
+end;
