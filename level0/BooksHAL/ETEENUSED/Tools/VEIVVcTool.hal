@@ -732,10 +732,12 @@ begin
   found = ReadFirstMain(VEr,1,true);
   if (found) then begin
     if (HasLocalization("SWE")==false) then begin
+      //cust - start - comment added by KB 22.04.2019
     	if (nonblank(VEr.AccOperator)) then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 04, 18 04 2019 y. at 9:56:10 AM
         VIp.BankCode = VEr.AccOperator;
         VIp.BankAcc = "";// Edit ************************** BPI Ukraine - KramarAlexandr - 04, 18 04 2019 y. at 9:56:14 AM
       end;
+      //cust - end
       if (blank(VIp.BankAcc)) then begin
         VIp.BankAcc = VEr.IBANCode;
       end;
@@ -745,7 +747,13 @@ begin
       if (blank(VIp.BankAcc)) then begin
         VIp.BankAcc = VEr.Bank;
       end;
-      
+      //cust - start - removed, comment added by KB 22.04.2019 - BPI change?
+      /*
+      if (nonblank(VEr.AccOperator)) then begin
+        VIp.BankCode = VEr.AccOperator;
+      end;
+      */
+      //cust - end
       if (nonblank(VEr.SortCode)) then begin
         VIp.SortCode = VEr.SortCode;      
       end;
