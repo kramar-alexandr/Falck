@@ -1,0 +1,261 @@
+external function Boolean HasContactClassification();
+external function Boolean HasMultiCurrency();
+external procedure PrintCurncyTotalsToFile(array string,array val,array val,array val,Integer,Integer,Integer,
+                                  Integer,Integer,Integer,Integer,Integer,Integer,Boolean,Integer);
+external procedure PrintVePerForm(record RcVc,record CUVc,val,val,
+                                  var array Integer,var array LongInt,var array string,
+                                  var array Date,var array Date,var array val,var array val,var array val,var array string,
+                                  var Integer);
+external procedure VEPer_PrintPurgeTransaction(record RcVc,record CUVc,record OPrsVc,val,
+                             var array string,var array val,var array val,var array val,var Integer,
+                             var Boolean,var val,var val,var val,var val,var val,record BaseCurBlock,Boolean,
+                             var array Integer,var array LongInt,var array string,var array Date,var array Date,var array val,var array val,var array val,var array string,var Integer);
+external procedure VEPer_PrintTransaction(record RcVc,record CUVc,record OPrsVc,val,
+                             var array string,var array val,var array val,var array val,var Integer,
+                             var Boolean,var val,var val,var val,var val,var val,record BaseCurBlock,Boolean,
+                             var array Integer,var array LongInt,var array string,var array Date,var array Date,var array val,var array val,var array val,var array string,var Integer);
+external procedure VEPer_PrintPayment(record RcVc,record CUVc,record OPrsVc,record BaseCurBlock,
+                             var array string,var array val,var array val,var array val,var Integer,
+                             var Boolean,var val,var val,var val,var val,var val,Boolean,
+                             var array Integer,var array LongInt,var array string,var array Date,var array Date,var array val,var array val,var array val,var array string,var Integer);
+external procedure VEPer_PrintInvoice(record RcVc,record CUVc,record BaseCurBlock,LongInt,
+                             var array string,var array val,var array val,var array val,var Integer,
+                             var val,var val,var val,var val,var val,Boolean,
+                             var array Integer,var array LongInt,var array string,var array Date,var array Date,var array val,var array val,var array val,var array string,var Integer);
+external procedure VEPer_PrintDataForInvoice(record RcVc,record CUVc,record BaseCurBlock,LongInt,
+                             val,var Boolean,
+                             var array string,var array val,var array val,var array val,var Integer,
+                             var val,var val,var val,var val,var val,Boolean,
+                             var array Integer,var array LongInt,var array string,var array Date,var array Date,var array val,var array val,var array val,var array string,var Integer);
+external procedure HT2Per(Date, Date , var string);
+external procedure VendListTransCLInRevPrepVE(record RcVc,record OPrsVc,record CUVc,var val,var val,record BaseCurBlock,Integer,var array string,var array val,var array val,Boolean,
+                                     var array Integer,var array LongInt,var array string,var array Date,var array Date,var array val,var array val,var array val,var array string,var Integer);
+external procedure VendListTransCLIn(record RcVc,record OPrsVc,record CUVc,var val,var val,var val,var val,record BaseCurBlock,Integer,var array string,var array val,var array val,Boolean,
+                                     var array Integer,var array LongInt,var array string,var array Date,var array Date,var array val,var array val,var array val,var array string,var Integer);
+external procedure VendListTransCLOut(record RcVc,record OPrsVc,record CUVc,var val,var val,var val,var val,record BaseCurBlock,Integer,var array string,var array val,var array val,Boolean,
+                                      var array Integer,var array LongInt,var array string,var array Date,var array Date,var array val,var array val,var array val,var array string,var Integer);
+external function val MulRateToBase1(var string,val,val,val,val,val,val,roundmode);
+external procedure BeginCurncyTotals(var Integer);
+external procedure AddCurncyTotals(var array string,var array val,var Integer,string,val);
+external procedure PrintCurncyTotals(array string,array val,array val,array val,Integer,Integer,Integer,Integer,Integer,Boolean,Integer);
+external procedure GetBaseCurncy(Integer,var string);
+external procedure HTDetailLevel(Integer, var string);
+external procedure HTVends(string, string, var string);
+external procedure HTLevCat(string, var string);
+external procedure VEGetStartBalance(record CUVc,string,string,Date ,var val);
+external function val VEGetEndBalance(record CUVc,string,string,Date );
+external procedure HTCustClass(string,var string);
+external procedure HTCustClassType(string,var string);
+external function Boolean SetInSet2(string,string);
+external procedure ClassTypef(string,string,var Boolean);
+
+SetLangMode(LangLithuanian, "LIT", 0);
+
+
+procedure VEPer_PrintTotals(record RcVc RepSpec,Boolean custout,Boolean printf,
+                            val balp,val totgain,val totloss,val SumDebet,val SumCredit)
+BEGIN
+      
+  RETURN;
+END;
+
+function val OrderedOPSum(record RcVc RepSpec,record CUVc VEr)
+BEGIN
+  val res;
+  
+  OrderedOPSum = res;
+  return;
+END;
+
+procedure VendHead(record RcVc RepSpec,record CUVc VEr,var val startbalp,Integer inbase)
+BEGIN
+
+  return;
+end;
+
+procedure VendListTrans(var array string acur,var array val av1,var array val av2,var array val av3,var Integer curcnt,record CUVc VEr,var val balp,record RcVc RepSpec,
+												var val StartBal,var array Integer adocRwtype,var array LongInt adocInvoiceNr,var array string adocVEInvNo,
+                                  var array Date adocInvDate,var array Date adocDueDate,var array val adocRVal,var array val adocCredVal,var array val adocDebVal,
+                                  var array string adocCurncyCode,var Integer adoccnt)
+
+begin
+  record OPrsVc OPrsr;
+  record BaseCurBlock bascur;
+  val SumDebet,SumCredit;
+  Boolean custout;
+  Boolean found;
+  val totgain,totloss;
+  Boolean printf; 
+  
+  BlockLoad(bascur);
+  custout = false;
+  printf = true;
+  StartBal = balp;
+
+  OPrsr.VECode = VEr.Code;
+  OPrsr.TransDate = RepSpec.sStartDate;
+  found = true;  
+  while (LoopMain(OPrsr,2,found)) begin
+    if (found) then begin
+      if (OPrsr.VECode<>VEr.Code) then begin
+        found = false;
+      end;
+    end;    
+    if (found) then begin
+      if (OPrsr.TransDate>RepSpec.sEndDate) then begin found = false; end;
+    end;    
+    if (found) then begin
+
+//Trace("v=" & v," cuscurval=" & cuscurval);                   
+//Trace(""," OPrsr.TransType=" & OPrsr.TransType);                   
+
+      if (OPrsr.TransType==kOPrsTransTypeInvoice) then begin
+        VEPer_PrintInvoice(RepSpec,VEr,bascur,OPrsr.TransNr,acur,av1,av2,av3,curcnt,balp,totgain,totloss,SumDebet,SumCredit,false,
+                           adocRwtype,adocInvoiceNr,adocVEInvNo,adocInvDate,adocDueDate,adocRVal,adocCredVal,adocDebVal,adocCurncyCode,adoccnt);
+      end;
+      if (OPrsr.TransType==kOPrsTransTypePayment) then begin      
+        VEPer_PrintPayment(RepSpec,VEr,OPrsr,bascur,acur,av1,av2,av3,curcnt,custout,balp,totloss,totgain,SumDebet,SumCredit,false,
+                           adocRwtype,adocInvoiceNr,adocVEInvNo,adocInvDate,adocDueDate,adocRVal,adocCredVal,adocDebVal,adocCurncyCode,adoccnt);        
+      end;
+      if (OPrsr.TransType==kOPrsTransTypePurgeNLTransaction) then begin
+        VEPer_PrintPurgeTransaction(RepSpec,VEr,OPrsr,StartBal,acur,av1,av2,av3,curcnt,custout,balp,totloss,totgain,SumDebet,SumCredit,bascur,false,
+                           adocRwtype,adocInvoiceNr,adocVEInvNo,adocInvDate,adocDueDate,adocRVal,adocCredVal,adocDebVal,adocCurncyCode,adoccnt);        
+      end;
+      if (OPrsr.TransType==kOPrsTransTypeNLTransaction) then begin
+        VEPer_PrintTransaction(RepSpec,VEr,OPrsr,StartBal,acur,av1,av2,av3,curcnt,custout,balp,totloss,totgain,SumDebet,SumCredit,bascur,false,
+                           adocRwtype,adocInvoiceNr,adocVEInvNo,adocInvDate,adocDueDate,adocRVal,adocCredVal,adocDebVal,adocCurncyCode,adoccnt);        
+      end;
+      if (OPrsr.TransType==kOPrsTransTypeCashOut) then begin
+        VendListTransCLOut(RepSpec,OPrsr,VEr,balp,totloss,totgain,SumDebet,bascur,curcnt,acur,av2,av3,false,
+                           adocRwtype,adocInvoiceNr,adocVEInvNo,adocInvDate,adocDueDate,adocRVal,adocCredVal,adocDebVal,adocCurncyCode,adoccnt);        
+      end;    
+      if (OPrsr.TransType==kOPrsTransTypeCashIn) then begin
+        VendListTransCLIn(RepSpec,OPrsr,VEr,balp,totloss,totgain,SumCredit,bascur,curcnt,acur,av2,av3,false,
+                           adocRwtype,adocInvoiceNr,adocVEInvNo,adocInvDate,adocDueDate,adocRVal,adocCredVal,adocDebVal,adocCurncyCode,adoccnt);        
+      end;    
+      if (OPrsr.TransType==kOPrsTransTypeReverseSupplierPrepayment) then begin
+        VendListTransCLInRevPrepVE(RepSpec,OPrsr,VEr,balp,SumCredit,bascur,curcnt,acur,av2,av3,false,
+                           adocRwtype,adocInvoiceNr,adocVEInvNo,adocInvDate,adocDueDate,adocRVal,adocCredVal,adocDebVal,adocCurncyCode,adoccnt);        
+      end;    
+    end;
+  end;
+  return;
+end;
+
+procedure VendListTrans_SortOnInvoice(var array string acur,var array val av1,var array val av2,var array val av3,var Integer curcnt,record CUVc VEr,var val balp,record RcVc RepSpec)
+BEGIN
+  
+  RETURN;
+END;
+
+global
+procedure BPI_RunVePer(record RcVc RepSpec,var array val acurv1,var array val acurv2,var array val acurv3,var array string acur,var Integer curcnt,var val TotStartBal,var val TotEndBal,var val StartBal,var array Integer adocRwtype,var array LongInt adocInvoiceNr,var array string adocVEInvNo,
+                                  var array Date adocInvDate,var array Date adocDueDate,var array val adocRVal,var array val adocCredVal,var array val adocDebVal,
+                                  var array string adocCurncyCode,var Integer adoccnt)
+begin
+  record CUVc VEr;
+  string 255 frcc,tocc;
+  record VSVc VSr;
+  Boolean TrHs,stfound,testf;
+  val DiffBal,EndBal,EndBalPlus,EndBalMinus;
+  val v,t;
+  record RcVc oldRepSpec;
+  Date td;
+
+  frcc = FirstInRange(RepSpec.f1,20);
+  tocc = LastInRange(RepSpec.f1,20);
+
+  VEr.Code = frcc;
+  TrHs = true;
+  while (LoopMain(VEr,1,TrHs)) begin
+    testf = true;
+    if (nonblank(tocc)) then begin
+      if (VEr.Code>tocc) then begin
+        TrHs = false;
+      end;
+    end;      
+    if (TrHs) then begin
+      if (nonblank(RepSpec.f2)) then begin
+        if (RepSpec.f2<>VEr.VECat) then begin testf = false; end;
+      end;
+    end;    
+    if (TrHs==false) then begin testf = false; end;
+    if (VEr.VEType==0) then begin testf = false; end;
+    if (testf==true) then begin 
+      if (nonblank(RepSpec.f4)) then begin
+        if (SetInSet2(RepSpec.f4,VEr.Classification)==false) then begin
+          testf = false;
+        end;
+      end;
+      if (nonblank(RepSpec.f5)) then begin
+        if (testf) then begin
+          testf = false;
+          ClassTypef(RepSpec.f5,VEr.Classification,testf);
+        end;
+      end;
+    end;
+    if (testf) then begin
+      VSr.VECode = VEr.Code;
+      stfound = ReadFirstMain(VSr,1,true);
+      if (stfound==true) then begin
+        if ((RepSpec.flags[2]==1) and (nonblank(VEr.VECurncyCode))) then begin
+          VEGetStartBalance(VEr,"vesalesinclvat",RepSpec.CurncyCode,RepSpec.sStartDate,StartBal);
+          VEGetStartBalance(VEr,"vepaidvalue",RepSpec.CurncyCode,RepSpec.sStartDate,v);
+          StartBal = StartBal + v;
+
+//          EndBal = GetBalance(VEr,"vesalesinclvat",RepSpec.sEndDate);
+//          v = GetBalance(VEr,"vepaidvalue",RepSpec.sEndDate);
+
+          EndBal = VEGetEndBalance(VEr,"vesalesinclvat",RepSpec.CurncyCode,RepSpec.sEndDate);
+          v = VEGetEndBalance(VEr,"vepaidvalue",RepSpec.CurncyCode,RepSpec.sEndDate);
+
+          EndBal = EndBal + v;
+          if (RepSpec.flags[3]==0) then begin
+            RecordCopy(oldRepSpec,RepSpec);
+            td.day = 1; td.month = 1; td.year = 1980;
+            oldRepSpec.sStartDate = td;
+            oldRepSpec.sEndDate = AddDay(RepSpec.sStartDate,-1);
+            t = OrderedOPSum(oldRepSpec,VEr);
+            StartBal = StartBal + t;
+            EndBal = EndBal + t;
+          end;
+          DiffBal = StartBal - EndBal;
+        end else begin
+          VEGetStartBalance(VEr,"vebalance",RepSpec.CurncyCode,RepSpec.sStartDate,StartBal);
+//          EndBal = GetBalance(VEr,"vebalance",RepSpec.CurncyCode,RepSpec.sEndDate);
+          EndBal = VEGetEndBalance(VEr,"vebalance",RepSpec.CurncyCode,RepSpec.sEndDate);
+          if (RepSpec.flags[3]==0) then begin
+            RecordCopy(oldRepSpec,RepSpec);
+            td.day = 1; td.month = 1; td.year = 1980;
+            oldRepSpec.sStartDate = td;
+            oldRepSpec.sEndDate = AddDay(RepSpec.sStartDate,-1);
+            t = OrderedOPSum(oldRepSpec,VEr);
+            StartBal = StartBal + t;
+            EndBal = EndBal + t;
+          end;
+          DiffBal = StartBal - EndBal;
+        end;
+      end else begin
+        StartBal = 0;
+        EndBal = 0;
+        DiffBal = 0;
+      end;
+      TotStartBal = TotStartBal + StartBal;          
+      if (true) then begin      
+          if (true) then begin
+            AddCurncyTotals(acur,acurv1,curcnt,VEr.VECurncyCode,StartBal);
+            EndBal = StartBal;
+            if (RepSpec.flags[9]==0) then begin
+              VendListTrans(acur,acurv1,acurv2,acurv3,curcnt,VEr,EndBal,RepSpec,StartBal,adocRwtype,adocInvoiceNr,adocVEInvNo,
+								 adocInvDate,adocDueDate,adocRVal,adocCredVal,adocDebVal,adocCurncyCode,
+								 adoccnt);
+            end else begin
+            end;
+            AddCurncyTotals(acur,acurv3,curcnt,VEr.VECurncyCode,StartBal);
+            TotEndBal = TotEndBal + EndBal;
+          end;
+      end;      
+    end;    
+  end;
+  return;
+end;
