@@ -628,14 +628,6 @@ BEGIN
 		end;
   end;
 	
-	logtext(0,"******************** Customer " & CUp.Code);
-  logtext(0,"******************** Period " & RepSpec.sStartDate & " - " & RepSpec.sStartDate);
-  logtext(0,"start balance " & ARSOnAccBal);
-  logtext(0,"credit " & cucred);
-  logtext(0,"debit " & cucdeb);
-  logtext(0,"turnover " & cucdeb - cucred);
-  logtext(0,"end balance " & ARSSum);
-  
  	BPI_RunVePer(RepSpec,acurv1,acurv2,acurv3,acur,vcurcnt,TotStartBal,TotEndBal,StartBal,vaRwtype,vaInvoiceNr,adocVEInvNo,
                                   vaInvDate,vaDueDate,vaRVal,vaCredVal,vaDebVal,
                                   vaCurncyCode,vacnt);
@@ -652,15 +644,6 @@ BEGIN
   
   SortDateArray(adates);
 	
-	logtext(0,"******************** Supplier " & CUp.Code);
-  logtext(0,"******************** Period " & RepSpec.sStartDate & " - " & RepSpec.sStartDate);
-  logtext(0,"start balance " & TotStartBal);
-  logtext(0,"credit " & vecred);
-  logtext(0,"debit " & vecdeb);
-  logtext(0,"turnover " & vecdeb - vecred);
-  logtext(0,"end balance " & TotEndBal);
- 
- 
  	cucdeb = cucdeb - vecdeb;
 	cucred = cucred - vecred;
 	
@@ -890,7 +873,7 @@ BEGIN
   PrintValueInclZero("F_TOTSUM",ARSSum + ARSOnAccBal,M4Val,LangNrr,SFb,false);
 
   OUTFORMFIELD("F_RANTEFRANDAG",RepSpec.d1);
-  OUTFORMFIELD("F_STARTDATE",RepSpec.d1);
+  OUTFORMFIELD("F_STARTDATE",RepSpec.sEndDate);
   OUTFORMFIELD("F_ANTALFORSENAT",ARSNotLateCount);
   OUTFORMFIELD("F_ANTALEJFORSENAT",ARSLateCount);
   RETURN;
