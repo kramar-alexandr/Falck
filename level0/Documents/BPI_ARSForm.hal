@@ -796,7 +796,7 @@ BEGIN
   
   PrintValueInclZero("F_DEBETPERIOD",cucdeb,M4Val,LangNrr,SFb,false);
   PrintValueInclZero("F_CREDITPERIOD",cucred,M4Val,LangNrr,SFb,false);
- 	PrintValueInclZero("BPIF_TURNPERIOD",cucdeb - cucred,M4Val,LangNrr,SFb,false);
+ 	PrintValueInclZero("BPIF_TURNPERIOD",cucred - cucdeb,M4Val,LangNrr,SFb,false);
  
   if (FIELDINFORM("F_REMTEXT")) then begin
     maxrem = -1;
