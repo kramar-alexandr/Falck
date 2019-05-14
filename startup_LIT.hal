@@ -4,6 +4,7 @@ begin
   SetLangMode(LangLithuanian,"LIT",2);
 	
 	Document("Periodinė pirkėjų ir tiekėjų būklė",VeCuPerRClass,VeCuPerForm,VeCuPerFClass,modSL);
+	Document("Periodinė pirkėjų ir tiekėjų būklė",VeCuPerRClass,VeCuPerForm,VeCuPerFClass,modPL);
 
   return;
 end;
