@@ -1,13 +1,13 @@
 external procedure FindAllPrepayLosses(string,Date,val,LongInt,val,var val,record IVVc,LongInt,LongInt,Boolean,record BaseCurBlock,val,string);
 external function val MulWithRateToBase1(var string,Date,val,roundmode);
-external procedure SumAged(Date,Integer,Integer,var val,var val,var val,var val,var val,var val,var val,var val,var val,var val);
+external procedure BPISumAged(Date,Integer,Integer,var val,var val,var val,var val,var val,var val,var val,var val,var val,var val,var val,var val);// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:43:02 PM
 external function Boolean GetARPayRate(LongInt,LongInt,var val,var val,var val,var val,var val,string,Date);
 external function LongInt CalculateLateDays(Date,Date,Date,Boolean,Boolean);
 external function Boolean HasBase2();
 external function Boolean HasMultiCurrency();
 external procedure YcToStr(Integer,var string);
 external function Integer GetIntYc(Date);
-external procedure PrintAgedLine(val,val,val,val,val,val,val,val,val,val,val,Integer,Integer,string);
+external procedure BPIPrintAgedLine(val,val,val,val,val,val,val,val,val,val,val,val,val,Integer,Integer,string);
 external function string 255 GetCustomerOnAccountAC(string);
 external function val MulRateToBase1(var string,val,val,val,val,val,val,roundmode);
 external function Boolean FindAccPeriod(Date,var record AccPeriodr);
@@ -513,7 +513,7 @@ LARRPrintOverView:;
 END;
 
 global
-procedure GetAccPeriodComments(Integer future,Date ondat,var string tstr1,var string tstr2,var string tstr3,var string tstr4,var string tstr5,var string tstr6,var string tstr7)
+procedure GetAccPeriodComments(Integer future,Date ondat,var string tstr1,var string tstr2,var string tstr3,var string tstr4,var string tstr5,var string tstr6,var string tstr7,var string tstr8,var string tstr9)
 begin
   record AccPeriodVc prevAccPeriodr,nextAccPeriodr,AccPeriodr;
   record AccperiodVc tmpAccPeriodr; //##ii
@@ -622,6 +622,23 @@ begin
           tstr7 = USetStr(2540) & "7";
         end;
       end;
+      
+      if (periodzero-7>=0) then begin
+        MatRowGet(AccPeriodr,periodzero-7,AccPeriodrw);
+        if (nonblank(AccPeriodrw.Comment)) then begin
+          tstr8 = AccPeriodrw.Comment;
+        end else begin
+          tstr8 = USetStr(2540) & "8";
+        end;
+      end;
+      if (periodzero-8>=0) then begin
+        MatRowGet(AccPeriodr,periodzero-8,AccPeriodrw);
+        if (nonblank(AccPeriodrw.Comment)) then begin
+          tstr9 = AccPeriodrw.Comment;
+        end else begin
+          tstr9 = USetStr(2540) & "9";
+        end;
+      end;
     end;
   end else begin
     if (FindAccPeriod(ondat,AccPeriodr)) then begin
@@ -706,6 +723,22 @@ begin
           tstr7 = USetStr(2540) & "7";
         end;
       end;
+      if (periodzero+7<rwcnt) then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 3:37:48 PM
+        MatRowGet(AccPeriodr,periodzero+7,AccPeriodrw);
+        if (nonblank(AccPeriodrw.Comment)) then begin
+          tstr8 = AccPeriodrw.Comment;
+        end else begin
+          tstr8 = USetStr(2540) & "8";
+        end;
+      end;
+      if (periodzero+8<rwcnt) then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 3:37:48 PM
+        MatRowGet(AccPeriodr,periodzero+8,AccPeriodrw);
+        if (nonblank(AccPeriodrw.Comment)) then begin
+          tstr9 = AccPeriodrw.Comment;
+        end else begin
+          tstr9 = USetStr(2540) & "9";
+        end;
+      end;
     end;
   end;
   return;
@@ -714,13 +747,13 @@ end;
 procedure PrintSLAgedHeader(record RcVc RepSpec,Date agedate,Integer nrofper,Integer ActualInvoices,Integer SeparateOnAcc)
 begin
   record AgedBlock AgedRec;
-  string 30 tstr1,tstr2,tstr3,tstr4,tstr5,tstr6,tstr7;
+  string 30 tstr1,tstr2,tstr3,tstr4,tstr5,tstr6,tstr7,tstr8,tstr9;
   LongInt p1,p2;
   LongInt totcols,colwidth,colstart,col2start;
   
   BlockLoad(AgedRec);
   if (AgedRec.UseAccPeriod) then begin
-    GetAccPeriodComments(0,agedate,tstr1,tstr2,tstr3,tstr4,tstr5,tstr6,tstr7);
+    GetAccPeriodComments(0,agedate,tstr1,tstr2,tstr3,tstr4,tstr5,tstr6,tstr7,tstr8,tstr9);
     if (nrofper<=1) then begin
       tstr2 = tstr2 & " - ";
     end;
@@ -736,7 +769,13 @@ begin
     if (nrofper<=5) then begin
       tstr6 = tstr6 & " - ";
     end;
-    tstr7 = tstr7 & " - ";
+    if (nrofper<=6) then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:19:28 PM
+      tstr7 = tstr7 & " - ";
+    end;
+    if (nrofper<=7) then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:19:29 PM
+      tstr8 = tstr8 & " - ";
+    end;
+    tstr9 = tstr9 & " - ";// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:19:31 PM
     StartFormat(15);
     OutString(0,0,USetStr(2426),false);
     if (RepSpec.ArtMode==5) then begin
@@ -786,6 +825,12 @@ begin
     if (nrofper>6) then begin
       OutStringAdjust(9,0,tstr7,true,M4Val);
     end;
+    if (nrofper>7) then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:20:13 PM
+      OutStringAdjust(9,0,tstr8,true,M4Val);
+    end;
+    if (nrofper>8) then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:20:13 PM
+      OutStringAdjust(9,0,tstr9,true,M4Val);
+    end;
     if (RepSpec.ArtMode==5) then begin
       OutStringAdjustBiDi(480,0,USetStr(2434),true,M4Val,520);
     end else begin
@@ -808,6 +853,10 @@ begin
     tstr6 = "" & AgedRec.Per5+1 & " - ";
     if (AgedRec.Per6>-1) then begin tstr6 = tstr6 & AgedRec.Per6; end;
     tstr7 = "" & AgedRec.Per6+1 & " - ";
+    if (AgedRec.Per7>-1) then begin tstr7 = tstr7 & AgedRec.Per7; end;// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:21:37 PM
+    tstr8 = "" & AgedRec.Per7+1 & " - ";
+    if (AgedRec.Per8>-1) then begin tstr8 = tstr8 & AgedRec.Per8; end;// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:21:37 PM
+    tstr9 = "" & AgedRec.Per8+1 & " - ";
     StartFormat(15);
     OutString(0,0,USetStr(2426),false);
     if (RepSpec.ArtMode==2) then begin
@@ -850,6 +899,12 @@ begin
     if (nrofper>5) then begin
       OutStringAdjust(9,0,tstr7,true,M4Val);
     end;
+    if (nrofper>6) then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:22:30 PM
+      OutStringAdjust(420,0,tstr8,true,M4Val);
+    end;
+    if (nrofper>7) then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:22:32 PM
+      OutStringAdjust(440,0,tstr9,true,M4Val);
+    end;
     OutStringAdjustBiDi(480,0,USetStr(2424),true,M4Val,520);
     EndFormat;
   end;
@@ -862,7 +917,7 @@ procedure ARPrintDueDetailedInstalmenInvoice(record IVVc IVr,record RcVc RepSpec
 BEGIN
   val t,blval,tcur;
   string 255 tstr1;
-  val sactinv,s0inv,s1inv,s2inv,s3inv,s4inv,s5inv,s6inv,s7inv,totinv;
+  val sactinv,s0inv,s1inv,s2inv,s3inv,s4inv,s5inv,s6inv,s7inv,totinv,s8inv,s9inv;// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:24:12 PM
   record ARInstallVc ARIr;
   record ARInstallHistVc ARIHr;
   Boolean TrHs,testf;
@@ -894,6 +949,8 @@ BEGIN
           s5inv = 0;
           s6inv = 0;
           s7inv = 0;
+          s8inv = 0;// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 3:40:42 PM
+          s9inv = 0;// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 3:40:42 PM
           t = FindInstalmentPaidAmount(IVr,ARIHr.InvoiceNr,ARIHr.InstallNr,RepSpec.d1,tcur);
           if (RepSpec.flags[2]==1) then begin
             if (nonblank(CUr.CurncyCode)) then begin
@@ -904,7 +961,7 @@ BEGIN
           end else begin
             t = ARIHr.BookRVal - t;
           end;
-          SumAged(RepSpec.d1,latedays,actualinvoices,t,sactinv,s0inv,s1inv,s2inv,s3inv,s4inv,s5inv,s6inv,s7inv);
+          BPISumAged(RepSpec.d1,latedays,actualinvoices,t,sactinv,s0inv,s1inv,s2inv,s3inv,s4inv,s5inv,s6inv,s7inv,s8inv,s9inv);// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:43:16 PM
           totinv = s0inv + s1inv;
           totinv = totinv + s2inv;
           totinv = totinv + s3inv;
@@ -912,6 +969,8 @@ BEGIN
           totinv = totinv + s5inv;
           totinv = totinv + s6inv;
           totinv = totinv + s7inv;
+          totinv = totinv + s8inv;
+          totinv = totinv + s9inv;
           totinv = totinv + sactinv;
           tstr1 = CreateInvoiceNumberDisputedMark(IVr.SerNr,IVr.OfficialSerNr,IVr.DisputedFlag);
           StartFormat(15);
@@ -929,10 +988,10 @@ BEGIN
             OutDate(115,0,ARIHr.DueDate,false);
           end;
           if (RepSpec.flags[2]==1) then begin
-            PrintAgedLine(sactinv,s0inv,s1inv,s2inv,s3inv,s4inv,s5inv,s6inv,s7inv,blval,totinv,nrofper,465,"");
+            BPIPrintAgedLine(sactinv,s0inv,s1inv,s2inv,s3inv,s4inv,s5inv,s6inv,s7inv,s8inv,s9inv,blval,totinv,nrofper,465,"");
             OutString(464,0,CUr.CurncyCode,false);
           end else begin
-            PrintAgedLine(sactinv,s0inv,s1inv,s2inv,s3inv,s4inv,s5inv,s6inv,s7inv,blval,totinv,nrofper,480,"");
+            BPIPrintAgedLine(sactinv,s0inv,s1inv,s2inv,s3inv,s4inv,s5inv,s6inv,s7inv,s8inv,s9inv,blval,totinv,nrofper,480,"");
           end;
           EndFormat;
         end;
@@ -964,6 +1023,8 @@ BEGIN
           s5inv = 0;
           s6inv = 0;
           s7inv = 0;
+          s8inv = 0;// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 3:41:26 PM
+          s9inv = 0;// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 3:41:28 PM
 //          t = FindInstalmentPaidAmount(IVr,ARIr.InvoiceNr,ARIr.InstallNr,CurrentDate,tcur);
           if (RepSpec.flags[2]==1) then begin
             if (nonblank(CUr.CurncyCode)) then begin
@@ -974,7 +1035,7 @@ BEGIN
           end else begin
             t = ARIr.BookRVal;
           end;
-          SumAged(RepSpec.d1,latedays,actualinvoices,t,sactinv,s0inv,s1inv,s2inv,s3inv,s4inv,s5inv,s6inv,s7inv);
+          BPISumAged(RepSpec.d1,latedays,actualinvoices,t,sactinv,s0inv,s1inv,s2inv,s3inv,s4inv,s5inv,s6inv,s7inv,s8inv,s9inv);// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:43:27 PM
           totinv = s0inv + s1inv;
           totinv = totinv + s2inv;
           totinv = totinv + s3inv;
@@ -982,6 +1043,8 @@ BEGIN
           totinv = totinv + s5inv;
           totinv = totinv + s6inv;
           totinv = totinv + s7inv;
+          totinv = totinv + s8inv;// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 3:41:35 PM
+          totinv = totinv + s9inv;// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 3:41:37 PM
           totinv = totinv + sactinv;
           tstr1 = CreateInvoiceNumberDisputedMark(IVr.SerNr,IVr.OfficialSerNr,IVr.DisputedFlag);
           StartFormat(15);
@@ -999,10 +1062,10 @@ BEGIN
             OutDate(115,0,ARIr.DueDate,false);
           end;
           if (RepSpec.flags[2]==1) then begin
-            PrintAgedLine(sactinv,s0inv,s1inv,s2inv,s3inv,s4inv,s5inv,s6inv,s7inv,blval,totinv,nrofper,465,"");
+            BPIPrintAgedLine(sactinv,s0inv,s1inv,s2inv,s3inv,s4inv,s5inv,s6inv,s7inv,s8inv,s9inv,blval,totinv,nrofper,465,"");
             OutString(464,0,CUr.CurncyCode,false);
           end else begin
-            PrintAgedLine(sactinv,s0inv,s1inv,s2inv,s3inv,s4inv,s5inv,s6inv,s7inv,blval,totinv,nrofper,480,"");
+            BPIPrintAgedLine(sactinv,s0inv,s1inv,s2inv,s3inv,s4inv,s5inv,s6inv,s7inv,s8inv,s9inv,blval,totinv,nrofper,480,"");
           end;
           EndFormat;
         end;
@@ -1013,7 +1076,7 @@ BEGIN
 END;
 
 global
-procedure ARPrintDueDetailed(record IVVc IVr,record RcVc RepSpec,string curcode,string objects,val sactinv,val s0inv,val s1inv,val s2inv,val s3inv,val s4inv,val s5inv,val s6inv,val s7inv,var val totinv,Integer nrofper)
+procedure BPIARPrintDueDetailed(record IVVc IVr,record RcVc RepSpec,string curcode,string objects,val sactinv,val s0inv,val s1inv,val s2inv,val s3inv,val s4inv,val s5inv,val s6inv,val s7inv,val s8inv,val s9inv,var val totinv,Integer nrofper)// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 3:00:30 PM
 BEGIN
   record ARVc AR2r;
   val t,vatel,blval;
@@ -1036,13 +1099,13 @@ BEGIN
   end;
   if (RepSpec.flags[2]==1) then begin
     if (blank(curcode)) then begin
-      PrintAgedLine(sactinv,s0inv,s1inv,s2inv,s3inv,s4inv,s5inv,s6inv,s7inv,blval,totinv,nrofper,480,"");
+      BPIPrintAgedLine(sactinv,s0inv,s1inv,s2inv,s3inv,s4inv,s5inv,s6inv,s7inv,s8inv,s9inv,blval,totinv,nrofper,480,"");
     end else begin
-      PrintAgedLine(sactinv,s0inv,s1inv,s2inv,s3inv,s4inv,s5inv,s6inv,s7inv,blval,totinv,nrofper,465,"");
+      BPIPrintAgedLine(sactinv,s0inv,s1inv,s2inv,s3inv,s4inv,s5inv,s6inv,s7inv,s8inv,s9inv,blval,totinv,nrofper,465,"");
       OutString(464,0,curcode,false);
     end;
   end else begin
-    PrintAgedLine(sactinv,s0inv,s1inv,s2inv,s3inv,s4inv,s5inv,s6inv,s7inv,blval,totinv,nrofper,480,"");
+    BPIPrintAgedLine(sactinv,s0inv,s1inv,s2inv,s3inv,s4inv,s5inv,s6inv,s7inv,s8inv,s9inv,blval,totinv,nrofper,480,"");
   end;
   EndFormat;
   RETURN;            
@@ -1783,8 +1846,8 @@ begin
 end;
 
 global
-procedure PrintARAged(record RcVc RepSpec,val ssact,val ss0,val ss1,val ss2,val ss3,val ss4,val ss5,val ss6,val ss7,val onacc,val tot,Integer nrofper,
-                      val ssactb2,val ss0b2,val ss1b2,val ss2b2,val ss3b2,val ss4b2,val ss5b2,val ss6b2,val ss7b2,val totb2)
+procedure BPIPrintARAged(record RcVc RepSpec,val ssact,val ss0,val ss1,val ss2,val ss3,val ss4,val ss5,val ss6,val ss7,val ss8,val ss9,val onacc,val tot,Integer nrofper,
+                      val ssactb2,val ss0b2,val ss1b2,val ss2b2,val ss3b2,val ss4b2,val ss5b2,val ss6b2,val ss7b2,val ss8b2,val ss9b2,val totb2)
 begin
   val sssum,blval;
   
@@ -1793,11 +1856,11 @@ begin
     OutString(0,0,"",false);
     OutString(0,0,"",false);
   end;
-  PrintAgedLine(ssact,ss0,ss1,ss2,ss3,ss4,ss5,ss6,ss7,onacc,tot,nrofper,480,"");
+  BPIPrintAgedLine(ssact,ss0,ss1,ss2,ss3,ss4,ss5,ss6,ss7,ss8,ss9,onacc,tot,nrofper,480,"");
   EndFormat;
   if (RepSpec.flags[12]!=0) then begin
     StartFormat(15);
-    PrintAgedLine(ssactb2,ss0b2,ss1b2,ss2b2,ss3b2,ss4b2,ss5b2,ss6b2,ss7b2,blval,totb2,nrofper,480,"");
+    BPIPrintAgedLine(ssactb2,ss0b2,ss1b2,ss2b2,ss3b2,ss4b2,ss5b2,ss6b2,ss7b2,ss8b2,ss9b2,blval,totb2,nrofper,480,"");
     EndFormat;
   end;
   StartFormat(10);
@@ -1809,8 +1872,8 @@ begin
     OutString(0,0,"",false);
   end;
   OutString(100,0,USetStr(2539),false);
-  sssum = ssact + ss0 + ss1 + ss2 + ss3 + ss4 + ss5 + ss6 + ss7 + onacc; // + onaccsum
-  PrintAgedLine(100*ssact/tot,100*ss0/tot,100*ss1/tot,100*ss2/tot,100*ss3/tot,100*ss4/tot,100*ss5/tot,100*ss6/tot,100*ss7/tot,100*onacc/tot,100*sssum/tot,nrofper,480,"")
+  sssum = ssact + ss0 + ss1 + ss2 + ss3 + ss4 + ss5 + ss6 + ss7 + ss8 + ss9 + onacc; // + onaccsum// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 3:43:25 PM
+  BPIPrintAgedLine(100*ssact/tot,100*ss0/tot,100*ss1/tot,100*ss2/tot,100*ss3/tot,100*ss4/tot,100*ss5/tot,100*ss6/tot,100*ss7/tot,100*ss8/tot,100*ss9/tot,100*onacc/tot,100*sssum/tot,nrofper,480,"")
   EndFormat;
   StartFormat(10);
   EndFormat;

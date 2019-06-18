@@ -78,6 +78,7 @@ external inner function Boolean HasPriceLists();
 external inner function Boolean HasCategories();
 external inner function Boolean HasMainPartner();
 external inner function Boolean HasAged();
+external inner function Boolean HasAccPeriods();
 
 
 
@@ -854,5 +855,40 @@ begin
   ButtonFrame(h=250,v=vm+16,123,2,"Rðäiavimas");
   RadioButton(h,v,0,0,"Apmok˜jimo data",flags[5]);
   RadioButton(h,v+=16,1,0,"Tiek˜jas",flags[5]);
+  EndWindow;
+end;
+
+window AgedTClass:1// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 11:52:40 AM
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real f,h,v,vs;
+  WindowBegin("Laikotarpiai",AgedTClass,CGSbl,AgedType);
+  SetBlid(AgedBlock);
+  SetWRect(64,80,509,400);
+  v = 6; vs = 20; h = 180; f = 100;
+  EditField(h,v,f,"Laikotarpis 1",Normal,Per1,true,0);
+  EditField(h,v+=vs,f,"Laikotarpis 2",Normal,Per2,true,0);
+  if (HasAdvancedAccounting) then begin
+  EditField(h,v+=vs,f,"Laikotarpis 3",Normal,Per3,true,0);
+  EditField(h,v+=vs,f,"Laikotarpis 4",Normal,Per4,true,0);
+  EditField(h,v+=vs,f,"Laikotarpis 5",Normal,Per5,true,0);
+  EditField(h,v+=vs,f,"Laikotarpis 6",Normal,Per6,true,0);
+  EditField(h,v+=vs,f,"Laikotarpis 7",Normal,Per7,true,0);
+  EditField(h,v+=vs,f,"Laikotarpis 8",Normal,Per8,true,0);
+  StaticText(50,v+=40,"Nustatymas daugiau nei 2 periodams reikalauja guls‹io formato",false);
+  ButtonFrame(h,v+=26,120,2,"Rodyti uìdelstas dienas");
+  RadioButton(h,v,0,0,"Neapmok˜tas ir uìdelstas",ShowDelayDays);
+  RadioButton(h,v+=16,1,0,"Tik uìdelstas",ShowDelayDays);
+    if (StandardHansa==false) then begin
+  CheckBox(100,v+=30,0,"Rodyti faktðras nustatytai datai, kaip esamas faktðras",ActualInvoices);
+  CheckBox(100,v+=16,0,"Naudoti apskaitos periodus vietoj laikotarpi÷",UseAccPeriod);
+  EditField(350,v+=vs,30,"Panaudoti apskaitos periodus, daugiausia 6",Normal,AccPeriods,true,0);
+  CheckBox(100,v+=16,0,"Atskiras stulpelis nesudengtiems mok˜jimams",SeparateOnAcc);
+    end;
+  end else begin 
+    if (HasAccPeriods) then begin
+      CheckBox(100,v+=vs,0,"Naudoti apsk. periodus didì. kn. nei laikotarpi÷ apr.",UseAccPeriod);
+    end;
+  end;
   EndWindow;
 end;

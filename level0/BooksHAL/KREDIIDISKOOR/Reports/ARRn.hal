@@ -11,13 +11,13 @@ external procedure ARRnRateDifferencesDetailed(record RcVc,record IVVc,record AR
                             var string,var Boolean,var record SMVc);
 external procedure ARRnRateDifferences(record RcVc,record IVVc,val,val,Date,var val,var val,var val,var val,
                             var string,var Boolean ,var record SMVc);
-external procedure PrintARAged(record RcVc,val,val,val,val,val,val,val,val,val,val,val,Integer,val,val,val,val,val,val,val,val,val,val);
+external procedure BPIPrintARAged(record RcVc,val,val,val,val,val,val,val,val,val,val,val,val,val,Integer,val,val,val,val,val,val,val,val,val,val,val,val);
 external procedure PrintARReportTotals(record RcVc,Integer,val,val,val,val,val,val,val,val,val,val,Array val);
 external function Boolean ARInvoiceTest(record RcVc,record IVVc,Boolean);
 external procedure ARRnAddToDebtorsAccounts(string,Integer,val,Array string,Array val,var Integer);
 external procedure ARRnPrintDebtorsAccounts(Array string,Array val,var Integer);
 external procedure ARRnGetInvBalance(record IVVc,var Date,Integer,var val,var val,var LongInt);
-external procedure SumAgedInstalmenInvoice(record RcVc,record CUVc,Date,record IVVc,Integer,var val,var val,var val,var val,var val,var val,var val,var val,var val);
+external procedure BPISumAgedInstalmenInvoice(record RcVc,record CUVc,Date,record IVVc,Integer,var val,var val,var val,var val,var val,var val,var val,var val,var val,var val,var val);// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:52:56 PM
 external procedure SubCashRows_IVVc(record IVVc,Boolean,var val,var val);
 external function val MulRateToBase2(var string,val,val,val,val,val,val,roundmode);
 external function val MulRateToBase1(var string,val,val,val,val,val,val,roundmode);
@@ -36,11 +36,11 @@ external procedure GetOnAccBalance(record RcVc,string,string,Boolean,Integer,var
                    Array string,Array val,var Integer);
 external procedure Base1ToBase2(var val,Date,var val);
 external procedure ARWithLogg(record CUVc,var array string,var array val,var Integer,record RcVc,record IVVc,record IPrsVc,record TRVc,var val,Integer,Boolean);
-external procedure ARPrintDueDetailed(record IVVc,record RcVc,string,string,val,val,val,val,val,val,val,val,val,var val,Integer);
+external procedure BPIARPrintDueDetailed(record IVVc,record RcVc,string,string,val,val,val,val,val,val,val,val,val,val,val,var val,Integer);
 external procedure ARRPrintOverView(record CUVc,record IVVc,record IPrsVc,record TRVc,record RcVc,val,val,LongInt);
-external procedure PrintAgedLine(val,val,val,val,val,val,val,val,val,val,val,Integer,Integer,string);
-external procedure SumAged(Date,Integer,Integer,var val,var val,var val,var val,var val,var val,var val,var val,var val,var val);
-external procedure SumAgedNew(Date,Date,Date,Boolean,Integer,Integer,var val,var val,var val,var val,var val,var val,var val,var val,var val,var val); //##ii
+external procedure BPIPrintAgedLine(val,val,val,val,val,val,val,val,val,val,val,val,val,Integer,Integer,string);
+external procedure BPISumAged(Date,Integer,Integer,var val,var val,var val,var val,var val,var val,var val,var val,var val,var val,var val,var val);// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:43:50 PM
+external procedure BPISumAgedNew(Date,Date,Date,Boolean,Integer,Integer,var val,var val,var val,var val,var val,var val,var val,var val,var val,var val,var val,var val); //##ii// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:52:41 PM
 external procedure CountPeriods(var Integer);
 external procedure ClassTypef(string,string,var boolean);
 external procedure AddInstalmentInvoiceBalanceTotals(record RcVc,record IVVc,Date,var Array val,var Array val,var Array val);
@@ -65,6 +65,8 @@ begin
   if (ncols==5) then begin colstart = 205; end;
   if (ncols==6) then begin colstart = 200; end;
   if (ncols==7) then begin colstart = 200; end;
+  if (ncols==8) then begin colstart = 200; end;// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:12:56 PM
+  if (ncols==9) then begin colstart = 200; end;// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:12:58 PM
   
   colwidth = (475 - colstart) / (ncols + 1); // 5 extra px. for total column
   col2start = colstart + colwidth;
@@ -90,8 +92,8 @@ BEGIN
   LongInt latedays;
   Integer i,rwcnt,keys,nrofper;
   Integer ivi,ivrwcnt;
-  val sact,s0,s1,s2,s3,s4,s5,s6,s7;
-  val sactb2,s0b2,s1b2,s2b2,s3b2,s4b2,s5b2,s6b2,s7b2;
+  val sact,s0,s1,s2,s3,s4,s5,s6,s7,s8,s9;// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:13:24 PM
+  val sactb2,s0b2,s1b2,s2b2,s3b2,s4b2,s5b2,s6b2,s7b2,s8b2,s9b2;// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:13:26 PM
   Array val ss;
 //  val ss0,ss1,ss2,ss3,ss4,ss5,ss6,ss7;
   Array val ssb2;  
@@ -107,7 +109,7 @@ BEGIN
   Array val TotalCurrent;
   val sumdiff,sumcurncy,sumbooked,sumnow;
   val totdiff,totbooked,totnow;
-  val sactinv,s0inv,s1inv,s2inv,s3inv,s4inv,s5inv,s6inv,s7inv,totinv;
+  val sactinv,s0inv,s1inv,s2inv,s3inv,s4inv,s5inv,s6inv,s7inv,totinv,s8inv,s9inv;
   string 255 ckey,invindex;
   record SMVc CurTotalsr;  //addcurencytotals
   record SMVc OnAccCurTotalsr;  //addcurencytotals
@@ -154,6 +156,8 @@ BEGIN
     if (ncols>=4) then begin SetRepColBiDi(7,colstart + (colwidth * 5),col2start + (colwidth * 5)); end;
     if (ncols>=5) then begin SetRepColBiDi(8,colstart + (colwidth * 6),col2start + (colwidth * 6)); end;
     if (ncols>=6) then begin SetRepColBiDi(9,colstart + (colwidth * 7),col2start + (colwidth * 7)); end;
+    //if (ncols>=7) then begin SetRepColBiDi(10,colstart + (colwidth * 8),col2start + (colwidth * 8)); end;// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:14:11 PM
+    //if (ncols>=8) then begin SetRepColBiDi(11,colstart + (colwidth * 9),col2start + (colwidth * 9)); end;// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:14:14 PM
   end;
   
   PrintHeaderAR2(RepSpec,agedate,nrofper,Agedb.ActualInvoices,Agedb.SeparateOnAcc);
@@ -276,6 +280,8 @@ L22:;
   s5 = 0; s5b2 = 0;
   s6 = 0; s6b2 = 0;
   s7 = 0; s7b2 = 0;
+  s8 = 0; s8b2 = 0;
+  s9 = 0; s9b2 = 0;
   if (RepSpec.flags[2]==1) then begin
     s0 = CurSum + s0;
   end else begin
@@ -694,17 +700,17 @@ L22:;
         end;
         if (RepSpec.ArtMode==2) then begin// Aged
           if ((IVr.InstallmentInv==1) and (RepSpec.flags[19]!=0)) then begin
-            SumAgedInstalmenInvoice(RepSpec,CUr,agedate,IVr,Agedb.ActualInvoices,sact,s0,s1,s2,s3,s4,s5,s6,s7);
+            BPISumAgedInstalmenInvoice(RepSpec,CUr,agedate,IVr,Agedb.ActualInvoices,sact,s0,s1,s2,s3,s4,s5,s6,s7,s8,s9);// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:58:32 PM
           end else begin
             if (RepSpec.flags[2]==0) then begin
-              SumAgedNew(agedate,IVr.PayDate,IVr.InvDate,RepSpec.flags[22]!=0,latedays,Agedb.ActualInvoices,rs,sact,s0,s1,s2,s3,s4,s5,s6,s7); //##cc
-              SumAgedNew(agedate,IVr.PayDate,IVr.InvDate,RepSpec.flags[22]!=0,latedays,Agedb.ActualInvoices,rs2,sactb2,s0b2,s1b2,s2b2,s3b2,s4b2,s5b2,s6b2,s7b2); //##cc
+              BPISumAgedNew(agedate,IVr.PayDate,IVr.InvDate,RepSpec.flags[22]!=0,latedays,Agedb.ActualInvoices,rs,sact,s0,s1,s2,s3,s4,s5,s6,s7,s8,s9); //##cc// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:54:44 PM
+              BPISumAgedNew(agedate,IVr.PayDate,IVr.InvDate,RepSpec.flags[22]!=0,latedays,Agedb.ActualInvoices,rs2,sactb2,s0b2,s1b2,s2b2,s3b2,s4b2,s5b2,s6b2,s7b2,s8b2,s9b2); //##cc// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:54:54 PM
             end else begin
               if (nonblank(CUr.CurncyCode)) then begin
-                SumAgedNew(agedate,IVr.PayDate,IVr.InvDate,RepSpec.flags[22]!=0,latedays,Agedb.ActualInvoices,rval,sact,s0,s1,s2,s3,s4,s5,s6,s7); //##cc
+                BPISumAgedNew(agedate,IVr.PayDate,IVr.InvDate,RepSpec.flags[22]!=0,latedays,Agedb.ActualInvoices,rval,sact,s0,s1,s2,s3,s4,s5,s6,s7,s8,s9); //##cc// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:55:00 PM
               end else begin
-                SumAgedNew(agedate,IVr.PayDate,IVr.InvDate,RepSpec.flags[22]!=0,latedays,Agedb.ActualInvoices,rs,sact,s0,s1,s2,s3,s4,s5,s6,s7); //##cc
-                SumAgedNew(agedate,IVr.PayDate,IVr.InvDate,RepSpec.flags[22]!=0,latedays,Agedb.ActualInvoices,rs2,sactb2,s0b2,s1b2,s2b2,s3b2,s4b2,s5b2,s6b2,s7b2); //##cc
+                BPISumAgedNew(agedate,IVr.PayDate,IVr.InvDate,RepSpec.flags[22]!=0,latedays,Agedb.ActualInvoices,rs,sact,s0,s1,s2,s3,s4,s5,s6,s7,s8,s9); //##cc// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:55:06 PM
+                BPISumAgedNew(agedate,IVr.PayDate,IVr.InvDate,RepSpec.flags[22]!=0,latedays,Agedb.ActualInvoices,rs2,sactb2,s0b2,s1b2,s2b2,s3b2,s4b2,s5b2,s6b2,s7b2,s8b2,s9b2); //##cc// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:55:16 PM
               end;
             end;
           end;
@@ -735,14 +741,16 @@ L22:;
           s5inv = 0;
           s6inv = 0;
           s7inv = 0;
+          s8inv = 0;// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:58:55 PM
+          s9inv = 0;// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:58:57 PM
           totinv = 0;
           if ((IVr.InstallmentInv==1) and (RepSpec.flags[19]!=0)) then begin
-            SumAgedInstalmenInvoice(RepSpec,CUr,agedate,IVr,Agedb.ActualInvoices,sact,s0,s1,s2,s3,s4,s5,s6,s7);
+            BPISumAgedInstalmenInvoice(RepSpec,CUr,agedate,IVr,Agedb.ActualInvoices,sact,s0,s1,s2,s3,s4,s5,s6,s7,s8,s9);// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:59:07 PM
           end else begin
             if (RepSpec.flags[2]==0) then begin
-              SumAgedNew(agedate,IVr.PayDate,IVr.InvDate,RepSpec.flags[22]!=0,latedays,Agedb.ActualInvoices,rs,sactinv,s0inv,s1inv,s2inv,s3inv,s4inv,s5inv,s6inv,s7inv); //##cc
+              BPISumAgedNew(agedate,IVr.PayDate,IVr.InvDate,RepSpec.flags[22]!=0,latedays,Agedb.ActualInvoices,rs,sactinv,s0inv,s1inv,s2inv,s3inv,s4inv,s5inv,s6inv,s7inv,s8inv,s9inv); //##cc// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:59:13 PM
             end else begin
-              SumAgedNew(agedate,IVr.PayDate,IVr.InvDate,RepSpec.flags[22]!=0,latedays,Agedb.ActualInvoices,rval,sactinv,s0inv,s1inv,s2inv,s3inv,s4inv,s5inv,s6inv,s7inv); //##cc
+              BPISumAgedNew(agedate,IVr.PayDate,IVr.InvDate,RepSpec.flags[22]!=0,latedays,Agedb.ActualInvoices,rval,sactinv,s0inv,s1inv,s2inv,s3inv,s4inv,s5inv,s6inv,s7inv,s8inv,s9inv); //##cc// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:59:15 PM
             end;
           end;
           totinv = s0inv + s1inv;
@@ -752,11 +760,13 @@ L22:;
           totinv = totinv + s5inv;
           totinv = totinv + s6inv;
           totinv = totinv + s7inv;
+          totinv = totinv + s8inv;// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:59:39 PM
+          totinv = totinv + s9inv;// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 2:59:41 PM
           totinv = totinv + sactinv;
           if ((IVr.InstallmentInv==1) and (RepSpec.flags[19]!=0)) then begin
             ARPrintDueDetailedInstalmenInvoice(IVr,RepSpec,CUr,Agedb.ActualInvoices,nrofper);
           end else begin
-            ARPrintDueDetailed(IVr,RepSpec,CUr.CurncyCode,CUr.Objects,sactinv,s0inv,s1inv,s2inv,s3inv,s4inv,s5inv,s6inv,s7inv,totinv,nrofper);
+            BPIARPrintDueDetailed(IVr,RepSpec,CUr.CurncyCode,CUr.Objects,sactinv,s0inv,s1inv,s2inv,s3inv,s4inv,s5inv,s6inv,s7inv,s8inv,s9inv,totinv,nrofper);
           end;
           if (RepSpec.flags[2]==0) or (nonblank(CUr.CurncyCode)) then begin
             sact = sactinv + sact;
@@ -768,6 +778,7 @@ L22:;
             s5 = s5inv + s5;
             s6 = s6inv + s6;
             s7 = s7inv + s7;
+            s8 = s8inv + s8;
           end else begin
             sact = sact + MulRateToBase1(IVr.CurncyCode,sactinv,IVr.FrRate,IVr.ToRateB1,IVr.ToRateB2,IVr.BaseRate1,IVr.BaseRate2,DefaultCurRoundOff);
             s0 = s0 + MulRateToBase1(IVr.CurncyCode,s0inv,IVr.FrRate,IVr.ToRateB1,IVr.ToRateB2,IVr.BaseRate1,IVr.BaseRate2,DefaultCurRoundOff);
@@ -778,6 +789,8 @@ L22:;
             s5 = s5 + MulRateToBase1(IVr.CurncyCode,s5inv,IVr.FrRate,IVr.ToRateB1,IVr.ToRateB2,IVr.BaseRate1,IVr.BaseRate2,DefaultCurRoundOff);
             s6 = s6 + MulRateToBase1(IVr.CurncyCode,s6inv,IVr.FrRate,IVr.ToRateB1,IVr.ToRateB2,IVr.BaseRate1,IVr.BaseRate2,DefaultCurRoundOff);
             s7 = s7 + MulRateToBase1(IVr.CurncyCode,s7inv,IVr.FrRate,IVr.ToRateB1,IVr.ToRateB2,IVr.BaseRate1,IVr.BaseRate2,DefaultCurRoundOff);
+            s8 = s8 + MulRateToBase1(IVr.CurncyCode,s8inv,IVr.FrRate,IVr.ToRateB1,IVr.ToRateB2,IVr.BaseRate1,IVr.BaseRate2,DefaultCurRoundOff);// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 3:06:10 PM
+            s9 = s9 + MulRateToBase1(IVr.CurncyCode,s9inv,IVr.FrRate,IVr.ToRateB1,IVr.ToRateB2,IVr.BaseRate1,IVr.BaseRate2,DefaultCurRoundOff);// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 3:06:08 PM
           end;
         end;
 L55:;
@@ -947,7 +960,7 @@ if (testf) then begin
   end;
   if (RepSpec.ArtMode==2) then begin
     testf = true;
-    if ((sact==0) and (s0==0) and (s1==0) and (s2==0) and (s3==0) and  (s4==0) and  (s5==0) and (s6==0) and (s7==0) and (sum==0)) then begin testf = false; end;        
+    if ((sact==0) and (s0==0) and (s1==0) and (s2==0) and (s3==0) and  (s4==0) and  (s5==0) and (s6==0) and (s7==0) and (s8==0) and (s9==0) and (sum==0)) then begin testf = false; end;        
     if (testf) then begin
 /*    
       if (RepSpec.flags[2]==1) then begin
@@ -963,6 +976,8 @@ if (testf) then begin
       tot = tot + s5;
       tot = tot + s6;
       tot = tot + s7;
+      tot = tot + s8;// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 3:05:21 PM
+      tot = tot + s9;// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 3:05:23 PM
       tot = tot + sact;
       if (RepSpec.flags[2]==1) then begin
         tot = tot + rval;
@@ -975,20 +990,20 @@ if (testf) then begin
        OutString(48,0,CUr.Name,false);
        if (RepSpec.flags[2]==1) then begin
          if (blank(CUr.CurncyCode)) then begin
-           PrintAgedLine(sact,s0,s1,s2,s3,s4,s5,s6,s7,sum,tot,nrofper,480,CUr.Code);
+           BPIPrintAgedLine(sact,s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,sum,tot,nrofper,480,CUr.Code);
          end else begin
-           PrintAgedLine(sact,s0,s1,s2,s3,s4,s5,s6,s7,rval,tot,nrofper,464,CUr.Code);
+           BPIPrintAgedLine(sact,s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,rval,tot,nrofper,464,CUr.Code);
            OutString(465,0,CUr.CurncyCode,false);
          end;
        end else begin
-         PrintAgedLine(sact,s0,s1,s2,s3,s4,s5,s6,s7,sum,tot,nrofper,480,CUr.Code);
+         BPIPrintAgedLine(sact,s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,sum,tot,nrofper,480,CUr.Code);
        end;
       EndFormat;
     end;
   end;
   if (RepSpec.ArtMode==5) then begin
     testf = true;
-    if ((sact==0) and (s0==0) and (s1==0) and (s2==0) and (s3==0) and (s4==0) and (s5==0) and (s6==0) and (s7==0) and (sum==0)) then begin testf = false; end;
+    if ((sact==0) and (s0==0) and (s1==0) and (s2==0) and (s3==0) and (s4==0) and (s5==0) and (s6==0) and (s7==0) and (s8==0) and (s9==0) and (sum==0)) then begin testf = false; end;
     if (testf) then begin
       if (sum<>0) then begin
         PrintOnAccountInfo(CUr,rval,sum,CustOut,RepSpec,CurTotalsr,backdatf);
@@ -1007,6 +1022,8 @@ if (testf) then begin
       tot = tot + s5;
       tot = tot + s6;
       tot = tot + s7;
+      tot = tot + s8;// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 3:05:06 PM
+      tot = tot + s9;// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 3:05:08 PM
       tot = tot + sact;
       if (RepSpec.flags[2]==1) then begin
         tot = tot + rval;
@@ -1021,13 +1038,13 @@ if (testf) then begin
       StartFormat(15);
       if (RepSpec.flags[2]==1) then begin
         if (blank(CUr.CurncyCode)) then begin
-          PrintAgedLine(sact,s0,s1,s2,s3,s4,s5,s6,s7,blval,tot,nrofper,480,""); // CUr.Code
+          BPIPrintAgedLine(sact,s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,blval,tot,nrofper,480,""); // CUr.Code
         end else begin
-          PrintAgedLine(sact,s0,s1,s2,s3,s4,s5,s6,s7,blval,tot,nrofper,464,""); // CUr.Code
+          BPIPrintAgedLine(sact,s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,blval,tot,nrofper,464,""); // CUr.Code
           OutString(465,0,CUr.CurncyCode,false);
         end;
       end else begin
-        PrintAgedLine(sact,s0,s1,s2,s3,s4,s5,s6,s7,blval,tot,nrofper,480,""); // CUr.Code
+        BPIPrintAgedLine(sact,s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,blval,tot,nrofper,480,""); // CUr.Code
       end;
       EndFormat;
     end;
@@ -1207,7 +1224,9 @@ L77:;
   ss[5] = s5 + ss[5];
   ss[6] = s6 + ss[6];
   ss[7] = s7 + ss[7];
-  ss[8] = sact + ss[8];
+  ss[8] = s8 + ss[8];// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 3:25:43 PM
+  ss[9] = s9 + ss[9];// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 3:25:45 PM
+  ss[10] = sact + ss[10];
 
 /*  
   ss0 = s0 + ss0;
@@ -1227,7 +1246,9 @@ L77:;
   ssb2[5] = ssb2[5] + s5b2;
   ssb2[6] = ssb2[6] + s6b2;
   ssb2[7] = ssb2[7] + s7b2;
-  ssb2[8] = ssb2[8] + sactb2;
+  ssb2[8] = ssb2[8] + s8b2;// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 3:25:40 PM
+  ssb2[9] = ssb2[9] + s9b2;// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 3:25:41 PM
+  ssb2[10] = ssb2[10] + sactb2;
 /*  
   ss0b2 = s0b2 + ss0b2;
   ss1b2 = s1b2 + ss1b2;
@@ -1252,6 +1273,8 @@ L88:;
     tot = ss[6] + tot;
     tot = ss[7] + tot;
     tot = ss[8] + tot;
+    tot = ss[9] + tot;
+    tot = ss[10] + tot;
     totb2 = totb2 + ssb2[0];
     totb2 = totb2 + ssb2[1];
     totb2 = totb2 + ssb2[2];
@@ -1261,15 +1284,17 @@ L88:;
     totb2 = totb2 + ssb2[6];
     totb2 = totb2 + ssb2[7];
     totb2 = totb2 + ssb2[8];
+    totb2 = totb2 + ssb2[9];
+    totb2 = totb2 + ssb2[10];
     
     if (RepSpec.ArtMode==5) then begin
       totonacctmp = blval;
       if (AgedRec.SeparateOnAcc!=0 and AgedRec.ActualInvoices==0) then begin totonacctmp = TotOnAcc; end;
-      PrintARAged(RepSpec,ss[8],ss[0],ss[1],ss[2],ss[3],ss[4],ss[5],ss[6],ss[7],totonacctmp,tot+TotOnAcc,nrofper,
-                        ssb2[8],ssb2[0],ssb2[1],ssb2[2],ssb2[3],ssb2[4],ssb2[5],ssb2[6],ssb2[7],totb2);
+      BPIPrintARAged(RepSpec,ss[10],ss[0],ss[1],ss[2],ss[3],ss[4],ss[5],ss[6],ss[7],ss[8],ss[9],totonacctmp,tot+TotOnAcc,nrofper,
+                        ssb2[10],ssb2[0],ssb2[1],ssb2[2],ssb2[3],ssb2[4],ssb2[5],ssb2[6],ssb2[7],ssb2[8],ssb2[9],totb2);
     end else begin
-      PrintARAged(RepSpec,ss[8],ss[0],ss[1],ss[2],ss[3],ss[4],ss[5],ss[6],ss[7],TotOnAcc,tot+TotOnAcc,nrofper,
-                        ssb2[8],ssb2[0],ssb2[1],ssb2[2],ssb2[3],ssb2[4],ssb2[5],ssb2[6],ssb2[7],totb2);
+      BPIPrintARAged(RepSpec,ss[10],ss[0],ss[1],ss[2],ss[3],ss[4],ss[5],ss[6],ss[7],ss[8],ss[9],TotOnAcc,tot+TotOnAcc,nrofper,
+                        ssb2[10],ssb2[0],ssb2[1],ssb2[2],ssb2[3],ssb2[4],ssb2[5],ssb2[6],ssb2[7],ssb2[8],ssb2[9],totb2);
     end;
   end;
   if ((RepSpec.flags[2]==1) and (RepSpec.ArtMode==2)) then begin goto L99; end;
@@ -1307,7 +1332,7 @@ global
 procedure ARRn(record RcVc RepSpec)
 BEGIN
   val tot1Sum;
-  
+    
   StartReportJob(USetStr(2430));
    PrintHeaderAR(RepSpec);
   EndHeader;  

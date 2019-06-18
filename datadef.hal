@@ -2834,5 +2834,21 @@ begin
   	ArrayField(LegalRecNo,M4Long,0,0);// Edit ************************** BPI Ukraine - KramarAlexandr - Tuesday, 9 October 2018 09:59:07
   EndRecordAdd;
 	
+	BlockBegin(AgedBlock,-,"agedblock");
+		RecordField(Per1,M4Long,0,0);
+		RecordField(Per2,M4Long,0,0);
+		RecordField(Per3,M4Long,0,0);
+		RecordField(Per4,M4Long,0,0);
+		RecordField(Per5,M4Long,0,0);
+		RecordField(Per6,M4Long,0,0);
+		RecordField(ShowDelayDays,M4Int,0,0);
+		RecordField(UseAccPeriod,M4Int,0,0);
+		RecordField(AccPeriods,M4Long,0,0);
+		RecordField(ActualInvoices,M4Int,0,0);
+		RecordField(SeparateOnAcc,M4Int,0,0);
+		RecordField(Per7,M4Long,0,0);// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 11:54:25 AM
+		RecordField(Per8,M4Long,0,0);// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 11:54:27 AM
+  EndBlock;
+	
   return;
 end;
