@@ -825,3 +825,34 @@ begin
   EditFieldTL(h,v+=20, 150,"Pirk˜jas/Tiek˜jas",M4UStr,Normal,30,f1,false,ContactCUSClass); 
   EndWindow;
 end;
+
+window PurInvVClass:1// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 11:37:38 AM
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+  WindowBegin("Sukurti mok˜jimo pasiðlymˆ",PurInvVClass,CGMnt,RcType);
+  SetWRect(20,93,412,370);
+  vs=20;
+  EditFieldTL(h=150,v=6, 82,"Nuo apm. datos",M4Date,Normal,0,d1,false,PasteCurDate);
+  EditFieldTL(h,v+=20, 82,"Iki apm. datos",M4Date,Normal,0,d2,false,PasteCurDate);
+  EditFieldTL(h,v+=20 ,82,"Tiek˜jas",M4UStr,Normal,41,f1,false,VESClass);
+  EditFieldTL(h,v+=vs ,82,"Kategorija",   M4UStr,Normal,10,LastAcc,false,VGSClass);
+  EditFieldTL(h,v+=20 ,82,"Klas˜",M4UStr,Normal,60,f4,false,CClassSClass);
+  EditFieldTL(h,v+=20 ,82,"Valiuta",M4UStr,Normal,5,f2,false,CurncyCodeSClass);
+  EditFieldTL(h,v+=20 ,100,"Didìiausia suma",M4Str,Normal,255,f3,true,0);
+  EditFieldTL(h,v+=20 ,30,"Mok˜jimo bðdas",M4Code,Normal,2,FirstAcc,false,PMSClass);
+  EditFieldTL(h,v+=20 ,82,"Mok˜jimo data",M4Date,Normal,0,RegDate,false,PasteCurDate);
+  EditFieldTL(h,v+=20 ,82,"Factoring company",M4UStr,Normal,41,f10,false,VESClass);// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 11:38:51 AM
+
+  CheckBox(20,vm=(v+=22),0,"Mok˜ti laiku",flags[2]);
+  CheckBox(20,v+=16,0,"Naudoti sutart. nuolaidˆ",flags[1]);
+  CheckBox(20,v+=16,0,"¯traukti kredito paì.",flags[3]);
+  CheckBox(20,v+=16,0,"Vienas tiek˜jas mok˜jimui",flags[4]);
+  if (StandardHansa==false) then begin
+  CheckBox(20,v+=16,0,"Sukurti dalinius mok˜jimus",flags[6]);
+  end;
+  ButtonFrame(h=250,v=vm+16,123,2,"Rðäiavimas");
+  RadioButton(h,v,0,0,"Apmok˜jimo data",flags[5]);
+  RadioButton(h,v+=16,1,0,"Tiek˜jas",flags[5]);
+  EndWindow;
+end;
