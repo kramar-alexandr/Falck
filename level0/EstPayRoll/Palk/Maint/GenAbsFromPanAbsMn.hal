@@ -1,0 +1,81 @@
+external procedure PasteContractToAbsence(var record Absence,var LongInt,var string);
+external procedure PasteDateToAbsence(var record AbsenceVc,var LongInt);
+
+updating procedure DoAbsence(record PlanAbsenceVc PlanAbsr, LongInt ContrSerNr,string AbsTypeCode,date StartDate1,date EndDate1,var longint absencenr)
+begin
+  record AbsenceVc Absr;
+  LongInt errstr;
+  string 255 tstr;
+  
+  absencenr = -1;
+  RecordNew(Absr);
+  Absr.ContrSerNr = ContrSerNr;
+  Absr.AbsTypeCode = AbsTypeCode;
+  PasteContractToAbsence(Absr,errstr,tstr);
+  Absr.StartDate = StartDate1;
+  Absr.EndDate = EndDate1;
+  PasteDateToAbsence(Absr,errstr);
+  Absr.PlanedFlag = 1;
+  Absr.SerNr = NextSerNr("AbsenceVc",Absr.StartDate,-1,false,"");
+  if (RecordStore(Absr,false)) then begin
+    CreateRecordLink(PlanAbsr,CurrentCompany,Absr,CurrentCompany);  
+    CreateRecordLink(Absr,CurrentCompany,PlanAbsr,CurrentCompany);  
+    absencenr = Absr.SerNr;
+  end;
+  return;
+end;
+
+global
+updating function Integer GenAbsFromPlanAbsMn(record RcVc RepSpec,var string errstr)
+begin
+  Integer res;
+  LongInt absfr,absto,absencenr;
+  record PlanAbsenceVc PlanAbsr,oldPlanAbsr;
+  row PlanAbsenceVc PlanAbsrw;
+  record AbsenceVc Absr;
+  Boolean testf,TrHs,okf;
+  Integer rwcnt,i;
+
+  absfr = FirstInRange(RepSpec.f1,10);
+  absto = LastInRange(RepSpec.f1,10);
+  
+  PlanAbsr.SerNr = absfr;
+  TrHs = true;
+  while (LoopMain(PlanAbsr,1,TrHs)) begin
+    testf = true;
+    if (TrHs) then begin
+      if (absto!=-1) then begin
+        if  (PlanAbsr.SerNr>absto) then begin
+          TrHs = false;
+        end;
+      end;
+    end;
+    if (TrHs==false) then begin testf = false; end;
+    if (PlanAbsr.OKFlag!=1) then begin testf = false; end;
+    if (PlanAbsr.CalcFlag!=0) then begin testf = false; end;
+    if (testf) then begin
+      okf = true;
+      RecordCopy(oldPlanAbsr,PlanAbsr);
+      rwcnt = MatRowCnt(PlanAbsr);
+      for (i=0;i<rwcnt;i=i+1) begin
+        MatRowGet(PlanAbsr,i,PlanAbsrw);
+        if (PlanAbsrw.AbsenceNr==-1) then begin
+          DoAbsence(PlanAbsr,PlanAbsrw.ContrSerNr,PlanAbsrw.AbsTypeCode,PlanAbsrw.StartDate1,PlanAbsrw.EndDate1,absencenr);
+          if (absencenr>0) then begin
+            PlanAbsrw.AbsenceNr = absencenr;
+            MatRowPut(PlanAbsr,i,PlanAbsrw);
+          end else begin
+            okf = false;
+          end;
+        end;
+      end;
+      if (okf) then begin
+        PlanAbsr.CalcFlag = 1;
+      end;
+      RecordUpdate(oldPlanAbsr,PlanAbsr,false);
+    end;
+    UserTrace(PlanAbsr.SerNr,M4Long);            
+  end;
+  GenAbsFromPlanAbsMn = res;
+  RETURN;
+end;

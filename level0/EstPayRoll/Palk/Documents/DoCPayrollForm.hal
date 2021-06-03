@@ -3,7 +3,7 @@ external procedure GetLangNr(string,var record LangNrVc);
 external procedure CommonDocumentFields(record RcVc);
 external function Integer NumberofDocumentPages(string,Integer);
 external function Boolean Getformcode(Integer,Integer,string,string,string,LongInt,LongInt,string,string,Integer,string,var string);
-external function val GetEmplTaxPercent(string,date,integer,val,var string,var string,var string);
+external function val GetEmplTaxPercent(string,date,integer,val,var string,var string,var string,var string);
 
 procedure PrintCPayroll(record RcVc RepSpec,record CalcPayrollVc CPr,string formcode)
 begin
@@ -12,7 +12,7 @@ begin
   record DocVc Docr;
   record ContractVc Contrr;
   row CalcPayrollVc CPrw;
-  string 255 tstr,tmpstr;
+  string 255 tstr,tmpstr,bankacc;
   Integer i,rwcnt;
   val percent;
   string 30 idcode;
@@ -24,15 +24,16 @@ begin
   Docr.Code = formcode;
   if (ReadFirstMain(Docr,1,true)) then begin
   end;
-  Contrr.SerNr=CPr.ContrSerNr;
+  Contrr.SerNr = CPr.ContrSerNr;
   if (ReadFirstMain(Contrr,1,true)) then begin
-    percent=GetEmplTaxPercent(Contrr.EmplCode,CPr.PaymDate,2,CPr.BrutoTotal,tmpstr,tmpstr,idcode);//kogumispension
+    percent = GetEmplTaxPercent(Contrr.EmplCode,CPr.PaymDate,2,CPr.BrutoTotal,tmpstr,tmpstr,idcode,bankacc);//kogumispension
   end;
   OUTFORMFIELD("F_CP_SERNR",CPr.SerNr);
   OUTFORMFIELD("F_CP_CALCDATE",CPr.CalcDate);
   OUTFORMFIELD("F_CP_CONTRSERNR",CPr.ContrSerNr);
   OUTFORMFIELD("F_CP_EMPLNAME",CPr.Firstname & " " & CPr.Surname);
   OUTFORMFIELD("F_CP_IDCODE",idcode);
+  OUTFORMFIELD("F_CP_BANKACC",bankacc);
   OUTFORMFIELD("F_CP_PENSION",percent);
   OUTFORMFIELD("F_CP_STARTDATE",CPr.StartDate);
   OUTFORMFIELD("F_CP_ENDDATE",CPr.EndDate);

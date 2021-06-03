@@ -1,0 +1,72 @@
+//sepa import
+//new dev KB 03.01.2019
+
+global
+function boolean TRIdentSameRowExist(record TRIdentBlock TRIdentr, row TRIdentBlock TRIdentrw,integer skippedRow, var integer foundRow)
+begin
+  boolean res;
+  integer i,rwcnt;
+  row TRIdentBlock TRIdent2rw;
+  
+  foundRow = -1;
+  rwcnt = MatRowCnt(TRIdentr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(TRIdentr,i,TRIdent2rw);
+    if (TRIdent2rw.DomainCode == TRIdentrw.DomainCode AND 
+        TRIdent2rw.FamilyCode == TRIdentrw.FamilyCode AND 
+        TRIdent2rw.SubfamilyCode == TRIdentrw.SubfamilyCode AND
+        TRIdent2rw.TheirIBAN == TRIdentrw.TheirIBAN AND
+        TRIdent2rw.OurIBAN == TRIdentrw.OurIBAN AND
+        TRIdent2rw.RmtInfUstrd == TRIdentrw.RmtInfUstrd AND
+        i != skippedRow) then begin
+      res = true;
+      foundRow = i;
+      i = rwcnt;
+    end;
+  end;
+  TRIdentSameRowExist = res;
+  return;
+end;
+
+global
+function LongInt TRIdentBlockCheck(var record TRIdentBlock TRIdentr,record TRIdentBlock TRIdent2r,LongInt stat,LongInt long4)
+BEGIN
+  LongInt res;
+  Integer i,rwcnt,errcode,foundRow;
+  row TRIdentBlock TRIdentrw;
+  string 255 errstr;
+  
+  res = 0;
+  rwcnt = MatRowCnt(TRIdentr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(TRIdentr,i,TRIdentrw);
+    if (TRIdentSameRowExist(TRIdentr,TRIdentrw,i,foundRow)) then begin
+      RecordCheckError(1547," " & TRIdentrw.DomainCode & "/" & TRIdentrw.FamilyCode & "/" & TRIdentrw.SubfamilyCode & "/" & TRIdentrw.TheirIBAN,i,"DomainCode");      
+      res = -1;
+      goto LTRIdentBlockCheck;
+    end;
+    if (blank(TRIdentrw.DomainCode)) then begin
+      RecordCheckError(1058,"",i,"DomainCode");      
+      res = -1;
+      goto LTRIdentBlockCheck;
+    end;
+    if (blank(TRIdentrw.FamilyCode)) then begin
+      RecordCheckError(1058,"",i,"FamilyCode");      
+      res = -1;
+      goto LTRIdentBlockCheck;
+    end;
+    if (blank(TRIdentrw.SubfamilyCode)) then begin
+      RecordCheckError(1058,"",i,"SubfamilyCode");      
+      res = -1;
+      goto LTRIdentBlockCheck;
+    end;
+    if (blank(TRIdentrw.DefDescr)) then begin
+      RecordCheckError(1058,"",i,"DefDescr");      
+      res = -1;
+      goto LTRIdentBlockCheck;
+    end;
+  end;
+LTRIdentBlockCheck:;  
+  TRIdentBlockCheck = res;
+  return;
+end;

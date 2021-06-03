@@ -35,9 +35,16 @@ procedure ExpGetRowRate(var record ExpVc Expp,Integer rownr)
 begin
   row ExpVc Exprw;
   Date td;
+  record ExpTBlock ETb;
  
+  BlockLoad(ETb);
   MatRowGet(Expp,rownr,Exprw);
-  td = Exprw.ExpDate;
+  if (blank(Exprw.BankCurncy)) then begin
+    Exprw.BankCurncy = Expp.CurncyCode;
+  end;
+  if (ETb.ExpRateCostAcc!=0) then begin
+    td = Exprw.ExpDate;
+  end;
   if (blankdate(td)) then begin
     td = Expp.TransDate;
   end;
@@ -471,7 +478,7 @@ BEGIN
         end else begin
           Exprw.AccNumber = WLSettingsr.AccNumber;
         end;
-        Exprw.Sum = WayListrw.Endkm;
+        Exprw.Sum = Round(WayListrw.Endkm,DefaultRoundMode);
         Exprw.qty = WayListrw.WDistVal;
         MatRowPut(Expp,rownr,Exprw);
         CalcExpRow(Expp,rownr);
@@ -659,7 +666,7 @@ LExpHIDDENLine:;
   if (blank(docname)) then begin
     docname = "ExpForm";
   end;
-  fname = "tmp/" & USetStr(1820) & Expr.SerNr & ".pdf";
+  fname = "tmp/" & USetStr(1847) & Expr.SerNr & ".pdf";
   SetDocumentFilename(fname);
   SetMedia(mtPdf);
   PrintDocument(Expr,docname,false);
@@ -751,7 +758,9 @@ procedure CalcExpRow(var record ExpVc Expp,Integer rownr)
 begin
   row ExpVc Exprw;
   val rval,vval;
-  
+   record ExpTBlock ETb;
+ 
+  BlockLoad(ETb);
   MatRowGet(Expp,rownr,Exprw);
   if (Exprw.Sum!=0) then begin
     GetVAT2Code(Exprw.VATCode,rval,vval);
@@ -759,15 +768,15 @@ begin
     Exprw.VATSum = Exprw.VATSum / 100;
     Exprw.VATSum = Round(Exprw.VATSum,DefaultRoundMode);
     RoundVATSum(Expp.CurncyCode,"","ExpVc",Exprw.VATSum);
-//bk fix - TS 2017/08
+ //Bk - start //fix - TS 2017/08
   end else begin
     Exprw.VATSum = blankval;
-//bk fix - end
+ //Bk - end
   end;
-  if (blank(Exprw.BankCurncy)) then begin
-    Exprw.BaseSum = MulRateToBase1(Expp.CurncyCode,Exprw.Sum,Expp.FrRate,Expp.ToRateB1,Expp.ToRateB2,Expp.BaseRate1,Expp.BaseRate2,DefaultCurRoundOff);
-  end else begin
+  if (ETb.ExpRateCostAcc!=0) and (nonblank(Exprw.BankCurncy)) and (nonblankdate(Exprw.ExpDate)) and (Exprw.ExpDate!=Expp.TransDate) then begin
     Exprw.BaseSum = MulRateToBase1(Exprw.BankCurncy,Exprw.Sum,Exprw.FrRateBankVal,Exprw.ToRateB1BankVal,Exprw.ToRateB2BankVal,Exprw.BaseRate1BankVal,Exprw.BaseRate2BankVal,DefaultCurRoundOff);
+  end else begin
+    Exprw.BaseSum = MulRateToBase1(Expp.CurncyCode,Exprw.Sum,Expp.FrRate,Expp.ToRateB1,Expp.ToRateB2,Expp.BaseRate1,Expp.BaseRate2,DefaultCurRoundOff);
   end;
   if (Exprw.BaseSum!=0) then begin
     GetVAT2Code(Exprw.VATCode,rval,vval);
@@ -775,10 +784,10 @@ begin
     Exprw.BaseVATSum = Exprw.BaseVATSum / 100;
     Exprw.BaseVATSum = Round(Exprw.BaseVATSum,DefaultRoundMode);
     RoundVATSum(Expp.CurncyCode,"","ExpVc",Exprw.BaseVATSum);
-//bk fix - TS 2017/08
+//Bk - start //fix - TS 2017/08
   end else begin
     Exprw.BaseVATSum = blankval;
-//bk fix - end
+//Bk - end
   end;
   MatRowPut(Expp,rownr,Exprw);
   ExpSumup(Expp,vval);

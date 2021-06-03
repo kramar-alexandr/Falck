@@ -1,7 +1,6 @@
 external procedure StripEndingSpaces(var string);
 external function string 255 StringFromSysList(Integer,Integer);
 
-global
 procedure PasteFromWn(Integer wn,string paststr)
 begin
   Integer mwn;
@@ -17,7 +16,6 @@ begin
           WindowFieldGoto(mwn,PPr,-1,"CalcSerNr",true);
       end;
     end;
-
     if (GetWindowFileName(mwn)=="AbsenceVc") begin
       record AbsenceVc Absr;
       switch (WindowActiveField(mwn)) begin
@@ -42,7 +40,7 @@ begin
     slen = len(tstr);
     for (i=1;i<slen;i=i+1) begin
       if (mid(tstr,i,1)==":") then begin
-        res=mid(tstr,i+6,20);
+        res = mid(tstr,i+6,20);
         goto L1;
       end;
     end;  
@@ -57,7 +55,7 @@ procedure PasteNrFromSysList(Integer wn)
 begin
   string 20 tstr;
 
-  tstr=SerNrFromSysList(wn);
+  tstr = SerNrFromSysList(wn);
   PasteFromWn(wn,tstr);
   return;
 end;
@@ -66,7 +64,7 @@ procedure PasteStringFromSysList(Integer wn)
 begin
   string 20 tstr;
 
-  tstr=StringFromSysList(wn,-2);
+  tstr = StringFromSysList(wn,-2);
   PasteFromWn(wn,tstr);
   return;
 end;

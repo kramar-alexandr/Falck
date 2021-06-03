@@ -1,0 +1,50 @@
+//Bk //valuutakursid KB 05.02.2018 - new functions only
+remote function boolean CurRatesAreOld(string,var date);
+
+function string 5 GetCurncyCodeFromIVVc(record IVVc IVp, integer rownr)
+begin
+  string 5 res;
+  row IVVc IVrw;
+
+  if(rownr = -1) then begin
+    res = IVp.CurncyCode;
+  end else begin
+    MatRowGet(IVp,rownr,IVrw);
+    res = IVrw.CurncyCode;
+  end;
+  GetCurncyCodeFromIVVc = res;
+  return;
+end;
+
+function string 5 GetCurncyCodeFromORVc(record ORVc ORp)
+begin
+  string 5 res;
+
+  res = ORp.CurncyCode;
+  GetCurncyCodeFromORVc = res;
+  return;
+end;
+
+procedure CheckRateLastUpdTime(string curncyCode)
+begin
+  date lastUpdDate;
+
+  if(CurRatesAreOld(curncyCode,lastUpdDate)) then begin
+    MessageBox(2346," on " & lastUpdDate & " - " & curncyCode);
+  end;
+  return;
+end;
+
+global
+procedure IVVc_CheckRateLastUpdTime(record IVVc IVp, integer rownr)
+begin
+  CheckRateLastUpdTime(GetCurncyCodeFromIVVc(IVp,rownr));
+  return;
+end;
+
+global
+procedure ORVc_CheckRateLastUpdTime(record ORVc ORp)
+begin
+  CheckRateLastUpdTime(GetCurncyCodeFromORVc(ORp));
+  return;
+end;

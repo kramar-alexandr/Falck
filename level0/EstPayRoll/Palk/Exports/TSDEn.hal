@@ -12,8 +12,8 @@ begin
   integer year,month;
   Boolean test,TrHs;
 
-  year=RepSpec.flags[1];
-  month=RepSpec.flags[2];
+  year = RepSpec.flags[1];
+  month = RepSpec.flags[2];
 
   ExportPlainXml("<?xml version=""1.0"" encoding=""UTF-8""?>",0);
   BlockLoad(CYr);

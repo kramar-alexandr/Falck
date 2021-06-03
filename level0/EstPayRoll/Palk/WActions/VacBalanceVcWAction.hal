@@ -1,4 +1,4 @@
-external function integer CountVacDaysNorm(LongInt,integer,date,date);
+external function integer CountVacDaysNorm(LongInt,integer,date,date,var val);
 external procedure YearCheck(var LongInt);
 external procedure GetFullYear(integer,var date,var date);
 
@@ -21,7 +21,6 @@ begin
       PutWindowRecord(wn,VBr);
     end; 
   end;
-  
   VacBalanceDClassSwitchRow = true;
   return;
 end;
@@ -43,7 +42,6 @@ begin
   if (VBr.OKFlag!=0) then begin
     res = false;
   end;
-
   VacBalanceDClassDeleteRowTest = res;
   return;
 end;
@@ -106,7 +104,8 @@ function boolean VacBalanceDClassYearEFAfter(integer wn,integer rownr,integer ch
   record VacBalanceVc VBr;
   row VacBalanceVc VBrw;
   date sd,ed;
-  
+  val tmpval;
+
   if (changedf!=0) then begin
     GetWindowRecord(wn,VBr);
     DeselectWindow(wn,false);
@@ -116,10 +115,10 @@ function boolean VacBalanceDClassYearEFAfter(integer wn,integer rownr,integer ch
       GetFullYear(VBrw.Year,sd,ed);
       VBrw.SDate = sd;
       VBrw.EDate = ed;
-      VBrw.VacDaysNorm=CountVacDaysNorm(VBr.ContrSerNr,VBrw.Year,VBrw.SDate,VBrw.EDate);
-      VBrw.VacDaysToUse=VBrw.VacDaysNorm-VBrw.VacDaysUsed;
-      VBrw.BestBeforeDate=AddYear(ed,1);
-      VBrw.VacDaysStatus=1;
+      VBrw.VacDaysNorm = CountVacDaysNorm(VBr.ContrSerNr,VBrw.Year,VBrw.SDate,VBrw.EDate,tmpval);
+      VBrw.VacDaysToUse = VBrw.VacDaysNorm-VBrw.VacDaysUsed;
+      VBrw.BestBeforeDate = AddYear(ed,1);
+      VBrw.VacDaysStatus = 1;
     end;
     MatRowPut(VBr,rownr,VBrw);
     PutWindowRecord(wn,VBr);
@@ -137,11 +136,10 @@ begin
     GetWindowRecord(wn,VBr);
     DeselectWindow(wn,false);
     MatRowGet(VBr,rownr,VBrw);
-    VBrw.VacDaysToUse=VBrw.VacDaysNorm-VBrw.VacDaysUsed;
+    VBrw.VacDaysToUse = VBrw.VacDaysNorm - VBrw.VacDaysUsed;
     MatRowPut(VBr,rownr,VBrw);
     PutWindowRecord(wn,VBr);
   end;
-
   VacBalanceDClassVacDaysNormEFAfter = true;
   return;
 end;
@@ -150,17 +148,17 @@ function boolean VacBalanceDClassSDateEFAfter(integer wn,integer rownr,integer c
 begin  
   record VacBalanceVc VBr;
   row VacBalanceVc VBrw;
-  
+  val tmpval;
+
   if (changedf!=0) then begin
     GetWindowRecord(wn,VBr);
     DeselectWindow(wn,false);
     MatRowGet(VBr,rownr,VBrw);
-    VBrw.VacDaysNorm=CountVacDaysNorm(VBr.ContrSerNr,VBrw.Year,VBrw.SDate,VBrw.EDate);
-    VBrw.VacDaysToUse=VBrw.VacDaysNorm-VBrw.VacDaysUsed;
+    VBrw.VacDaysNorm = CountVacDaysNorm(VBr.ContrSerNr,VBrw.Year,VBrw.SDate,VBrw.EDate,tmpval);
+    VBrw.VacDaysToUse = VBrw.VacDaysNorm - VBrw.VacDaysUsed;
     MatRowPut(VBr,rownr,VBrw);
     PutWindowRecord(wn,VBr);
   end;
-
   VacBalanceDClassSDateEFAfter = true;
   return;
 end;
@@ -177,7 +175,6 @@ begin
     case "VacDaysNorm": res = VacBalanceDClassVacDaysNormEFAfter(wn,rownr,changed);
     case "VacDaysUsed": res = VacBalanceDClassVacDaysNormEFAfter(wn,rownr,changed);
   end;
-  
   VacBalanceDClassAfterEditField = res;
   return;
 end;

@@ -1,6 +1,27 @@
 event startup
-begin
+  begin
 
 		Setting("Falck - Automatically Created Objects",AutoCrObjTClass,modNL);// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 25 June 2018 14:31:58
+		Setting("Falck - Non-VAT Payer Supplier Class",VINoVATPayTClass,modPL);
+		Report("Falck - PL/SL Comparison",FLComparisonRClass,FLComparisonRn,0,modNL);
+
+    SString(13000000,"Falck - PL/SL Comparison");//Fakt. nr.
+    SString(13000001,"Invoice No.");//Fakt. nr.
+    SString(13000002,"Official No.");//Oficialus nr.
+    SString(13000003,"Date");//Oper. data
+    SString(13000004,"Tag/Object");//Objektas
+    SString(13000005,"Debit");//Debetas
+    SString(13000006,"Credit");//Kreditas
+    SString(13000007,"Accounts");
+    SString(13000008,"Object");
+    SString(13000009,"Debit");
+    SString(13000010,"Deb. Date");
+    SString(13000011,"Deb. Inv.");
+    SString(13000012,"Credit");
+    SString(13000013,"Cred. Date");
+    SString(13000014,"Cred. Inv.");
+    SString(13000015,"Profit");
+
+
 	  return;
 end;

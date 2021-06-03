@@ -1,0 +1,286 @@
+//pangaliidestus
+external function LongInt DateDiff(Date,Date);
+external function boolean SGWSendStateReqToHTS(area,record BankReqQueVc,var string,var string);
+external procedure SGWGenerateStateReqArea(var area,record BankReqQueVc);
+external updating procedure MarkBankQueRecordFailed(var record BankReqQueVc,string);
+external procedure BankingDebugMsg(string,string);
+external function boolean IsPartnerStmtActive(string,string);
+external function integer BankQueStatusNew();
+external function integer BankQueStatusSent();
+external function integer BankQueStatusFailed();
+
+
+/*
+function string 20 GetActiveStmntTypeForPartner(record BankServicesBlock BankServicesbl, string partner)
+begin
+  string 20 res;
+
+  switch(partner) begin //do not translate res
+    case "SGW":
+      if (BankServicesbl.Bank1AccStmtFlag == 1) then begin
+        res = "Statement";
+      end;
+      if (BankServicesbl.Bank1TodayAccStmtFlag == 1) then begin
+        res = "TodayStatement";
+      end;
+  end;
+  GetActiveStmntTypeForPartner = res;
+  return;
+end;
+*/
+
+procedure StmntLastDateTimeForPartner(record BankServicesBlock BankServicesbl, var date lastDate, var time lastTime, string stmntType, string partner)
+begin
+  switch(partner) begin
+    case "SGW":
+      switch(stmntType) begin
+        case "TodayStatement":
+          lastDate = BankServicesbl.Bank1TodayAccStmtLastDate;
+          lastTime = BankServicesbl.Bank1TodayAccStmtLastTime;
+        case "Statement":
+          lastDate = BankServicesbl.Bank1AccStmtLastDate;
+          lastTime = BankServicesbl.Bank1AccStmtLastTime;
+      end;
+  end;
+  return;
+end;
+
+global updating
+procedure ReportReplyDateTimeStmtPartner(date datep, time timep, string stmntType, string partner)
+begin
+  record BankServicesBlock BankServicesbl;
+  
+  BlockLoad(BankServicesbl);
+  switch(partner) begin
+    case "SGW":
+      switch(stmntType) begin
+        case "TodayStatement":
+          BankServicesbl.Bank1TodayAccStmtLastDate = datep;
+          BankServicesbl.Bank1TodayAccStmtLastTime = timep;
+        case "Statement":
+          BankServicesbl.Bank1AccStmtLastDate = datep;
+          BankServicesbl.Bank1AccStmtLastTime = timep;
+      end;
+  end;
+  BlockStore(BankServicesbl);
+  return;
+end;
+
+global
+function string 10 BankSWIFTToPartnerCode(string swiftCode)
+begin
+  string 10 res;
+
+  switch(swiftCode) begin
+    case "HABAEE2X": res = "SGW";
+  end;
+  BankSWIFTToPartnerCode = res;
+  return;
+end;
+
+global
+function boolean SendStateRequestToBankHTS(record BankReqQueVc BankReqQuer, var string uniqueID, var string errMsg)
+begin
+  boolean res;
+  area reqArea;
+
+  switch(BankReqQuer.Partner) begin
+    case "SGW":
+      SGWGenerateStateReqArea(reqArea,BankReqQuer);
+      if (GetAreaLength(reqArea) > 0) then begin
+        BankingDebugMsg("BANK SERVICES","Sending statement request area to SGW HTS server...");
+        res = SGWSendStateReqToHTS(reqArea,BankReqQuer,uniqueID,errMsg);
+      end else begin
+        errMsg = USetStr(1501079); 
+      end;
+    otherwise
+      errMsg = USetStr(1501080) & BankReqQuer.Partner; 
+  end;  
+  if (res) then begin
+    BankingDebugMsg("BANK SERVICES","Statement area successfully sent, size " & GetAreaLength(reqArea));
+  end else begin
+    BankingDebugMsg("BANK SERVICES","Statement area sending failed, size " & GetAreaLength(reqArea));
+  end;
+  SendStateRequestToBankHTS = res;
+  return;
+end;
+
+function boolean PartnerStmtAlreadyInQueue(record BankServicesBlock BankServicesbl, string stmntType, string partner, string bankCode, string iban, var string errMsg)
+begin
+  boolean res;
+  record BankReqQueVc BankReqQuer;
+
+  BankReqQuer.Status = BankQueStatusNew;
+  BankReqQuer.BankReqType = stmntType;
+  BankReqQuer.Partner = partner;
+  BankReqQuer.BankCode = bankCode;
+  BankReqQuer.IBAN = iban;
+  if (ReadFirstKey("StatReqTypeIBAN",BankReqQuer,5,true)) then begin
+    res = true;
+    errMsg = "New " & stmntType & " SerNr " & BankReqQuer.SerNr & " request is already in bank queue";
+    goto LStmtAlreadyInQueue;
+  end;
+  ResetLoop(BankReqQuer);
+  RecordClear(BankReqQuer);
+  BankReqQuer.Status = BankQueStatusSent;
+  BankReqQuer.BankReqType = stmntType;
+  BankReqQuer.Partner = partner;
+  BankReqQuer.BankCode = bankCode;
+  BankReqQuer.IBAN = iban;
+  if (ReadFirstKey("StatReqTypeIBAN",BankReqQuer,5,true)) then begin
+    res = true;
+    errMsg = "Sent " & stmntType & " SerNr " & BankReqQuer.SerNr & " request is already in bank queue";
+    goto LStmtAlreadyInQueue;
+  end;
+  ResetLoop(BankReqQuer);
+  RecordClear(BankReqQuer);
+  BankReqQuer.Status = BankQueStatusFailed;
+  BankReqQuer.BankReqType = stmntType;
+  BankReqQuer.Partner = partner;
+  BankReqQuer.BankCode = bankCode;
+  BankReqQuer.IBAN = iban;
+  if (ReadFirstKey("StatReqTypeIBAN",BankReqQuer,5,true)) then begin
+    res = true;
+    errMsg = "Failed " & stmntType & " SerNr " & BankReqQuer.SerNr & " request is in bank queue found, stopping.";
+    goto LStmtAlreadyInQueue;
+  end;
+LStmtAlreadyInQueue:;
+  PartnerStmtAlreadyInQueue = res;
+  return;
+end;
+
+function boolean NextStmtCanBeSent(record BankServicesBlock BankServicesbl, string stmntType, string partner, var string errMsg)
+begin
+  boolean res;
+  date stmntLastDate,nextToDate;
+  time stmntLastTime;
+
+  res = true;
+  switch(stmntType) begin
+    case "Statement": nextToDate = AddDay(CurrentDate,-1); //up to yesterday 23:59:59 only
+    case "TodayStatement": ; //leaving it blank, can request up to current moment
+    otherwise
+      res = false;
+  end;
+  StmntLastDateTimeForPartner(BankServicesbl,stmntLastDate,stmntLastTime,stmntType,partner);
+  if (stmntLastDate >= nextToDate AND nonblankdate(nextToDate)) then begin
+    res = false;
+    errMsg = stmntType & " request was already done to date/time: " & stmntLastDate & " / " & stmntLastTime;
+  end;
+  NextStmtCanBeSent = res;
+  return;
+end;
+
+function boolean CanReqStmntForPartner(record BankServicesBlock BankServicesbl, string stmntType, string partner, string bankCode, string iban, var string errMsg)
+begin
+  boolean res;
+  record CYBlock CYb;
+  string 60 userName;
+
+  res = true;
+  BlockLoad(CYb);
+  if (blank(CYb.OrgNr)) then begin
+    res = false;
+    errMsg = "Company reg. nr. is empty";
+    goto LCanReqStmntForPartner;
+  end;
+  if (blank(partner)) then begin
+    res = false;
+    errMsg = "Partner is blank";
+    goto LCanReqStmntForPartner;
+  end;
+  if (blank(iban)) then begin
+    res = false;
+    errMsg = "IBAN is blank in Payment Modes";
+    goto LCanReqStmntForPartner;
+  end;
+  if (PartnerStmtAlreadyInQueue(BankServicesbl,stmntType,partner,bankCode,iban,errMsg)) then begin
+    res = false;
+    goto LCanReqStmntForPartner;
+  end;
+  if (NextStmtCanBeSent(BankServicesbl,stmntType,partner,errMsg) == false) then begin
+    res = false;
+    goto LCanReqStmntForPartner;
+  end;
+LCanReqStmntForPartner:;
+  CanReqStmntForPartner = res;
+  return;
+end;
+
+updating
+procedure SaveNewBankRequest(var record BankReqQueVc BankReqQuer)
+begin
+  BankReqQuer.SerNr = NextSerNr("BankReqQueVc",BankReqQuer.CreationDate,-1,false,"");
+  if (RecordInsert(BankReqQuer,true)) then begin
+  end;
+  return;
+end;
+
+global updating //for qupdating
+procedure AddStmntTypeReqToQue(string stmntType, string partner, string bankCode, string iban)
+begin
+  record BankServicesBlock BankServicesbl;
+  record BankReqQueVc BankReqQuer;
+  record CYBlock CYb;
+  string 255 errMsg;
+
+  BlockLoad(CYb);
+  BlockLoad(BankServicesbl);
+  if (CanReqStmntForPartner(BankServicesbl,stmntType,partner,bankCode,iban,errMsg)) then begin
+    //SGW
+    RecordNew(BankReqQuer);
+    BankReqQuer.RegNr = CYb.OrgNr;
+    BankReqQuer.UserName = "idle_task"; //as done by idle task in server - no cur user
+    BankReqQuer.BankReqType = stmntType;
+    //BankReqQuer.ReqFileName // will generate file on the fly when sending this request
+    BankReqQuer.Status = BankQueStatusNew;
+    BankReqQuer.SendAttempts = 0;
+    BankReqQuer.StatusMessage = USetStr(1501068);
+    if (stmntType == "Statement" AND nonblankdate(BankServicesbl.Bank1AccStmtLastDate) AND DateDiff(CurrentDate,BankServicesbl.Bank1AccStmtLastDate) > 2) then begin
+      BankReqQuer.CreationDate = AddDay(BankServicesbl.Bank1AccStmtLastDate,2); //as if it was created earlier
+    end else begin
+      BankReqQuer.CreationDate = CurrentDate;
+    end;
+    BankReqQuer.CreationTime = CurrentTime;
+    BankReqQuer.Partner = partner;
+    BankReqQuer.BankCode = bankCode;
+    BankReqQuer.IBAN = iban;
+    SaveNewBankRequest(BankReqQuer);
+  end else begin
+    BankingDebugMsg("BANK SERVICES","Cannot request account statement: " & errMsg & ", partner: " & partner & ", bank: " & bankCode & ", iban: " & iban);
+  end;
+  return;
+end;
+
+global
+procedure AddBankStatementReqToCurCompany()
+begin
+  boolean res;
+  record PMBlock PMblr;
+  row PMBlock PMblrw;
+  record BankVc Bankr;
+  string 10 partner;
+  string 20 stmntType;
+  string 60 userName,iban;
+  integer i,rwcnt;
+
+  BlockLoad(PMblr);
+  rwcnt = MatRowCnt(PMblr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(PMblr,i,PMblrw);
+    Bankr.Code = PMblrw.BankCode;
+    if (ReadFirstMain(Bankr,1,true)) then begin
+      iban = PMblrw.BankNr;
+      partner = BankSWIFTToPartnerCode(Bankr.SWIFT);
+      stmntType = "Statement";
+      if (IsPartnerStmtActive(partner,stmntType)) then begin
+        qupdating.AddStmntTypeReqToQue(stmntType,partner,Bankr.Code,iban); //this call must be qupdating
+      end;
+      stmntType = "TodayStatement";
+      if (IsPartnerStmtActive(partner,stmntType)) then begin
+        qupdating.AddStmntTypeReqToQue(stmntType,partner,Bankr.Code,iban); //this call must be qupdating
+      end;
+    end;
+  end;
+  return;
+end;

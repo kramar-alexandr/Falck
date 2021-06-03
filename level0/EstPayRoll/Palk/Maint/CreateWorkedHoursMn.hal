@@ -2,6 +2,8 @@ external function boolean IsWHPaymType(string);
 external function Boolean IsHolliday(Date,record ExceptDatesVc,Boolean);
 external function Boolean GetExceptDates(record ExceptDatesVc,integer);
 external procedure GetDaysAndHoursTotal(record WorkedHoursVc,integer,var val,var integer);
+external function string 1 GetAbsTypeFlag(string);
+external function boolean IsAbsDay(LongInt,date,var string);
 
 global
 function string 20 GetWHTTypeCode(string ptcode,date whdate)
@@ -17,7 +19,7 @@ begin
     if (WHTr.PaymTypeCode!=ptcode) then begin TrHs = false; end;
     if (TrHs) then begin
       if (DateInRange(whdate,WHTr.StartDate,WHTr.EndDate)) then begin
-        res=WHTr.Code;
+        res = WHTr.Code;
         goto LGetWHTTypeCode;
       end;
     end;
@@ -27,40 +29,47 @@ LGetWHTTypeCode:;
   return;
 end;
 
-procedure PasteHoursInWHrw(row WorkedHoursVc WHrw,integer day,val hours)
+procedure PasteHoursInWHrw(row WorkedHoursVc WHrw,integer day,val hours,string abstype)
 begin
+  string 10 tmpsrt;
+  
+  if nonblank(abstype) then begin
+    tmpsrt = abstype;
+  end else begin
+    tmpsrt = ValToString(hours,M4Val,"",",",0);
+  end;
   switch (day) begin
-    case 1: WHrw.d1 = hours;
-    case 2: WHrw.d2 = hours;
-    case 3: WHrw.d3 = hours;
-    case 4: WHrw.d4 = hours;
-    case 5: WHrw.d5 = hours;
-    case 6: WHrw.d6 = hours;
-    case 7: WHrw.d7 = hours;
-    case 8: WHrw.d8 = hours;
-    case 9: WHrw.d9 = hours;
-    case 10: WHrw.d10 = hours;
-    case 11: WHrw.d11 = hours;
-    case 12: WHrw.d12 = hours;
-    case 13: WHrw.d13 = hours;
-    case 14: WHrw.d14 = hours;
-    case 15: WHrw.d15 = hours;
-    case 16: WHrw.d16 = hours;
-    case 17: WHrw.d17 = hours;
-    case 18: WHrw.d18 = hours;
-    case 19: WHrw.d19 = hours;
-    case 20: WHrw.d20 = hours;
-    case 21: WHrw.d21 = hours;
-    case 22: WHrw.d22 = hours;
-    case 23: WHrw.d23 = hours;
-    case 24: WHrw.d24 = hours;
-    case 25: WHrw.d25 = hours;
-    case 26: WHrw.d26 = hours;
-    case 27: WHrw.d27 = hours;
-    case 28: WHrw.d28 = hours;
-    case 29: WHrw.d29 = hours;
-    case 30: WHrw.d30 = hours;
-    case 31: WHrw.d31 = hours;
+    case 1: WHrw.d1 = tmpsrt;
+    case 2: WHrw.d2 = tmpsrt;
+    case 3: WHrw.d3 = tmpsrt;
+    case 4: WHrw.d4 = tmpsrt;
+    case 5: WHrw.d5 = tmpsrt;
+    case 6: WHrw.d6 = tmpsrt;
+    case 7: WHrw.d7 = tmpsrt;
+    case 8: WHrw.d8 = tmpsrt;
+    case 9: WHrw.d9 = tmpsrt;
+    case 10: WHrw.d10 = tmpsrt;
+    case 11: WHrw.d11 = tmpsrt;
+    case 12: WHrw.d12 = tmpsrt;
+    case 13: WHrw.d13 = tmpsrt;
+    case 14: WHrw.d14 = tmpsrt;
+    case 15: WHrw.d15 = tmpsrt;
+    case 16: WHrw.d16 = tmpsrt;
+    case 17: WHrw.d17 = tmpsrt;
+    case 18: WHrw.d18 = tmpsrt;
+    case 19: WHrw.d19 = tmpsrt;
+    case 20: WHrw.d20 = tmpsrt;
+    case 21: WHrw.d21 = tmpsrt;
+    case 22: WHrw.d22 = tmpsrt;
+    case 23: WHrw.d23 = tmpsrt;
+    case 24: WHrw.d24 = tmpsrt;
+    case 25: WHrw.d25 = tmpsrt;
+    case 26: WHrw.d26 = tmpsrt;
+    case 27: WHrw.d27 = tmpsrt;
+    case 28: WHrw.d28 = tmpsrt;
+    case 29: WHrw.d29 = tmpsrt;
+    case 30: WHrw.d30 = tmpsrt;
+    case 31: WHrw.d31 = tmpsrt;
   end;  
   return;
 end;
@@ -78,14 +87,14 @@ begin
   integer rwcnt,rwcnt1,i,j,d,year,month,rw,days,dtot;
   LongInt frcontr,tocontr;
   date whdate,thedate,contrSDate;
-  boolean testf,testf1,TrHs,excflag;
+  boolean testf,testf1,TrHs;
   val hours,htot;
-  
+  string 10 atcode,abstype;
+
   year = RepSpec.flags[1];
   month = RepSpec.flags[2];
   frcontr = FirstInRange(RepSpec.f1,20);
   tocontr = LastInRange(RepSpec.f1,20);
-  hours = RepSpec.vals0;
   thedate.year = year;
   thedate.month = month;
 
@@ -93,7 +102,7 @@ begin
   RecordNew(WHr);
   WHr.Year = year;
   WHr.Month = month;
-  if (GetExceptDates(EDr,year)) then begin excflag = true; end;
+  if (GetExceptDates(EDr,year)) then begin end;
 
   TrHs = true;
   ResetLoop(Contrr);
@@ -148,14 +157,18 @@ begin
                     WHrw.ObjCode = Contrrw.ObjCode;
                     days = DaysInMonth(year,month);
                     for (d=1;d<=days;d=d+1) begin
+                      abstype = "";
                       thedate.day = d;                    
                       if (DateInRange(thedate,Contrr.StartDate,Contrr.EndDate)) then begin
-                        if (excflag) then begin
-                          if (IsHolliday(thedate,EDr,false)==false) then begin
-                            PasteHoursInWHrw(WHrw,d,hours);
-                          end;
+                        if (IsAbsDay(Contrr.SerNr,thedate,atcode)) then begin
+                          hours = 0;
+                          abstype = GetAbsTypeFlag(atcode);
+                          PasteHoursInWHrw(WHrw,d,hours,abstype);
                         end else begin
-                          PasteHoursInWHrw(WHrw,d,hours);
+                          if (IsHolliday(thedate,EDr,false)==false) then begin
+                            hours = RepSpec.vals0;
+                            PasteHoursInWHrw(WHrw,d,hours,abstype);
+                          end;
                         end;
                       end;
                     end;
@@ -176,7 +189,7 @@ begin
   end;
   if (MatRowCnt(WHr)>0) then begin
     WHr.SerNr = NextSerNr("WorkedHoursVc",whdate,-1,false,"");//Bk fix, ts - 2018/05
-    if (WHr.SerNr > 0) then begin
+    if (WHr.SerNr>0) then begin
       if (RecordInsert(WHr,false)) then begin end;
     end;
   end;

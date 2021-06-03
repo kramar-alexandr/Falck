@@ -43,8 +43,8 @@ begin
   integer rwcnt,i;
   LongInt updatemode,insertmode;
   
-  insertmode=1;
-  updatemode=2;
+  insertmode = 1;
+  updatemode = 2;
   res = 0;
 
   if (SFB2r.Invalid!=0) then begin
@@ -81,7 +81,7 @@ begin
     goto LSalaryFBVcRecordCheck;
   end;
  
-  rwcnt=MatRowCnt(SFBr);
+  rwcnt = MatRowCnt(SFBr);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(SFBr,i,SFBrw);
     if (SFBrw.ContrSerNr<=0) then begin
@@ -108,7 +108,7 @@ begin
   end;
 LSalaryFBVcRecordCheck:;
   if (res==-1) then begin
-    SFBr.OKFlag=0;
+    SFBr.OKFlag = 0;
     SetMarkFlag(SFBr.OKFlag,SFBr.OKMark);
   end;
   SalaryFBVcRecordCheck = res;

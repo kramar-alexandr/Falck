@@ -1,0 +1,417 @@
+//earvete erinouded
+external procedure ExtractObj(string,var Integer,var string);
+external function Boolean GetFirstItem(var string,var record INVc);
+external procedure FindBatchBestBeforeDate(string,string,var Date);
+external procedure EstEInvBuildString2(string,string,var string);
+external procedure EstEInvTagValue(string,string,integer,area); 
+external procedure EstEInvStartTag2(string,var string,area);
+external procedure EstEInvEndTag(string,area);
+
+global
+procedure FindHospitalContracts(record IVVc IVr, string artCode, var array record COVc arrCOr)
+begin
+  record COVc COr;
+  row COVc COrw;
+  boolean TrHs,testf;
+  integer i,rwcnt;
+
+  TrHs = true;  
+  COr.CustCode = IVr.CustCode;
+  while (LoopKey("CustCode",COr,1,TrHs)) begin
+    testf = true;
+    if (TrHs) then begin
+      if (COr.CustCode <> IVr.CustCode) then begin
+         TrHs = false; 
+      end;
+      if (COr.Accepted == 0) then begin
+         testf = false; 
+      end;
+      if (COr.OKFlag == 0) then begin
+         testf = false;
+      end;
+      if (nonblankdate(COr.endDate) AND nonblankdate(COr.startDate) AND DateInRange(IVr.InvDate,COr.startDate,COr.endDate) == false) then begin
+        testf = false;
+      end;
+      if (blankdate(COr.startDate) AND nonblankdate(COr.endDate) AND IVr.InvDate > COr.endDate) then begin
+        testf = false;
+      end;  
+      if (nonblankdate(COr.startDate) AND blankdate(COr.endDate) AND IVr.InvDate < COr.startDate) then begin
+        testf = false;
+      end;  
+    end; 
+    if (TrHs and testf) then begin
+      if (nonblank(artCode)) then begin
+        rwcnt = MatRowCnt(COr);
+        for (i=0;i<rwcnt;i=i+1) begin
+          MatRowGet(COr,i,COrw);
+          if (COrw.ArtCode == artCode) then begin
+            arrCOr[arrCOr.length] = COr;
+            i = rwcnt; //do not search in this contract anymore
+          end;
+        end;
+      end else begin
+        arrCOr[arrCOr.length] = COr;
+      end;
+    end;
+  end;
+  return;
+end;
+
+global
+function string 100 GetClientContactEMail(string clientContName, string cuCode)
+begin
+  string 100 res;
+  record ContactRelVc ContactRelr;
+  record CUVc contCUr;
+
+  if (nonblank(clientContName) AND nonblank(cuCode)) then begin
+    ContactRelr.ContactName = clientContName;
+    ContactRelr.CustCode = cuCode;
+    if (ReadFirstKey("Contact",ContactRelr,2,true)) then begin
+      contCUr.Code = ContactRelr.ContactCode;
+      if (ReadFirstMain(contCUr,1,true)) then begin
+        res = contCUr.eMail;
+      end;
+    end;
+  end;
+  GetClientContactEMail = res;
+  return;
+end;
+
+function boolean GetObjOfTypeFromIV(var record ObjVc Objr, string objType, record IVVc IVr)
+begin
+  boolean res;
+  string 20 obj;
+  integer pos;
+
+  pos = 0;
+  ExtractObj(IVr.Objects,pos,obj);
+  while (nonblank(obj)) begin
+    Objr.Code = obj;
+    if (ReadFirstMain(Objr,1,true)) then begin
+      if (Objr.OTCode == objType) then begin
+        res = true;
+        goto LGetObjOfTypeFromIV;
+      end;
+    end;
+    ExtractObj(IVr.Objects,pos,obj);
+  end;  
+LGetObjOfTypeFromIV:;
+  GetObjOfTypeFromIV = res;
+  return;
+end;
+
+global
+function string 100 GetIVContractNumber(record IVVc IVr)
+begin
+  string 100 res;
+  string 5 OTcodeToFind;
+  record EInvObjTypeBlock EInvObjTypebl;
+  row EInvObjTypeBlock EInvObjTypeblrw;
+  integer i,rwcnt;
+  record ObjVc Objr;
+
+  if (nonblank(IVr.OfficialSerNr2)) then begin
+    res = IVr.OfficialSerNr2;
+  end else begin
+    BlockLoad(EInvObjTypebl);
+    rwcnt = MatRowCnt(EInvObjTypebl);
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(EInvObjTypebl,i,EInvObjTypeblrw);
+      if (EInvObjTypeblrw.EInvElem == "ContractNumber") then begin
+        i = rwcnt;
+        OTcodeToFind = EInvObjTypeblrw.IVObjType;
+      end;
+    end;
+    if (nonblank(OTcodeToFind)) then begin
+      if (GetObjOfTypeFromIV(Objr,OTcodeToFind,IVr)) then begin
+        res = Objr.Comment;
+      end;
+    end;
+  end;
+  GetIVContractNumber = res;
+  return;
+end;
+
+global
+procedure GetIVContentCodeAndText(record IVVc IVr, var string contCode, var string contText)
+begin
+  string 5 OTcodeToFind;
+  record EInvObjTypeBlock EInvObjTypebl;
+  row EInvObjTypeBlock EInvObjTypeblrw;
+  integer i,rwcnt;
+  record ObjVc Objr;
+
+  BlockLoad(EInvObjTypebl);
+  rwcnt = MatRowCnt(EInvObjTypebl);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(EInvObjTypebl,i,EInvObjTypeblrw);
+    if (EInvObjTypeblrw.EInvElem == "InvoiceContentCode") then begin
+      i = rwcnt;
+      OTcodeToFind = EInvObjTypeblrw.IVObjType;
+    end;
+  end;
+  if (nonblank(OTcodeToFind)) then begin
+    if (GetObjOfTypeFromIV(Objr,OTcodeToFind,IVr)) then begin
+      contCode = Objr.Code;
+      contText = Objr.Comment;
+    end;
+  end;
+  return;
+end;
+
+function string 10 GetRowExpiredDate(record IVVc IVr, row IVVc IVrw)
+begin
+  string 10 res;
+  date expDate;
+
+  FindBatchBestBeforeDate(IVrw.ArtCode,IVrw.SerialNr,expDate);
+  res = DateToString(expDate,"YYYY-MM-DD");
+  GetRowExpiredDate = res;
+  return;
+end;
+
+function string 60 GetRowLotNumber(record IVVc IVr, row IVVc IVrw)
+begin
+  string 60 res;
+
+  res = IVrw.SerialNr;
+  GetRowLotNumber = res;
+  return;
+end;
+
+function string 50 GetRowItemRavimikood(record INVc INr)
+begin
+  string 50 res;
+
+  res = INr.UserStr1; //user must define this field name
+  GetRowItemRavimikood = res;
+  return;
+end;
+
+function string 50 GetRowItemAtc(record INVc INr)
+begin
+  string 50 res;
+
+  res = INr.UserStr2; //user must define this field name
+  GetRowItemAtc = res;
+  return;
+end;
+
+function string 50 GetRowItemProducer(record INVc INr)
+begin
+  string 50 res;
+  record SourceVc Sourcer;
+
+  Sourcer.Code = INr.DefaultSource;
+  if (ReadFirstMain(Sourcer,1,true)) then begin
+    res = Sourcer.Name;
+  end;
+  GetRowItemProducer = res;
+  return;
+end;
+
+function string 50 GetRowItemProducerCntry(record INVc INr)
+begin
+  string 50 res;
+  record SourceVc Sourcer;
+  record CUVc CUr;
+
+  Sourcer.Code = INr.DefaultSource;
+  if (ReadFirstMain(Sourcer,1,true)) then begin
+    CUr.Code = Sourcer.Manufacturer;
+    if (ReadFirstMain(CUr,1,true)) then begin
+      res = CUr.CountryCode;
+    end;
+  end;
+  GetRowItemProducerCntry = res;
+  return;
+end;
+
+global
+procedure ExpHospitalFields(record IVVc IVr, row IVVc IVrw, var area a)
+begin
+  string 255 tstr,param;
+  string 100 tenderId,contractId;
+  record INVc INr;
+  record COVc COr;
+  array record COVc arrCOr;
+  boolean contractFound,itemFound;
+
+  param = "";
+  tstr = "ExpiredDate";
+  EstEInvBuildString2("extensionId",tstr,param);
+  EstEInvStartTag2("ItemReserve",param,a);
+  EstEInvTagValue("InformationContent",GetRowExpiredDate(IVr,IVrw),100,a);
+  EstEInvEndTag("ItemReserve",a);
+  param = "";
+  tstr = "LotNumber";
+  EstEInvBuildString2("extensionId",tstr,param);
+  EstEInvStartTag2("ItemReserve",param,a);
+  EstEInvTagValue("InformationContent",GetRowLotNumber(IVr,IVrw),100,a);
+  EstEInvEndTag("ItemReserve",a);
+
+  if (nonblank(IVrw.ArtCode)) then begin
+    itemFound = GetFirstItem(IVrw.ArtCode,INr);
+  end;
+  if (itemFound) then begin
+    param = "";
+    tstr = "Ravimikood";
+    EstEInvBuildString2("extensionId",tstr,param);
+    EstEInvStartTag2("ItemReserve",param,a);
+    EstEInvTagValue("InformationContent",GetRowItemRavimikood(INr),100,a);
+    EstEInvEndTag("ItemReserve",a);
+    param = "";
+    tstr = "Atc";
+    EstEInvBuildString2("extensionId",tstr,param);
+    EstEInvStartTag2("ItemReserve",param,a);
+    EstEInvTagValue("InformationContent",GetRowItemAtc(INr),100,a);
+    EstEInvEndTag("ItemReserve",a);
+    param = "";
+    tstr = "Producer";
+    EstEInvBuildString2("extensionId",tstr,param);
+    EstEInvStartTag2("ItemReserve",param,a);
+    EstEInvTagValue("InformationContent",GetRowItemProducer(INr),100,a);
+    EstEInvEndTag("ItemReserve",a);
+    param = "";
+    tstr = "ProduserCountry";
+    EstEInvBuildString2("extensionId",tstr,param);
+    EstEInvStartTag2("ItemReserve",param,a);
+    EstEInvTagValue("InformationContent",GetRowItemProducerCntry(INr),100,a);
+    EstEInvEndTag("ItemReserve",a);
+  end;
+  if (itemFound) then begin
+    if (blank(IVr.BKContractId)) then begin //regardless of BKTenderId field
+      FindHospitalContracts(IVr,IVrw.ArtCode,arrCOr);
+      if (arrCOr.length > 0) then begin
+        COr = arrCOr[0]; //use the first found
+        contractId = COr.InvComment;
+        tenderId = COr.Department;
+      end;
+    end else begin
+      contractId = IVr.BKContractId;
+      tenderId = IVr.BKTenderId;
+    end;
+    param = "";
+    tstr = "ContractId";
+    EstEInvBuildString2("extensionId",tstr,param);
+    EstEInvStartTag2("ItemReserve",param,a);
+    EstEInvTagValue("InformationContent",contractId,100,a);
+    EstEInvEndTag("ItemReserve",a);
+    param = "";
+    tstr = "TenderId";
+    EstEInvBuildString2("extensionId",tstr,param);
+    EstEInvStartTag2("ItemReserve",param,a);
+    EstEInvTagValue("InformationContent",tenderId,100,a);
+    EstEInvEndTag("ItemReserve",a);
+  end;
+  return;
+end;
+
+global
+procedure ExpHospitalFieldsTelema(record IVVc IVr, row IVVc IVrw, var area a)
+begin
+  string 255 tstr,param;
+  string 100 tenderId,contractId;
+  record INVc INr;
+  record COVc COr;
+  array record COVc arrCOr;
+  boolean contractFound,itemFound;
+
+  param = "";
+  tstr = "ExpiredDate";
+  EstEInvBuildString2("extensionId",tstr,param);
+  EstEInvStartTag2("ItemReserve",param,a);
+  EstEInvTagValue("InformationContent",GetRowExpiredDate(IVr,IVrw),100,a);
+  EstEInvEndTag("ItemReserve",a);
+  param = "";
+  tstr = "LotNumber";
+  EstEInvBuildString2("extensionId",tstr,param);
+  EstEInvStartTag2("ItemReserve",param,a);
+  EstEInvTagValue("InformationContent",GetRowLotNumber(IVr,IVrw),100,a);
+  EstEInvEndTag("ItemReserve",a);
+
+  if (nonblank(IVrw.ArtCode)) then begin
+    itemFound = GetFirstItem(IVrw.ArtCode,INr);
+  end;
+  if (itemFound) then begin
+    param = "";
+    tstr = "Ravimikood";
+    EstEInvBuildString2("extensionId",tstr,param);
+    EstEInvStartTag2("ItemReserve",param,a);
+    EstEInvTagValue("InformationContent",GetRowItemRavimikood(INr),100,a);
+    EstEInvEndTag("ItemReserve",a);
+    param = "";
+    tstr = "Atc";
+    EstEInvBuildString2("extensionId",tstr,param);
+    EstEInvStartTag2("ItemReserve",param,a);
+    EstEInvTagValue("InformationContent",GetRowItemAtc(INr),100,a);
+    EstEInvEndTag("ItemReserve",a);
+    param = "";
+    tstr = "Producer";
+    EstEInvBuildString2("extensionId",tstr,param);
+    EstEInvStartTag2("ItemReserve",param,a);
+    EstEInvTagValue("InformationContent",GetRowItemProducer(INr),100,a);
+    EstEInvEndTag("ItemReserve",a);
+    param = "";
+    tstr = "ProduserCountry";
+    EstEInvBuildString2("extensionId",tstr,param);
+    EstEInvStartTag2("ItemReserve",param,a);
+    EstEInvTagValue("InformationContent",GetRowItemProducerCntry(INr),100,a);
+    EstEInvEndTag("ItemReserve",a);
+  end;
+  if (itemFound) then begin
+    if (blank(IVr.BKContractId)) then begin //regardless of BKTenderId field
+      FindHospitalContracts(IVr,IVrw.ArtCode,arrCOr);
+      if (arrCOr.length > 0) then begin
+        COr = arrCOr[0]; //use the first found
+        contractId = COr.InvComment;
+        tenderId = COr.Department;
+      end;
+    end else begin
+      contractId = IVr.BKContractId;
+      tenderId = IVr.BKTenderId;
+    end;
+    param = "";
+    tstr = "ContractId";
+    EstEInvBuildString2("extensionId",tstr,param);
+    EstEInvStartTag2("ItemReserve",param,a);
+    EstEInvTagValue("InformationContent",contractId,100,a);
+    EstEInvEndTag("ItemReserve",a);
+    param = "";
+    tstr = "TenderId";
+    EstEInvBuildString2("extensionId",tstr,param);
+    EstEInvStartTag2("ItemReserve",param,a);
+    EstEInvTagValue("InformationContent",tenderId,100,a);
+    EstEInvEndTag("ItemReserve",a);
+  end;
+  return;
+end;
+
+global
+function boolean IsHospitalInvoice()
+begin
+  boolean res;
+  record EInvoiceBlock EInvoicebl;
+
+  BlockLoad(EInvoicebl);
+  if (EInvoicebl.UseMedicalElems == 1) then begin
+    res = true;
+  end;
+  IsHospitalInvoice = res;
+  return;
+end;
+
+global
+function boolean IsTootuKassaInvoice()
+begin
+  boolean res;
+  record EInvoiceBlock EInvoicebl;
+
+  BlockLoad(EInvoicebl);
+  if (EInvoicebl.UseTootKassaElems == 1) then begin
+    res = true;
+  end;
+  IsTootuKassaInvoice = res;
+  return;
+end;

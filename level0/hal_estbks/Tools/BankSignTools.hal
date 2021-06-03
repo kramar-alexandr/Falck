@@ -1,0 +1,166 @@
+//pangaliidestus
+//new dev
+external updating procedure ExcPINWClassOKOP(record RcVc); //must not be remote
+external updating procedure ExcPINWClassOKPP(record RcVc); //must not be remote
+external updating procedure ExcPINWClassOKPaymPayroll(record RcVc); //must not be remote
+external updating procedure ExcPINWClassOKGrpPaymPayroll(record RcVc); //must not be remote
+external updating procedure ExcPINWClassNoSignOP(record RcVc); //must not be remote
+external updating procedure ExcPINWClassNoSignPP(record RcVc); //must not be remote
+external updating procedure ExcPINWClassNoSignPaymPayroll(record RcVc); //must not be remote
+external updating procedure ExcPINWClassNoSignGrpPaymPayroll(record RcVc); //must not be remote
+external updating procedure MarkBankQueRecordSent(var record BankReqQueVc,string);
+external updating procedure MarkBankQueRecordTried(var record BankReqQueVc,string);
+external function boolean SGWSendSignedFileToHTS(area,string,record BankReqQueVc,var string,var string);
+external function integer BankQueStatusNew();
+remote procedure CopyAreaToServer(area,string); //must be remote
+remote function boolean BankingInTestMode();
+remote procedure BankingDebugMsg(string,string);
+
+global
+function boolean SendSignedFileToBankHTS(area fileArea, string fileName, record BankReqQueVc BankReqQuer, var string uniqueID, var string errMsg)
+begin
+  boolean res;
+
+  switch(BankReqQuer.Partner) begin
+    case "SGW":
+      res = SGWSendSignedFileToHTS(fileArea,fileName,BankReqQuer,uniqueID,errMsg);
+    otherwise
+      errMsg = USetStr(1501080) & BankReqQuer.Partner; 
+  end;  
+  SendSignedFileToBankHTS = res;
+  return;
+end;
+
+global
+procedure SendBdocToBankHTS(area signedFileArea, string fileName,var record BankReqQueVc BankReqQuer, var string errMsg)
+begin
+  boolean res;
+  string 255 uniqueID;
+
+  ReadFirstMain(BankReqQuer,0,true); //get refreshed record from main thread in case it was modified
+  if (BankReqQuer.Status != BankQueStatusNew) then begin
+    goto LSendBdocToBankHTS;
+  end;
+  if (GetAreaLength(signedFileArea) > 0) then begin
+    switch(BankReqQuer.Partner) begin
+      case "SGW":
+        BankingDebugMsg("BANK SERVICES","Sending file " & fileName & " to SGW HTS server...");
+        res = SGWSendSignedFileToHTS(signedFileArea,fileName,BankReqQuer,uniqueID,errMsg);
+      //case "another":
+    end;  
+    if (res) then begin
+      qupdating.MarkBankQueRecordSent(BankReqQuer,uniqueID);
+      BankingDebugMsg("BANK SERVICES","Request was sent to HTS server. Type = " & BankReqQuer.BankReqType & ", ser.nr = " & BankReqQuer.SerNr);
+      Delete_File("./tmp/" & fileName);
+    end else begin
+      qupdating.MarkBankQueRecordTried(BankReqQuer,errMsg);
+      BankingDebugMsg("BANK SERVICES","Request sending to HTS failed. Will try again. Type = " & BankReqQuer.BankReqType & ", ser.nr = " & BankReqQuer.SerNr);
+    end;
+  end else begin
+    errMsg = USetStr(1501069) & fileName; 
+  end;
+LSendBdocToBankHTS:;
+  return;
+end;
+
+function string 255 SignErrorCodeToMsg(integer errCode)
+begin
+  string 255 res;
+
+  /* HW developer's initial description
+    1 - DigiDoc support not available
+    1000 - Invalid input buffer
+    1001 - Couldn't create the DigiDoc file
+    1001 - Couldn't create container
+    1002 - Couldn't add data file
+    1003 - Couldn't sign the container
+    1004 - Couldn't save the DigiDoc file
+    1005 - Signature validation error
+  */
+  switch(errCode) begin
+    case 1: res = "DigiDoc support not available " & "err=" & errCode;
+    case 1000: res = "Invalid input buffer " & "err=" & errCode;
+    case 1001: res = "Couldn't create the DigiDoc file / Container " & "err=" & errCode;
+    case 1002: res = "Couldn't add data file " & "err=" & errCode;
+    case 1003: res = USetStr(1501101) & " " & "err=" & errCode;
+    case 1004: res = "Couldn't save the DigiDoc file " & "err=" & errCode;
+    case 1005: res = "Signature validation error " & "err=" & errCode;
+    otherwise
+      res = USetStr(14667) & " " & errCode;
+  end;
+  SignErrorCodeToMsg = res;
+  return;
+end;
+
+//this happens on client, as ID card is on client, so call here must be not remote
+global updating
+function boolean SignAreaWithIDCard(area fileArea, string fileName, string pin, var area signedArea, var string signedFileName, var string errMsg)
+begin
+  boolean res;
+  integer errorCode;
+  string 255 bdocDispFileName;
+  string 20 tempFolder;
+
+  tempFolder = "tmp/";
+  bdocDispFileName = fileName;
+
+  if (GetAreaLength(fileArea) > 0) then begin
+    if (BankingInTestMode) then begin //no signing, just copy the area, will be singed by test server
+      MessageBox(0,"Panga teenused on TEST reziimis. Allkirjastamine ei ole vajalik.");
+      res = true;
+      InsertAreaBeforeArea(fileArea,signedArea);
+      signedFileName = fileName; //for test, send the file in plain xml, will be signed at SGWHTS
+    end else begin
+      signedFileName = Left(fileName,Len(fileName) - 4) & ".bdoc";
+      res = CreateSignedDigiDocFileWithCard(fileArea,bdocDispFileName,"text/plain",pin,tempFolder & signedFileName,errorCode);
+      if (res AND errorCode == 0) then begin //res = true but errcode was 1003 if pin incorrect, so checking both
+        AddFileToArea(tempFolder & signedFileName,signedArea,false);
+        Delete_File(tempFolder & signedFileName); //the signing function creates the file, so need to delete it
+      end else begin
+        res = false;
+        errMsg = SignErrorCodeToMsg(errorCode);
+      end;
+    end;
+    CopyAreaToServer(signedArea,tempFolder & signedFileName); //keep copy of file on server until really sent
+  end;
+  SignAreaWithIDCard = res;
+  return;
+end;
+
+global updating
+procedure ExcPINWClassOK()
+begin
+  integer wn;
+  record RcVc RepSpec;
+
+  wn = CurWindow;
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  switch(RepSpec.f4) begin
+    case "OPVc": ExcPINWClassOKOP(RepSpec);
+    case "PPVc": ExcPINWClassOKPP(RepSpec);
+    case "PaymPayrollVc": ExcPINWClassOKPaymPayroll(RepSpec);
+    case "GrpPaymPayrollVc": ExcPINWClassOKGrpPaymPayroll(RepSpec);
+  end;
+  CloseWindow(wn);
+  return;
+end;
+
+global updating
+procedure ExcPINWClassNoSign()
+begin
+  integer wn;
+  record RcVc RepSpec;
+
+  wn = CurWindow;
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  switch(RepSpec.f4) begin
+    case "OPVc": ExcPINWClassNoSignOP(RepSpec);
+    case "PPVc": ExcPINWClassNoSignPP(RepSpec);
+    case "PaymPayrollVc": ExcPINWClassNoSignPaymPayroll(RepSpec);
+    case "GrpPaymPayrollVc": ExcPINWClassNoSignGrpPaymPayroll(RepSpec);
+  end;
+  CloseWindow(wn);
+  return;
+end;

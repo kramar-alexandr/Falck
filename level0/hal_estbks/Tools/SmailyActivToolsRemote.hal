@@ -1,0 +1,76 @@
+//Bk //smaily ts - 2019/07
+updating
+procedure UpdSmailyServiceCache(record RcVc RepSpec)
+begin
+  record ServiceCacheVc SCr,oldSCr;
+  boolean newRecord;
+
+  SCr.Code = "SMAILY";
+  if (ReadFirstMain(SCr,1,true)) then begin
+    newRecord = false;
+    RecordCopy(oldSCr,SCr);
+  end else begin
+    newRecord = true;
+    RecordNew(SCr);
+  end;
+  SCr.ServiceHost = RepSpec.f1;
+  SCr.ServicePort = 443;
+  SCr.FuncName = "api/contact.php";
+  SCr.Partner = "";
+  SCr.ServiceHTTPPort = "";
+  if (newRecord) then begin
+    SCr.Code = "SMAILY";
+    RecordInsert(SCr,false);
+  end else begin
+    RecordUpdate(oldSCr,SCr,true);
+  end;
+  return;
+end;
+
+updating
+procedure UpdSmailySettings(record RcVc RepSpec)
+begin
+  record SmailyBlock Sb;
+
+  BlockLoad(Sb);
+  Sb.ServiceHost = RepSpec.f1;
+  Sb.dbUser = RepSpec.f2;
+  Sb.dbPasswd = RepSpec.f3;
+  BlockStore(Sb);
+  return;
+end;
+
+updating
+procedure UpdSmailyFieldsMatrix(record RcVc RepSpec)
+begin
+  record SmailyFieldsBlock SFr;
+  row SmailyFieldsBlock SFrw;
+  integer rwcnt,i;
+
+  BlockLoad(SFr);
+  rwcnt = MatRowCnt(SFr);
+  if(rwcnt == 0) then begin //fill only if empty, do not overwrite user settings
+    ClearRow(SFr,SFrw,1);
+    SFrw.FieldName = "email";
+    SFrw.dbField = "eMail";
+    SFrw.Type = 0;
+    SFrw.Param = "";
+    MatRowInsert(SFr,0,SFrw);
+    ClearRow(SFr,SFrw,1);
+    SFrw.FieldName = "name";
+    SFrw.dbField = "Name";
+    SFrw.Type = 0;
+    SFrw.Param = "";
+    MatRowInsert(SFr,1,SFrw);
+    BlockStore(SFr);
+  end;
+end;
+
+global updating
+procedure FillSmailySettingsRemote(record RcVc RepSpec)
+begin
+  UpdSmailyServiceCache(RepSpec);
+  UpdSmailySettings(RepSpec);
+  UpdSmailyFieldsMatrix(RepSpec);
+  return;
+end;

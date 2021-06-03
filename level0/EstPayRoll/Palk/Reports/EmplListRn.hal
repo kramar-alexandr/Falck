@@ -1,0 +1,120 @@
+//palk
+external function string 255 AddStr(string,string,string);
+
+procedure PrintRepHeader(record RcVc RepSpec)
+begin
+  integer rw;
+  string 20 frEmpl,toEmpl;
+
+  rw = 1;
+  if (nonblank(RepSpec.f1)) then begin
+    frEmpl = FirstInRange(RepSpec.f1,20);
+    toEmpl = LastInRange(RepSpec.f1,20);
+    Header(rw,USetStr(1500478) & " " & frEmpl & " : " & toEmpl,1);
+  end;
+  if (RepSpec.flags[0] != 0) then begin
+    rw = rw + 1;
+    Header(rw,USetStr(1500390),1);
+  end;
+  EndHeader;
+  return;
+end;
+
+procedure SetReportColumns()
+begin
+  SetRepCol(2,40);
+  SetRepCol(3,85);
+  SetRepCol(4,130);
+  SetRepCol(5,170);
+  SetRepCol(6,210);
+  SetRepCol(7,350);
+  SetRepCol(8,420);
+  return;
+end;
+
+procedure PrintColumnHeaders()
+begin
+  StartFormat(15);
+  OutString(0,0,USetStr(1500385),false); //kood
+  OutString(2,0,USetStr(1500395),false); //nimi
+  OutString(3,0,USetStr(1500510),false); //isikukood
+  OutString(4,0,USetStr(12114),false); //telefon
+  OutString(5,0,USetStr(12112),false); //email
+  OutString(6,0,USetStr(14307),false); //aadress
+  OutString(7,0,USetStr(1500564),false); //IBAN
+  OutString(8,0,USetStr(1500396),false); //objekt
+  OutString(1,0,USetStr(1500466),true); //staatus
+  EndFormat;
+  Gray_Divider(0,1);
+  return;
+end;
+
+procedure PrintEmployees(record RcVc RepSpec)
+begin
+  record EmplVc Emplr;
+  boolean TrHs,testf;
+  string 20 frEmpl,toEmpl;
+  string 255 fullAddr;
+  string 20 statusStr;
+  string 50 ibanStr;
+
+  frEmpl = FirstInRange(RepSpec.f1,20);
+  toEmpl = LastInRange(RepSpec.f1,20);
+
+  TrHs = true;
+  Emplr.Code = frEmpl;
+  while LoopMain(Emplr,1,TrHs) begin
+    testf = true;
+    if (nonblank(toEmpl) AND Emplr.Code > toEmpl) then begin
+      TrHs = false;
+    end;
+    if (RepSpec.flags[0] == 0 AND Emplr.ClosedFlag == 1) then begin
+      testf = false;
+    end;
+    if (TrHs and testf) then begin
+      StartFormat(15);
+      OutString(0,0,Emplr.Code,false);
+      OutString(2,0,Emplr.Firstname & " " & Emplr.Surname,false);
+      OutString(3,0,Emplr.IDCode,false);
+      OutString(4,0,Emplr.Phone,false);
+      OutString(5,0,Emplr.Mail,false);
+      fullAddr = "";
+      fullAddr = AddStr(fullAddr,Emplr.Addr1,",");
+      fullAddr = AddStr(fullAddr,Emplr.Addr2,",");
+      fullAddr = AddStr(fullAddr,Emplr.Addr3,",");
+      OutString(6,0,fullAddr,false);
+      if (nonblank(Emplr.RecipientBankAcc)) then begin
+        ibanStr = Emplr.RecipientBankAcc & " *";
+      end else begin
+        ibanStr = Emplr.BankAccount;
+      end;
+      OutString(7,0,ibanStr,false);
+      OutString(8,0,Emplr.ObjCode,false);
+      if (Emplr.ClosedFlag == 1) then begin
+        statusStr = USetStr(1500468);
+      end else begin
+        statusStr = "";
+        //statusStr = USetStr(1500467);
+      end;
+      OutString(1,0,statusStr,true);
+      EndFormat;
+    end;
+  end;
+  StartFormat(15);
+  Gray_Divider(0,1);
+  OutString(0,0,"* - " & USetStr(1500565),false);
+  EndFormat;
+  return;
+end;
+
+global
+procedure EmplListRn(record RcVc RepSpec)
+begin
+  StartReportJob(USetStr(6100));
+  PrintRepHeader(RepSpec);
+  SetReportColumns;
+  PrintColumnHeaders;
+  PrintEmployees(RepSpec);
+  EndJob;
+  return;
+end;

@@ -11,7 +11,7 @@ external procedure GetTSDRowsArray(var array string,var Integer);
 external function val GetMinSocTax(date);
 external function val GetMinSocTaxPaymSum(date,val,string);
 external function string 255 GetTSDRowSpec(string);
-external function val GetEmplTaxPercent(string,date,integer,val,var string,var string,var string);
+external function val GetEmplTaxPercent(string,date,integer,val,var string,var string,var string,var string);
 external function boolean EmplSocTaxMin(string);
 external function roundmode GetSalaryRoundMode(string);
 external function val CalcIncTax(val);
@@ -35,75 +35,75 @@ begin
   LongInt ContractNr;
   
   if (RepSpec.JobDf==1) then begin 
-    repflag=true; //Report
+    repflag = true; //Report
   end else begin
-    repflag=false; //Export
+    repflag = false; //Export
   end; 
 
   if (RepSpec.Custf==1) then begin 
-    tsdadd1=true; //Lisa 1
+    tsdadd1 = true; //Lisa 1
   end else begin
-    tsdadd1=false; //Lisa 2
+    tsdadd1 = false; //Lisa 2
   end; 
   
-  year=RepSpec.flags[1];
-  month=RepSpec.flags[2];
+  year = RepSpec.flags[1];
+  month = RepSpec.flags[2];
   rw = 1;
   
   if (repflag) then begin
     DoPrintTSD_part1(tsdadd1,year,month,rw);
   end;
-  calcvalue=RepSpec.flags[6];
+  calcvalue = RepSpec.flags[6];
   
   //Lisa
   rw = 0;
-  transdate.day=01;
-  transdate.month=month;
-  transdate.year=year;
+  transdate.day = 01;
+  transdate.month = month;
+  transdate.year = year;
   
   GetTSDRowsArray(tsdrwcode,tsdrwcnt);
-  TrHs=true;
+  TrHs = true;
   ResetLoop(Emplr);
-  Emplr.ClosedFlag=0;
+  Emplr.ClosedFlag = 0;
   while (LoopKey("ClosedFlag",Emplr,1,TrHs)) begin
-    if (Emplr.ClosedFlag!=0) then begin TrHs=false; end;
+    if (Emplr.ClosedFlag!=0) then begin TrHs = false; end;
     if (TrHs) then begin
-      testf=true;
-      printemplflag=false;
+      testf = true;
+      printemplflag = false;
       if (tsdadd1) then begin
-        if (Emplr.NotResidentFlag!=0) then begin testf=false; end;
+        if (Emplr.NotResidentFlag!=0) then begin testf = false; end;
       end else begin
-        if (Emplr.NotResidentFlag==0) then begin testf=false; end;
+        if (Emplr.NotResidentFlag==0) then begin testf = false; end;
       end;  
       if (testf) then begin
-        coef=blankval;
-        inctaxperc=0;
-        TrHs1=true;
-        emplcode=Emplr.Code;
+        coef = blankval;
+        inctaxperc = 0;
+        TrHs1 = true;
+        emplcode = Emplr.Code;
         ResetLoop(Contrr);
-        Contrr.EmplCode=emplcode;
+        Contrr.EmplCode = emplcode;
         while (LoopKey("EmplCode",Contrr,1,TrHs1)) begin
-          if (Contrr.EmplCode!=emplcode) then begin TrHs1=false; end;
+          if (Contrr.EmplCode!=emplcode) then begin TrHs1 = false; end;
           if (TrHs1) then begin
             if (Contrr.IncTaxFreeMinFlag==1) then begin
-              inctaxfreeminflag=1;
+              inctaxfreeminflag = 1;
             end else begin
-              inctaxfreeminflag=0;
+              inctaxfreeminflag = 0;
             end;
             if (Contrr.DisPensFlag!=0) then begin
-              dispensflag=1;
+              dispensflag = 1;
             end else begin
-              dispensflag=0;
+              dispensflag = 0;
             end;
             ContractNr = Contrr.SerNr;
-            rwcnt=MatRowCnt(Contrr);
+            rwcnt = MatRowCnt(Contrr);
             for (i=0;i<rwcnt;i=i+1) begin
               MatRowGet(Contrr,i,Contrrw);
               if (DateInRange(transdate,Contrrw.SDate,Contrrw.EDate)) and (DateInRange(transdate,Contrr.StartDate,Contrr.EndDate)) then begin
-                coef=coef+Contrrw.WorkLoad;
+                coef = coef + Contrrw.WorkLoad;
               end;
             end;
-            inctaxperc=GetEmplTaxPercent(emplcode,transdate,0,1,tmpstr,tmpstr,tmpstr);
+            inctaxperc = GetEmplTaxPercent(emplcode,transdate,0,1,tmpstr,tmpstr,tmpstr,tmpstr);
             PaymPayrollVcEmplSums(emplcode,Contrr.SerNr,year,month,tsdrwsum,tsdrwsumtot,tsdrwcode,tsdrwcnt,printemplflag);
           end;
         end;
@@ -115,37 +115,37 @@ begin
           end else begin
             DoExportTSD_part1(tsdadd1,Emplr);
           end;
-          stot1030=0;
-          stot1060=0;
-          stot1070=0;
-          stot1090=0;
-          stot1100=0;
-          stot1110=0;
-          stot1120=0;
-          stot1130=0;
-          stot1140=0;
-          stot1160=0;
-          stot1170=0;
-          stot2150=0;
-          stot1030=tsdrwsumtot[emplcode & ":" & "1030"];
-          stot1060=tsdrwsumtot[emplcode & ":" & "1060"];
-          stot1070=tsdrwsumtot[emplcode & ":" & "1070"];
-          stot1100=tsdrwsumtot[emplcode & ":" & "1100"];
-          stot1110=tsdrwsumtot[emplcode & ":" & "1110"];
-          stot1120=tsdrwsumtot[emplcode & ":" & "1120"];
-          stot1130=tsdrwsumtot[emplcode & ":" & "1130"];
-          stot1140=tsdrwsumtot[emplcode & ":" & "1140"];
-          stot1160=tsdrwsumtot[emplcode & ":" & "1160"];
-          s1160_chk=tsdrwsumtot[emplcode & ":" & "1160"];//ts, tmp
-          stot1170=tsdrwsumtot[emplcode & ":" & "1170"];
-          stot2150=tsdrwsumtot[emplcode & ":" & "2150"];
-         //cust - begin, ts - 2018/02
-          stotSUPP=tsdrwsumtot[emplcode & ":" & "SUPP"];
+          stot1030 = 0;
+          stot1060 = 0;
+          stot1070 = 0;
+          stot1090 = 0;
+          stot1100 = 0;
+          stot1110 = 0;
+          stot1120 = 0;
+          stot1130 = 0;
+          stot1140 = 0;
+          stot1160 = 0;
+          stot1170 = 0;
+          stot2150 = 0;
+          stot1030 = tsdrwsumtot[emplcode & ":" & "1030"];
+          stot1060 = tsdrwsumtot[emplcode & ":" & "1060"];
+          stot1070 = tsdrwsumtot[emplcode & ":" & "1070"];
+          stot1100 = tsdrwsumtot[emplcode & ":" & "1100"];
+          stot1110 = tsdrwsumtot[emplcode & ":" & "1110"];
+          stot1120 = tsdrwsumtot[emplcode & ":" & "1120"];
+          stot1130 = tsdrwsumtot[emplcode & ":" & "1130"];
+          stot1140 = tsdrwsumtot[emplcode & ":" & "1140"];
+          stot1160 = tsdrwsumtot[emplcode & ":" & "1160"];
+          s1160_chk = tsdrwsumtot[emplcode & ":" & "1160"];//ts, tmp
+          stot1170 = tsdrwsumtot[emplcode & ":" & "1170"];
+          stot2150 = tsdrwsumtot[emplcode & ":" & "2150"];
+         //Bk - start, ts - 2018/02
+          stotSUPP = tsdrwsumtot[emplcode & ":" & "SUPP"];
           checksum = 0; roundup = 0;
-          if (stotSUPP > 0) and (Contrr.IncTaxFreeMinFlag==1) then begin
+          if (stotSUPP>0) and (Contrr.IncTaxFreeMinFlag==1) then begin
             checksum = round((CalcIncTax(stotSUPP)),GetSalaryRoundMode("2"));
             minsum = GetIncTaxFreeMin(ContractNr,transdate);
-            if (checksum > minsum) then begin
+            if (checksum>minsum) then begin
               checksum = minsum;
             end;
             diff = stot1160 - checksum;           
@@ -155,27 +155,27 @@ begin
               stot2150 = stot2150 + roundup;
             end;
           end;
-         //end
-          s1070=0;
-          s1090=0;
+         //Bk - end
+          s1070 = 0;
+          s1090 = 0;
           minsoctaxpaymsum=GetMinSocTaxPaymSum(transdate,stot1060,emplcode);
           if (stot1060<minsoctaxpaymsum) then begin
             if (dispensflag!=0) then begin
-              s1090=0;
-              stot1090=s1090;
+              s1090 = 0;
+              stot1090 = s1090;
             end else begin
               if (EmplSocTaxMin(emplcode)) then begin
-                s1090=minsoctaxpaymsum-stot1060;
+                s1090 = minsoctaxpaymsum - stot1060;
               end else begin
-                s1090=0;
+                s1090 = 0;
               end;
             end;  
-            stot1090=s1090;
+            stot1090 = s1090;
           end;
 
-          s1070=stot1070;
-          if (s1070<=0) then begin s1070=0; end;
-          if (s1090<=0) then begin s1090=0; end;
+          s1070 = stot1070;
+          if (s1070<=0) then begin s1070 = 0; end;
+          if (s1090<=0) then begin s1090 = 0; end;
 
           if (repflag) then begin
            if (tsdadd1) then begin
@@ -188,44 +188,44 @@ begin
           end;
 
           for (i=0;i<tsdrwcnt;i=i+1) begin        
-            s1030=0;
-            s1060=0;
-            s1100=0;
-            s1110=0;
-            s1120=0;
-            s1130=0;
-            s1140=0;
-            s1160=0;
-            s1170=0;
-            s2150=0;
-            s1030=tsdrwsum[emplcode & ":" & tsdrwcode[i] & ":" & "1030"];
-            s1060=tsdrwsum[emplcode & ":" & tsdrwcode[i] & ":" & "1060"];
-            s1100=tsdrwsum[emplcode & ":" & tsdrwcode[i] & ":" & "1100"];
-            s1110=tsdrwsum[emplcode & ":" & tsdrwcode[i] & ":" & "1110"];
-            s1120=tsdrwsum[emplcode & ":" & tsdrwcode[i] & ":" & "1120"];
-            s1130=tsdrwsum[emplcode & ":" & tsdrwcode[i] & ":" & "1130"];
-            s1140=tsdrwsum[emplcode & ":" & tsdrwcode[i] & ":" & "1140"];
-            s1160=tsdrwsum[emplcode & ":" & tsdrwcode[i] & ":" & "1160"];
-            s1170=tsdrwsum[emplcode & ":" & tsdrwcode[i] & ":" & "1170"];
-            s2150=tsdrwsum[emplcode & ":" & tsdrwcode[i] & ":" & "2150"];
-           //cust - begin, ts - 2018/02
+            s1030 = 0;
+            s1060 = 0;
+            s1100 = 0;
+            s1110 = 0;
+            s1120 = 0;
+            s1130 = 0;
+            s1140 = 0;
+            s1160 = 0;
+            s1170 = 0;
+            s2150 = 0;
+            s1030 = tsdrwsum[emplcode & ":" & tsdrwcode[i] & ":" & "1030"];
+            s1060 = tsdrwsum[emplcode & ":" & tsdrwcode[i] & ":" & "1060"];
+            s1100 = tsdrwsum[emplcode & ":" & tsdrwcode[i] & ":" & "1100"];
+            s1110 = tsdrwsum[emplcode & ":" & tsdrwcode[i] & ":" & "1110"];
+            s1120 = tsdrwsum[emplcode & ":" & tsdrwcode[i] & ":" & "1120"];
+            s1130 = tsdrwsum[emplcode & ":" & tsdrwcode[i] & ":" & "1130"];
+            s1140 = tsdrwsum[emplcode & ":" & tsdrwcode[i] & ":" & "1140"];
+            s1160 = tsdrwsum[emplcode & ":" & tsdrwcode[i] & ":" & "1160"];
+            s1170 = tsdrwsum[emplcode & ":" & tsdrwcode[i] & ":" & "1170"];
+            s2150 = tsdrwsum[emplcode & ":" & tsdrwcode[i] & ":" & "2150"];
+           //Bk - start, ts - 2018/02
             if (roundup!=0) and (i==0) then begin
               s1160 = s1160 + roundup;
               s2150 = s2150 + roundup;
             end;
-           //end    
-            if (s1030<=0) then begin s1030=0; end;
-            if (s1060<=0) then begin s1060=0; end;
-            if (s1100<=0) then begin s1100=0; end;
-            if (s1110<=0) then begin s1110=0; end;
-            if (s1120<=0) then begin s1120=0; end;
-            if (s1130<=0) then begin s1130=0; end;
-            if (s1140<=0) then begin s1140=0; end;
+           //Bk - end    
+            if (s1030<=0) then begin s1030 = 0; end;
+            if (s1060<=0) then begin s1060 = 0; end;
+            if (s1100<=0) then begin s1100 = 0; end;
+            if (s1110<=0) then begin s1110 = 0; end;
+            if (s1120<=0) then begin s1120 = 0; end;
+            if (s1130<=0) then begin s1130 = 0; end;
+            if (s1140<=0) then begin s1140 = 0; end;
             //ts, tmp
-            if (s1160 < 0) or (s1160 > s1160_chk) then begin
+            if (s1160<0) or (s1160>s1160_chk) then begin
               s1160_max = s1030 - s1110 - s1130;
-              percent = round(s1170*100/(s1160_max-s1160),GetSalaryRoundMode("2"));
-              if (s1160_chk <= s1160_max) then begin
+              percent = round(s1170*100/(s1160_max - s1160),GetSalaryRoundMode("2"));
+              if (s1160_chk<=s1160_max) then begin
                 s1160 = s1160_chk;
                 s1160_chk = 0;
                 s1170 = round((s1160_max - s1160)*percent/100,GetSalaryRoundMode("2"));
@@ -236,12 +236,12 @@ begin
               end;
             end;
             //ts, tmp - end          
-            if (s1160<=0) then begin s1160=0; end;
-            if (s1170<=0) then begin s1170=0; end;
-            if (s2150<=0) then begin s2150=0; end;
+            if (s1160<=0) then begin s1160 = 0; end;
+            if (s1170<=0) then begin s1170 = 0; end;
+            if (s2150<=0) then begin s2150 = 0; end;
             if ((s1030>0) or (s1100>0)) then begin
-              tsdrowspec="";
-              tsdrowspec=GetTSDRowSpec(tsdrwcode[i]);
+              tsdrowspec = "";
+              tsdrowspec = GetTSDRowSpec(tsdrwcode[i]);
               if (repflag) then begin
                 DoPrintTSD_part3(tsdadd1,tsdrwcode[i],s1030,s1060,s1100,s1110,s1120,s1130,s1140,s1160,s1170,s2150,inctaxperc,tsdrowspec);
               end else begin
@@ -288,8 +288,8 @@ begin
     RepSpec.stoff = -1;
     RepSpec.flags[1] = CurRepSpec.flags[1];
     RepSpec.flags[2] = CurRepSpec.flags[2];
-    RepSpec.Custf=1; //Lisa 1
-    RepSpec.JobDf=1; //Report
+    RepSpec.Custf = 1; //Lisa 1
+    RepSpec.JobDf = 1; //Report
     RunReport(RepSpec,0);
   end;
   return;
@@ -328,16 +328,16 @@ begin
   val brsoctaxtot,pensiontot,unemplinstot,inctaxtot,soctaxtot,emplunemplinstot;
   integer year,month,rw,acnt,i,tsdrwcnt;
 
-  year=RepSpec.flags[1];
-  month=RepSpec.flags[2];
+  year = RepSpec.flags[1];
+  month = RepSpec.flags[2];
   rw = 1;
   GetTSDRowsArray(tsdrwcode,tsdrwcnt);
   
   StartReportJob(USetStr(1500429));
-  tstr=USetStr(1500430) & year;
+  tstr = USetStr(1500430) & year;
   Header(rw,tstr,1);
   rw = rw + 1;
-  tstr=USetStr(1500431) & month;
+  tstr = USetStr(1500431) & month;
   Header(rw,tstr,1);
   rw = rw + 1;
   EndHeader;
@@ -417,13 +417,13 @@ begin
   EndFormat;
   Gray_Divider(0,1);
 
-  tstr="";
+  tstr = "";
   if (acnt>0) then begin
     for (i=0;i<acnt;i=i+1) begin        
       if (tstr=="") then begin
-        tstr=USetStr(1500489) & zerotsdrwcode[i];
+        tstr = USetStr(1500489) & zerotsdrwcode[i];
       end else begin
-        tstr=tstr & ", " & zerotsdrwcode[i];
+        tstr = tstr & ", " & zerotsdrwcode[i];
       end;
     end;
     StartFormat(16);

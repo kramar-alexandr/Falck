@@ -1,0 +1,129 @@
+//smaily
+//pangaliidestus
+//scoro
+//tsekk.ee
+//pensiooni liitumisparing
+//ariregistri paring
+//valuutakursside paring
+//telema
+global
+function boolean EInvoiceTClassService4FlagButtonAction(integer wn,integer value)
+begin
+  boolean res;
+ 
+  res = false;
+  EInvoiceTClassService4FlagButtonAction = res;
+  return;
+end;
+
+global
+function boolean EInvoiceTClassService5FlagButtonAction(integer wn,integer value)
+begin
+  boolean res;
+ 
+  res = false;
+  EInvoiceTClassService5FlagButtonAction = res;
+  return;
+end;
+
+global
+function boolean EInvoiceTClassService6FlagButtonAction(integer wn,integer value)
+begin
+  boolean res;
+ 
+  res = false;
+  EInvoiceTClassService6FlagButtonAction = res;
+  return;
+end;
+
+global
+function boolean EInvoiceTClassCreditScoreServiceFlagButtonAction(integer wn,integer value)
+begin
+  boolean res;
+ 
+  res = false;
+  EInvoiceTClassCreditScoreServiceFlagButtonAction = res;
+  return;
+end;
+
+global
+function boolean EInvoiceTClassCustomerDataServiceFlagButtonAction(integer wn,integer value)
+begin
+  boolean res;
+ 
+  res = false;
+  EInvoiceTClassCustomerDataServiceFlagButtonAction = res;
+  return;
+end;
+
+global
+function boolean EInvoiceTClassWebLinkServiceFlagButtonAction(integer wn,integer value)
+begin
+  boolean res;
+ 
+  res = false;
+  EInvoiceTClassWebLinkServiceFlagButtonAction = res;
+  return;
+end;
+
+global
+function boolean EInvoiceTClassDebtsServiceFlagButtonAction(integer wn,integer value)
+begin
+  boolean res;
+ 
+  res = false;
+  EInvoiceTClassDebtsServiceFlagButtonAction = res;
+  return;
+end;
+
+global
+function boolean EInvoiceTClassTsekkActivFlagButtonAction(integer wn,integer value)
+begin
+  boolean res;
+ 
+  res = false;
+  EInvoiceTClassTsekkActivFlagButtonAction = res;
+  return;
+end;
+
+global
+function boolean EInvoiceTClassService15FlagButtonAction(integer wn,integer value)
+begin
+  boolean res;
+ 
+  res = false;
+  EInvoiceTClassService15FlagButtonAction = res;
+  return;
+end;
+
+global
+function boolean EInvoiceTClassService20FlagButtonAction(integer wn,integer value)
+begin
+  boolean res;
+ 
+  res = false;
+  EInvoiceTClassService20FlagButtonAction = res;
+  return;
+end;
+
+global
+function boolean EInvoiceTClassService30FlagButtonAction(integer wn,integer value)
+begin
+  boolean res;
+ 
+  res = false;
+  EInvoiceTClassService30FlagButtonAction = res;
+  return;
+end;
+
+//Bk - start //smaily ts 2019/07
+global
+function boolean EInvoiceTClassService40FlagButtonAction(integer wn,integer value)
+begin
+  boolean res;
+ 
+  res = false;
+  EInvoiceTClassService40FlagButtonAction = res;
+  return;
+end;
+

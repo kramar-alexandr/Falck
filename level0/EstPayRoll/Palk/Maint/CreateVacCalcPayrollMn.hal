@@ -1,5 +1,5 @@
 external procedure CPrSumUp(var record CalcPayrollVc);
-external procedure PasteCPrTaxes(var record CalcPayrollVc,integer,integer,integer,integer,integer,var val,Boolean);
+external procedure PasteCPrTaxes(var record CalcPayrollVc,integer,integer,integer,integer,integer,Boolean);
 external function boolean GetRightPeriod(var date,var date,date,date);
 external function val GetCPSumForPeriod(LongInt,date,date);
 external function LongInt GetWorkingDays(Date,Date);
@@ -15,45 +15,171 @@ external function LongInt GetMonthDiff(Date,Date);
 external procedure PasteCPrwFromContrrw(var record CalcPayrollVc,var row CalcPayrollVc,record ContractVc,row ContractVc,var integer,integer,integer,integer,boolean);
 external function integer GetPaymTypeFlag(string);
 external function roundmode GetSalaryRoundMode(string);
+external function val GetStandingChargeSum(record ContractVc,date,boolean);
+external updating procedure DoCPRun(record RcVc,var record CalcPayrollVc,var array val,var array val);
+external procedure CPFSumUp(record RcVc,record CalcPayrollVc,var array val);
+external function LongInt GetCalendarDays(date,date);
+external function boolean No6Month(longint,date);
 
 global
-function val GetStandingChargeSum(record ContractVc Contrr,date calcdate)
-begin
+function integer CheckCalcmethod(record ContractVc Contrr,date abssd,date monthsdate,date monthedate,var val sumtot,var val sumperday,var val vacdays)
+begin  
   record PaymTypeVc PTr;
-  row ContractVc Contrrw;  
-  integer rwcnt,i;
-  val res;
-  
+  row ContractVc Contrrw;
+  integer res,rwcnt,i,caldays;
+  Boolean testf;
+
   res = 0;
   rwcnt = MatRowCnt(Contrr);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(Contrr,i,Contrrw);
-    if nonblank(Contrrw.PosCode) then begin
-      if (DateInRange(calcdate,Contrrw.SDate,Contrrw.EDate)) then begin
-        PTr.Code=Contrrw.PaymTypeCode;
-        if (ReadFirstMain(PTr,1,true)) then begin
-          if (PTr.StandingChargeFlag!=0) then begin 
-            res = res + Contrrw.LoadSum;
-          end;
+    if (nonblank(Contrrw.PosCode)) then begin
+      testf = true;
+      if (nonblank(abssd) and nonblank(Contrrw.EDate)) then begin
+        if (DateInRange(abssd,Contrrw.SDate,Contrrw.EDate)) then begin
+          testf = false;
         end;
-      end;   
+      end;
+      if (testf) then begin
+        PTr.Code = Contrrw.PaymTypeCode;
+        if (ReadFirstMain(PTr,1,true)) then begin
+          if ((PTr.CalcTypeFlag==0) or (PTr.CalcTypeFlag==1)) then begin //Fikseeritud summa või Proportsionaalselt töötatud ajaga
+            sumtot = Contrrw.LoadSum;
+            //caldays = ((GetCalendarDays(monthsdate,monthedate))-(GetExceptDays(monthsdate,monthedate)));
+            //sumperday = (sumtot/caldays);
+            res = 4; //res = 6; //Bk, ts 2020/06 //palga jätkumine
+          end;
+          if (PTr.CalcTypeFlag==2) then begin //Tööajatabel
+            sumperday = Contrrw.LoadSum;
+            //vacdays = vacdays*8; //8 tundi tööpäevas //Bk, ts 2020/06
+            //Bk - start: ts 2020/06
+            if (PTr.CalcMethodFlag==4) then begin
+              sumperday = 0;
+            end;
+            //Bk - end
+            res = 7;
+          end;
+          if (PTr.CalcTypeFlag==3) then begin //Tükitöö
+            sumtot = 0;
+          end;
+          i = rwcnt;
+        end;
+      end;
     end;
-  end;  
-  GetStandingChargeSum = res;
+  end;
+  CheckCalcmethod = res;
   return;
 end;
 
-procedure PasteVacCPrwFromAbsr(record CalcPayrollVc CPr,record AbsenceVc Absr,record ContractVc Contrr,date sd,date ed,string paymtypecode,date paymdate,Integer vacperstart)
+global
+procedure GetVacCPrw(var record CalcPayrollVc CPr,var row CalcPayrollVc CPrw,record ContractVc Contrr,date sd,date ed,boolean nocpf,var integer calcmethod,var date edate,var val vacdays,date specdate,boolean finalcpf)
+begin  
+  integer months,absfbworkdays,abscalfbnoexcdays;
+  date monthsdate,monthedate,sdate;
+  val sumtot,sumperday,sumtmp,sum1tmp,minsalary;
+  longint caldays,absworkdays,abscaldays,workdaysnorm,workdays,daystmp,abscalnoexcdays,absfbdays;
+
+  if (calcmethod>0) then begin
+    months = 6;
+    if (GetBackXMonthsPeriod(sdate,edate,months)) then begin
+      if (nocpf) then begin
+        sdate = specdate;
+        edate = sdate;
+        sdate.day = 1;
+        edate.day = DaysInMonth(GetYear(edate),GetMonth(edate));
+      end;
+      if (GetRightPeriod(sdate,edate,Contrr.StartDate,Contrr.EndDate)) then begin
+        //Bk - start: ts 2020/06
+        if (finalcpf) then begin //lõpparve
+          if (AddMonth(edate,-6)<Contrr.StartDate) then begin
+            sdate = Contrr.StartDate;
+            edate = CPr.EndDate;
+          end;
+        end;
+        //Bk - end
+        monthsdate = CPr.CalcDate;
+        if (nocpf) then begin
+          monthsdate = sdate;
+        end;
+        monthsdate.day = 1;
+        monthedate = monthsdate;
+        monthedate.day = DaysInMonth(GetYear(monthedate),GetMonth(monthedate));
+        workdaysnorm = GetWorkingDays(monthsdate,monthedate);
+        sumtot = GetCPSumForPeriod(Contrr.SerNr,sdate,edate);
+        sumtot = sumtot + GetSalaryFBSumForPeriod(Contrr.SerNr,sdate,edate);
+        abscaldays = GetAbsenceDays(Contrr.SerNr,"",sdate,edate,absworkdays,abscalnoexcdays);
+        absfbdays = GetAbsenceFBDaysForPeriod(Contrr.SerNr,"",sdate,edate,absfbworkdays,abscalfbnoexcdays);
+        if (finalcpf==false) then begin //kui ei ole lõpparve
+          vacdays = ((GetCalendarDays(sd,ed)) - (GetExceptDays(sd,ed)));      
+        end;
+        if (nocpf) then begin
+          calcmethod = CheckCalcmethod(Contrr,sd,monthsdate,monthedate,sumtot,sumperday,vacdays);
+        end;
+        switch (calcmethod) begin
+          case 1: 
+            workdays = (GetWorkingDays(sdate,edate)-(absworkdays+absfbworkdays));
+            sumperday = (sumtot/workdays);
+          case 2: 
+            caldays = ((GetCalendarDays(sdate,edate))-(GetExceptDays(sdate,edate))-abscalnoexcdays-abscalfbnoexcdays);
+            sumperday = (sumtot/caldays);
+          case 3: 
+            caldays = (GetCalendarDays(sdate,edate) - abscaldays - absfbdays);
+            sumperday = (sumtot/caldays);
+          case 4:
+            //see below
+          case 5: 
+            minsalary = GetMinSalary(monthsdate); //date?
+            sumperday = (minsalary/workdaysnorm);
+            if (finalcpf==false) then begin //kui ei ole lõpparve
+              vacdays = GetWorkingDays(sd,ed);
+            end;
+        end;
+        if ((calcmethod==4) or ((calcmethod==2) and (No6Month(Contrr.SerNr,sd)==false))) then begin
+          sum1tmp = GetStandingChargeSum(Contrr,CPr.CalcDate,nocpf);
+          sumtmp = (sum1tmp/workdaysnorm);
+          if (finalcpf==false) then begin
+            daystmp = GetWorkingDays(sd,ed);
+          end;
+          if (calcmethod==2) then begin
+            if ((sumtmp*daystmp)>(sumperday*vacdays)) then begin
+              sumperday = sumtmp;
+              if (finalcpf==false) then begin
+                vacdays = daystmp;
+              end; 
+            end;
+          end else begin //calcmethod = 4
+            sumperday = sumtmp;
+            if (finalcpf==false) then begin
+              vacdays = daystmp;
+            end;
+          end;
+        end;
+        CPrw.Tariff = sumperday;
+        CPrw.Tariff = round(CPrw.Tariff,GetSalaryRoundMode("2"));
+        CPrw.Amount = vacdays;
+        CPrw.BrutoSum = (CPrw.Tariff*CPrw.Amount);
+        CPrw.NetoSum = 0;
+      end;
+    end;
+  end else begin //ei tasustata
+    CPrw.Tariff = 0;
+    CPrw.Amount = 0;
+    CPrw.BrutoSum = (CPrw.Tariff*CPrw.Amount);
+    CPrw.NetoSum = 0;  
+  end;
+L1:;
+  return;
+end;
+
+procedure PasteVacCPrwFromAbsr(record CalcPayrollVc CPr,record AbsenceVc Absr,record ContractVc Contrr,date sd,date ed,string paymtypecode,date paymdate,date specdate,Integer vacperstart)
 begin  
   record PaymTypeVc PTr;
   row CalcPayrollVc CPrw;
-  row ContractVc Contrrw;
-  boolean testf;
-  integer months,calcmethod,paymflag,tmpint,absfbworkdays,abscalfbnoexcdays;
-  date sdate,edate,monthsdate,monthedate;
-  val sumtot,sumperday,sumtmp,sum1tmp,minsalary,ttt;
-  LongInt caldays,absworkdays,abscaldays,workdaysnorm,workdays,vacdays,daystmp,abscalnoexcdays,absfbdays;
-  
+  integer calcmethod,paymflag;
+  date edate;
+  val tmpval;
+  boolean nocpf;
+
   CPrw.PosCode = "";
   CPrw.PaymTypeCode = paymtypecode;
   PTr.Code = CPrw.PaymTypeCode;
@@ -69,81 +195,129 @@ begin
   CPrw.EDate = CPr.EndDate;
   CPrw.ObjCode = Absr.ObjCode;
   CPrw.AbsNr = Absr.SerNr;
-//cust - begin: ts 2018/05
-/*
-  if (paymdate>Absr.StartDate) then begin
-    edate = Absr.StartDate;
-  end else begin
-    edate = paymdate;
+  edate = Absr.StartDate;
+  if (vacperstart!=0) then begin
+    edate = AddMonth(Absr.StartDate,-1);
   end;
-*/
-  if (vacperstart==0) then begin
-    edate=Absr.StartDate;
-  end else begin
-    edate=AddMonth(Absr.StartDate,-1);
+  if (GetCPSumForPeriod(Absr.ContrSerNr,Contrr.StartDate,Absr.StartDate)==0) then begin
+    nocpf = true; //uus töötaja -> ei ole arvestuskaarte
   end;
-//cust - end
-  if (calcmethod>0) then begin
-    months=6;
-    if (GetBackXMonthsPeriod(sdate,edate,months)) then begin
-      if (GetRightPeriod(sdate,edate,Contrr.StartDate,Contrr.EndDate)) then begin
-        monthsdate = CPr.CalcDate;
-        monthsdate.day = 1;
-        monthedate = CPr.CalcDate;
-        monthedate.day = DaysInMonth(GetYear(monthedate),GetMonth(monthedate));
-        workdaysnorm = GetWorkingDays(monthsdate,monthedate);
-        sumtot = GetCPSumForPeriod(Absr.ContrSerNr,sdate,edate);
-        sumtot = sumtot + GetSalaryFBSumForPeriod(Absr.ContrSerNr,sdate,edate);
-        abscaldays = GetAbsenceDays(Absr.ContrSerNr,"",sdate,edate,absworkdays,abscalnoexcdays);
-        absfbdays = GetAbsenceFBDaysForPeriod(Absr.ContrSerNr,"",sdate,edate,absfbworkdays,abscalfbnoexcdays);
-        vacdays = ((GetCalendarDays(sd,ed)) - (GetExceptDays(sd,ed)));
-        switch (calcmethod) begin
-          case 1: 
-            workdays = (GetWorkingDays(sdate,edate) - (absworkdays + absfbworkdays));
-            sumperday = (sumtot/workdays);
-          case 2: 
-            caldays = ((GetCalendarDays(sdate,edate)) - (GetExceptDays(sdate,edate)) - abscalnoexcdays - abscalfbnoexcdays);
-            sumperday = (sumtot/caldays);
-          case 3: 
-            caldays = (GetCalendarDays(sdate,edate) - abscaldays - absfbdays);
-            sumperday = (sumtot/caldays);
-          case 4: 
-            //see below
-          case 5: 
-            minsalary = GetMinSalary(monthsdate); //date?
-            sumperday = (minsalary/workdaysnorm);
-            vacdays = GetWorkingDays(sd,ed);
-        end;
-
-        if ((calcmethod==2) or (calcmethod==4)) then begin
-          sum1tmp = GetStandingChargeSum(Contrr,CPr.CalcDate);
-          sumtmp = (sum1tmp/workdaysnorm);
-          daystmp = GetWorkingDays(sd,ed);
-          if (calcmethod==2) then begin
-            if ((sumtmp*daystmp)>(sumperday*vacdays)) then begin
-              sumperday = sumtmp;
-              vacdays = daystmp;
-            end;
-          end else begin //calcmethod = 4
-            sumperday = sumtmp;
-            vacdays = daystmp;
-          end;
-        end;
-        CPrw.Tariff = sumperday;
-        CPrw.Tariff=round(CPrw.Tariff,GetSalaryRoundMode("2"));//ts - 2018/03, to fix rounding
-        CPrw.Amount = vacdays;
-        CPrw.BrutoSum = (CPrw.Tariff*CPrw.Amount);
-        CPrw.NetoSum = 0;
-      end;
-    end;
-  end else begin //ei tasustata
-    CPrw.Tariff = 0;
-    CPrw.Amount = 0;
-    CPrw.BrutoSum = (CPrw.Tariff*CPrw.Amount);
-    CPrw.NetoSum = 0;  
-  end;
+  GetVacCPrw(CPr,CPrw,Contrr,sd,ed,nocpf,calcmethod,edate,tmpval,specdate,false);
   MatRowInsert(CPr,0,CPrw);
 L1:;
+  return;
+end;
+
+global
+updating procedure PasteVacCProws(record RcVc RepSpec,record ContractVc Contrr,var record CalcPayrollVc CPr,var array val CPSums)
+begin
+  row CalcPayrollVc CPrw;
+  row ContractVc Contrrw;
+  record AbsenceVc Absr;
+  record AbsTypeVc ATr;
+  string 20 paymtypecode;
+  boolean TrHs,testf;
+  integer rwcnt,j,i,cprwnr,monthcnt;
+  date contrsdate,contredate,sdate,edate,cdate,sd,ed,paymdate,specdate;
+
+  cprwnr = 0;
+  contrsdate = RepSpec.sStartDate;
+  contredate = RepSpec.sEndDate;
+  paymdate = RepSpec.d1;
+  testf = GetRightPeriod(contrsdate,contredate,Contrr.StartDate,Contrr.EndDate);
+  if (testf) then begin
+  //Puhkused
+    TrHs = true;
+    ResetLoop(Absr);
+    Absr.ContrSerNr = Contrr.SerNr;
+    Absr.OKFlag = 1;
+    Absr.StartDate = contrsdate;
+    while (LoopKey("ContrSerNrSDate",Absr,3,TrHs)) begin
+      if (Absr.ContrSerNr!=Contrr.SerNr) then begin
+        TrHs = false;
+      end;
+      if (Absr.OKFlag!=1) then begin
+        TrHs = false;
+      end;
+      if (TrHs) then begin
+        testf = true;
+        if (Absr.StartDate>contredate) then begin
+          testf = false;
+        end;
+        if (Absr.CalcSerNr>0) then begin
+          testf = false;
+        end;
+        if (testf) then begin
+          ATr.Code = Absr.AbsTypeCode;
+          if (ReadFirstMain(ATr,1,true)) then begin
+            if (ATr.AbsTypeFlag!=0) then begin
+              testf = false; 
+            end;
+            paymtypecode = ATr.PaymTypeCode;
+            if blank(paymtypecode) then begin
+              testf = false; 
+            end;
+            if (testf) then begin
+              sdate = contrsdate;
+              edate = sdate;
+              edate.day = DaysInMonth(GetYear(sdate),GetMonth(sdate));
+              sd = Absr.StartDate;
+              ed = Absr.EndDate;
+              monthcnt = GetMonthDiff(Absr.StartDate,Absr.EndDate);
+              for (i=1;i<=monthcnt;i=i+1) begin
+                RecordNew(CPr);   
+                CPr.ContrSerNr = Contrr.SerNr;
+                CPr.CalcDate = RepSpec.sEndDate;
+                CPr.StartDate = contrsdate;
+                CPr.EndDate = contredate;
+                CPr.PaymDate = paymdate;
+                CPr.Firstname = Contrr.Firstname;
+                CPr.Surname = Contrr.Surname;
+                if (monthcnt>1) then begin
+                  CPr.CalcDate = edate;
+                  CPr.StartDate = sdate;
+                  CPr.EndDate = edate;
+                  ed = sd;
+                  ed.day=DaysInMonth(GetYear(ed),GetMonth(ed));
+                  if (ed>Absr.EndDate) then begin
+                    ed = Absr.EndDate;                                
+                  end;
+                end;
+                if (GetNextCalcPayrollSerNr(CPr.CalcDate,CPr.SerNr)) then begin end;
+                PasteVacCPrwFromAbsr(CPr,Absr,Contrr,sd,ed,paymtypecode,paymdate,contrsdate,RepSpec.flags[11]);
+                //Kontroll, kas on Kohtutäituri summad
+                cprwnr = cprwnr + 1;
+                rwcnt = MatRowCnt(Contrr);
+                for (j=0;j<rwcnt;j=j+1) begin
+                  MatRowGet(Contrr,j,Contrrw);
+                  if (nonblank(Contrrw.PosCode)) then begin
+                    if (GetPaymTypeFlag(Contrrw.PaymTypeCode)==3) then begin //Tasuliigi tüüp: Kohtutäitur (kinnip.neto)
+                      PasteCPrwFromContrrw(CPr,CPrw,Contrr,Contrrw,cprwnr,0,0,1,true);
+                    end;                                         
+                  end;
+                end; 
+                PasteCPrTaxes(CPr,2,0,0,0,RepSpec.flags[11],false);
+                PasteCPrTaxes(CPr,0,0,0,0,0,true);
+                CPrSumUp(CPr);
+                if (MatRowCnt(CPr)>0) then begin
+                  if (RepSpec.repname=="CPForecastRn") then begin
+                    CPFSumUp(RepSpec,CPr,CPSums);     
+                  end else begin
+                    if (RecordInsert(CPr,true)) then begin end; 
+                  end; 
+                end;
+                edate = AddMonth(edate,1);
+                edate.day = DaysInMonth(GetYear(edate),GetMonth(edate));
+                sdate = edate;
+                sdate.day = 1;
+                sd = sdate;
+              end;
+            end;
+          end;
+        end;
+      end;
+    end;                
+  end;
   return;
 end;
 
@@ -151,160 +325,9 @@ global
 updating procedure CreateVacCalcPayrollMn(record RcVc RepSpec)
 begin
   record CalcPayrollVc CPr;
-  row CalcPayrollVc CPrw;
-  record EmplVc Emplr;
-  record ContractVc Contrr;
-  row ContractVc Contrrw;
-  record AbsenceVc Absr;
-  record AbsTypeVc ATr;
-  string 20 frempl,toempl,paymtypecode;
-  LongInt frcontr,tocontr;
-  boolean TrHs,TrHs1,TrHs2,testf,testf1;
-  integer rwcnt,rwcnt1,i,j,cprwnr,monthcnt,vacdays;
-  date contrsdate,contredate,sdate,edate,cdate,sd,ed,paymdate;
-  val tmpval,previtfmin;
-  
-  frempl = FirstInRange(RepSpec.f1,20);
-  toempl = LastInRange(RepSpec.f1,20);
-  frcontr = FirstInRange(RepSpec.f2,20);
-  tocontr = LastInRange(RepSpec.f2,20);
-  paymdate=RepSpec.d1;
-  ResetLoop(Emplr);
-  TrHs = true;
-  Emplr.Code = frempl;
-  while (LoopMain(Emplr,1,TrHs)) begin
-    if (TrHs) then begin
-      if (nonblank(toempl)) then begin
-        if (Emplr.Code>toempl) then begin
-          TrHs = false;
-        end;
-      end;
-      if (TrHs) then begin
-        testf=true;
-        if (Emplr.ClosedFlag!=0) then begin
-          testf = false;
-        end;
-        if (testf) then begin
-          previtfmin=0; tmpval=0;//cust, TS 2015/11, per employee
-          TrHs1=true;
-          ResetLoop(Contrr);
-          Contrr.EmplCode = Emplr.Code;
-          while (LoopKey("EmplCode",Contrr,1,TrHs1)) begin
-            if (Contrr.EmplCode!=Emplr.Code) then begin
-              TrHs1 = false;
-            end;
-            if (TrHs1) then begin
-              testf=true;
-              if ((frcontr>0)) then begin
-                if ((Contrr.SerNr<frcontr) or (Contrr.SerNr>tocontr)) then begin
-                  testf = false;
-                end;
-              end;
-              if (Contrr.Status!=1) then begin
-                testf = false;
-              end;
-              if (testf) then begin                
-                //previtfmin=0;//cust, moved up
-                cprwnr=0;
-                contrsdate=RepSpec.sStartDate;
-                contredate=RepSpec.sEndDate;
-                testf1=GetRightPeriod(contrsdate,contredate,Contrr.StartDate,Contrr.EndDate);
-                if (testf1) then begin
-                  //Puhkused
-                  TrHs2=true;
-                  ResetLoop(Absr);
-                  Absr.ContrSerNr=Contrr.SerNr;
-                  Absr.OKFlag=1;
-                  Absr.StartDate=contrsdate;
-                  while (LoopKey("ContrSerNrSDate",Absr,3,TrHs2)) begin
-                    if (Absr.ContrSerNr!=Contrr.SerNr) then begin
-                      TrHs2=false;
-                    end;
-                    if (Absr.OKFlag!=1) then begin
-                      TrHs2=false;
-                    end;
-                    if (TrHs2) then begin
-                      testf1=true;
-                      if (Absr.StartDate>contredate) then begin
-                        testf1=false;
-                      end;
-                      if (Absr.CalcSerNr>0) then begin
-                        testf1=false;
-                      end;
-                      if (testf1) then begin
-                        ATr.Code = Absr.AbsTypeCode;
-                        if (ReadFirstMain(ATr,1,true)) then begin
-                          if (ATr.AbsTypeFlag!=0) then begin
-                            testf1=false; 
-                          end;
-                          paymtypecode=ATr.PaymTypeCode;
-                          if blank(paymtypecode) then begin
-                            testf1=false; 
-                          end;
-                          if (testf1) then begin
-                            sdate=contrsdate;
-                            edate=sdate;
-                            edate.day=DaysInMonth(GetYear(sdate),GetMonth(sdate));
-                            sd=Absr.StartDate;
-                            ed=Absr.EndDate;
-                            monthcnt=GetMonthDiff(Absr.StartDate,Absr.EndDate);
-                            for (i=1;i<=monthcnt;i=i+1) begin
-                              RecordNew(CPr);   
-                              CPr.ContrSerNr=Contrr.SerNr;
-                              CPr.CalcDate=RepSpec.sEndDate;
-                              CPr.StartDate=contrsdate;
-                              CPr.EndDate=contredate;
-                              CPr.PaymDate=paymdate;
-                              CPr.Firstname=Contrr.Firstname;
-                              CPr.Surname=Contrr.Surname;
-                              if (monthcnt>1) then begin
-                                CPr.CalcDate=edate;
-                                CPr.StartDate=sdate;
-                                CPr.EndDate=edate;
-                                ed=sd;
-                                ed.day=DaysInMonth(GetYear(ed),GetMonth(ed));
-                                if (ed>Absr.EndDate) then begin
-                                  ed=Absr.EndDate;                                
-                                end;
-                              end;
-                              if (GetNextCalcPayrollSerNr(CPr.CalcDate,CPr.SerNr)) then begin end;
-                              PasteVacCPrwFromAbsr(CPr,Absr,Contrr,sd,ed,paymtypecode,paymdate,RepSpec.flags[0]);
-                              //Kontroll, kas on Kohtutäituri summad
-                              cprwnr = cprwnr + 1;
-                              rwcnt1=MatRowCnt(Contrr);
-                              for (j=0;j<rwcnt1;j=j+1) begin
-                                MatRowGet(Contrr,j,Contrrw);
-                                if (nonblank(Contrrw.PosCode)) then begin
-                                  if (GetPaymTypeFlag(Contrrw.PaymTypeCode)==3) then begin //Tasuliigi tüüp: Kohtutäitur (kinnip.neto)
-                                    PasteCPrwFromContrrw(CPr,CPrw,Contrr,Contrrw,cprwnr,0,0,1,true);
-                                  end;                                         
-                                end;
-                              end; 
-                              PasteCPrTaxes(CPr,2,0,0,0,RepSpec.flags[0],tmpval,false);
-                              PasteCPrTaxes(CPr,0,0,0,0,0,previtfmin,true);
-                              CPrSumUp(CPr);
-                              if (MatRowCnt(CPr)>0) then begin
-                                if (RecordInsert(CPr,true)) then begin end; 
-                              end; 
-                              edate=AddMonth(edate,1);
-                              edate.day=DaysInMonth(GetYear(edate),GetMonth(edate));
-                              sdate=edate;
-                              sdate.day=1;
-                              sd=sdate;
-                            end;
-                          end;
-                        end;
-                      end;
-                    end;
-                  end;                
-                end;
-              end;
-            end;  
-          end;
-        end;
-      end;
-    end;
-  end;
-LCreateVacCalcPayrollMn:;
+  array val CPSums;
+  array val CPSumsTot;
+
+   DoCPRun(RepSpec,CPr,CPSums,CPSumsTot);
   return;
 end;

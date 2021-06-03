@@ -1,0 +1,44 @@
+external function boolean EServiceActivated(string);
+external procedure CollectCodeForContributoryTax(var string,var string,var string);
+external procedure SendCCRequestToPartner2(string,string,string,var LongInt,var date,var date,var string);
+external function boolean FillContributoryTaxRow(var record EmplVc,string,string,string,date,date,string,date,date);
+external updating procedure SaveEmplRecord(record EmplVc);
+
+global
+procedure CheckContributoryMn(record RcVc RepSpec)
+begin
+  record EmplVc Emplr;
+  Boolean res,testf;
+  string 60 tstr,tcode,tname,y_2020;
+  LongInt responsecode;
+  date sdate,edate,sd,ed;
+  
+  if (!EServiceActivated("SENDESTCCLOOKUP")) then begin
+    MessageBox(1500005,"");
+    goto LCheckContributoryMn;
+  end;
+
+  CollectCodeForContributoryTax(tstr,tcode,tname);
+  ed = "30.11.2020"; sd = "01.09.2021";
+
+  while (LoopMain(Emplr,1,true)) begin
+    testf = true;
+    if (Emplr.ClosedFlag!=0) then begin
+      testf = false;
+    end;
+    if (len(Emplr.IDCode)!=11) then begin
+      testf = false;
+    end;
+    if (testf) then begin
+      SendCCRequestToPartner2(Emplr.Code,Emplr.IDCode,"SENDESTCCLOOKUP",responsecode,sdate,edate,y_2020);//threadasync
+      if (responsecode==0) then begin
+        res = FillContributoryTaxRow(Emplr,tstr,tcode,tname,sdate,edate,y_2020,sd,ed);
+        if (res) then begin
+          queued.SaveEmplRecord(Emplr);
+        end;
+      end;
+    end;  
+  end;
+LCheckContributoryMn:;
+  return;
+end;

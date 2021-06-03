@@ -1,0 +1,56 @@
+external function LongInt DateDiff(date,date);
+external function LongInt GetExceptDays(date,var date);
+external updating function Integer GenAbsFromPlanAbsMn(record RcVc,var string);
+
+global
+function Boolean SerNrTestPlanAbsenceVc(LongInt sernr,Date tdp)
+begin
+  Boolean res;
+  record PlanAbsenceSerBlock AbsSerr;
+  row PlanAbsenceSerBlock AbsSerrw;
+  Integer i,rwcnt;
+
+  if (sernr==-1) then begin
+    res = false;
+    goto LSerNrTestPlanAbsenceVc1;
+  end;
+  BlockLoad(AbsSerr);
+  rwcnt = MatRowCnt(AbsSerr);
+  if (rwcnt==0) then begin
+    res = true;
+    goto LSerNrTestPlanAbsenceVc1;
+  end;
+  for (i=0; i<rwcnt ;i=i+1) begin
+    MatRowGet(AbsSerr,i,AbsSerrw);
+    if ((sernr<AbsSerrw.TSerStart) or (sernr>AbsSerrw.TSerEnd)) then begin
+      goto LSerNrTestPlanAbsenceVc2;
+    end;  
+    if (nonblankdate(AbsSerrw.StartDate)) then begin
+      if (tdp<AbsSerrw.StartDate) then begin goto LSerNrTestPlanAbsenceVc2; end;
+    end;  
+    if (nonblankdate(AbsSerrw.EndDate)) then begin
+      if (tdp>AbsSerrw.EndDate) then begin goto LSerNrTestPlanAbsenceVc2; end;
+    end;  
+    res = true;
+    goto LSerNrTestPlanAbsenceVc1;
+LSerNrTestPlanAbsenceVc2:;
+  end;
+LSerNrTestPlanAbsenceVc1:;
+  SerNrTestPlanAbsenceVc = res;
+  return;
+end;
+
+global
+updating function Integer RecordAction_rlPlanAbsToAbs(var record PlanAbsenceVc PlanAbsp,var string errstr)
+BEGIN
+  record RcVc RepSpec;
+  Integer res,err;
+  
+  if (IsRecordLocked(PlanAbsp)) then begin goto LRecordAction_rlPlanAbsToAbs; end;
+  if (ReadFirstMain(PlanAbsp,0,true)) then begin end;  
+  RepSpec.f1 = PlanAbsp.SerNr;
+  res = GenAbsFromPlanAbsMn(RepSpec,errstr);
+LRecordAction_rlPlanAbsToAbs:;
+  RecordAction_rlPlanAbsToAbs = res;
+  RETURN;
+END;

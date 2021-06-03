@@ -20,14 +20,14 @@ begin
     if (tsdadd1) then begin 
       ExportPlainXml("<tsd_L1_A_Isik>",4);
       ExportTagXml("c1000_Kood",Emplr.IDCode,5);
-      tstr=Emplr.Firstname & " " & Emplr.Surname;      
+      tstr = Emplr.Firstname & " " & Emplr.Surname;      
       if nonblank(tstr) then begin
         ExportTagXml("c1010_Nimi",ConvertXml(tstr),5);
       end;
     end else begin
       ExportPlainXml("<tsd_L2_A_Isik>",4);
       ExportTagXml("c2000_Kood",Emplr.IDCode,5);
-      tstr=Emplr.Firstname & " " & Emplr.Surname;      
+      tstr = Emplr.Firstname & " " & Emplr.Surname;      
       if nonblank(tstr) then begin
         ExportTagXml("c2010_Nimi",ConvertXml(tstr),5);
       end;
@@ -44,11 +44,11 @@ begin
   val tmp1070,tmp1090;
   
   if (rownr==0) then begin
-    tmp1070=s1070; //2080
-    tmp1090=s1090; //2100
+    tmp1070 = s1070; //2080
+    tmp1090 = s1090; //2100
   end else begin
-    tmp1070=0;
-    tmp1090=0;
+    tmp1070 = 0;
+    tmp1090 = 0;
   end;
 
   if (tsdadd1) then begin //Lisa1

@@ -1,0 +1,70 @@
+event startup
+begin
+  SetLangMode(LangRussian,"RUS",0);
+
+//eteenused
+  Setting("Обработка импортируемых счетов",EInvoiceSetTClass,modSL);
+  Setting("Формы предприятия",CompanyFormLClass,modSL);
+  Setting("Электронные счета/ф",CUIVLClass,modSL);
+  Setting("Обработка эл. счетов поставщиков",SupEInvoiceSetTClass,modPL);
+  Setting("Формы предприятия",CompanyFormLClass,modPL);
+  Setting("Интервал запросов эл. услуг",EInvQueryIntrvlTClass,modTC);
+  Setting("Статистика эл. услуг",CUServiceUsageLClass,modDBMain);
+  Setting("Авансовые отчеты",CUExpLClass,modExp);
+  Import("Электронный счет",EArveXMLIn,EArveXMLIn,modSL);
+  Maintenance("Определите каналы эл. счетов",DefEInvRcvPrefVClass,DefEInvRcvPrefMn,modSL);
+  Report("Счета поставщиков с прикрепленными файлами",BK_VIPdfLinkRClass,BK_VIPdfLinkRn,0,modPL);
+
+//earvete erinouded
+  Setting("Типы объектов эл. счета",EInvObjTypeTCLass,modSY);
+
+//pangaliidestus
+  Register("Очередь запросов в банк","Очередь запросов в банк",BankReqQueVc,modTC);
+  Setting("Настройки запросов в банк",BankServicesTClass,modTC);
+  Report("Статус э-платежей (Books)",EPayStatRClass,BK_EPayStatRn,0,modPL);
+  Report("Статус выписки банка",BankStmntStatRClass,BankStmntStatRn,0,modSL);
+  Report("Статус выписки банка",BankStmntStatRClass,BankStmntStatRn,0,modPL);
+  Report("Статус выписки банка",BankStmntStatRClass,BankStmntStatRn,0,modNL);
+  Maintenance("Запрос выписки банка",BankStmntVClass,BankStmntMn,modNL);
+  //cust - start KB 04.11.2019 - customer also has //pangaliidestus, so adding it
+  //if (IsBooks) then begin //to avoid problems if modSAL is put to ERP
+    Maintenance("Отправить выплаты по зарплате в банк",BankPayRollVClass,BankPayRollsMn,modSAL);
+  //end;
+  //cust - end
+
+//rik
+  Setting("Настройки запроса RIK",TXTSerClass,modTC);
+  Report("Запрос информации RIK",EstAddrLookupRClass,EstAddrLookupRn,0,modCRM);
+  Report("Запрос информации RIK",EstAddrLookupRClass,EstAddrLookupRn,0,modSL);
+
+//sepa eksport
+  Report("Конвертирование расчетных счетов (IBAN)",ConverttoIBANRClass,ConverttoIBANRn,0,modTC);
+  Report("Проверка данных (SEPA платежи)",FindMisMatchSEPARClass,FindMisMatchSEPARn,0,modTC);
+  Maintenance("Конвертирование расчетных счетов (IBAN)",ConverttoIBANVClass,ConverttoIBANMn,modTC);
+
+//sepa import
+  Setting("Импорт файла SEPA из банка",SEPABankFileTClass,modSL);
+  Setting("Архив выписок банка",BankImportArhiveLClass,modNL); //refers to register SEPABankEntryVc, but is setting to have different LClass
+  Setting("Распознавание транзакций банка",TRIdentTCLass,modNL);
+  Import("Банковский файл, SEPA",SEPAIn,SEPAIn,modSL);
+  Import("Банковский файл, SEPA",SEPAIn,SEPAIn,modPL);
+  Import("Банковский файл, SEPA",SEPAIn,SEPAIn,modNL);
+  Register("Необработанные транзакции","Необработанные транзакции",SEPABankEntryVc,modNL);
+  Report("История импорта транзакций банка",BankEntryHistRClass,BankEntryHistRn,0,modSL);
+  Report("История импорта транзакций банка",BankEntryHistRClass,BankEntryHistRn,0,modPL);
+  Report("История импорта транзакций банка",BankEntryHistRClass,BankEntryHistRn,0,modNL);
+
+//smaily
+  Setting("Настройки Smaily",SmailyTClass,modCRM);
+  Setting("Поля запроса Smaily",SmailyFieldsTClass,modCRM);
+  Maintenance("Отправка данных контактов в Smaily",CUtoSmailyVClass,CUtoSmailyMn,modCRM);
+
+//tsekk.ee
+  Setting("Настройки Costpocket",TsekkSetTClass,modTC);
+
+//xml arve
+  Report("Проверка данных (XML счет)",FindMisMatchRClass,FindMisMatchRn,0,modDBMain);
+  Export("XML счет",eInvoiceEClass,eInvoiceEn,modInteg);
+
+  return;
+end;

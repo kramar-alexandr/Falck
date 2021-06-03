@@ -1,6 +1,6 @@
 external function boolean GetRightPeriod(var date,var date,date,date);
 external procedure GetPaymTypeData(string,var integer,var integer,var integer,var integer,var integer,var integer,var string,var integer,var integer);
-external function val GetEmplTaxPercent(string,date,integer,val,var string,var string,var string);
+external function val GetEmplTaxPercent(string,date,integer,val,var string,var string,var string,var string);
 external function LongInt GetAbsenceDays(LongInt,string,date,date,var LongInt,var LongInt);
 external function LongInt GetWorkingDays(date,date);
 
@@ -28,7 +28,6 @@ procedure EmplSalarySlip(record RcVc RepSpec,record EmplVc Emplr,var date sdate,
 						var val sumtot1,var val sumtot2,var val sumtot3,var val TaxFreeMin,var val sumtot4,var val sumtot5,var LongInt workdays,var LongInt workeddays,var string cptstr)
 begin
   record ContractVc Contrr;
-  row ContractVc Contrrw;
   record CalcPayrollVc CPr;
   row CalcPayrollVc CPrw;
   LongInt frcontr,tocontr;
@@ -77,7 +76,7 @@ begin
             sdate = sd;
           end; 
           if (DateInRange(ed,edate,RepSpec.sEndDate)) then begin
-            edate=ed;
+            edate = ed;
           end; 
         end;
         TrHs2 = true;
@@ -119,14 +118,14 @@ begin
             end;
             if (testf1) then begin
               cpflag = true;
-              TaxFreeMin = TaxFreeMin+CPr.IncTaxFreeMinTotal-CPr.AddTaxSumTotal;
+              TaxFreeMin = TaxFreeMin + CPr.IncTaxFreeMinTotal-CPr.AddTaxSumTotal;
               rwcnt = MatRowCnt(CPr);
               for (i=0;i<rwcnt;i=i+1) begin
                 MatRowGet(CPr,i,CPrw);
                 GetPaymTypeData(CPrw.PaymTypeCode,paymtypeflag,unemplinsflag,pensionflag,inctaxflag,soctaxflag,emplunemplinsflag,tmpstr,tmpint,tmpint);
 
                //osa Tasud
-                newflag=true;
+                newflag = true;
 //              if (paymtypeflag==7) then begin //Tasuliigi tŸŸp: Tasu
                 if ((CPrw.BrutoSum!=0) or (CPrw.NetoSum!=0)) then begin
                   if (cpflag) then begin
@@ -137,12 +136,12 @@ begin
                 end;
                 for (k=1;k<=acnt1;k=k+1) begin
                   if ((CPrw.PaymTypeCode==paymcode[k]) and (CPrw.Tariff==paymtariff[k])) then begin
-                    paymtariff[k]=CPrw.Tariff;
-                    paymamount[k]=paymamount[k]+CPrw.Amount;
-                    paymsumnet[k]=paymsumnet[k]+CPrw.NetoSum;
-                    paymsum[k]=paymsum[k]+CPrw.BrutoSum;
+                    paymtariff[k] = CPrw.Tariff;
+                    paymamount[k] = paymamount[k] + CPrw.Amount;
+                    paymsumnet[k] = paymsumnet[k] + CPrw.NetoSum;
+                    paymsum[k] = paymsum[k] + CPrw.BrutoSum;
                     if (blank(CPrw.BrutoSum)) then begin
-                      paymsumdet[k]=paymsumdet[k]+CPrw.NetoSum;
+                      paymsumdet[k] = paymsumdet[k] + CPrw.NetoSum;
                     end;
                     newflag = false;
                   end;
@@ -159,17 +158,17 @@ begin
                     paymsumdet[k] = CPrw.NetoSum;
                   end;
                 end;                
-               //cust, TS 2015/11
+               //Bk - start, TS 2015/11
                 coef = 1;
                 if ((paymtypeflag==1) or (paymtypeflag==2) or (paymtypeflag==3)) then begin //Tasuliigi tŸŸp: Kinnipidamine (bruto, neto v›i KohtutŠitur (kinnip.neto)
                   coef = -1;
                 end;
-               //cust, end    
+               //Bk - end    
                            
                //osa Kinnipidamised (tulumaks)
                 newflag = true;
                 if (inctaxflag) then begin
-                  percent = GetEmplTaxPercent(Emplr.Code,CPr.PaymDate,0,CPrw.BrutoSum*coef,taxcode,taxname,tmpstr);
+                  percent = GetEmplTaxPercent(Emplr.Code,CPr.PaymDate,0,CPrw.BrutoSum*coef,taxcode,taxname,tmpstr,tmpstr);
                   if (taxcode!="") then begin
                     for (k=1;k<=acnt2;k=k+1) begin                   
                       if (taxcode==deductcode[k]) then begin
@@ -192,7 +191,7 @@ begin
                //osa Kinnipidamised (tšštuskindlustus)
                 newflag = true;
                 if (unemplinsflag) then begin 
-                  percent = GetEmplTaxPercent(Emplr.Code,CPr.PaymDate,1,CPrw.BrutoSum*coef,taxcode,taxname,tmpstr);
+                  percent = GetEmplTaxPercent(Emplr.Code,CPr.PaymDate,1,CPrw.BrutoSum*coef,taxcode,taxname,tmpstr,tmpstr);
                   if (taxcode!="") then begin
                     for (k=1;k<=acnt2;k=k+1) begin                     
                       if (taxcode==deductcode[k]) then begin
@@ -215,7 +214,7 @@ begin
                 //osa Kinnipidamised (kogumispension)
                 newflag = true;
                 if (pensionflag) then begin 
-                  percent = GetEmplTaxPercent(Emplr.Code,CPr.PaymDate,2,CPrw.BrutoSum*coef,taxcode,taxname,tmpstr);
+                  percent = GetEmplTaxPercent(Emplr.Code,CPr.PaymDate,2,CPrw.BrutoSum*coef,taxcode,taxname,tmpstr,tmpstr);
                   if (taxcode!="") then begin
                     for (k=1;k<=acnt2;k=k+1) begin                     
                       if (taxcode==deductcode[k]) then begin
@@ -238,13 +237,13 @@ begin
                //osa Tššandja maksud (sotsiaalmaks)
                 newflag = true;
                 if (soctaxflag) then begin 
-                  percent = GetEmplTaxPercent(Emplr.Code,CPr.PaymDate,5,CPrw.BrutoSum*coef,taxcode,taxname,tmpstr);
+                  percent = GetEmplTaxPercent(Emplr.Code,CPr.PaymDate,5,CPrw.BrutoSum*coef,taxcode,taxname,tmpstr,tmpstr);
                   if (taxcode!="") then begin
                     for (k=1;k<=acnt3;k=k+1) begin                     
                       if (taxcode==emplpaymcode[k]) then begin
-                        emplpaymtariff[k] = emplpaymtariff[k]+CPrw.BrutoSum;
-                        emplpaymsum[k] = emplpaymsum[k]+CPrw.SocTaxSum;
-                        newflag=false;
+                        emplpaymtariff[k] = emplpaymtariff[k] + CPrw.BrutoSum;
+                        emplpaymsum[k] = emplpaymsum[k] + CPrw.SocTaxSum;
+                        newflag = false;
                       end;
                     end;
                     if (newflag) then begin
@@ -259,9 +258,9 @@ begin
                 end;
 
                 //osa Tššandja maksud (tšštuskindlustus)
-                newflag=true;
+                newflag = true;
                 if (emplunemplinsflag) then begin 
-                  percent = GetEmplTaxPercent(Emplr.Code,CPr.PaymDate,6,CPrw.BrutoSum*coef,taxcode,taxname,tmpstr);
+                  percent = GetEmplTaxPercent(Emplr.Code,CPr.PaymDate,6,CPrw.BrutoSum*coef,taxcode,taxname,tmpstr,tmpstr);
                   if (taxcode!="") then begin
                     for (k=1;k<=acnt3;k=k+1) begin                     
                       if (taxcode==emplpaymcode[k]) then begin
@@ -293,11 +292,12 @@ begin
       end;
     end;  
   end;
-  sumtot1 = 0; sumtotdet = 0;
+  sumtot1 = 0; 
+  sumtotdet = 0;
   sumtot2 = 0;
   for (k=1;k<=acnt1;k=k+1) begin
-    sumtot1 = sumtot1+paymsum[k];
-    sumtotdet = sumtotdet+paymsumdet[k];
+    sumtot1 = sumtot1 + paymsum[k];
+    sumtotdet = sumtotdet + paymsumdet[k];
   end;
   for (k=1;k<=acnt2;k=k+1) begin
     sumtot2 = sumtot2 + deductsum[k];
@@ -409,36 +409,28 @@ begin
         end;
       end;
       if (TrHs) then begin
-        testf=true;
+        testf = true;
         if (Emplr.ClosedFlag!=0) then begin
           testf = false;
         end;
         if (testf) then begin
-          for (k=1;k<=acnt1;k=k+1) begin
-            paymcode[k] = "";
-            paymname[k] = "";
-            paymtariff[k] = 0;
-            paymamount[k] = 0;
-            paymsumnet[k] = 0;
-            paymsum[k] = 0;
-          end;
-          for (k=1;k<=acnt2;k=k+1) begin
-            deductcode[k] = "";
-            deductname[k] = "";
-            deducttariff[k] = 0;
-            deductamount[k] = 0;
-            deductsum[k] = 0;
-          end;
-          for (k=1;k<=acnt3;k=k+1) begin
-            emplpaymcode[k] = "";
-            emplpaymname[k] = "";
-            emplpaymtariff[k] = 0;
-            emplpaymamount[k] = 0;
-            emplpaymsum[k] = 0;
-          end;
-          for (k=1;k<=cpcnt;k=k+1) begin
-            cpstr[k] = "";
-          end;
+          ClearArray(paymcode);
+          ClearArray(paymname);
+          ClearArray(paymtariff);
+          ClearArray(paymamount);
+          ClearArray(paymsumnet);
+          ClearArray(paymsum);
+          ClearArray(deductcode);
+          ClearArray(deductname);
+          ClearArray(deducttariff);
+          ClearArray(deductamount);
+          ClearArray(deductsum);
+          ClearArray(emplpaymcode);
+          ClearArray(emplpaymname);
+          ClearArray(emplpaymtariff);
+          ClearArray(emplpaymamount);
+          ClearArray(emplpaymsum);
+          ClearArray(cpstr);
           
           EmplSalarySlip(RepSpec,Emplr,sdate,edate,paymcode,deductcode,emplpaymcode,paymname,deductname,emplpaymname,cpstr,
           				paymtariff,deducttariff,emplpaymtariff,paymamount,deductamount,emplpaymamount,
@@ -456,29 +448,29 @@ begin
             StartFormat(15);
             EndFormat;
             StartFormat(15);
-            tstr=USetStr(1500385) & ":";
+            tstr = USetStr(1500385) & ":";
             OutString(0,0,tstr,false);
             OutString(4,"DblEmplVc",Emplr.Code,false);
-            tstr="                        " & USetStr(1144) & "        " & sdate & " : " & edate ;
+            tstr = "                        " & USetStr(1144) & "        " & sdate & " : " & edate ;
             OutString(3,0,tstr,false);
             EndFormat;
 
             StartFormat(15);
-            tstr=USetStr(1500416);
+            tstr = USetStr(1500416);
             OutString(0,0,tstr,false);
-            tstr=Emplr.Firstname & " " & Emplr.Surname;
+            tstr = Emplr.Firstname & " " & Emplr.Surname;
             OutString(4,0,tstr,false);
-            tstr="   " & USetStr(1500442) & "         nr.  " & cptstr;
+            tstr = "   " & USetStr(1500442) & "         nr.  " & cptstr;
             OutString(3,0,tstr,false);
             EndFormat;
 
             StartFormat(15);
-            tstr=USetStr(1500418);
+            tstr = USetStr(1500418);
             OutString(0,0,tstr,false);
             OutString(4,0,Emplr.IDCode,false);
-            tstr="                      " & USetStr(1500398) & ":         " & workdays;
+            tstr = "                      " & USetStr(1500398) & ":         " & workdays;
             OutString(3,0,tstr,false);
-            tstr=USetStr(1500417) & "       " & workeddays;
+            tstr = USetStr(1500417) & "       " & workeddays;
             OutString(360,0,tstr,false);
             EndFormat;
            
@@ -491,19 +483,19 @@ begin
             EndFormat;
          
             StartFormat(15);
-            tstr=USetStr(1500419);
+            tstr = USetStr(1500419);
             OutString(5,0,tstr,true);
-            tstr=USetStr(1500420);
+            tstr = USetStr(1500420);
             OutString(6,0,tstr,true);
-            tstr=USetStr(1500502);
+            tstr = USetStr(1500502);
             OutString(7,0,tstr,true);
-            tstr=USetStr(1500503);
+            tstr = USetStr(1500503);
             OutString(1,0,tstr,true);
             EndFormat;
 
           //Tasud
             StartFormat(15);
-            tstr=USetStr(1500422);
+            tstr = USetStr(1500422);
             OutString(0,0,tstr,false);
             EndFormat;
             Gray_Divider(0,80);
@@ -526,17 +518,17 @@ begin
             EndFormat;
 
             StartFormat(15);
-            tstr=USetStr(1500419);
+            tstr = USetStr(1500419);
             OutString(5,0,tstr,true);
-            tstr=USetStr(1500473);
+            tstr = USetStr(1500473);
             OutString(6,0,tstr,true);
-            tstr=USetStr(1500421);
+            tstr = USetStr(1500421);
             OutString(1,0,tstr,true);
             EndFormat;
 
           //Kinnipidamised
             StartFormat(15);
-            tstr=USetStr(1500423);
+            tstr = USetStr(1500423);
             OutString(0,0,tstr,false);
             EndFormat;
             Gray_Divider(0,80);
@@ -565,7 +557,7 @@ begin
 
           //Tššandja maksud
             StartFormat(15);
-            tstr=USetStr(1500424);
+            tstr = USetStr(1500424);
             OutString(0,0,tstr,false);
             EndFormat;
             Gray_Divider(0,80);
@@ -582,31 +574,31 @@ begin
             EndFormat;
             Black_Divider(300,1);
             StartFormat(15);
-            tstr=USetStr(1500425);
+            tstr = USetStr(1500425);
             OutString(300,0,tstr,false);
             OutVal(1,0,sumtot1,M4Val,true);
             EndFormat;
             StartFormat(15);
-            tstr=USetStr(1500426);
+            tstr = USetStr(1500426);
             OutString(300,0,tstr,false);
             OutVal(1,0,sumtot2,M4Val,true);
             EndFormat;
             StartFormat(15);
-            tstr=USetStr(1500554);
+            tstr = USetStr(1500554);
             OutString(300,0,tstr,false);
             OutVal(1,0,sumtot4,M4Val,true);
             EndFormat;
             StartFormat(15);
-            tstr=USetStr(1500555);
+            tstr = USetStr(1500555);
             OutString(300,0,tstr,false);
             OutVal(1,0,sumtot5,M4Val,true);
             EndFormat;
             StartFormat(15);
-            tstr=USetStr(1500427);
+            tstr = USetStr(1500427) & ":";
             OutString(300,0,tstr,false);
             OutVal(1,0,sumtot3,M4Val,true);
             EndFormat;
-            pgcnt=pgcnt+1;
+            pgcnt = pgcnt + 1;
             StartFormat(15);
             EndFormat;
             Black_Divider(0,1);
@@ -629,7 +621,7 @@ begin
   wn = CurWindow;
   GetWindowRecord(wn,CPr);
   RepSpec.repname = "SalarySlipRn";
-  RepSpec.f1 ="";
+  RepSpec.f1 = "";
   RepSpec.f2 = CPr.ContrSerNr;
   RepSpec.Media = mtScreen;
   RepSpec.sStartDate = CPr.StartDate;

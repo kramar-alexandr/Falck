@@ -12,6 +12,8 @@ external function boolean PrevIllAbsSerNrOK(LongInt,LongInt,string);
 external procedure YearCheck(var LongInt);
 external function boolean IsVacAbsTypeFlag(string);
 remote function Boolean CheckIfSamePeriodAbsExists(LongInt,LongInt,date,date);//ts - 2018/01
+remote procedure PasteInfoFlag(var record AbsenceVc);
+
 
 global
 function Boolean AbsenceDClassSwitchRow(Integer wn,Integer rownr)
@@ -23,7 +25,7 @@ begin
   if (rownr>0) then begin
     GetWindowRecord(wn,Absr);
     DeselectWindow(wn,false);
-    rwcnt=MatRowCnt(Absr);
+    rwcnt = MatRowCnt(Absr);
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(Absr,i,Absrw);
       if ((Absrw.Year)<=0) and blank(Absrw.SDate) and blank(Absrw.EDate) then begin
@@ -55,7 +57,6 @@ begin
   if (Absr.OKFlag!=0) then begin
     res = false;
   end;
-
   AbsenceDClassDeleteRowTest = res;
   return;
 end;
@@ -67,8 +68,8 @@ begin
   record AbsenceVc Absr;
   row AbsenceVc Absrw;
   integer updatemode;
-    
-  res=true;
+
+  res = true;
   GetWindowRecord(wn,Absr);
   if (Absr.OKFlag!=0) then begin
     res = false;
@@ -81,11 +82,13 @@ begin
       case "PrevAbsSerNr": 
         if (Absr.ContinueFlag==0) then begin
           res = false;
-        end; 
+        end;   
+/* //ts 2019/02
       case "SerNr": 
         if (wnst==Rs_update) then begin
           res = false;
         end;
+*/
 //ToDo? case "BrutoSum": res = false;
     end;
   end;  
@@ -132,7 +135,7 @@ begin
   DeSelectWindow(wn,false);
   if (changedf!=0) then begin
     if (Absr.ContinueFlag==0) then begin
-      Absr.PrevAbsSerNr=-1;
+      Absr.PrevAbsSerNr = -1;
       PasteIllPeriods(Absr);
       PutWindowRecord(wn,Absr);
     end;
@@ -141,45 +144,87 @@ begin
   return;
 end;
 
-function boolean AbsenceDClassContrSerNrEFAfter(integer wn,integer rownr,integer changedf)
-  begin  
-  record AbsenceVc Absr;
+global
+function boolean AbsenceDClassInfoFlagButtonAction(integer wn,integer value)
+begin
+  AbsenceDClassInfoFlagButtonAction = false;
+  return;
+end;
+
+global
+procedure PasteDateToAbsence(var record AbsenceVc Absr,var LongInt errstr)
+begin
+  Date contrsd;
+  
+  errstr = -1;
+  if (Absr.EndDate<Absr.StartDate) then begin
+    Absr.EndDate=Absr.StartDate;
+  end;
+  Absr.CalendarDays=GetCalendarDays(Absr.StartDate,Absr.EndDate);
+  Absr.WorkDays=GetWorkingDays(Absr.StartDate,Absr.EndDate);
+  PasteIllPeriods(Absr);
+  PasteVacDates(Absr);
+  PasteInfoFlag(Absr);
+//ts - 2018/01
+  if (CheckIfSamePeriodAbsExists(Absr.SerNr,Absr.ContrSerNr,Absr.StartDate,Absr.EndDate)) then begin
+    errstr = 1500548;
+  end;
+//ts - end
+  return;
+end;
+
+global
+procedure PasteContractToAbsence(var record AbsenceVc Absr,var LongInt errstr,var string vacabstype)
+begin
   record EmplVc Emplr;
   record ContractVc Contr;
-  row ContractVc Contrrw;
   integer rwcnt;
-  string 20 vacabstype;
+
+  Absr.EmplCode = "";
+  Absr.Firstname = "";
+  Absr.Surname = "";
+  errstr = -1;
   
+  Contr.SerNr = Absr.ContrSerNr;
+  if (ReadFirstMain(Contr,1,true)) then begin
+    Emplr.Code = Contr.EmplCode;
+    if (ReadFirstMain(Emplr,1,true)) then begin
+      Absr.EmplCode = Emplr.Code;
+      Absr.Firstname = Emplr.Firstname;
+      Absr.Surname = Emplr.Surname;
+    end;
+    if nonblank(Contr.ObjCode) then begin
+       Absr.ObjCode = Contr.ObjCode;
+    end;
+  end;  
+  PasteVacDates(Absr);
+  if (Absr.ContrSerNr>0) and nonblank(Absr.AbsTypeCode) then begin
+    if (IsVacAbsTypeFlag(Absr.AbsTypeCode)) then begin
+      vacabstype = GetVacAbsTypeCode(Absr.ContrSerNr);
+      if (Absr.AbsTypeCode!=vacabstype) then begin
+        errstr = 1500501;
+      end;
+    end;
+  end;
+  return;
+end;
+
+function boolean AbsenceDClassContrSerNrEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record AbsenceVc Absr;
+  LongInt errstr;
+  string 20 vacabstype;
+    
   if (changedf!=0) then begin
     GetWindowRecord(wn,Absr);
     DeselectWindow(wn,false);
-    Absr.EmplCode = "";
-    Absr.Firstname = "";
-    Absr.Surname = "";
-
-    Contr.SerNr = Absr.ContrSerNr;
-    if (ReadFirstMain(Contr,1,true)) then begin
-      Emplr.Code = Contr.EmplCode;
-      if (ReadFirstMain(Emplr,1,true)) then begin
-        Absr.EmplCode = Emplr.Code;
-        Absr.Firstname = Emplr.Firstname;
-        Absr.Surname = Emplr.Surname;
-      end;
-      if nonblank(Contr.ObjCode) then begin
-        Absr.ObjCode=Contr.ObjCode;
-      end;
-    end;  
-    PasteVacDates(Absr);
-    PutWindowRecord(wn,Absr);
-    if (Absr.ContrSerNr>0) and nonblank(Absr.AbsTypeCode) then begin
-      if (IsVacAbsTypeFlag(Absr.AbsTypeCode)) then begin
-        vacabstype=GetVacAbsTypeCode(Absr.ContrSerNr);
-        if (Absr.AbsTypeCode!=vacabstype) then begin
-          MessageBox(1500501,vacabstype);
-        end;
-      end;
+    PasteContractToAbsence(Absr,errstr,vacabstype);
+    if (errstr>0) then begin
+      MessageBox(errstr,vacabstype);
     end;
- end;
+    PasteInfoFlag(Absr);
+    PutWindowRecord(wn,Absr);
+  end;
   AbsenceDClassContrSerNrEFAfter = true;
   return;
 end;
@@ -187,25 +232,17 @@ end;
 function boolean AbsenceDClassStartDateEFAfter(integer wn,integer rownr,integer changedf)
 begin  
   record AbsenceVc Absr;
+  LongInt errstr;
   
   if (changedf!=0) then begin
     GetWindowRecord(wn,Absr);
     DeselectWindow(wn,false);
-    If (Absr.EndDate<Absr.StartDate) then begin
-      Absr.EndDate=Absr.StartDate;
+    PasteDateToAbsence(Absr,errstr);
+    if (errstr>0) then begin
+      MessageBox(errstr,"");
     end;
-    Absr.CalendarDays=GetCalendarDays(Absr.StartDate,Absr.EndDate);
-    Absr.WorkDays=GetWorkingDays(Absr.StartDate,Absr.EndDate);
-    PasteIllPeriods(Absr);
-    PasteVacDates(Absr);
-//ts - 2018/01
-    if (CheckIfSamePeriodAbsExists(Absr.SerNr,Absr.ContrSerNr,Absr.StartDate,Absr.EndDate)) then begin
-      MessageBox(1500548,"");
-    end;
-//ts - end
     PutWindowRecord(wn,Absr);
   end;
-
   AbsenceDClassStartDateEFAfter = true;
   return;
 end;
@@ -219,12 +256,13 @@ begin
     GetWindowRecord(wn,Absr);
     DeselectWindow(wn,false);
     PasteIllPeriods(Absr);
+    PasteInfoFlag(Absr);
     PasteVacDates(Absr);
     PutWindowRecord(wn,Absr);
     
     if (Absr.ContrSerNr>0) and nonblank(Absr.AbsTypeCode) then begin
       if (IsVacAbsTypeFlag(Absr.AbsTypeCode)) then begin
-        vacabstype=GetVacAbsTypeCode(Absr.ContrSerNr);
+        vacabstype = GetVacAbsTypeCode(Absr.ContrSerNr);
         if (Absr.AbsTypeCode!=vacabstype) then begin
           MessageBox(1500501,vacabstype);
         end;
@@ -241,19 +279,18 @@ begin
   record AbsenceVc Absr;
   boolean res;
   
-  res=true;
+  res = true;
   if (changedf != 0) then begin
     GetWindowRecord(wn,Absr);
     DeselectWindow(wn,false);
     if (Absr.Period1>Absr.CalendarDays) then begin
-      Absr.Period1=blankval;
+      Absr.Period1 = blankval;
       PasteIllDates(Absr);
     end else begin
       PasteIllDates(Absr);
     end;
     PutWindowRecord(wn,Absr);
   end;
-
   AbsenceDClassPeriod1EFAfter = res;
   return;
 end;
@@ -264,19 +301,18 @@ begin
   record AbsenceVc Absr;
   boolean res;
   
-  res=true;
+  res = true;
   if (changedf != 0) then begin
     GetWindowRecord(wn,Absr);
     DeselectWindow(wn,false);
     if (Absr.Period1>Absr.CalendarDays) then begin
-      Absr.Period2=blankval;
+      Absr.Period2 = blankval;
       PasteIllDates(Absr);
     end else begin
       PasteIllDates(Absr);
     end;
     PutWindowRecord(wn,Absr);
   end;
-
   AbsenceDClassPeriod2EFAfter = res;
   return;
 end;
@@ -292,16 +328,16 @@ function boolean AbsenceDClassYearEFAfter(integer wn,integer rownr,integer chang
   if (changedf!=0) then begin
     GetWindowRecord(wn,Absr);
     DeselectWindow(wn,false);
-    vacabstype=GetVacAbsTypeCode(Absr.ContrSerNr);
+    vacabstype = GetVacAbsTypeCode(Absr.ContrSerNr);
     if (Absr.AbsTypeCode==vacabstype) then begin
       MatRowGet(Absr,rownr,Absrw);
       if (Absrw.Year>0) then begin
         YearCheck(Absrw.Year);        
-        Absrw.SDate=bdate;
-        Absrw.EDate=bdate;
-        Absrw.Days=0;
-        Absrw.VacDaysToUse=GetYearVacDaysToUse(Absr.ContrSerNr,Absrw.Year);
-        Absrw.HDays=0;
+        Absrw.SDate = bdate;
+        Absrw.EDate = bdate;
+        Absrw.Days = 0;
+        Absrw.VacDaysToUse = GetYearVacDaysToUse(Absr.ContrSerNr,Absrw.Year);
+        Absrw.HDays = 0;
       end;
       MatRowPut(Absr,rownr,Absrw);
       PutWindowRecord(wn,Absr);
@@ -323,31 +359,31 @@ function boolean AbsenceDClassDaysEFAfter(integer wn,integer rownr,integer chang
   if (changedf!=0) then begin
     GetWindowRecord(wn,Absr);
     DeselectWindow(wn,false);
-    vacabstype=GetVacAbsTypeCode(Absr.ContrSerNr);
+    vacabstype = GetVacAbsTypeCode(Absr.ContrSerNr);
     if (Absr.AbsTypeCode==vacabstype) then begin
       MatRowGet(Absr,rownr,Absrw);
       if (Absrw.Year>0) then begin
         if (rownr>0) then begin
           MatRowGet(Absr,rownr-1,Abs2rw);
-          sd=AddDay(Abs2rw.EDate,1);
+          sd = AddDay(Abs2rw.EDate,1);
           if (sd>Absr.EndDate) then begin
-            sd=Absr.EndDate;
+            sd = Absr.EndDate;
           end;
         end else begin
-          sd=Absr.StartDate;
+          sd = Absr.StartDate;
         end;
-        vacdaystot=Absrw.Days;
+        vacdaystot = Absrw.Days;
         GetVacDates(Absr.ContrSerNr,Absrw.Year,vacdaystouse,vacdaysyear,vacdaystot,hdays,sd,ed,Absr.EndDate);
-        Absrw.Days=DateDiff(AddDay(ed,1),sd)-hdays;  
-        Absrw.HDays=hdays;
-        Absrw.VacDaysToUse=vacdaystouse-Absrw.Days;
-        Absrw.SDate=sd;
-        Absrw.EDate=ed;
+        Absrw.Days = DateDiff(AddDay(ed,1),sd)-hdays;  
+        Absrw.HDays = hdays;
+        Absrw.VacDaysToUse = vacdaystouse - Absrw.Days;
+        Absrw.SDate = sd;
+        Absrw.EDate = ed;
         if (Absrw.Days==0) then begin
-          Absrw.SDate=bdate;
-          Absrw.EDate=bdate;
-          Absrw.HDays=0;
-          Absrw.VacDaysToUse=GetYearVacDaysToUse(Absr.ContrSerNr,Absrw.Year);
+          Absrw.SDate = bdate;
+          Absrw.EDate = bdate;
+          Absrw.HDays = 0;
+          Absrw.VacDaysToUse = GetYearVacDaysToUse(Absr.ContrSerNr,Absrw.Year);
         end;
       end;
       MatRowPut(Absr,rownr,Absrw);
@@ -364,14 +400,14 @@ begin
   record AbsenceVc Absr;
   boolean res;
   
-  res=true;
-  if (changedf != 0) then begin
+  res = true;
+  if (changedf!=0) then begin
     GetWindowRecord(wn,Absr);
     DeselectWindow(wn,false);
     if (Absr.PrevAbsSerNr>0) then begin
       if (PrevIllAbsSerNrOK(Absr.PrevAbsSerNr,Absr.SerNr,Absr.EmplCode)==false) then begin
         MessageBox(1500379,"");
-        Absr.PrevAbsSerNr=-1;
+        Absr.PrevAbsSerNr = -1;
       end;
       PasteIllPeriods(Absr);
       PutWindowRecord(wn,Absr);
@@ -398,5 +434,49 @@ begin
     case "Days": res = AbsenceDClassDaysEFAfter(wn,rownr,changed);
   end;
   AbsenceDClassAfterEditField = res;
+  return;
+end;
+
+global
+procedure VacCalcDsm()
+begin
+  record RcVc RepSpec;
+  record AbsenceVc Absr;  
+  integer wn,nwn;
+  
+  wn = CurWindow;
+  if (WindowState(wn)==0) then begin
+    GetWindowRecord(wn,Absr);
+    RepSpec.repname = "VacCalcRn";
+    ReportDefaults(RepSpec,"VacCalcRClass");
+    RepSpec.f1 = Absr.SerNr;
+    RepSpec.d1 = CurrentDate;
+    RepSpec.Media = mtScreen;    
+    nwn = OpenWindow("VacCalcRClass",1,0,"","",RepSpec);
+  end else begin
+    Beep;
+  end;
+  return;
+end;
+
+global
+procedure IllCalcDsm()
+begin
+  record RcVc RepSpec;
+  record AbsenceVc Absr;  
+  integer wn,nwn;
+  
+  wn = CurWindow;
+  if (WindowState(wn)==0) then begin
+    GetWindowRecord(wn,Absr);
+    RepSpec.repname = "IllCalcRn";
+    ReportDefaults(RepSpec,"IllCalcRClass");
+    RepSpec.f1 = Absr.SerNr;
+    RepSpec.d1 = CurrentDate;
+    RepSpec.Media = mtScreen;    
+    nwn = OpenWindow("IllCalcRClass",1,0,"","",RepSpec);
+  end else begin
+    Beep;
+  end;
   return;
 end;

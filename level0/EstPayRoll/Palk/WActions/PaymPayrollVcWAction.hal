@@ -5,8 +5,9 @@ external procedure PastePPrTaxes(record PaymPayrollVc,integer);
 external function integer GetPaymTypeFlag(string);
 external function string 255 GetPaymTypeName(string);
 external function boolean OneEmplOnPaymPayroll(record PaymPayrollVc,var string);
+remote updating function Boolean RecordAction_rlPPrLOK(var record PaymPayrollVc,Boolean);
 
-global 
+global
 function Boolean PaymPayrollDClassDeleteRowTest(Integer wn,Integer rownr)
 begin
   record PaymPayrollVc PPr;
@@ -111,10 +112,12 @@ begin
           res = false;
         end;
 */
+/* //ts 2019/02
       case "SerNr": 
         if (wnst==Rs_update) then begin
           res = false;
         end;
+*/
     end;
   end;  
 L1:;
@@ -199,28 +202,28 @@ begin
     if (ReadFirstMain(CPr,1,true)) then begin
       if (CPr.ContrSerNr!=PPrw.ContrSerNr) then begin
         MessageBox(1500374,PPrw.CalcSerNr);
-        PPrw.CalcSerNr=-1;
+        PPrw.CalcSerNr = -1;
         goto LPaymPayrollDClassCalcSerNrEFAfter;
       end;
       MatRowDelete(PPr,rownr);
       PastePPrwsFromCPr(PPr,PPrw,CPr,rownr);
     end else begin
-      PPrw.PaymTypeCode="";
-      PPrw.PaymTypeName="";
-      PPrw.ObjCode="";
-      PPrw.NetoSum=blankval;
-      PPrw.BrutoSum=blankval;
-      PPrw.UnemplInsSum=blankval;
-      PPrw.PensionSum=blankval;
-      PPrw.CalcBrutoSum=blankval;
-      PPrw.AddTaxSum=blankval;
-      PPrw.IncTaxSum=blankval;
-      PPrw.IncTaxFreeMinSum=blankval;
-      PPrw.DPDiscSum=blankval;
-      PPrw.SocTaxSum=blankval;
-      PPrw.EmplUnemplInsSum=blankval;
-      PPrw.CalcNetoSum=blankval;
-      PPrw.NotPaidNetoSum=blankval;
+      PPrw.PaymTypeCode = "";
+      PPrw.PaymTypeName = "";
+      PPrw.ObjCode = "";
+      PPrw.NetoSum = blankval;
+      PPrw.BrutoSum = blankval;
+      PPrw.UnemplInsSum = blankval;
+      PPrw.PensionSum = blankval;
+      PPrw.CalcBrutoSum = blankval;
+      PPrw.AddTaxSum = blankval;
+      PPrw.IncTaxSum = blankval;
+      PPrw.IncTaxFreeMinSum = blankval;
+      PPrw.DPDiscSum = blankval;
+      PPrw.SocTaxSum = blankval;
+      PPrw.EmplUnemplInsSum = blankval;
+      PPrw.CalcNetoSum = blankval;
+      PPrw.NotPaidNetoSum = blankval;
       MatRowPut(PPr,rownr,PPrw);
     end;      
     PPrSumUp(PPr);
@@ -240,7 +243,7 @@ begin
     GetWindowRecord(wn,PPr);
     DeselectWindow(wn,false);
     MatRowGet(PPr,rownr,PPrw);
-    PPrw.PaymTypeName=GetPaymTypeName(PPrw.PaymTypeCode);
+    PPrw.PaymTypeName = GetPaymTypeName(PPrw.PaymTypeCode);
     MatRowPut(PPr,rownr,PPrw);
     PutWindowRecord(wn,PPr);
   end;
@@ -278,7 +281,6 @@ begin
 //      PPrSumUp(PPr);
 //      PutWindowRecord(wn,PPr);
 //    end;
-
   end;
   PaymPayrollDClassPDateEFAfter = true;
   return;
@@ -295,49 +297,49 @@ begin
     GetWindowRecord(wn,PPr);
     DeselectWindow(wn,false);
   
-    deductsum=0;
-    rwcnt=MatRowCnt(PPr);
+    deductsum = 0;
+    rwcnt = MatRowCnt(PPr);
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(PPr,i,PPrw);
-      paymtypeflag=GetPaymTypeFlag(PPrw.PaymTypeCode);
+      paymtypeflag = GetPaymTypeFlag(PPrw.PaymTypeCode);
       if ((paymtypeflag==1) or (paymtypeflag==2) or (paymtypeflag==3)) then begin //kinnipidamine k.a. KohtutŠitur (kinnip.neto)
-        deductsum=deductsum+PPrw.NotPaidNetoSum;
+        deductsum = deductsum + PPrw.NotPaidNetoSum;
       end;
-      notpaidnetotot=notpaidnetotot+PPrw.NotPaidNetoSum;
+      notpaidnetotot = notpaidnetotot + PPrw.NotPaidNetoSum;
     end;
 
-    netototnew=PPr.NetoTotal;
+    netototnew = PPr.NetoTotal;
     if (netototnew<0) then begin
       MessageBox(1500382,notpaidnetotot);
-      netototnew=notpaidnetotot;
+      netototnew = notpaidnetotot;
       for (i=0;i<rwcnt;i=i+1) begin
-        PPrw.NetoSum=PPrw.NotPaidNetoSum;
+        PPrw.NetoSum = PPrw.NotPaidNetoSum;
         MatRowPut(PPr,i,PPrw);
       end;
-      PPr.NetoTotal=notpaidnetotot;
+      PPr.NetoTotal = notpaidnetotot;
     end else begin
       if (netototnew>notpaidnetotot) then begin
         MessageBox(1500372,notpaidnetotot);
-        netototnew=notpaidnetotot;
+        netototnew = notpaidnetotot;
         for (i=0;i<rwcnt;i=i+1) begin
-          PPrw.NetoSum=PPrw.NotPaidNetoSum;
+          PPrw.NetoSum = PPrw.NotPaidNetoSum;
           MatRowPut(PPr,i,PPrw);
         end;
-        PPr.NetoTotal=notpaidnetotot;
+        PPr.NetoTotal = notpaidnetotot;
       end;
     end; 
     if (netototnew<=notpaidnetotot) then begin
-      netototnew=netototnew-deductsum;
+      netototnew = netototnew - deductsum;
       for (i=0;i<rwcnt;i=i+1) begin
         MatRowGet(PPr,i,PPrw);
-        paymtypeflag=GetPaymTypeFlag(PPrw.PaymTypeCode);
+        paymtypeflag = GetPaymTypeFlag(PPrw.PaymTypeCode);
         if (paymtypeflag==7) then begin //tasu
           if (PPrw.NotPaidNetoSum<=netototnew) then begin
-            PPrw.NetoSum=PPrw.NotPaidNetoSum;
-            netototnew=netototnew-PPrw.NetoSum;
+            PPrw.NetoSum = PPrw.NotPaidNetoSum;
+            netototnew = netototnew - PPrw.NetoSum;
           end else begin
-            PPrw.NetoSum=netototnew;
-            netototnew=netototnew-PPrw.NetoSum;
+            PPrw.NetoSum = netototnew;
+            netototnew = netototnew - PPrw.NetoSum;
           end;  
         end;  
         MatRowPut(PPr,i,PPrw);
@@ -422,6 +424,29 @@ begin
       end;
   end;
   PaymPayrollDClassOpenRecord = res;
+  return;
+end;
+
+global
+updating procedure OKPPrLsm()
+begin
+  Integer wn;
+  record PaymPayrollVc PPr;
+  LongInt i;
+  boolean testf;
+  
+  wn = CurWindow;
+  i = 1;
+  while (GetRecordFromBrowse(PPr,wn,i)) begin
+    testf = true;
+    if (PPr.Invalid!=0) then begin testf = false; end;
+    if (PPr.OKFlag!=0) then begin testf = false; end;
+    if (testf) then begin
+      if (RecordAction_rlPPrLOK(PPr,true)) then begin end;
+    end;
+    i = i + 1;
+  end;
+  UpdateBrowses("PaymPayrollVc");
   return;
 end;
 

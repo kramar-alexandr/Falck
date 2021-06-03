@@ -1,0 +1,301 @@
+external function Boolean IsStandardUnused();
+external function Boolean IsEnterprise();
+external function Boolean StandardHansa();
+external function Boolean HasATOL();
+
+external function Boolean HasAccPeriods();
+external function Boolean HasAccessGroups();
+external function Boolean HasAddFee();
+external function Boolean HasApprovals();
+external function Boolean HasCCPayments();
+external function Boolean HasAdvancedAccounting();
+external function Boolean HasAdvancedCRM();
+external function Boolean HasAdvancedPricing();
+external function Boolean HasAdvancedProduction();
+external function Boolean HasAdvancedStock();
+external function Boolean HasAged();
+external function Boolean HasBar();
+external function Boolean HasBase2();
+external function Boolean HasBranch();
+external function Boolean HasBuyBack();
+external function Boolean HasCategories();
+//external function Boolean HasConsigmentStock();
+external function Boolean HasCommunicator();
+external function Boolean HasConsignmentStock();
+external function Boolean HasContactClassification();
+external function Boolean HasContactRelations();
+external function Boolean HasConsolidation();
+external function Boolean HasCountryPerCustomer();
+external function Boolean HasCreditLimit();
+external function Boolean HasCustItem();
+external function Boolean HasCustomerSearchKey();
+external function Boolean HasCustomerStatusReport();
+external function Boolean HasDownpayments();
+external function Boolean HasDefineColumns();
+external function Boolean HasDeliveryAddress();
+external function Boolean HasDepartments();
+external function Boolean HasETaxDocuments();
+external function Boolean HasEInvoicing();
+external function Boolean HasEndorsedChecks();
+external function Boolean HasExtraNLComment();
+external function Boolean HasExtTax();
+external function Boolean HasFavouriteActTypes();
+external function Boolean HasFiscalPrinter();
+external function Boolean HasFormEditor();
+external function Boolean HasFreightAdvanced();
+external function Boolean HasHideCostPrice();
+external function Boolean HasHotelInterface();
+external function Boolean HasGuestUserDefined();
+external function Boolean HasJewelleryInterface();
+external function Boolean HasIncomeAndExpenseBook();
+external function Boolean HasIOUChecks();
+external function Boolean HasItemClassification();
+external function Boolean HasItemGroups();
+external function Boolean HasKPIs();
+external function Boolean HasLanguages();
+external function Boolean HasLimitedAccess();
+external function Boolean HasLocalMachines();
+external function Boolean HasLoyaltyCards();
+external function Boolean HasMailTags();
+external function Boolean HasMainPartner();
+external function Boolean HasMultiCurrency();
+external function Boolean HasMultiLocations();
+external function Boolean HasNLBudget();
+external function Boolean HasNLBudgetClass();
+external function Boolean HasObjects();
+external function Boolean HasInvoiceOfficialSerNr();
+external function Boolean HasOfficialSerNr();
+external function Boolean HasOrderClasses();
+external function Boolean HasPreferedOfficialSerNr();
+external function Boolean HasNumberSeries();
+external function Boolean HasPersons();
+external function Boolean HasPocketScreen();
+external function Boolean HasPositions();
+external function Boolean HasPrepayments();
+external function Boolean HasProjects();
+external function Boolean HasPriceLists();
+external function Boolean HasQualityControl();
+external function Boolean HasReconLevel2();
+external function Boolean HasReminderLevel();
+external function Boolean HasRemoteBackup();
+external function Boolean HasResourceDisplayGroups();
+external function Boolean HasRussianPrepayment();
+external function Boolean HasRetGoodsToSupp();
+external function Boolean HasReturnedGoods();
+external function Boolean HasRoomPackages();
+external function Boolean HasRoomTypes();
+external function Boolean HasRoute();
+external function Boolean HasSalesman();
+external function Boolean HasSalesmanBonus();
+external function Boolean HasSalesGroup();
+external function Boolean HasSecondQuantity();
+external function Boolean HasSerialNumbers();
+external function Boolean HasServerInCloud();
+external function Boolean HasSettlementDiscount();
+external function Boolean HasSimulations();
+external function Boolean hasSimAccruals();
+external function Boolean HasSkypeConnection();
+external function Boolean HasSIPServerConnection();
+external function Boolean HasStrAsSignFType();
+external function Boolean HasTouchScreenDevice();
+external function Boolean HasTaxMatrix();
+external function Boolean HasTestFeatures();
+external function Boolean HasMetroTestFeatures();
+external function Boolean HasWorkOrders();
+external function Boolean HasThrouLocation();
+external function Boolean HasTouchScreenLook();
+external function Boolean HasTREO();
+external function Boolean HasVarieties();
+external function Boolean HasVATZone();
+external function Boolean HasWithholdingTax();
+external function Boolean HasWithholdingTaxAdvanced();
+external function Boolean HasWorkOrders();
+external function Boolean HasWorkflowOverview();
+
+external function Boolean HasStandardCRM();
+external function Boolean HasStandardOrganizer();
+external function Boolean HasStandardCommunicator();
+
+external function Boolean HasEMail();
+external function Boolean HasExternalEMail();
+
+external function Boolean HasModAT2();
+external function Boolean HasModBA();
+external function Boolean HasModCheck();
+external function Boolean HasModCL();
+external function Boolean HasModCO();
+external function Boolean HasModCons();
+external function Boolean HasModCourses();
+external function Boolean HasModCredMan();
+external function Boolean HasModCRM();
+external function Boolean HasModEDI();
+external function Boolean HasModExp();
+external function Boolean HasModHotel();
+external function Boolean HasModHRM();
+external function Boolean HasModIN();
+external function Boolean HasModIntStock();
+external function Boolean HasModNL();
+external function Boolean HasPaymentGateway();
+external function Boolean HasModPO();
+external function Boolean HasModPOS();
+external function Boolean HasModPL();
+external function Boolean HasModPOProg();
+external function Boolean HasModPP();
+external function Boolean HasModProd();
+external function Boolean HasModQT();
+external function Boolean HasModRent();
+external function Boolean HasModRest();
+external function Boolean HasModRsrt();
+external function Boolean HasModSO();
+external function Boolean HasModSL();
+external function Boolean HasModSVO();
+external function Boolean HasModTS();
+external function Boolean HasModWHM();
+external function Boolean HasModDI();
+external function Boolean UsePostOKButton();
+external function Boolean HasBankImport();
+external function Boolean HasPLIntegratedWithNL();
+external function Boolean HasSLIntegratedWithNL();
+external function Boolean HasIntegratedNL();
+external function Boolean HasConsStockMoveInvoices();
+external procedure RateField(real,real,real,string,integer,string,boolean,real,real,string,boolean);
+
+window PPDClass:1
+  wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h1,h2,h3,t,v,vs;
+  Integer tilenr,flipnr,f,pos;
+
+  WindowBegin("Personnel Payment",PPDClass,CGview,-);
+  SetWRect(20,80,527,350);
+  Sizeable(-1,-1,0,0);
+  UseView(PPVc);
+  FormName(PersPayForm);
+  ActiveFieldOnNew("PayDate");
+  h = 80; h2 = 222; h3 = 444; v = 6;
+  if (IsEnterprise or HasMultiCurrency or HasBase2) then begin
+    Tile(0,50+24,false,"",PayMode);
+  end;
+  EditField(h,v, 60,"No.",St_i,SerNr,false,TSerSClass);
+  EditField(h2,v,80,"Pay Date",Normal,PayDate,false,PasteCurDate);
+  if (HasModNL) then begin
+    EditField(h3,v,85,"Trans. Date",Normal,TransDate,false,PasteCurDate);
+  end;
+  CheckBox(-100,6,0,"Ordered",OrderedFlag);
+  CheckBox(-100,6+20,0,"OK",DoneFlag);
+  EditField(h,v+=20,30,"Pay Mode",Normal,PayMode,false,PMSClass);
+  EditField(h2,v,120,"Own Bank A/C",Normal,BankAcc,false,0);
+  EditField(h3,v,80,"#Sort Code#",Normal,SortCode,false,0);
+  EditField(h,v+=20,564,"Comment",Normal,Comment,false,0);
+  EnterSkip(Math);
+  tilenr = 1;
+  if (IsEnterprise or HasMultiCurrency or HasBase2) then begin
+    TileButton(tilenr,"Amounts"); tilenr = tilenr + 1;
+  end;
+  if (IsEnterprise or HasMultiCurrency or HasBase2) then begin
+    TileButton(tilenr,"Currency"); tilenr = tilenr + 1;
+  end;
+  tilenr = 1;
+  if (IsEnterprise or HasMultiCurrency or HasBase2) then begin
+    Tile(tilenr,171,true,tilenr,Math); tilenr = tilenr + 1;
+  end;
+  if (HasMultiCurrency or HasBase2) then begin
+    EditField(-300,-41,85,"Currency",Normal,CurncyCode,false,CurncyCodeSClass);
+  end;
+  if (IsEnterprise) then begin
+    EditField(-300,-21,85,"Bank Fee",Normal,ExtraCost,true,0);
+  end;
+  EditField(-125,-41,85,"Sum",ViewOnly,PayVal,true,0);
+  if (IsEnterprise) then begin
+    EditField(-125,-21,85,"Withdrawn",ViewOnly,BasePayVal,true,0);
+  end;
+  //cust - start KB 06.11.2019 //pangaliidestus
+  HalPushButton(20,-30,10+100,-10,"SignAndSendPPDsm","Send to bank");
+  //cust - end
+  if (tilenr>1) then begin
+    v = 24;
+  end else begin
+    v = v+40;
+  end;
+  h=4;
+  MatrixBegin(h,v,-50,-50,-,99);
+  MatTypedRow(stp);
+  MatOverStrike(ovst);
+  Flip(0);
+  MatCol(t=1,24,"Person",0,Person,false,UserSClass);
+  MatCol(t  ,70,"Text",0,Comment,false,0);
+  if (HasObjects) then begin
+    MatCol(t  ,195,"Pay Mode",0,PayMode,false,PMSClass);
+    MatCol(t  ,-380,"Tag/Object",0,Objects,false,ObjSClass);
+  end else begin
+    MatCol(t  ,-290,"Pay Mode",0,PayMode,false,PMSClass);
+  end;
+  Flip(1);
+  if (HasModCheck) then begin
+    MatCol(t  ,-310,"#Cheque#",0,ChequeNr,false,OwnCheckSClass);
+  end;
+  MatCol(t  ,-230,"#Sort Code#",0,SortCode,false,0);
+  MatCol(t  ,-170,"Bank A/C",0,BankAcc,false,0);
+  MatCol(t  ,-91,"Amount",0,PayVal,true,0);
+  Flip(2);
+  MatCol(t=1,-220,"Reference Number",0,rkPayNumber,false,0);
+  InsertRowTest;
+  DeleteRowTest;
+  EndMatrix;
+  vs = 20;
+//  v = 18; 
+  v = v + 1;
+           VTab(-35,v,-16,v+vs,ToolFlip,1,"A");
+  v=v+vs;  VTab(-35,v,-16,v+vs,ToolFlip,2,"B");
+//  CheckBox(25,v=-41,0,"O_rdered",OrderedFlag);
+//  CheckBox(25,v=-25,0,"OK",DoneFlag);
+  if (IsEnterprise or HasMultiCurrency or HasBase2) then begin
+    Tile(tilenr,70,false,tilenr,FrRate); tilenr = tilenr + 1;
+    vs = 20; h1 = 110; h2 = 295;
+    if (HasBase2) then begin
+      h1 = h1 + 20;
+    end;
+    EditField(h1,v=6,50,"Currency",Normal,CurncyCode,false,CurncyCodeSClass);
+    if (HasMultiCurrency) then begin
+      if (HasBase2) then begin
+        EditField(h1,v+vs,50,"Base Currency 1",Normal,BaseRate1,true,0);
+      end else begin
+        EditField(h1,v+vs,50,"Base Currency",Normal,BaseRate1,true,0);
+      end;
+      if (HasBase2) then begin  
+        EditField(h1,v+(vs*2),50,"Base Currency 2",Normal,BaseRate2,true,0);
+      end;
+      EditField(h2=295,v,50,"Rate",Normal,FrRate,true,0);
+      if (HasBase2) then begin  
+        RateField(h3=360,v,50,":",Normal,"ToRateB1",true,h3+60,v+14,"Base Currency 1",false);
+        RateField(h3,v+=vs,50,":",Normal,"ToRateB2",true,h3+60,v+14,"Base Currency 2",false);          
+      end else begin
+        RateField(h3=360,v,50,":",Normal,"ToRateB1",true,h3+60,v+14,"Base Currency",false);    
+      end;    
+    end else begin
+      EditField(h1,v+=vs,50,"Base Currency 1",Normal,BaseRate1,true,0);
+      EditField(h1,v+=vs,50,"Base Currency 2",Normal,BaseRate2,true,0);
+    end;
+  end;
+  if (IsEnterprise) then begin
+    SpecialMenu("Print Cash IN-OUT",' ',0,"PrintCashInOutPPDsm");
+  end;
+  if (HasModNL) then begin
+    SpecialMenu("Open #NL# Transaction",'t',1,"OpenTRFromPP");
+  end;
+  if (IsEnterprise) then begin
+    SpecialMenu("Bank Statement",' ',3,"BankStPPDsm");
+    if (StandardHansa==false) then begin
+      SpecialMenu("Prepare #Cheque#",'e',9,"PrepChequePPDsm");
+      SpecialMenu("Print #Cheques#",' ',9,"PrintChequesPPDsm");
+    end;
+  end;
+  //cust - start KB 06.11.2019 //pangaliidestus
+  SpecialMenu("E-personnel payment status",' ',10,"BK_EPayStatusPPDsm");
+  //cust - end
+  SpecMenuGroup("",kSpecMenuGroupTypeExtendedPlusMenu,0);
+  if (HaseMail) then begin
+    SpecialMenu("Email(s)",'m',12,"CreateMailFromPPDsm");
+  end;  
+  EndWindow;
+end;

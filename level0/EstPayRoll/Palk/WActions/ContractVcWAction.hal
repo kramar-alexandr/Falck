@@ -1,10 +1,23 @@
 external procedure PastePositionInContract(var record ContractVc,integer);
 external procedure PasteEmplInContract(var record ContractVc);
 
+function Boolean ContractHistoryFound(LongInt COSerNr)
+begin
+  record CalcPayrollVc CPr;
+  Boolean res;
+  
+  CPr.ContrSerNr = COSerNr;
+  if (ReadFirstKey("ContrSerNr",CPr,1,true)) then begin
+    res = true;
+  end;
+  ContractHistoryFound = res;
+  return;
+end;
+
 global
 function boolean ContractDClassActiveEditField(integer wn,string fieldname,integer fn,integer wnst,integer rownr,integer changed)
 begin
-  boolean res;
+  boolean res,ihfound;
   record ContractVc Contrr;
   
   res = true;
@@ -15,8 +28,14 @@ begin
     switch (fieldname) begin
       case "LastCalcDate": res = false;
       case "LoadSum": res = false;
-      case "SerNr": 
+      case "SerNr":
+/*
         if (wnst==Rs_update) then begin
+          res = false;
+        end;
+*/
+        ihfound = ContractHistoryFound(Contrr.SerNr);
+        if (ihfound) then begin
           res = false;
         end;
     end;
@@ -97,7 +116,7 @@ function boolean ContractDClassVacDaysNormEFAfter(integer wn,integer rownr,integ
     GetWindowRecord(wn,Contrr);
     DeselectWindow(wn,false);
     if (Contrr.VacDaysNorm<0) or (Contrr.VacDaysNorm>366) then begin
-      Contrr.VacDaysNorm=0;
+      Contrr.VacDaysNorm = 0;
       PutWindowRecord(wn,Contrr);
     end;
   end;
@@ -119,5 +138,116 @@ begin
     case "VacDaysNorm": res = ContractDClassVacDaysNormEFAfter(wn,rownr,changed);
   end;
   ContractDClassAfterEditField = res;
+  return;
+end;
+
+global
+procedure VacBalToUseDsm()
+begin
+  Integer wn;
+  record ContractVc Contrr;
+  record RcVc RepSpec;
+
+  wn = CurWindow;
+  GetWindowRecord(wn,Contrr);
+  ReportDefaults(RepSpec,"VacBalToUseRClass"); 
+  RepSpec.Media = mtScreen;
+  RepSpec.repname = "VacBalToUseRn";
+  RepSpec.f2 = Contrr.SerNr;
+  RepSpec.d1 = CurrentDate;
+  RunReport(RepSpec,0);
+  return;
+end;
+
+global
+procedure VacBalToUseLsm()
+begin
+  Integer wn;
+  record ContractVc Contrr;
+  record RcVc RepSpec;
+
+  wn = CurWindow;
+  if (ReadMarkedRecord(wn,Contrr)) then begin
+    ReportDefaults(RepSpec,"VacBalToUseRClass"); 
+    RepSpec.Media = mtScreen;
+    RepSpec.repname = "VacBalToUseRn";
+    RepSpec.f2 = Contrr.SerNr;
+    RepSpec.d1 = CurrentDate;
+    RunReport(RepSpec,0);
+  end;
+  return;
+end;
+
+global
+procedure EmplHistDsm()
+begin
+  Integer wn;
+  record ContractVc Contrr;
+  record RcVc RepSpec;
+
+  wn = CurWindow;
+  GetWindowRecord(wn,Contrr);
+  ReportDefaults(RepSpec,"EmplHistRClass"); 
+  RepSpec.Media = mtScreen;
+  RepSpec.repname = "EmplHistRn";
+  RepSpec.f2 = Contrr.SerNr;
+  RunReport(RepSpec,0);
+  return;
+end;
+
+global
+procedure EmplHistLsm()
+begin
+  Integer wn;
+  record ContractVc Contrr;
+  record RcVc RepSpec;
+
+  wn = CurWindow;
+  if (ReadMarkedRecord(wn,Contrr)) then begin
+    ReportDefaults(RepSpec,"EmplHistRClass"); 
+    RepSpec.Media = mtScreen;
+    RepSpec.repname = "EmplHistRn";
+    RepSpec.f2 = Contrr.SerNr;
+    RunReport(RepSpec,0);
+  end;
+  return;
+end;
+
+global
+procedure WorkedHoursDsm()
+begin
+  Integer wn;
+  record ContractVc Contrr;
+  record RcVc RepSpec;
+
+  wn = CurWindow;
+  GetWindowRecord(wn,Contrr);
+  ReportDefaults(RepSpec,"WorkedHoursRClass");
+  RepSpec.Media = mtScreen;
+  RepSpec.repname = "WorkedHoursRn";
+  RepSpec.f2 = Contrr.SerNr;
+  RepSpec.flags[1] = GetYear(AddMonth(CurrentDate,-1));
+  RepSpec.flags[2] = GetMonth(AddMonth(CurrentDate,-1));
+  RunReport(RepSpec,0);
+  return;
+end;
+
+global
+procedure WorkedHoursLsm()
+begin
+  Integer wn;
+  record ContractVc Contrr;
+  record RcVc RepSpec;
+
+  wn = CurWindow;
+  if (ReadMarkedRecord(wn,Contrr)) then begin
+    ReportDefaults(RepSpec,"WorkedHoursRClass");
+    RepSpec.Media = mtScreen;
+    RepSpec.repname = "WorkedHoursRn";
+    RepSpec.f2 = Contrr.SerNr;
+    RepSpec.flags[1] = GetYear(AddMonth(CurrentDate,-1));
+    RepSpec.flags[2] = GetMonth(AddMonth(CurrentDate,-1));
+    RunReport(RepSpec,0);
+  end;
   return;
 end;

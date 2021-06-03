@@ -1,0 +1,228 @@
+//pangaliidestus
+external procedure GetUserName(string,var string);
+external function Boolean GetPMRow(string,var row PMBlock);
+external function boolean IsPartnerEPayActive(string);
+external function string 10 BankSWIFTToPartnerCode(string);
+external procedure BankingDebugMsg(string,string);
+external updating procedure MarkBankQueRecordSent(var record BankReqQueVc,string);
+external updating procedure MarkBankQueRecordTried(var record BankReqQueVc,string);
+external function integer BankQueStatusNew();
+external function integer BankQueReplyProgress();
+external function integer BankQueReplySuccess();
+external function integer BankQueReplyError();
+external procedure BankFillReqQueRowsFromXML(var record BankReqQueVc,xml);
+external function integer GetNbOfTxsFromXML(xml);
+
+function string 10 GetPartnerFromPayMode(string payModeCode)
+begin
+  string 10 res;
+  row PMBlock PMblrw;
+  string 10 bankCode;
+  record BankVc Bankr;
+
+  if (GetPMRow(payModeCode,PMblrw)) then begin
+    Bankr.Code = PMblrw.BankCode;
+    if (ReadFirstMain(Bankr,1,true)) then begin
+      res = BankSWIFTToPartnerCode(Bankr.SWIFT);
+    end;
+  end;
+  GetPartnerFromPayMode = res;
+  return;
+end;
+
+global
+function string 255 GetUniqueFileNameForPaymPayroll(record PaymPayrollVc PaymPayrollr)
+begin
+  string 255 res;
+
+  res = "paympayroll_" & PaymPayrollr.SerNr & "_comp_" & CurrentCompany & "_" & CurrentUser;
+  GetUniqueFileNameForPaymPayroll = res;
+  return;
+end;
+
+function string 60 GetMsgIDFromXmlArea(area xmlArea)
+begin
+  string 60 res;
+  xml parsedXML;
+
+  parsedXML = ParseXmlArea(xmlArea);
+  res = XmlGet(parsedXML,"Document/CstmrCdtTrfInitn/GrpHdr/MsgId");
+  GetMsgIDFromXmlArea = res;
+  return;
+end;
+
+global
+function boolean PaymPayrollCanAddToBankQueue(record PaymPayrollVc PaymPayrollr, var string errMsg)
+begin
+  boolean res;
+  record BankReqQueVc BankReqQuer;
+  row PaymPayrollVc PaymPayrollrw;
+  record CYBlock CYb;
+  string 60 userName;
+  string 10 partner;
+  integer rwcnt,i;
+
+  BlockLoad(CYb);
+  res = true;
+  if (PaymPayrollr.OKFlag != 1) then begin
+    res = false;
+    errMsg = USetStr(1138);
+    goto LPaymPayrollCanAddToBankQueue;
+  end;
+  //find in header index
+  BankReqQuer.RecordID = PaymPayrollr.SerNr & "";
+  BankReqQuer.RecordType = "PaymPayrollVc";
+  if (ReadFirstKey("RecordIDType",BankReqQuer,2,true)) then begin
+    res = false;
+    errMsg = USetStr(1501062);
+    goto LPaymPayrollCanAddToBankQueue;
+  end;
+  //find in matrix index
+  ResetLoop(BankReqQuer);
+  RecordClear(BankReqQuer);
+  BankReqQuer.RecordType = "PaymPayrollVc";
+  if (ReadFirstKey("RowRecordIDType:" & PaymPayrollr.SerNr,BankReqQuer,1,true)) then begin
+    res = false;
+    errMsg = USetStr(1501062);
+    goto LPaymPayrollCanAddToBankQueue;
+  end;
+  if (blank(CYb.OrgNr)) then begin
+    res = false;
+    errMsg = USetStr(1501063);
+    goto LPaymPayrollCanAddToBankQueue;
+  end;
+  /*
+  if (PaymPayrollr.SentFlag == 1) then begin
+    res = false;
+    errMsg = USetStr(33495);
+    goto LPaymPayrollCanAddToBankQueue;
+  end;
+  */
+  partner = GetPartnerFromPayMode(PaymPayrollr.PMCode);
+  switch(partner) begin
+    case "SGW":
+      if (IsPartnerEPayActive(partner) == false) then begin
+        res = false;
+        errMsg = USetStr(1501065) & partner & ": " & USetStr(1501066);
+        goto LPaymPayrollCanAddToBankQueue;
+      end;
+    otherwise
+      res = false;
+      errMsg = USetStr(1501067) & PaymPayrollr.PMCode;
+      goto LPaymPayrollCanAddToBankQueue;
+  end;
+  //checking rows
+  rwcnt = MatRowCnt(PaymPayrollr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    //no bankref in PaymPayrollVc
+    /*
+    MatRowGet(PaymPayrollr,i,PaymPayrollrw);
+    if (blank(PaymPayrollrw.BankRefStr)) then begin
+      res = false;
+      errMsg = USetStr(13205) & " " & USetStr(15094);
+      goto LPaymPayrollCanAddToBankQueue;
+    end;
+    */
+  end;
+LPaymPayrollCanAddToBankQueue:;
+  PaymPayrollCanAddToBankQueue = res;
+  return;
+end;
+
+global 
+updating function boolean PaymPayrollAddToBankReqQueue(record PaymPayrollVc PaymPayrollr, area xmlFileArea, string fileName, var record BankReqQueVc BankReqQuer)
+begin
+  boolean res;
+  record CYBlock CYb;
+  string 60 userName;
+  xml parsedXML;
+
+  parsedXML = ParseXMlArea(xmlFileArea);
+  BlockLoad(CYb);
+  GetUserName(CurrentUser,userName);
+  RecordNew(BankReqQuer);
+  BankReqQuer.RegNr = CYb.OrgNr;
+  BankReqQuer.UserName = userName;
+  BankReqQuer.BankReqType = "Payment"; //do not translate
+  BankReqQuer.RecordType = "PaymPayrollVc";
+  BankReqQuer.RecordID = PaymPayrollr.SerNr & "";
+  //BankReqQuer.MsgID = GetMsgIDFromXML(parsedXML);
+  BankReqQuer.ReqFileName = fileName;
+  BankReqQuer.Status = BankQueStatusNew;
+  BankReqQuer.SendAttempts = 0;
+  BankReqQuer.StatusMessage = USetStr(1501068);
+  BankReqQuer.CreationDate = CurrentDate;
+  BankReqQuer.CreationTime = CurrentTime;
+  BankReqQuer.Partner = GetPartnerFromPayMode(PaymPayrollr.PMCode);
+  BankReqQuer.SerNr = NextSerNr("BankReqQueVc",BankReqQuer.CreationDate,-1,false,"");
+  BankFillReqQueRowsFromXML(BankReqQuer,parsedXML);
+  if (RecordInsert(BankReqQuer,true)) then begin
+    res = true;
+  end;
+  PaymPayrollAddToBankReqQueue = res;
+  return;
+end;
+
+global
+function boolean GrpPaymPayrollCanAddToBankQueue(record RcVc RepSpec, var string errMsg)
+begin
+  boolean res;
+  string 10 partner;
+
+  partner = GetPartnerFromPayMode(RepSpec.FirstAcc);
+  switch(partner) begin
+    case "SGW":
+      if (IsPartnerEPayActive(partner) == false) then begin
+        res = false;
+        errMsg = USetStr(1501065) & partner & ": " & USetStr(1501066);
+        goto LGrpPaymPayrollCanAddToBankQueue;
+      end;
+    otherwise
+      res = false;
+      errMsg = USetStr(1501067) & RepSpec.FirstAcc;
+      goto LGrpPaymPayrollCanAddToBankQueue;
+  end;
+  res = true;
+LGrpPaymPayrollCanAddToBankQueue:;
+  GrpPaymPayrollCanAddToBankQueue = res;
+  return;
+end;
+
+global 
+updating function boolean GrpPayrollAddToBankReqQueue(string pmCode, area xmlFileArea, string fileName, var record BankReqQueVc BankReqQuer, var string errMsg)
+begin
+  boolean res;
+  record CYBlock CYb;
+  string 60 userName;
+  xml parsedXML;
+
+  parsedXML = ParseXMlArea(xmlFileArea);
+  BlockLoad(CYb);
+  GetUserName(CurrentUser,userName);
+  RecordNew(BankReqQuer);
+  BankReqQuer.RegNr = CYb.OrgNr;
+  BankReqQuer.UserName = userName;
+  BankReqQuer.BankReqType = "Payment"; //do not translate
+  BankReqQuer.RecordType = "PaymPayrollVc";
+  BankReqQuer.RecordID = ""; //blank for group
+  //BankReqQuer.MsgID = GetMsgIDFromXML(parsedXML);
+  BankReqQuer.ReqFileName = fileName;
+  BankReqQuer.Status = BankQueStatusNew;
+  BankReqQuer.SendAttempts = 0;
+  BankReqQuer.StatusMessage = USetStr(1501068);
+  BankReqQuer.CreationDate = CurrentDate;
+  BankReqQuer.CreationTime = CurrentTime;
+  BankReqQuer.Partner = GetPartnerFromPayMode(pmCode);
+  BankReqQuer.NbOfTxs = GetNbOfTxsFromXML(parsedXML);
+  BankReqQuer.SerNr = NextSerNr("BankReqQueVc",BankReqQuer.CreationDate,-1,false,"");
+  BankFillReqQueRowsFromXML(BankReqQuer,parsedXML);
+  if (MatRowCnt(BankReqQuer) > 0) then begin //additional check for group payments
+    if (RecordInsert(BankReqQuer,true)) then begin
+      res = true;
+    end;
+  end else begin
+    errMsg = USetStr(1501103);
+  end;
+  GrpPayrollAddToBankReqQueue = res;
+  return;
+end;

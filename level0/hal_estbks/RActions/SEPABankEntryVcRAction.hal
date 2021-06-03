@@ -1,0 +1,20 @@
+//sepa import
+//new dev KB 16.01.2019
+
+global
+function longint SEPABankEntryVcRecordInIndex(record SEPABankEntryVc SEPABankEntryr, string indexname)
+begin
+  longint res;
+  
+  res = 1;
+  if (SEPABankEntryr.DoneFlag == 1) then begin 
+    if (indexname=="SerNrNotDone")  then begin res = 0; end;
+    if (indexname=="ImportedDateTimeNotDone")  then begin res = 0; end;
+    if (indexname=="DoneDateTimeNotDone")  then begin res = 0; end;
+    if (indexname=="CdtDbtIndNotDone")  then begin res = 0; end;
+    if (indexname=="BookgDtNotDone")  then begin res = 0; end;
+    if (indexname=="SvcrBICNtryNotDone")  then begin res = 0; end;
+  end;
+  SEPABankEntryVcRecordInIndex = res;
+  return;
+end;

@@ -1,0 +1,225 @@
+//pangaliidestus
+external updating procedure MPEn(record RcVc);
+remote updating procedure StoreCUServiceUsage(date,string,Integer,string,Integer,Integer);
+external function string 255 GetUniqueFileNameForOP(record OPVc);
+external function integer BankReqTypeToHTSServNumber(string);
+remote updating function boolean OPAddToBankReqQueue(record OPVc,area,string,var record BankReqQueVc);
+remote function boolean OPCanAddToBankQueue(record OPVc,var string);
+remote procedure SendBdocToBankHTS(area,string,var record BankReqQueVc,var string);
+remote procedure BankingDebugFile(area,string);
+external function integer BankQueReplyProgress();
+external function integer BankQueReplySuccess();
+external function integer BankQueReplyError();
+remote function boolean IsBankQueueActive();
+external updating function boolean SignAreaWithIDCard(area,string,string,var area,var string,var string); //must not be remote
+
+updating
+procedure ExportOPSEPAForSign(record OPVc OPr, var string fileName, var area XMLOPArea)
+begin
+  record RcVc RepSpec;
+  string 20 tmpFolder;
+  
+  tmpFolder = "tmp/";
+  fileName = GetUniqueFileNameForOP(OPr) & ".xml";
+  if (OpenExportFile(tmpFolder & filename,false) == false) then begin
+    MessageBox(1695," " & filename);
+  end;
+  ReportDefaults(RepSpec,"MPEClass");
+  RepSpec.sStartDate = OPr.TransDate;
+  RepSpec.sEndDate = OPr.TransDate;
+  RepSpec.f1 = OPr.SerNr;
+  RepSpec.repname = "MPEn";
+  RepSpec.Media = mtFile;
+  if (HasLocalization("EST")) then begin
+    RepSpec.OnlyUnprntd = 1;
+  end;
+  MPEn(RepSpec);
+  CloseFile;
+  AddFileToArea(tmpFolder & fileName,XMLOPArea,false);
+  BankingDebugFile(XMLOPArea,OPr.SerNr & "_op_area.xml");
+  Delete_File(tmpFolder & fileName);
+  return;
+end;
+
+global updating
+procedure ExcPINWClassOKOP(record RcVc RepSpec)
+begin
+  record OPVc OPr;
+  string 5 pin;
+  area xmlFileArea,signedArea;
+  string 255 errMsg,fileName,signedFileName;
+  record BankReqQueVc BankReqQuer;
+
+  pin = RepSpec.f1;
+  OPr.SerNr = RepSpec.long1;
+  if (ReadFirstMain(OPr,1,true)) then begin
+    ExportOPSEPAForSign(OPr,fileName,xmlFileArea);
+    if (SignAreaWithIDCard(xmlFileArea,fileName,pin,signedArea,signedFileName,errMsg)) then begin
+      if (OPAddToBankReqQueue(OPr,xmlFileArea,signedFileName,BankReqQuer)) then begin
+        threadremoteasync.SendBdocToBankHTS(signedArea,signedFileName,BankReqQuer,errMsg); //run from non main thread, as involves web request
+        MessageBox(1501086,"");
+        StoreCUServiceUsage(CurrentDate,BankReqQuer.RegNr,BankReqTypeToHTSServNumber(BankReqQuer.BankReqType),BankReqQuer.Partner,1,1);
+      end else begin
+        MessageBox(23192,": " & USetStr(1501087));
+      end;
+    end else begin
+      MessageBox(1501088," " & errMsg);
+    end;
+  end else begin
+    MessageBox(28263,": " & OPr.SerNr);
+  end;
+  return;
+end;
+
+global updating
+procedure ExcPINWClassNoSignOP(record RcVc RepSpec)
+begin
+  record OPVc OPr;
+  area xmlFileArea;
+  string 255 errMsg,fileName;
+  record BankReqQueVc BankReqQuer;
+
+  OPr.SerNr = RepSpec.long1;
+  if (ReadFirstMain(OPr,1,true)) then begin
+    ExportOPSEPAForSign(OPr,fileName,xmlFileArea);
+    if (OPAddToBankReqQueue(OPr,xmlFileArea,fileName,BankReqQuer)) then begin
+      threadremoteasync.SendBdocToBankHTS(xmlFileArea,fileName,BankReqQuer,errMsg); //run from non main thread, as involves web request
+      MessageBox(1501086,"");
+      StoreCUServiceUsage(CurrentDate,BankReqQuer.RegNr,BankReqTypeToHTSServNumber(BankReqQuer.BankReqType),BankReqQuer.Partner,1,1);
+    end else begin
+      MessageBox(23192,": " & USetStr(1501087));
+    end;
+  end else begin
+    MessageBox(28263,": " & OPr.SerNr);
+  end;
+  return;
+end;
+
+procedure RequestEstIDCardPin2ForOPr(record OPVc OPr)
+begin
+  record RcVc RepSpec;
+
+  RepSpec.long1 = OPr.SerNr;
+  RepSpec.f4 = "OPVc";
+  OpenWindow("ExcPINWClass",0,CurWindow,"","",RepSpec);
+  return;
+end;
+
+global
+updating procedure SignAndSendOPDsm()
+begin
+  integer wn;
+  record OPVc OPr;
+  record RcVc RepSpec;
+  area xmlFileArea;
+  string 255 errMsg,fileName;
+
+  wn = CurWindow;
+  if (wn > 0) then begin
+    if (GetWindowClass(wn)=="OPDClass") then begin
+      GetWindowRecord(wn,OPr);
+      if (OPCanAddToBankQueue(OPr,errMsg)) then begin
+        RequestEstIDCardPin2ForOPr(OPr);
+      end else begin
+        MessageBox(0,errMsg);
+        if (IsBankQueueActive == false) then begin
+          OpenWindow("BankInfoWClass",0,CurWindow,"","",RepSpec);
+        end;
+      end;
+    end;
+  end;
+  return;
+end;
+
+global
+procedure BK_EPayStatusOPDsm()
+begin
+  Integer wn;
+  record OPVc OPr;
+  record RcVc RepSpec;
+  
+  if(IsBankQueueActive == false) then begin
+    OpenWindow("BankInfoWClass",0,CurWindow,"","",RepSpec);
+  end else begin
+    wn = CurWindow;
+    GetWindowRecord(wn,OPr);
+    ReportDefaults(RepSpec,"EPayStatRClass");
+    RepSpec.f1 = OPr.SerNr;
+    RepSpec.Media = mtScreen;
+    RepSpec.repname = "BK_EPayStatRn";
+    RunReport(RepSpec,0);
+  end;
+  return;
+end;
+
+global
+procedure BK_EPayStatusOPLsm()
+begin
+  integer wn,i;
+  record OPVc OPr;
+  record RcVc RepSpec;
+  
+  if(IsBankQueueActive == false) then begin
+    OpenWindow("BankInfoWClass",0,CurWindow,"","",RepSpec);
+  end else begin
+    wn = CurWindow;
+    i = 1;
+    GetRecordFromBrowse(OPr,wn,i);
+    if (OPr.SerNr != -1) then begin
+      ReportDefaults(RepSpec,"EPayStatRClass");
+      RepSpec.f1 = OPr.SerNr;
+      RepSpec.Media = mtScreen;
+      RepSpec.repname = "BK_EPayStatRn";
+      RunReport(RepSpec,0);
+    end;
+  end;
+  return;
+end;
+
+//this function is missing in std, only in Books HAL yet
+global
+function integer OPLClassRowColor(record OPVc OPr)
+begin
+  integer res;
+  record BankReqQueVc BankReqQuer;
+  
+  res = kRowColorNone;
+  BankReqQuer.RecordType = "OPVc";
+  BankReqQuer.RecordID = OPr.SerNr & "";
+  if (ReadFirstKey("RecordIDType",BankReqQuer,2,true)) then begin
+    if (BankReqQuer.ReplyStatCode == BankQueReplySuccess) begin
+      res = kRowColorGreen;
+      goto LOPLClassRowColor;
+    end;
+    if (BankReqQuer.ReplyStatCode == BankQueReplyProgress) begin
+      res = kRowColorYellow;
+      goto LOPLClassRowColor;
+    end;
+    if (BankReqQuer.ReplyStatCode == BankQueReplyError) begin
+      res = kRowColorRed;
+      goto LOPLClassRowColor;
+    end;
+  end else begin
+  //find in matrix
+    ResetLoop(BankReqQuer);
+    RecordClear(BankReqQuer);
+    BankReqQuer.RecordType = "OPVc";
+    if (ReadFirstKey("RowRecordIDType:" & OPr.SerNr,BankReqQuer,1,true)) then begin
+      if (BankReqQuer.ReplyStatCode == BankQueReplySuccess) begin
+        res = kRowColorGreen;
+        goto LOPLClassRowColor;
+      end;
+      if (BankReqQuer.ReplyStatCode == BankQueReplyProgress) begin
+        res = kRowColorYellow;
+        goto LOPLClassRowColor;
+      end;
+      if (BankReqQuer.ReplyStatCode == BankQueReplyError) begin
+        res = kRowColorRed;
+        goto LOPLClassRowColor;
+      end;
+    end;
+  end;
+LOPLClassRowColor:;
+  OPLClassRowColor = res;
+  return;
+end;

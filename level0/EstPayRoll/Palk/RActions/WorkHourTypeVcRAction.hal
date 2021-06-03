@@ -12,7 +12,7 @@ begin
   end else begin
     WHTr.Code = "";
   end;
-  WHTr.StartDate=CurrentDate;
+  WHTr.StartDate = CurrentDate;
   
   WorkHourTypeVcRecordDefaults = res; 
   return;
@@ -28,8 +28,7 @@ begin
   end else begin
     WHTr.Code = "";
   end;
-  WHTr.StartDate=CurrentDate;
-
+  WHTr.StartDate = CurrentDate;
   WorkHourTypeVcRecordDuplicate = res; 
   return;
 end;
@@ -41,12 +40,12 @@ begin
   record WorkHourTypeVc WHT3r;
   LongInt updatemode,insertmode;
   
-  insertmode=1;
-  updatemode=2;
+  insertmode = 1;
+  updatemode = 2;
   res = 0;
   if (blank(WHTr.Code)) then begin
     if (stat==updatemode) and nonblank(WHT2r.Code) then begin
-      WHTr.Code=WHT2r.Code;
+      WHTr.Code = WHT2r.Code;
     end else begin
       if (GetNextWorkHourTypeNr(WHTr.Code)) then begin end;
     end;

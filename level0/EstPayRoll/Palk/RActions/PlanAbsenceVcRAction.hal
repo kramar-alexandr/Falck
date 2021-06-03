@@ -1,0 +1,274 @@
+external function integer CheckObjs(string,string,var string);
+external function boolean ContractExsistsAndActive(LongInt);
+external function boolean AbsTypeExsists(string);
+external function string 20 GetIllAbsTypeCode(var integer,var integer,var val);
+external function string 20 GetVacAbsTypeCode(LongInt);
+external updating procedure UpdateVacBalFromAbsr(record AbsenseVc,boolean);
+external function Boolean SerNrTestPlanAbsenceVc(LongInt,date);
+
+global
+function LongInt PlanAbsenceVcRecordDefaults(var record PlanAbsenceVc Absr,record PlanAbsenceVc Abs2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+
+  Absr.SerNr = -1;
+  Absr.TransDate = CurrentDate;
+  if (SingleUserMode) then begin
+    Absr.SerNr = NextSerNr("PlanAbsenceVc",Absr.TransDate,-1,false,"");
+  end;
+  PlanAbsenceVcRecordDefaults = res; 
+  return;
+end;
+
+global
+function LongInt PlanAbsenceVcRecordDuplicate(var record PlanAbsenceVc Absr,record PlanAbsenceVc Abs2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  row PlanAbsenceVc Absrw;
+  integer rwcnt,i;
+ 
+  Absr.SerNr = -1;
+  Absr.OKFlag = 0;
+  if (SingleUserMode) then begin
+    Absr.SerNr = NextSerNr("PlanAbsenceVc",Absr.TransDate,-1,false,"");
+  end;
+  rwcnt = MatRowCnt(Absr);
+  for (i=0; i<rwcnt; i=i+1) begin
+    MatRowGet(Absr,i,Absrw);
+    Absrw.AbsenceNr = -1;
+    MatRowPut(Absr,i,Absrw);
+  end;
+  PlanAbsenceVcRecordDuplicate = res; 
+  return;
+end;
+
+global
+function LongInt PlanAbsenceVcRecordCheck(var record PlanAbsenceVc Absr,record PlanAbsenceVc Abs2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  record PlanAbsenceVc Abs3r;
+  row PlanAbsenceVc Absrw;
+  row PlanAbsenceVc Abs2rw;
+  record ContractVc Contrr;
+  record VacBalanceVc VBr;
+  row VacBalanceVc VBrw;
+  integer rwcnt,rwcnt1,i,j,tmp,vacdays;
+  val tmp1;
+  string 255 tstr;
+  LongInt updatemode,insertmode,errcode;
+  string 20 illabstype,vacabstype;
+  boolean yearflag;
+  
+  insertmode = 1;
+  updatemode = 2;
+  res = 0;
+  if (stat!=insertmode) then begin
+    if (Abs2r.OKFlag!=0) then begin
+      goto LPlanAbsenceVcRecordCheck;
+    end;
+  end;
+  if (stat==updatemode) then begin
+    if (Absr.SerNr<=0)  then begin
+      Absr.SerNr = Abs2r.SerNr;
+    end;
+  end;
+  if (Absr.SerNr==-1) then begin
+    Absr.SerNr = NextSerNr("PlanAbsenceVc",Absr.TransDate,-1,false,"");
+  end;
+  if (SerNrTestPlanAbsenceVc(Absr.SerNr,Absr.TransDate)==false) then begin
+    RecordCheckError(1557,"",-1,"SerNr");      
+    res = -1; 
+    goto LPlanAbsenceVcRecordCheck;
+  end;
+
+  if (stat==insertmode) or (stat==updatemode and Absr.SerNr!=Abs2r.SerNr) then begin
+    Abs3r.SerNr = Absr.SerNr;
+    if (ReadFirstMain(Abs3r,1,true)) then begin
+      RecordCheckError(1547," " & Absr.SerNr,-1,"SerNr");      
+      res = -1; 
+      goto LPlanAbsenceVcRecordCheck;
+    end;
+  end;   
+  if (len(Absr.SerNr)<=0 or (Absr.SerNr<=0)) then begin
+    RecordCheckError(1500343,"",-1,"SerNr");      
+    res = -1; 
+    goto LPlanAbsenceVcRecordCheck;
+  end;
+/*  
+  if (Absr.ContrSerNr<=0) then begin
+    RecordCheckError(1500318,"",-1,"ContrSerNr");      
+    res = -1; 
+    goto LAbsenceVcRecordCheck; 
+  end else begin
+    if (ContractExsistsAndActive(Absr.ContrSerNr)==false) then begin
+      RecordCheckError(1500332," v›i ei ole aktiivne " & Absr.ContrSerNr,-1,"ContrSerNr");      
+      res = -1; 
+      goto LAbsenceVcRecordCheck; 
+    end;
+  end;
+  if blank(Absr.EndDate) then begin
+    RecordCheckError(1500334,"",-1,"EndDate");      
+    res = -1; 
+    goto LAbsenceVcRecordCheck;
+  end else begin
+    if (Absr.EndDate<Absr.StartDate) then begin
+      RecordCheckError(1500322,"",-1,"EndDate");      
+      res = -1; 
+      goto LAbsenceVcRecordCheck;
+    end;
+  end;
+  Contrr.SerNr = Absr.ContrSerNr;
+  if (ReadFirstMain(Contrr,1,true)) then begin
+    if ((DateInRange(Absr.StartDate,Contrr.StartDate,Contrr.EndDate))==false) or ((DateInRange(Absr.EndDate,Contrr.StartDate,Contrr.EndDate))==false) then begin
+      RecordCheckError(1500438,"",-1,"StartDate");      
+      res = -1; 
+      goto LAbsenceVcRecordCheck;
+    end;
+  end;
+*/
+  if blank(Absr.TransDate) then begin
+    RecordCheckError(1500321,"",-1,"StartDate");      
+    res = -1; 
+    goto LPlanAbsenceVcRecordCheck;
+  end;
+/*
+  illabstype = GetIllAbsTypeCode(tmp,tmp,tmp1);
+  if (Absr.AbsTypeCode==illabstype) and blank(Absr.AbsPaymDate) then begin
+    RecordCheckError(1500342,"",-1,"AbsPaymDate");      
+    res = -1; 
+    goto LAbsenceVcRecordCheck;
+  end;
+  if (Absr.ContinueFlag!=0) then begin
+    if (len(Absr.SerNr)<=0 or (Absr.PrevAbsSerNr<=0)) then begin
+      RecordCheckError(1500378,"",-1,"PrevAbsSerNr");      
+      res = -1; 
+      goto LAbsenceVcRecordCheck;
+    end;
+  end;
+
+  vacabstype = GetVacAbsTypeCode(Absr.ContrSerNr);
+  if (Absr.AbsTypeCode==vacabstype) then begin
+    rwcnt=MatRowCnt(Absr);
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(Absr,i,Absrw);
+      if (Absrw.Year<=0) then begin
+        RecordCheckError(1500337,"",i,"Year");      
+        res = -1; 
+        goto LAbsenceVcRecordCheck;
+      end else begin
+        for (j=i;j<rwcnt;j=j+1) begin
+          if (j>i) then begin
+            MatRowGet(Absr,j,Abs2rw);
+            if (Absrw.Year==Abs2rw.Year) then begin
+              RecordCheckError(1500360,"",j,"Year");      
+              res = -1; 
+              goto LAbsenceVcRecordCheck;
+            end;
+          end;
+        end;
+      end;
+      if ((Absrw.Days<0) or (Absrw.Days==0 and Absrw.HDays==0)) then begin
+        RecordCheckError(1500361,"",i,"Days");      
+        res = -1; 
+        goto LAbsenceVcRecordCheck;
+      end;
+    end;
+    for (j=0;j<rwcnt;j=j+1) begin
+      MatRowGet(Absr,j,Abs2rw);
+      if (Absrw.Year>0) then begin
+        vacdays=vacdays+Abs2rw.Days+Abs2rw.HDays; 
+      end;
+    end;
+    if (vacdays!=Absr.CalendarDays) then begin
+      RecordCheckError(1500362,"",0,"Days");      
+      res = -1; 
+      goto LAbsenceVcRecordCheck;
+    end;
+    VBr.ContrSerNr = Absr.ContrSerNr;
+    if (ReadFirstKey("ContrSerNr",VBr,1,true)) then begin
+      rwcnt=MatRowCnt(Absr);
+      rwcnt1 = MatRowCnt(VBr);
+      for (i=0;i<rwcnt;i=i+1) begin
+        MatRowGet(Absr,i,Absrw);
+        yearflag = false;
+        for (j=0;j<rwcnt1;j=j+1) begin
+          MatRowGet(VBr,j,VBrw);
+          if (VBrw.Year==Absrw.Year) then begin
+            yearflag = true;
+          end;
+        end;
+        if (yearflag==false) then begin
+          RecordCheckError(1500505,"",i,"Year");
+          res = -1; 
+          goto LAbsenceVcRecordCheck;
+        end;
+      end;
+    end;
+  end;
+*/
+LPlanAbsenceVcRecordCheck:;
+  if (res==-1) then begin
+    Absr.OKFlag = 0;
+  end;
+  PlanAbsenceVcRecordCheck = res;
+  return;
+end;
+
+global
+updating function LongInt PlanAbsenceVcRecordSave(var record PlanAbsenceVc Absr,record PlanAbsenceVc Abs2r,LongInt stat,LongInt long4)
+begin
+  LongInt res,wn;
+  
+  PlanAbsenceVcRecordSave = res;
+  return;
+end;
+
+global
+updating function LongInt PlanAbsenceVcRecordSaveAfter(var record PlanAbsenceVc Absr,record PlanAbsenceVc Abs2r,LongInt stat,LongInt long4)
+begin
+  LongInt res,wn;
+  
+  PlanAbsenceVcRecordSaveAfter = res;
+  return;
+end;
+
+global
+updating function LongInt PlanAbsenceVcRecordUpdate(var record PlanAbsenceVc Absr,record PlanAbsenceVc Abs2r,LongInt stat,LongInt long4)
+begin
+  LongInt res,wn;
+  
+  PlanAbsenceVcRecordUpdate = res;
+  return;
+end;
+
+global
+updating function LongInt PlanAbsenceVcRecordUpdateAfter(var record PlanAbsenceVc Absr,record PlanAbsenceVc Abs2r,LongInt stat,LongInt long4)
+begin
+  LongInt res,wn;
+  
+  PlanAbsenceVcRecordUpdateAfter = res;
+  return;
+end;
+
+global
+function LongInt PlanAbsenceVcRecordRemoveTest(var record PlanAbsenceVc Absr,record PlanAbsenceVc Abs2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+
+  res = 1;
+  if (Absr.OKFlag!=0) then begin
+    MessageBox(1560,"")
+    res = 0;
+  end;
+  PlanAbsenceVcRecordRemoveTest = res; 
+  return;
+end;
+  
+global
+updating function LongInt PlanAbsenceVcRecordImport(var record PlanAbsenceVc Absr,record PlanAbsenceVc Abs2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+
+  PlanAbsenceVcRecordImport = res; 
+  return;
+end;

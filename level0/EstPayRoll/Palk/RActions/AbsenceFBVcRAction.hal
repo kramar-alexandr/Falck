@@ -30,7 +30,7 @@ begin
   if (SingleUserMode) then begin
     if (GetNextAbsFBSerNr(AFBr.SerNr)) then begin end;
   end else begin
-    AFBr.SerNr =-1;
+    AFBr.SerNr = -1;
   end;
   AbsenceFBVcRecordDuplicate = res; 
   return;
@@ -46,8 +46,8 @@ begin
   integer rwcnt,i;
   LongInt updatemode,insertmode;
   
-  insertmode=1;
-  updatemode=2;
+  insertmode = 1;
+  updatemode = 2;
   res = 0;
  
   if (AFB2r.Invalid!=0) then begin
@@ -84,7 +84,7 @@ begin
     goto LAbsenceFBVcRecordCheck;
   end;
  
-  rwcnt=MatRowCnt(AFBr);
+  rwcnt = MatRowCnt(AFBr);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(AFBr,i,AFBrw);
     if (AFBrw.ContrSerNr<=0) then begin
@@ -124,7 +124,7 @@ begin
   end;
 LAbsenceFBVcRecordCheck:;
   if (res==-1) then begin
-    AFBr.OKFlag=0;
+    AFBr.OKFlag = 0;
     SetMarkFlag(AFBr.OKFlag,AFBr.OKMark);
   end;
   AbsenceFBVcRecordCheck = res;

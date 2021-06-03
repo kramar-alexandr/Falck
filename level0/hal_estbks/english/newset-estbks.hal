@@ -1,0 +1,207 @@
+event startup //keep for convenience
+begin
+  SetLangMode(LangEnglish,"ENG",0);
+
+  StrSetAdd(3);
+  StrSetText(ExpFromVEIV,"Create Expenses from Supplier e-invoices");
+  StrSetText(RemoveAttachFiles,"Delete company attach files");
+  StrSetText(DisallowPrintEInvoicesFromIV,"Disallow Printing Electronic Invoices from Invoice Record");
+  EndStrSet;
+
+//eteenused
+  SetBegin(10667);
+  SetText(0,"Select Service");
+  SetText(1,"HansaWorld");
+  SetText(7,"Sending Invoices (Fitek)");
+  SetText(2,"Sending Invoices (Omniva)");
+  SetText(8,"Receiving of the Supplier Invoices (Fitek)");
+  SetText(3,"Receiving of the Supplier Invoices (Omniva)");
+  SetText(4,"Pension pillars request");
+  SetText(5,"E-Business Register request");
+  SetText(6,"Currency rates request");
+  EndSet;
+
+  //sepa import
+  SetBegin(1670);
+  SetText(0,"Do not create");
+  SetText(1,"Trans.");
+  SetText(IPYc,"Receipt");
+  SetText(OPYc,"Payment");
+  EndSet;
+
+  //smaily
+  SetBegin(1668);
+  SetText(0,"Field value");
+  SetText(1,"Connected record descr.");
+  EndSet;
+
+  StrSetBegin(1669);
+  StrSetText("FiscalFlag","Fiscal Invoices Only");
+  StrSetText("ANACode","ANA code");
+  StrSetText("InvoiceToCode","Invoice To");
+  StrSetText("InvAddr0","Invoice addr 1");
+  StrSetText("InvAddr1","Invoice addr 2");
+  StrSetText("InvAddr2","Invoice addr 3");
+  StrSetText("InvAddr3","Invoice addr 4");
+  StrSetText("InvAddr4","Invoice addr 5");
+  StrSetText("BankAccount","Bank Account");
+  StrSetText("Bank" ,"Bank Account 2");
+
+  StrSetText("eMail","E-mail");
+  StrSetText("EDIFlag","EDI Customer");
+  StrSetText("OnAccount","On Account");
+  StrSetText("Fax","Fax");
+
+  StrSetText("VEType","#Supplier#");
+  StrSetText("SortCode","#Sort Code#");
+  StrSetText("RebCode","Discount Matrix");
+  StrSetText("PLCode","Price List");
+  StrSetText("WarnText1","Warning");
+
+  StrSetText("IBANCode","IBAN Code");
+  StrSetText("LangCode","Language");
+  StrSetText("Classification","Classification");
+  StrSetText("CustCat","Customer Category");
+  StrSetText("CUType","Customer");
+  StrSetText("VATNr","#VAT Reg. No.#");
+  StrSetText("Comment","Comment");
+  StrSetText("Comment0","Comment 1");
+  StrSetText("Comment1","Comment 2");
+  StrSetText("Comment2","Comment 3");
+  StrSetText("Code","Code");
+  StrSetText("DateCreated","Creation Date");
+  StrSetText("AccCost","Cost A/C");
+
+  StrSetText("LocationCode","Location");
+  StrSetText("DelAddr0","Del. addr. 1");
+  StrSetText("DelAddr1","Del. addr. 2");
+  StrSetText("DelAddr2","Del. addr. 3");
+  StrSetText("DelAddr3","Del. addr. 4");
+  StrSetText("DelAddr4","Del. addr. 5");
+  StrSetText("ShipDeal","Del. Terms");
+  StrSetText("ShipMode","Del. Mode");
+
+  StrSetText("SearchKey","Short");
+
+  StrSetText("MinOrdSum","Min. Order Sum");
+  StrSetText("Mobile","#Mobile#");
+  StrSetText("AltPhone","Alt Phone");
+  StrSetText("RemndrFlag","Reminders");
+  StrSetText("CreditLimit","Credit Limit");
+  StrSetText("VATCode" ,"Sales #VAT# Code");
+  StrSetText("Objects","Sales Tags/Objects");
+  StrSetText("PayDeal","Payment Terms");
+  StrSetText("SalesGroup","Sales Group");
+  StrSetText("SalesMan","#Salesman#");
+
+  StrSetText("TheirCode","Their Code");
+  StrSetText("Name","Name");
+  StrSetText("WebDisplays","Display on the Web");
+
+  StrSetText("UserStr1","User string 1");
+  StrSetText("UserStr2","User string 2");
+  StrSetText("UserStr3","User string 3");
+  StrSetText("UserStr4","User string 4");
+  StrSetText("UserStr5","User string 5");
+  StrSetText("UserVal1","User value 1");
+  StrSetText("UserVal2","User value 2");
+  StrSetText("UserVal3","User value 3");
+  StrSetText("UserDate1","User date 1");
+  StrSetText("UserDate2","User date 2");
+  StrSetText("UserDate3","User date 3");
+  StrSetText("OnHoldFlag","On Hold");
+  StrSetText("Department","Department");
+  StrSetText("OnAccAccAP","Cred. On Acc. A/C");
+  StrSetText("RefStr","Reference");
+  StrSetText("AccAP","Creditor A/C");
+
+  StrSetText("AccOperator","Account Operator");
+  StrSetText("Person","Primary Contact");
+  StrSetText("MainDispGroup","Parent Product Category");
+
+  StrSetText("RegNr1","#Reg. No.# 1");
+  StrSetText("RegNr2","#Reg. No. 2#");
+  StrSetText("Region","Region");
+  StrSetText("CountryCode","Country");
+
+  StrSetText("SIPCode","SIP");
+  StrSetText("SkypeName","Skype Name");
+  StrSetText("blockedFlag","Closed");
+
+  StrSetText("Sorting","Route");
+  StrSetText("Phone","Telephone");
+  StrSetText("OrderComment","Order Comment");
+  StrSetText("Salutation1","Salutation 1");
+  StrSetText("Salutation2","Salutation 2");
+  StrSetText("Salutation3","Salutation 3");
+  StrSetText("FreightCode","Freight Code");
+  StrSetText("FreightNr","Freight No.");
+  StrSetText("CustType","Type");
+
+  StrSetText("CompItemCode","Default Items");
+  StrSetText("CurncyCode","Sales Currency");
+  StrSetText("WebStartPage","Web Start Page");
+  StrSetText("WebConf","Web Conference");
+  StrSetText("wwwAddr","Web Site");
+  StrSetText("DateChanged","Last Changed");
+  StrSetText("Title","Courtesy Title");
+  StrSetText("InterestFlag","Interest");
+  StrSetText("IntRate","Interest Rate");
+
+  StrSetText("NoLetterPosting","No Mass Letters");
+  StrSetText("NoMailPosting","No Mass Emailing");
+  
+  EndStrSet;
+
+  //pangaliidestus
+  SetBegin(1671);
+  SetText(0,"New");
+  SetText(1,"Sent");
+  SetText(2,"Replied");
+  SetText(3,"Error");
+  EndSet;
+
+  SetBegin(1672);
+  SetText(0,"In progress");
+  SetText(1,"Done");
+  SetText(2,"Error");
+  EndSet;
+
+  //scoro liidestus
+  SetBegin(1680);
+  SetText(0,"New");
+  SetText(1,"Sent");
+  SetText(2,"Canceled");
+  SetText(3,"Error");
+  EndSet;
+
+  SetBegin(1681);
+  SetText(0,"Empty");
+  SetText(1,"VAT codes");
+  SetText(2,"Persons");
+  EndSet;
+
+  SetBegin(1682);
+  SetText(0,"None");
+  SetText(1,"Items");
+  SetText(2,"Invoices");
+  SetText(3,"Purch. invoices");
+  EndSet;  
+
+//Bk SEPA start
+  StrSetBegin(668);
+  StrSetText(SEPA,"SEPA zone");
+  StrSetText(Foreign,"Foreign bank");
+  EndStrSet;
+//Bk SEPA end
+
+//earvete erinouded
+  StrSetBegin(680);
+  StrSetText("ContractNumber","ContractNumber");
+  StrSetText("InvoiceContentCode","InvoiceContentCode");
+  EndStrSet;
+//earvete end
+
+  return;
+end;
+

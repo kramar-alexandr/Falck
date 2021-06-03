@@ -34,8 +34,8 @@ begin
   integer rwcnt,rwcnt1,i,j;
   LongInt updatemode,insertmode;
   
-  insertmode=1;
-  updatemode=2;
+  insertmode = 1;
+  updatemode = 2;
   res = 0;
   if (stat==updatemode) then begin
     if (ProgTaxr.SerNr<=0)  then begin

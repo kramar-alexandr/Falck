@@ -1,4 +1,6 @@
-external function integer CountVacDaysNorm(LongInt,integer,date,date);
+external function integer CountVacDaysNorm(LongInt,integer,date,date,var val);
+external function LongInt DateDiff(Date,Date);
+external function LongInt GetExceptDays(date,var date);
 
 global
 procedure VacBalanceRn(record RcVc RepSpec)
@@ -7,15 +9,18 @@ begin
   record ContractVc Contrr;
   record VacBalanceVc VBr;
   row VacBalanceVc VBrw;
+  record AbsenceVc Absr;
+  row AbsenceVc Absrw;
   string 20 frempl,toempl;
   LongInt frcontr,tocontr;
-  boolean TrHs, TrHs1,TrHs2,testf,printempl;
+  boolean TrHs,TrHs1,TrHs2,found,testf,printempl,backdated;
   integer rw,year,tmpyear,tmprownr,toyear,vacdaysnorm,vacdaystouse,vacdaysused;
   string 255 tstr,bestbefore,status;
-  integer rwcnt,i,j,k,yearcnt;
-  array integer vbyear,vbrownr;
+  integer rwcnt,rwcnt2,i,j,k,yearcnt,hdays,days,pos;
+  array integer vbyear,vbrownr,vbused;
   date todate;
-  
+  val tmpval;
+
   rw = 1;
   StartReportJob(USetStr(1500459));
   frempl = FirstInRange(RepSpec.f1,20);
@@ -56,8 +61,12 @@ begin
 
   todate=RepSpec.d1;
   if blank(todate) then begin
-    todate=CurrentDate;
+    todate = CurrentDate;
   end;
+  if (todate!=CurrentDate) then begin
+    backdated = true;
+  end;
+  
   tstr = USetStr(1500460) & " " & todate;
   Header(rw,tstr,1);
   rw = rw + 1; 
@@ -78,7 +87,7 @@ begin
   EndFormat;
   Gray_Divider(0,1);
 
-  toyear=GetYear(todate);
+  toyear = GetYear(todate);
   TrHs = true;
   ResetLoop(Emplr);
   Emplr.Code = frempl;
@@ -90,13 +99,13 @@ begin
         end;
       end;
       if (TrHs) then begin
-        printempl=true;
-        testf=true;
+        printempl = true;
+        testf = true;
         if (Emplr.ClosedFlag!=0) then begin
           testf = false;
         end;
         if (testf) then begin
-          TrHs1=true;
+          TrHs1 = true;
           ResetLoop(Contrr);
           Contrr.EmplCode = Emplr.Code;
           while (LoopKey("EmplCode",Contrr,1,TrHs1)) begin
@@ -104,7 +113,7 @@ begin
               TrHs1 = false;
             end;
             if (TrHs1) then begin
-              testf=true;
+              testf = true;
               if ((frcontr>0)) then begin
                 if ((Contrr.SerNr<frcontr) or (Contrr.SerNr>tocontr)) then begin
                   testf = false;
@@ -127,62 +136,105 @@ begin
                   OutString(0,"DblEmplVc",Emplr.Code,false);
                   OutString(70,0,Emplr.Firstname & " " & Emplr.Surname,false);
                   EndFormat;
-                  printempl=false;
+                  printempl = false;
                 end;
                 StartFormat(15);
                 OutString(0,0,USetStr(1500414) & ": ",false);
                 OutString(50,"DblContractVc",Contrr.SerNr,false);
                 Endformat;
-                TrHs2=true;
+                TrHs2 = true;
                 ResetLoop(VBr);
-                VBr.OKFlag=1;
-                VBr.ContrSerNr=Contrr.SerNr;
+                VBr.OKFlag = 1;
+                VBr.ContrSerNr = Contrr.SerNr;
                 while (LoopKey("OKFlag",VBr,2,TrHs2)) begin
                   if (VBr.OKFlag!=1) then begin
-                    TrHs2=false;  
+                    TrHs2 = false;  
                   end;
                   if (VBr.ContrSerNr!=Contrr.SerNr) then begin
-                    TrHs2=false;  
+                    TrHs2 = false;  
                   end;
                   if (TrHs2) then begin
                     //array tühistamine
-                    for (i=0;i<yearcnt;i=i+1) begin
-                      vbyear[i]=0;
-                      vbrownr[i]=0;
-                    end;
-                    yearcnt=0;
-                    
-                    rwcnt=MatRowCnt(VBr);
+                    ClearArray(vbyear);
+                    ClearArray(vbrownr);
+                    ClearArray(vbused);
+                    yearcnt = 0;
+                    rwcnt = MatRowCnt(VBr);
                     for (i=0;i<rwcnt;i=i+1) begin
                       MatRowGet(VBr,i,VBrw);  
                       if (VBrw.Year>0) then begin
-                        vbyear[yearcnt]=VBrw.Year;
-                        vbrownr[yearcnt]=i;
-                        yearcnt=yearcnt+1;
+                        found = true;
+                        if (RepSpec.flags[0]==0) then begin
+                          if (VBrw.BestBeforeDate<todate) then begin
+                            found = false;
+                          end;
+                        end;
+                        if (found) then begin
+                          vbyear[yearcnt] = VBrw.Year;
+                          vbrownr[yearcnt] = i;
+                          yearcnt = yearcnt + 1;
+                        end;
                       end;
                     end;
                     //array sorting
                     for (k=0;k<yearcnt-1;k=k+1) begin
                       for (i=k+1;i<yearcnt;i=i+1) begin
                         if (vbyear[k]>vbyear[i]) then begin
-                          tmpyear=vbyear[i];
-                          vbyear[i]=vbyear[k];
-                          vbyear[k]=tmpyear;
-                          tmprownr=vbrownr[i];
-                          vbrownr[i]=vbrownr[k];
-                          vbrownr[k]=tmprownr;
+                          tmpyear = vbyear[i];
+                          vbyear[i] = vbyear[k];
+                          vbyear[k] = tmpyear;
+                          tmprownr = vbrownr[i];
+                          vbrownr[i] = vbrownr[k];
+                          vbrownr[k] = tmprownr;
                         end;
                       end;
                     end;
-
+                    if (backdated) then begin
+                      Absr.ContrSerNr = Contrr.SerNr;
+                      Absr.OKFlag = 1;
+                      found = true;
+                      ResetLoop(Absr);
+                      while (LoopBackKey("ContrSerNr",Absr,2,found)) begin
+                        if (Absr.ContrSerNr!=Contrr.SerNr) then begin
+                          found = false;
+                        end;
+                        if (Absr.OKFlag!=1) then begin
+                          found = false;
+                        end;
+                        if (Absr.EndDate<todate) then begin
+                          found = false;                 
+                        end;
+                        if (found) and (Absr.AbsTypeCode==Contrr.VacAbsTypeCode) then begin
+                          rwcnt2 = MatRowCnt(Absr);
+                          for (i=0;i<rwcnt2;i=i+1) begin
+                            MatRowGet(Absr,i,Absrw);
+                            days = 0;
+                            if (Absrw.SDate>todate) then begin days = Absrw.Days; end;
+                            if (DateInRange(todate,Absrw.SDate,Absrw.EDate)) then begin
+                              hdays = GetExceptDays(todate,Absrw.EDate);
+                              days = DateDiff(Absrw.EDate,todate) - hdays;
+                            end;
+                            if (days>0) then begin
+                              for (k=0;k<yearcnt;k=k+1) begin
+                                if (vbyear[k]==Absrw.Year) then begin
+                                  pos = vbrownr[k];
+                                  vbused[pos] = vbused[pos] + days;
+                                  k = yearcnt;
+                                end;
+                              end;
+                            end;
+                          end;                    
+                        end;
+                      end;
+                    end;
                     for (k=0;k<yearcnt;k=k+1) begin
                       if (vbyear[k]<=toyear) then begin
                         MatRowGet(VBr,vbrownr[k],VBrw);  
-                        year=VBrw.Year; 
-                        vacdaysnorm=VBrw.VacDaysNorm;
-                        vacdaysused=VBrw.VacDaysUsed;
-                        vacdaystouse=VBrw.VacDaysToUse;
-                        bestbefore=VBrw.BestBeforeDate;
+                        year = VBrw.Year; 
+                        vacdaysnorm = VBrw.VacDaysNorm;
+                        vacdaysused = VBrw.VacDaysUsed - vbused[k];
+                        vacdaystouse = VBrw.VacDaysToUse + vbused[k];
+                        bestbefore = VBrw.BestBeforeDate;
                         if (VBrw.VacDaysStatus==1) then begin
                           status=USetStr(1500467);
                         end else begin
@@ -190,8 +242,8 @@ begin
                         end;
                         if (vbyear[k]==toyear) then begin
                           if (VBrw.EDate!=todate) then begin
-                            vacdaysnorm=CountVacDaysNorm(VBr.ContrSerNr,VBrw.Year,VBrw.SDate,todate);
-                            vacdaystouse=vacdaysnorm-vacdaysused;
+                            vacdaysnorm = CountVacDaysNorm(VBr.ContrSerNr,VBrw.Year,VBrw.SDate,todate,tmpval);
+                            vacdaystouse = vacdaysnorm - vacdaysused;
                           end;
                         end;
                         Startformat(15);

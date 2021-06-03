@@ -8,7 +8,7 @@ begin
   
   res = 0;
   rwcnt = MatRowCnt(MSTr);
-  for (i=0; i<rwcnt;i=i+1) begin
+  for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(MSTr,i,MSTrw);
     if blank(MSTrw.SDate) then begin
       RecordCheckError(1500321,"",i,"SDate");      

@@ -1,0 +1,95 @@
+//pangaliidestus
+external procedure HT2Per(Date, Date , var string);
+remote function boolean IsBankQueueActive();
+
+procedure PrintColumnHeaders()
+begin
+  StartFormat(15);
+  OutString(0,0,USetStr(12667),false); //ser nr
+  OutString(2,0,USetStr(1501097),false); //create date time
+  OutString(3,0,USetStr(1501098),false); //send date time
+  OutString(4,0,USetStr(1501099),false); //reply time
+  OutString(5,0,USetStr(8456),false); //bank
+  OutString(1,0,USetStr(12156),true); //status
+  EndFormat;
+  Gray_Divider(0,1);
+  return;
+end;
+
+procedure PrintRepHeader(record RcVc RepSpec)
+begin
+  integer rw;
+  string 100 tstr;
+
+  rw = 0;
+  HT2Per(RepSpec.sStartDate,RepSpec.sEndDate,tstr);
+  Header(rw,tstr,1);
+  rw = rw + 2;
+  EndHeader;
+  return;
+end;
+
+procedure SetReportColumns()
+begin
+  SetRepCol(2,50);
+  SetRepCol(3,120);
+  SetRepCol(4,190);
+  SetRepCol(5,260);
+  return;
+end;
+
+procedure PrintStmntRequests(record RcVc RepSpec)
+begin
+  record BankReqQueVc BankReqQuer;
+  boolean TrHs,testf;
+
+  TrHs = true;
+  BankReqQuer.CreationDate = RepSpec.sStartDate;
+  while LoopKey("CreationDateTime",BankReqQuer,1,TrHs) begin
+    testf = true;
+    if (BankReqQuer.SendDate > RepSpec.sEndDate AND nonblankdate(RepSpec.sEndDate)) then begin
+      TrHs = false;
+    end;
+    if (BankReqQuer.BankReqType != "Statement" AND BankReqQuer.BankReqType != "TodayStatement") then begin
+      testf = false;
+    end;
+    if (TrHs AND testf) then begin
+      StartFormat(15);
+      OutString(0,0,BankReqQuer.SerNr,false);
+      OutString(2,0,BankReqQuer.CreationDate & " " & BankReqQuer.CreationTime,false);
+      OutString(3,0,BankReqQuer.SendDate & " " & BankReqQuer.SendTime,false);
+      OutString(4,0,BankReqQuer.ReplyDate & " " & BankReqQuer.ReplyTime,false);
+      OutString(5,0,BankReqQuer.Partner,false);
+      OutString(1,0,BankReqQuer.StatusMessage,true);
+      EndFormat;
+    end;
+  end;
+  return;
+end;
+
+global
+procedure BankStmntStatRn(record RcVc RepSpec)
+begin
+  StartReportJob(USetStr(1501096));
+  PrintRepHeader(RepSpec);
+  SetReportColumns;
+  PrintColumnHeaders;
+  PrintStmntRequests(RepSpec);
+  EndJob;
+  return;
+end;
+
+global
+function Boolean BankStmntStatRClassOnOKWindow(Integer wn)
+begin
+  boolean res;
+  record RcVc RepSpec;
+
+  res = true;
+  if (IsBankQueueActive == false) then begin
+    res = false;
+    OpenWindow("BankInfoWClass",0,CurWindow,"","",RepSpec);
+  end;
+  BankStmntStatRClassOnOKWindow = res;
+  return;
+end;

@@ -160,10 +160,10 @@ begin
     if (RecordInsert(VBr,false)) then begin 
       CreateRecordLink(VBr,CurrentCompany,Contrr,CurrentCompany);  
       CreateRecordLink(Contrr,CurrentCompany,VBr,CurrentCompany);  
-      res=true;
+      res = true;
     end;
   end;
-  CreateVacBalFromContrr=res;
+  CreateVacBalFromContrr = res;
   return;
 end;
 
@@ -197,7 +197,34 @@ begin
   record SalSettingBlock SalSettingRec;
   
   BlockLoad(SalSettingRec);
-  res=SalSettingRec.AccGroupCode;
-  GetAccGroupCode=res;
+  res = SalSettingRec.AccGroupCode;
+  GetAccGroupCode = res;
   return;
 end;
+
+//Bk - start: ts 2019/01
+global
+updating procedure CreateContractFromEmplRemote(var record ContractVc Contrp,string EmplCode)
+begin
+  record EmplVc Emplr;
+  LongInt newnr;
+  record SRBlock SRRec;
+      
+  RecordNew(Contrp);
+  Emplr.Code = EmplCode;
+  if (ReadFirstMain(Emplr,1,true)) then begin
+  end;
+  Contrp.EmplCode = Emplr.Code;
+  Contrp.Firstname = Emplr.Firstname;
+  Contrp.Surname = Emplr.Surname;
+  Contrp.ObjCode = Emplr.ObjCode;
+  Contrp.StartDate = CurrentDate;
+  Contrp.SerNr = NextSerNr("ContractVc",Contrp.StartDate,-1,false,"");
+  if (RecordInsert(Contrp,false)) then begin 
+    CreateRecordLink(Contrp,CurrentCompany,Emplr,CurrentCompany);  
+    CreateRecordLink(Emplr,CurrentCompany,Contrp,CurrentCompany);  
+  end;
+LCreateContractFromEmplRemote:;
+  return;
+end;
+//Bk - end

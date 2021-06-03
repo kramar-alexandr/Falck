@@ -36,8 +36,8 @@ begin
   record PaymTypeVc PT3r;
   LongInt updatemode,insertmode;
   
-  insertmode=1;
-  updatemode=2;
+  insertmode = 1;
+  updatemode = 2;
   res = 0;
 
   if (blank(PTr.Code)) then begin

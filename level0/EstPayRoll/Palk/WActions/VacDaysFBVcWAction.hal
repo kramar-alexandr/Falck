@@ -17,7 +17,6 @@ begin
   if (VDFBr.OKFlag!=0) then begin
     res = false;
   end;
-
   VacDaysFBDClassDeleteRowTest = res;
   return;
 end;
@@ -91,7 +90,6 @@ function boolean VacDaysFBDClassContrSerNrEFAfter(integer wn,integer rownr,integ
     MatRowPut(VDFBr,rownr,VDFBrw);
     PutWindowRecord(wn,VDFBr);
   end;
-
   VacDaysFBDClassContrSerNrEFAfter = true;
   return;
 end;
@@ -109,7 +107,6 @@ function boolean VacDaysFBDClassYearEFAfter(integer wn,integer rownr,integer cha
     end;
     PutWindowRecord(wn,VDFBr);
   end;
-
   VacDaysFBDClassYearEFAfter = true;
   return;
 end;
@@ -123,7 +120,6 @@ begin
     case "ContrSerNr": res = VacDaysFBDClassContrSerNrEFAfter(wn,rownr,changed);
     case "Year": res = VacDaysFBDClassYearEFAfter(wn,rownr,changed);
   end;
-
   VacDaysFBDClassAfterEditField = res;
   return;
 end;

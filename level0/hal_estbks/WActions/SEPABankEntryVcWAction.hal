@@ -1,0 +1,479 @@
+//from BK build 85321107 + cust
+
+//sepa import
+//new dev
+remote function boolean CanMakeIPFromBankEntry(record SEPABankEntryVc,var record RcVc,var string,var longint);
+remote function boolean CanMakeOPFromBankEntry(record SEPABankEntryVc,var record RcVc,var string,var longint);
+remote function boolean CanMakeTRFromBankEntry(record SEPABankEntryVc,var record RcVc,var string,var longint);
+remote function boolean CanMakeNoneFromBankEntry(record SEPABankEntryVc,var record RcVc,var string,var longint);
+remote updating procedure CreateIPFromBankEntry(var record IPVc,var record SEPABankEntryVc,boolean,boolean,record RcVc,var string);
+remote updating procedure CreateOPFromBankEntry(var record OPVc,var record SEPABankEntryVc,boolean,boolean,record RcVc,var string);
+remote updating function boolean CreateTRFromBankEntry(var record TRVc,var record SEPABankEntryVc,boolean,boolean,record RcVc,var string);
+remote updating procedure CreateNoneFromBankEntry(var record SEPABankEntryVc,boolean,boolean,record RcVc,var string);
+//cust - start KB 18.03.2020
+remote function boolean CanManualMakeTRFromBankEntry(record RcVc,var string);
+external procedure Falck_PasteCustObjects(var string,record SEPABankEntryVc);
+external function boolean IsFalckPOSPaym(record SEPABankEntryVc);
+//cust - end
+
+global
+procedure SEPABankEntryLClassButtonFlags(integer wn,var boolean duplOK,var boolean newOK,var boolean saveOK,var boolean restOK)
+begin
+
+    duplOK = false;
+    newOK = false;
+  return;
+end;
+
+global
+procedure SEPABankEntryDClassButtonFlags(integer wn,var boolean duplOK,var boolean newOK,var boolean saveOK,var boolean restOK)
+begin
+
+    duplOK = false;
+    newOK = false;
+  return;
+end;
+
+global
+procedure DblBankEntry(string dblstr,string l,Integer currepwn)
+begin
+  Integer wn;
+  record SEPABankEntryVc SEPABankEntryr;
+
+  if (nonblank(l)) then begin
+    SEPABankEntryr.SerNr = StringToLongInt(l);
+  end else begin
+    SEPABankEntryr.SerNr = StringToLongInt(dblstr);
+  end;
+  if (ReadFirstMain(SEPABankEntryr,1,true)) then begin  
+    wn = OpenWindow("SEPABankEntryDClass",1,0,"","",SEPABankEntryr);
+  end; 
+  return;
+end;
+
+procedure PrefillFromBankEntry(var record RcVc RepSpec, record SEPABankEntryVc SEPABankEntryr)
+begin
+  if (blank(SEPABankEntryr.DbtrAcctIBAN)) then begin
+    RepSpec.f5 = SEPABankEntryr.CdtrAcctIBAN;
+  end else begin
+    RepSpec.f5 = SEPABankEntryr.DbtrAcctIBAN;
+  end;
+  RepSpec.f6 = SEPABankEntryr.OurIBAN;
+  RepSpec.f7 = SEPABankEntryr.RmtInfUstrd;
+//cust - start KB 18.03.2020
+  if (IsFalckPOSPaym(SEPABankEntryr)) then begin
+    Falck_PasteCustObjects(RepSpec.f3,SEPABankEntryr);
+    Falck_PasteCustObjects(RepSpec.f4,SEPABankEntryr);
+  end;
+//cust - end
+  return;
+end;
+
+global updating
+procedure IPFromBankOK()
+begin
+  integer wn;
+  record SEPABankEntryVc SEPABankEntryr;
+  record IPVc IPr;
+  record RcVc RepSpec;
+  string 255 errMsg;
+  boolean changeAssociation,saveAssociation;
+
+  wn = CurWindow;
+  DeselectWindow(wn,true);
+  if (wn > 0) then begin
+    GetWindowRecord(wn,RepSpec);
+    changeAssociation = RepSpec.flags[1] == 1;
+    saveAssociation = RepSpec.flags[2] == 1;
+    SEPABankEntryr.SerNr = RepSpec.long1;
+    CloseWindow(wn);
+    CloseWindow(RepSpec.ArtMode); //closing the SEPABankEntryr window
+    ReadFirstMain(SEPABankEntryr,1,true);
+    CreateIPFromBankEntry(IPr,SEPABankEntryr,changeAssociation,saveAssociation,RepSpec,errMsg);
+    if (blank(errMsg)) then begin
+      UpdateBrowses("SEPABankEntryVc");
+      OpenWindow("IPDClass",0,0,"","",IPr);
+    end else begin
+      MessageBox(0,errMsg);
+    end;
+  end;
+  return;
+end;
+
+global
+procedure IPFromBankCancel()
+begin
+  integer wn;
+
+  wn = CurWindow;
+  DeselectWindow(wn,true);
+  CloseWindow(wn);
+  return;
+end;
+
+procedure DoIPFromBankEntryCommon(record RcVc RepSpec) //A means save and Associate
+begin
+  integer wn;
+  string 255 errMsg;
+  longint errCode;
+  record SEPABankEntryVc SEPABankEntryr;
+  record IPVc IPr;
+
+  wn = CurWindow;
+  if (wn > 0) then begin
+    if (WindowState(wn) == Rs_normal) then begin
+      GetWindowRecord(wn,SEPABankEntryr);
+      RepSpec.ArtMode = wn;
+      RepSpec.long1 = SEPABankEntryr.SerNr;
+      RepSpec.flags[0] = IPYc; //see set 1670
+      if (CanMakeIPFromBankEntry(SEPABankEntryr,RepSpec,errMsg,errCode)) then begin
+        PrefillFromBankEntry(RepSpec,SEPABankEntryr);
+        OpenWindow("IPFromBankWClass",0,0,"","",RepSpec);
+      end else begin
+        MessageBox(0,errMsg);
+        if (errCode == 1500253) then begin
+          OpenWindow("ReplaceIdentWClass",0,0,"","",RepSpec);
+        end;
+      end;
+    end else begin
+      MessageBox(1356,"");
+    end;
+  end;
+  return;
+end;
+
+global
+procedure IPFromBankEntryDsm()
+begin
+  record RcVc RepSpec;
+
+  RepSpec.flags[2] = 0; //do not save the association
+  DoIPFromBankEntryCommon(RepSpec);
+  return;
+end;
+
+global
+procedure IPFromBankEntryDsmA() //A means save and Associate
+begin
+  record RcVc RepSpec;
+
+  RepSpec.flags[2] = 1; //save the association
+  DoIPFromBankEntryCommon(RepSpec);
+  return;
+end;
+
+global updating
+procedure OPFromBankOK()
+begin
+  integer wn;
+  record SEPABankEntryVc SEPABankEntryr;
+  record OPVc OPr;
+  record RcVc RepSpec;
+  string 255 errMsg;
+  boolean changeAssociation,saveAssociation;
+
+  wn = CurWindow;
+  DeselectWindow(wn,true);
+  if (wn > 0) then begin
+    GetWindowRecord(wn,RepSpec);
+    changeAssociation = RepSpec.flags[1] == 1;
+    saveAssociation = RepSpec.flags[2] == 1;
+    SEPABankEntryr.SerNr = RepSpec.long1;
+    CloseWindow(wn);
+    CloseWindow(RepSpec.ArtMode); //closing the SEPABankEntryr window
+    ReadFirstMain(SEPABankEntryr,1,true);
+    CreateOPFromBankEntry(OPr,SEPABankEntryr,changeAssociation,saveAssociation,RepSpec,errMsg);
+    if (blank(errMsg)) then begin
+      UpdateBrowses("SEPABankEntryVc");
+      OpenWindow("OPDClass",0,0,"","",OPr);
+    end else begin
+      MessageBox(0,errMsg);
+    end;
+  end;
+  return;
+end;
+
+global
+procedure OPFromBankCancel()
+begin
+  integer wn;
+
+  wn = CurWindow;
+  DeselectWindow(wn,true);
+  CloseWindow(wn);
+  return;
+end;
+
+procedure DoOPFromBankEntryCommon(record RcVc RepSpec)
+begin
+  integer wn;
+  string 255 errMsg;
+  longint errCode;
+  record SEPABankEntryVc SEPABankEntryr;
+  record OPVc OPr;
+
+  wn = CurWindow;
+  if (wn > 0) then begin
+    if (WindowState(wn) == Rs_normal) then begin
+      GetWindowRecord(wn,SEPABankEntryr);
+      RepSpec.ArtMode = wn;
+      RepSpec.long1 = SEPABankEntryr.SerNr;
+      RepSpec.flags[0] = OPYc; //see set 1670
+      if (CanMakeOPFromBankEntry(SEPABankEntryr,RepSpec,errMsg,errCode)) then begin
+        PrefillFromBankEntry(RepSpec,SEPABankEntryr);
+        OpenWindow("OPFromBankWClass",0,0,"","",RepSpec);
+      end else begin
+        MessageBox(0,errMsg);
+        if (errCode == 1500253) then begin
+          OpenWindow("ReplaceIdentWClass",0,0,"","",RepSpec);
+        end;
+      end;
+    end else begin
+      MessageBox(1356,"");
+    end;
+  end;
+  return;
+end;
+
+global
+procedure OPFromBankEntryDsm()
+begin
+  record  RcVc RepSpec;
+
+  RepSpec.flags[2] = 0; //do not save the association
+  DoOPFromBankEntryCommon(RepSpec);
+  return;
+end;
+
+global
+procedure OPFromBankEntryDsmA() //A means save and Associate
+begin
+  record  RcVc RepSpec;
+
+  RepSpec.flags[2] = 1; //save the association
+  DoOPFromBankEntryCommon(RepSpec);
+  return;
+end;
+
+global updating
+procedure TRFromBankOK()
+begin
+  integer wn;
+  record SEPABankEntryVc SEPABankEntryr;
+  record TRVc TRr;
+  record RcVc RepSpec;
+  string 20 debAcc,credAcc;
+  string 60 objCred,objDeb;
+  string 255 errMsg;
+  boolean changeAssociation,saveAssociation;
+
+  wn = CurWindow;
+  DeselectWindow(wn,true);
+  if (wn > 0) then begin
+    GetWindowRecord(wn,RepSpec);
+    changeAssociation = RepSpec.flags[1] == 1;
+    saveAssociation = RepSpec.flags[2] == 1;
+    credAcc = RepSpec.f1;
+    debAcc = RepSpec.f2;
+    objCred = RepSpec.f3;
+    objDeb = RepSpec.f4;
+    SEPABankEntryr.SerNr = RepSpec.long1;
+    if (CanManualMakeTRFromBankEntry(RepSpec,errMsg)) then begin //cust KB 18.03.2020
+      CloseWindow(wn);
+      CloseWindow(RepSpec.ArtMode);
+      ReadFirstMain(SEPABankEntryr,1,true);
+      if (CreateTRFromBankEntry(TRr,SEPABankEntryr,changeAssociation,saveAssociation,RepSpec,errMsg)) then begin
+        UpdateBrowses("SEPABankEntryVc");
+        OpenWindow("TRDClass",0,0,"","",TRr);
+      end else begin
+        MessageBox(0,errMsg);
+      end;
+    end else begin
+      MessageBox(0,errMsg); //cust KB 18.03.2020
+    end;
+  end;
+  return;
+end;
+
+global
+procedure TRFromBankCancel()
+begin
+  integer wn;
+
+  wn = CurWindow;
+  DeselectWindow(wn,true);
+  CloseWindow(wn);
+  return;
+end;
+
+procedure DoTRFromBankEntryCommon(var record RcVc RepSpec)
+begin
+  integer wn;
+  string 255 errMsg;
+  longint errCode;
+  record SEPABankEntryVc SEPABankEntryr;
+
+  wn = CurWindow;
+  if (wn > 0) then begin
+    if (WindowState(wn) == Rs_normal) then begin
+      GetWindowRecord(wn,SEPABankEntryr);
+      RepSpec.ArtMode = wn;
+      RepSpec.long1 = SEPABankEntryr.SerNr;
+      RepSpec.flags[0] = 1; //see set 1670
+      if (CanMakeTRFromBankEntry(SEPABankEntryr,RepSpec,errMsg,errCode)) then begin
+        PrefillFromBankEntry(RepSpec,SEPABankEntryr);
+        OpenWindow("TRFromBankWClass",0,0,"","",RepSpec);
+      end else begin
+        MessageBox(0,errMsg);
+        if (errCode == 1500253) then begin
+          OpenWindow("ReplaceIdentWClass",0,0,"","",RepSpec);
+        end;
+      end;
+    end else begin
+      MessageBox(1356,"");
+    end;
+  end;
+  return;
+end;
+
+global
+procedure TRFromBankEntryDsm()
+begin
+  record  RcVc RepSpec;
+
+  RepSpec.flags[2] = 0; //do not save the association
+  DoTRFromBankEntryCommon(RepSpec);
+  return;
+end;
+
+global
+procedure TRFromBankEntryDsmA() //A means save and Associate
+begin
+  record  RcVc RepSpec;
+
+  RepSpec.flags[2] = 1; //save the association
+  DoTRFromBankEntryCommon(RepSpec);
+  return;
+end;
+
+global updating
+procedure NoneFromBankOK()
+begin
+  integer wn;
+  record SEPABankEntryVc SEPABankEntryr;
+  record RcVc RepSpec;
+  string 255 errMsg;
+  boolean changeAssociation,saveAssociation;
+
+  wn = CurWindow;
+  DeselectWindow(wn,true);
+  if (wn > 0) then begin
+    GetWindowRecord(wn,RepSpec);
+    changeAssociation = RepSpec.flags[1] == 1;
+    saveAssociation = RepSpec.flags[2] == 1;
+    SEPABankEntryr.SerNr = RepSpec.long1;
+    CloseWindow(wn);
+    CloseWindow(RepSpec.ArtMode);
+    ReadFirstMain(SEPABankEntryr,1,true);
+    CreateNoneFromBankEntry(SEPABankEntryr,changeAssociation,saveAssociation,RepSpec,errMsg);
+    if (blank(errMsg)) then begin
+      UpdateBrowses("SEPABankEntryVc");
+    end else begin
+      MessageBox(0,errMsg);
+    end;
+  end;
+  return;
+end;
+
+global
+procedure NoneFromBankCancel()
+begin
+  integer wn;
+
+  wn = CurWindow;
+  DeselectWindow(wn,true);
+  CloseWindow(wn);
+  return;
+end;
+
+procedure DoNoneFromBankEntryCommon(record RcVc RepSpec)
+begin
+  integer wn;
+  record SEPABankEntryVc SEPABankEntryr;
+  string 255 errMsg;
+  longint errCode;
+
+  wn = CurWindow;
+  if (wn > 0) then begin
+    if (WindowState(wn) == Rs_normal) then begin
+      GetWindowRecord(wn,SEPABankEntryr);
+      RepSpec.ArtMode = wn;
+      RepSpec.long1 = SEPABankEntryr.SerNr;
+      RepSpec.flags[0] = 0; //see set 1670
+      if (CanMakeNoneFromBankEntry(SEPABankEntryr,RepSpec,errMsg,errCode)) then begin
+        PrefillFromBankEntry(RepSpec,SEPABankEntryr);
+        OpenWindow("NothingFromBankWClass",0,0,"","",RepSpec);
+      end else begin
+        MessageBox(0,errMsg);
+        if (errCode == 1500253) then begin
+          OpenWindow("ReplaceIdentWClass",0,0,"","",RepSpec);
+        end;
+      end;
+    end else begin
+      MessageBox(1356,"");
+    end;
+  end;
+  return;
+end;
+
+global updating
+procedure NoneFromBankEntryDsm()
+begin
+  record RcVc RepSpec;
+
+  RepSpec.flags[2] = 0; //do not save the association
+  DoNoneFromBankEntryCommon(RepSpec);
+  return;
+end;
+
+global updating
+procedure NoneFromBankEntryDsmA() //A means save and Associate
+begin
+  record RcVc RepSpec;
+
+  RepSpec.flags[2] = 1; //save the association
+  DoNoneFromBankEntryCommon(RepSpec);
+  return;
+end;
+
+global
+procedure ChangeIdentCancel()
+begin
+  integer wn;
+
+  wn = CurWindow;
+  DeselectWindow(wn,true);
+  CloseWindow(wn);
+  return;
+end;
+
+global
+procedure ChangeIdentOK()
+begin
+  integer wn;
+  record RcVc RepSpec;
+
+  wn = CurWindow;
+  DeselectWindow(wn,true);
+  GetWindowRecord(wn,RepSpec);
+  RepSpec.flags[1] = 1; //set overwrite flag
+  switch(RepSpec.flags[0]) begin
+    case 0: OpenWindow("NothingFromBankWClass",0,0,"","",RepSpec);
+    case 1: OpenWindow("TRFromBankWClass",0,0,"","",RepSpec);
+    case OPYc: OpenWindow("OPFromBankWClass",0,0,"","",RepSpec);
+    case IPYc:OpenWindow("IPFromBankWClass",0,0,"","",RepSpec);
+  end;
+  CloseWindow(wn);
+  return;
+end;
+

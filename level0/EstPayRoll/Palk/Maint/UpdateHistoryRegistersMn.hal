@@ -25,34 +25,34 @@ begin
   integer rwcnt,j;
   boolean TrHs,testf;
 
-  testf=true;
-  TrHs=true;
+  testf = true;
+  TrHs = true;
   MatRowGet(CPr,cprownr,CPrw);
   ResetLoop(OTr);
   OTr.PaymTypeCode=CPrw.PaymTypeCode;
   while (LoopKey("PaymTypeCode",OTr,1,TrHs)) begin
     if (OTr.PaymTypeCode!=CPrw.PaymTypeCode) then begin
-      TrHs=false;
+      TrHs = false;
     end;
     if (TrHs) then begin 
       if (OTr.OKFlag!=1) then begin
-        testf=false;
+        testf = false;
       end;
       if (OTr.CalcFlag!=1) then begin
-        testf=false;
+        testf = false;
       end;
       if (OTr.TransDate>CPr.EndDate) then begin
-        testf=false;
+        testf = false;
       end;
       if (testf) then begin
-        rwcnt=MatRowCnt(OTr);
+        rwcnt = MatRowCnt(OTr);
         for (j=0;j<rwcnt;j=j+1) begin
           MatRowGet(OTr,j,OTrw);
           if (OTrw.CalcSerNr>0) then begin
             if (OTrw.CalcSerNr==CPr.SerNr) then begin
               InsertCPOTVc(CPr.SerNr,cprownr,OTr.SerNr,j);
-              checkrowflag=false;
-              TrHs=false;
+              checkrowflag  = false;
+              TrHs = false;
             end;   
           end;
         end;
@@ -71,27 +71,27 @@ begin
 
   MatRowGet(CPr,cprownr,CPrw);
   if (IsAbsPaymType(CPrw.PaymTypeCode)) then begin
-    TrHs=true;
+    TrHs = true;
     ResetLoop(Absr);
-    Absr.AbsTypeCode=CPrw.PaymTypeCode;
-    Absr.ContrSerNr=CPr.ContrSerNr;
-    Absr.OKFlag=1;
+    Absr.AbsTypeCode = CPrw.PaymTypeCode;
+    Absr.ContrSerNr = CPr.ContrSerNr;
+    Absr.OKFlag = 1;
     while (LoopKey("AbsTypeCode",Absr,3,TrHs)) begin
       if (Absr.AbsTypeCode!=CPrw.PaymTypeCode) then begin
-        TrHs=false;
+        TrHs = false;
       end;
       if (Absr.ContrSerNr!=CPr.ContrSerNr) then begin
-        TrHs=false;
+        TrHs = false;
       end;
       if (Absr.OKFlag!=1) then begin
-        TrHs=false;
+        TrHs = false;
       end;
       if (TrHs) then begin
         if (Absr.CalcSerNr>0) then begin
           if (Absr.CalcSerNr==CPr.SerNr) then begin
             InsertCPAbsVc(CPr.SerNr,cprownr,Absr.SerNr);
-            checkrowflag=false;
-            TrHs=false;
+            checkrowflag = false;
+            TrHs = false;
           end;
         end;
       end;
@@ -112,24 +112,24 @@ begin
 
   MatRowGet(CPr,cprownr,CPrw);
   if (IsWHPaymType(CPrw.PaymTypeCode)) then begin //tššajatabel
-    testf=true;
-    TrHs=true;
+    testf = true;
+    TrHs = true;
     ResetLoop(WHr);
-    WHr.OKFlag=1;
+    WHr.OKFlag = 1;
     while (LoopKey("OKFlag",WHr,1,TrHs)) begin
       if (WHr.OKFlag!=1) then begin
-        TrHs=false;
+        TrHs = false;
       end;
       if (TrHs) then begin 
         if (WHr.Year>GetYear(CPr.CalcDate)) then begin
-          testf=false;
+          testf = false;
         end else begin
           if (WHr.Year==GetYear(CPr.CalcDate)) and (WHr.Month>GetMonth(CPr.CalcDate)) then begin
-            testf=false;
+            testf = false;
           end;
         end;
         if (testf) then begin 
-          rwcnt=MatRowCnt(WHr);
+          rwcnt = MatRowCnt(WHr);
           for (j=0;j<rwcnt;j=j+1) begin
             MatRowGet(WHr,j,WHrw);
             if (WHrw.CalcSerNr==CPr.SerNr) then begin
@@ -137,9 +137,9 @@ begin
               if (ReadFirstMain(WHTr,1,true)) then begin end;
               if (WHTr.PaymTypeCode==CPrw.PaymTypeCode) then begin
                 InsertCPWHVc(CPr.SerNr,cprownr,WHr.SerNr,j);
-                checkrowflag=false;
-                TrHs=false;
-                j=rwcnt;//ts, fix 2018/08
+                checkrowflag = false;
+                TrHs = false;
+                j = rwcnt;//ts, fix 2018/08
               end;
             end;   
           end;
@@ -162,34 +162,34 @@ begin
          
   MatRowGet(CPr,cprownr,CPrw);
   if (IsPWPaymType(CPrw.PaymTypeCode)) then begin
-    TrHs=true;
+    TrHs = true;
     ResetLoop(PWTr);
-    PWTr.PaymTypeCode=CPrw.PaymTypeCode;
+    PWTr.PaymTypeCode = CPrw.PaymTypeCode;
     while (LoopKey("PaymTypeCode",PWTr,1,TrHs)) begin
       if (PWTr.PaymTypeCode!=CPrw.PaymTypeCode) then begin
-        TrHs=false;
+        TrHs = false;
       end;
       if (TrHs) then begin 
-        TrHs1=true;
+        TrHs1 = true;
         ResetLoop(PWr);
-        PWr.OKFlag=1;
-        PWr.PieceWorkTypeCode=PWTr.Code;
+        PWr.OKFlag = 1;
+        PWr.PieceWorkTypeCode = PWTr.Code;
         while (LoopKey("OKFlag",PWr,2,TrHs1)) begin
           if (PWr.OKFlag!=1) then begin
-            TrHs1=false;
+            TrHs1 = false;
           end;
           if (PWr.PieceWorkTypeCode!=PWTr.Code) then begin
-            TrHs1=false;
+            TrHs1 = false;
           end;
           if (TrHs1) then begin 
-            rwcnt=MatRowCnt(PWr);
+            rwcnt = MatRowCnt(PWr);
             for (j=0;j<rwcnt;j=j+1) begin
               MatRowGet(PWr,j,PWrw);
               if (PWrw.CalcSerNr>0) then begin
                 if (PWrw.CalcSerNr==CPr.SerNr) then begin
                   InsertCPPWVc(CPr.SerNr,cprownr,PWr.SerNr,j);
-                  TrHs1=false;
-                  TrHs=false;
+                  TrHs1 = false;
+                  TrHs = false;
                 end;
               end;
             end;   
@@ -220,7 +220,7 @@ begin
 //tŸhistamine
   if (RepSpec.flags[0]!=0) then begin //Arvestuse abiregister
     ResetLoop(CPUr);
-    CPUr.SerNr=-1;
+    CPUr.SerNr = -1;
     while (LoopMain(CPUr,1,true)) begin
       RecordDelete(CPUr);
       StepBack(CPUr);
@@ -228,7 +228,7 @@ begin
   end;
   if (RepSpec.flags[1]!=0) then begin //Arvestuste/VŠljamaksete ajalugu - testimiseks
     ResetLoop(CPPPHistr);
-    CPPPHistr.EmplCode="";
+    CPPPHistr.EmplCode = "";
     while (LoopMain(CPPPHistr,1,true)) begin
       RecordDelete(CPPPHistr);
       StepBack(CPPPHistr);
@@ -236,7 +236,7 @@ begin
   end;
   if (RepSpec.flags[2]!=0) then begin //Avatud kannete abiregister
     ResetLoop(CPOTr);
-    CPOTr.CalcSerNr=-1;
+    CPOTr.CalcSerNr = -1;
     while (LoopMain(CPOTr,1,true)) begin
       RecordDelete(CPOTr);
       StepBack(CPOTr);
@@ -244,7 +244,7 @@ begin
   end;  
   if (RepSpec.flags[3]!=0) then begin //Puudumiste abiregister
     ResetLoop(CPAbsr);
-    CPAbsr.CalcSerNr=-1;
+    CPAbsr.CalcSerNr = -1;
     while (LoopMain(CPAbsr,1,true)) begin
       RecordDelete(CPAbsr);
       StepBack(CPAbsr);
@@ -252,7 +252,7 @@ begin
   end;
   if (RepSpec.flags[4]!=0) then begin //TM vaba miinimumi abiregister
     ResetLoop(ITFMUr);
-    ITFMUr.SerNr=-1;
+    ITFMUr.SerNr = -1;
     while (LoopMain(ITFMUr,1,true)) begin
       RecordDelete(ITFMUr);
       StepBack(ITFMUr);
@@ -260,7 +260,7 @@ begin
   end;
   if (RepSpec.flags[7]!=0) then begin //Tššv›imetuspensionŠri abiregister
     ResetLoop(DPDUr);
-    DPDUr.SerNr=-1;
+    DPDUr.SerNr = -1;
     while (LoopMain(DPDUr,1,true)) begin
       RecordDelete(DPDUr);
       StepBack(DPDUr);
@@ -268,7 +268,7 @@ begin
   end;
   if (RepSpec.flags[5]!=0) then begin //Tššajatabeli abiregister
     ResetLoop(CPWHr);
-    CPWHr.CalcSerNr=-1;
+    CPWHr.CalcSerNr = -1;
     while (LoopMain(CPWHr,1,true)) begin
       RecordDelete(CPWHr);
       StepBack(CPWHr);
@@ -276,7 +276,7 @@ begin
   end;
   if (RepSpec.flags[6]!=0) then begin //TŸkitšš abiregister
     ResetLoop(CPPWr);
-    CPPWr.CalcSerNr=-1;
+    CPPWr.CalcSerNr = -1;
     while (LoopMain(CPPWr,1,true)) begin
       RecordDelete(CPPWr);
       StepBack(CPPWr);
@@ -285,7 +285,7 @@ begin
 
 //register Arvestused
   ResetLoop(CPr);
-  CPr.SerNr=-1;
+  CPr.SerNr = -1;
   while (LoopMain(CPr,1,true)) begin
     if (CPr.Invalid==0) then begin //k.a. kinnitamata arvestused
       UpdateCPHistory(CPr,0,true,true,RepSpec.flags[2],RepSpec.flags[3],RepSpec.flags[5],RepSpec.flags[6]);
@@ -312,7 +312,7 @@ begin
 
 //register VŠljamaksed
   ResetLoop(PPr);
-  PPr.SerNr=-1;
+  PPr.SerNr = -1;
   while (LoopMain(PPr,1,true)) begin
     if ((PPr.OKFlag!=0) and (PPr.Invalid==0)) then begin
       //Arvestuse abiregister - testimiseks

@@ -1,5 +1,8 @@
+external procedure GetPMBankAccName(string,var string,var string,var string);
+external function integer GetPaymTypeFlag(string);
+
 global
-function Boolean CreateCalcPayrollVClassOnOKWindow(Integer wn)
+function boolean CreateCalcPayrollVClassOnOKWindow(integer wn)
 begin
   boolean res;
   record RcVc RepSpec;
@@ -10,28 +13,28 @@ begin
   if ((blankdate(RepSpec.sStartDate)) or (blankdate(RepSpec.sEndDate)) or (RepSpec.sStartDate>=RepSpec.sEndDate)) then begin
     MessageBox(17258,"");
     WindowFieldGoto(wn,RepSpec,-1,"period",true);
-    res = -1;
+    res = false;
     goto L1;
   end;
   if blankdate(RepSpec.d1) then begin 
     MessageBox(1500377,"");
     WindowFieldGoto(wn,RepSpec,-1,"d1",true);
-    res = -1;
+    res = false;
     goto L1;
   end;
   if ((RepSpec.flags[0]==0) and (RepSpec.flags[1]==0) and (RepSpec.flags[2]==0) and (RepSpec.flags[3]==0) and (RepSpec.flags[4]==0)) then begin
     MessageBox(1500381,"");
-    res = -1;
+    res = false;
     goto L1;
   end;
   if ((RepSpec.flags[4]!=0) or (RepSpec.flags[3]!=0))then begin
-    tmpdate=RepSpec.sStartDate;
-    tmpdate.day=01;
-    tmpdate1=RepSpec.sStartDate;
-    tmpdate1.day=DaysInMonth(GetYear(tmpdate),GetMonth(tmpdate));
+    tmpdate = RepSpec.sStartDate;
+    tmpdate.day = 01;
+    tmpdate1 = RepSpec.sStartDate;
+    tmpdate1.day = DaysInMonth(GetYear(tmpdate),GetMonth(tmpdate));
     if (RepSpec.sStartDate!=tmpdate) or (RepSpec.sEndDate!=tmpdate1) then begin
       MessageBox(1500380,"");
-      res = -1;
+      res = false;
       goto L1;
     end;
   end;
@@ -41,7 +44,126 @@ L1:;
 end;
 
 global
-function Boolean CreatePaymPayrollVClassOnOKWindow(Integer wn)
+function boolean CreateCalcPayrollEndVClassOnOKWindow(integer wn)
+begin
+  boolean res;
+  record RcVc RepSpec;
+  
+  res = true;
+  GetWindowRecord(wn,RepSpec);
+  if ((blankdate(RepSpec.sStartDate)) or (blankdate(RepSpec.sEndDate)) or (RepSpec.sStartDate>=RepSpec.sEndDate)) then begin
+    MessageBox(17258,"");
+    WindowFieldGoto(wn,RepSpec,-1,"period",true);
+    res = false;
+    goto LCreateCalcPayrollEndVClassOnOKWindow;
+  end;
+  if blankdate(RepSpec.d1) then begin 
+    MessageBox(1500377,"");
+    WindowFieldGoto(wn,RepSpec,-1,"d1",true);
+    res = false;
+    goto LCreateCalcPayrollEndVClassOnOKWindow;
+  end;
+  if (blank(RepSpec.f1) and blank(RepSpec.f2)) then begin
+    MessageBox(1500557,"");
+    WindowFieldGoto(wn,RepSpec,-1,"f1",true);
+    res = false;
+    goto LCreateCalcPayrollEndVClassOnOKWindow;
+  end;
+  if (blank(RepSpec.f7)) then begin
+    MessageBox(1500558,"");
+    WindowFieldGoto(wn,RepSpec,-1,"f7",true);
+    res = false;
+    goto LCreateCalcPayrollEndVClassOnOKWindow;
+/* //Bk, ts 2020/06, removed
+  end else begin
+    if (GetPaymTypeFlag(RepSpec.f7)!=2) then begin
+      MessageBox(1500591,"");
+      WindowFieldGoto(wn,RepSpec,-1,"f7",true);
+      res = false;
+      goto LCreateCalcPayrollEndVClassOnOKWindow;
+    end;
+*/
+  end;
+LCreateCalcPayrollEndVClassOnOKWindow:;
+  CreateCalcPayrollEndVClassOnOKWindow = res;
+  return;
+end;
+
+global
+function boolean CreateOpenTransFrSLBonusVClassOnOKWindow(integer wn)
+begin
+  boolean res;
+  record RcVc RepSpec;
+  
+  res = true;
+  GetWindowRecord(wn,RepSpec);
+  if ((blankdate(RepSpec.sStartDate)) or (blankdate(RepSpec.sEndDate)) or (RepSpec.sStartDate>=RepSpec.sEndDate)) then begin
+    MessageBox(17258,"");
+    WindowFieldGoto(wn,RepSpec,-1,"period",true);
+    res = false;
+    goto LCreateOpenTransFrSLBonusVClassOnOKWindow;
+  end;
+  if blankdate(RepSpec.d1) then begin 
+    MessageBox(1500342,"");
+    WindowFieldGoto(wn,RepSpec,-1,"d1",true);
+    res = false;
+    goto LCreateOpenTransFrSLBonusVClassOnOKWindow;
+  end;
+  if (blank(RepSpec.f3)) then begin
+    MessageBox(1500559,"");
+    WindowFieldGoto(wn,RepSpec,-1,"f3",true);
+    res = false;
+    goto LCreateOpenTransFrSLBonusVClassOnOKWindow;
+  end;
+LCreateOpenTransFrSLBonusVClassOnOKWindow:;
+  CreateOpenTransFrSLBonusVClassOnOKWindow = res;
+  return;
+end;
+
+global
+function boolean CreatePaymPayrollVClassOnOKWindow(integer wn)
+begin
+  boolean res;
+  record RcVc RepSpec;
+  string 20 bankacc,bankname,bankcode;
+
+  res = true;
+  GetWindowRecord(wn,RepSpec);
+  if ((blankdate(RepSpec.sStartDate)) or (blankdate(RepSpec.sEndDate)) or (RepSpec.sStartDate>=RepSpec.sEndDate)) then begin
+    MessageBox(17258,"");
+    WindowFieldGoto(wn,RepSpec,-1,"period",true);
+    res = false;
+    goto L2;
+  end;
+  if blankdate(RepSpec.d1) then begin 
+    MessageBox(1500377,"");
+    WindowFieldGoto(wn,RepSpec,-1,"d1",true);
+    res = false;
+    goto L2;
+  end;
+  if blank(RepSpec.f3) then begin 
+    MessageBox(1500493,"");
+    WindowFieldGoto(wn,RepSpec,-1,"f3",true);
+    res = false;
+    goto L2;
+  end else begin
+    if (RepSpec.flags[1]!=0) then begin
+      GetPMBankAccName(RepSpec.f3,bankacc,bankname,bankcode);
+      if blank(bankcode) then begin
+        MessageBox(1500581,"");
+        WindowFieldGoto(wn,RepSpec,-1,"f3",true);
+        res = false;
+        goto L2;    
+      end;
+    end;
+  end;
+L2:;
+  CreatePaymPayrollVClassOnOKWindow = res;
+  return;
+end;
+
+global
+function boolean PaymPayrollXMLEClassOnOKWindow(integer wn)
 begin
   boolean res;
   record RcVc RepSpec;
@@ -51,28 +173,22 @@ begin
   if ((blankdate(RepSpec.sStartDate)) or (blankdate(RepSpec.sEndDate)) or (RepSpec.sStartDate>=RepSpec.sEndDate)) then begin
     MessageBox(17258,"");
     WindowFieldGoto(wn,RepSpec,-1,"period",true);
-    res = -1;
+    res = false;
     goto L2;
   end;
-  if blankdate(RepSpec.d1) then begin 
-    MessageBox(1500377,"");
-    WindowFieldGoto(wn,RepSpec,-1,"d1",true);
-    res = -1;
-    goto L2;
-  end;
-  if blank(RepSpec.f3) then begin 
+  if blank(RepSpec.FirstAcc) then begin 
     MessageBox(1500493,"");
-    WindowFieldGoto(wn,RepSpec,-1,"f3",true);
-    res = -1;
+    WindowFieldGoto(wn,RepSpec,-1,"FirstAcc",true);
+    res = false;
     goto L2;
   end;
 L2:;
-  CreatePaymPayrollVClassOnOKWindow = res;
+  PaymPayrollXMLEClassOnOKWindow = res;
   return;
 end;
 
 global
-function Boolean CreateAdvPaymentVClassOnOKWindow(Integer wn)
+function boolean CreateAdvPaymentVClassOnOKWindow(integer wn)
 begin
   boolean res;
   record RcVc RepSpec;
@@ -82,13 +198,13 @@ begin
   if blankdate(RepSpec.d1) then begin 
     MessageBox(1500377,"");
     WindowFieldGoto(wn,RepSpec,-1,"d1",true);
-    res = -1;
+    res = false;
     goto L3;
   end;
   if (RepSpec.vals0<=0) then begin 
     MessageBox(1500359,"");
     WindowFieldGoto(wn,RepSpec,-1,"vals0",true);
-    res = -1;
+    res = false;
     goto L3;
   end;
 L3:;
@@ -97,7 +213,7 @@ L3:;
 end;
 
 global
-function Boolean CreateVacCalcPayrollVClassOnOKWindow(Integer wn)
+function boolean CreateVacCalcPayrollVClassOnOKWindow(integer wn)
 begin
   boolean res;
   record RcVc RepSpec;
@@ -107,13 +223,13 @@ begin
   if ((blankdate(RepSpec.sStartDate)) or (blankdate(RepSpec.sEndDate)) or (RepSpec.sStartDate>=RepSpec.sEndDate)) then begin
     MessageBox(17258,"");
     WindowFieldGoto(wn,RepSpec,-1,"period",true);
-    res = -1;
+    res = false;
     goto L4;
   end;
   if (blankdate(RepSpec.d1)) then begin
     MessageBox(1500377,"");
     WindowFieldGoto(wn,RepSpec,-1,"d1",true);
-    res = -1;
+    res = false;
     goto L4;
   end;
 L4:;
@@ -122,37 +238,37 @@ L4:;
 end;
 
 global
-function Boolean TSDEClassOnOKWindow(Integer wn)
+function boolean TSDEClassOnOKWindow(integer wn)
 begin
   record RcVc RepSpec;
   record TSDErrorBlock TSDEr;
   row TSDErrorBlock TSDErw;
-  Integer i,rwcnt,err;
+  integer i,rwcnt,err;
   boolean res,testf;
   string 255 accstr,fieldgoto;
 
   res = true;
-  testf=false;
+  testf = false;
   BlockLoad(TSDEr);
   GetWindowRecord(wn,RepSpec);
   if (RepSpec.ArtMode==1) then begin 
     if blank(RepSpec.f2) then begin 
       MessageBox(1058,"");
       WindowFieldGoto(wn,RepSpec,-1,"f2",true);
-      res = -1;
+      res = false;
       goto LTSDEClassCheck;
     end else begin
       rwcnt = MatRowCnt(TSDEr);
       for (i=0;i<rwcnt;i=i+1) begin
         MatRowGet(TSDEr,i,TSDErw);
         if (TSDErw.Code==RepSpec.f2) then begin
-          testf=true;
+          testf = true;
         end;
       end;
       if (testf==false) then begin
         MessageBox(1500491,"");
         WindowFieldGoto(wn,RepSpec,-1,"f2",true);
-        res = -1;
+        res = false;
         goto LTSDEClassCheck;
       end;  
     end;
@@ -160,7 +276,7 @@ begin
       if blank(RepSpec.f1) then begin 
         MessageBox(1058,"");
         WindowFieldGoto(wn,RepSpec,-1,"f1",true);
-        res = -1;
+        res = false;
         goto LTSDEClassCheck;
       end;
     end;
@@ -168,7 +284,7 @@ begin
   if (RepSpec.flags[2]>12) or (RepSpec.flags[2]<1) then begin 
     MessageBox(1500415,"");
     WindowFieldGoto(wn,RepSpec,-1,"flags[2]",true);
-    res = -1;
+    res = false;
     goto LTSDEClassCheck;
   end;
 LTSDEClassCheck:;
@@ -177,17 +293,17 @@ LTSDEClassCheck:;
 end;
 
 global
-function Boolean TSDRClassOnOKWindow(Integer wn)
+function boolean TSDRClassOnOKWindow(integer wn)
 begin
   record RcVc RepSpec;
-  Boolean res;
+  boolean res;
 
   res = true;
   GetWindowRecord(wn,RepSpec);
   if (RepSpec.flags[2]>12) or (RepSpec.flags[2]<1) then begin 
     MessageBox(1500415,"");
     WindowFieldGoto(wn,RepSpec,-1,"flags[2]",true);
-    res = -1;
+    res = false;
     goto LTSDRClassCheck;
   end;
 LTSDRClassCheck:;
@@ -196,7 +312,7 @@ LTSDRClassCheck:;
 end;
 
 global
-function Boolean OkCalcPayrollVClassOnOKWindow(Integer wn)
+function boolean OkCalcPayrollVClassOnOKWindow(integer wn)
 begin
   boolean res;
   record RcVc RepSpec;
@@ -206,7 +322,7 @@ begin
   if ((blankdate(RepSpec.sStartDate)) or (blankdate(RepSpec.sEndDate)) or (RepSpec.sStartDate>=RepSpec.sEndDate)) then begin
     MessageBox(17258,"");
     WindowFieldGoto(wn,RepSpec,-1,"period",true);
-    res = -1;
+    res = false;
     goto L5;
   end;
 L5:;
@@ -215,7 +331,7 @@ L5:;
 end;
 
 global
-function Boolean OkPaymPayrollVClassOnOKWindow(Integer wn)
+function boolean OkPaymPayrollVClassOnOKWindow(integer wn)
 begin
   boolean res;
   record RcVc RepSpec;
@@ -225,7 +341,7 @@ begin
   if ((blankdate(RepSpec.sStartDate)) or (blankdate(RepSpec.sEndDate)) or (RepSpec.sStartDate>=RepSpec.sEndDate)) then begin
     MessageBox(17258,"");
     WindowFieldGoto(wn,RepSpec,-1,"period",true);
-    res = -1;
+    res = false;
     goto L6;
   end;
 L6:;
@@ -234,17 +350,17 @@ L6:;
 end;
 
 global
-function Boolean CreateWorkedHoursVClassOnOKWindow(Integer wn)
+function boolean CreateWorkedHoursVClassOnOKWindow(integer wn)
 begin
   record RcVc RepSpec;
-  Boolean res;
+  boolean res;
 
   res = true;
   GetWindowRecord(wn,RepSpec);
   if (RepSpec.flags[2]>12) or (RepSpec.flags[2]<1) then begin 
     MessageBox(1500415,"");
     WindowFieldGoto(wn,RepSpec,-1,"flags[2]",true);
-    res = -1;
+    res = false;
     goto LCreateWorkedHoursVClassCheck;
   end;
 LCreateWorkedHoursVClassCheck:;
@@ -253,7 +369,7 @@ LCreateWorkedHoursVClassCheck:;
 end;
 
 global
-function Boolean AbsencesRClassOnOKWindow(Integer wn)
+function boolean AbsencesRClassOnOKWindow(integer wn)
 begin
   boolean res;
   record RcVc RepSpec;
@@ -263,7 +379,7 @@ begin
   if ((blankdate(RepSpec.sStartDate)) or (blankdate(RepSpec.sEndDate)) or (RepSpec.sStartDate>=RepSpec.sEndDate)) then begin
     MessageBox(17258,"");
     WindowFieldGoto(wn,RepSpec,-1,"period",true);
-    res = -1;
+    res = false;
     goto L7;
   end;
 L7:;
@@ -272,7 +388,7 @@ L7:;
 end;
 
 global
-function Boolean CalcPayrollRClassOnOKWindow(Integer wn)
+function boolean PlanAbsencesRClassOnOKWindow(integer wn)
 begin
   boolean res;
   record RcVc RepSpec;
@@ -282,7 +398,45 @@ begin
   if ((blankdate(RepSpec.sStartDate)) or (blankdate(RepSpec.sEndDate)) or (RepSpec.sStartDate>=RepSpec.sEndDate)) then begin
     MessageBox(17258,"");
     WindowFieldGoto(wn,RepSpec,-1,"period",true);
-    res = -1;
+    res = false;
+    goto LPlanAbsencesRClassOnOKWindow;
+  end;
+LPlanAbsencesRClassOnOKWindow:;
+  PlanAbsencesRClassOnOKWindow = res;
+  return;
+end;
+
+global
+function boolean PayTypesRClassOnOKWindow(integer wn)
+begin
+  boolean res;
+  record RcVc RepSpec;
+
+  res = true;
+  GetWindowRecord(wn,RepSpec);
+  if ((blankdate(RepSpec.sStartDate)) or (blankdate(RepSpec.sEndDate)) or (RepSpec.sStartDate>RepSpec.sEndDate)) then begin
+    MessageBox(17258,"");
+    WindowFieldGoto(wn,RepSpec,-1,"period",true);
+    res = false;
+    goto LPayTypesRClassOnOKWindow;
+  end;
+LPayTypesRClassOnOKWindow:;
+  PayTypesRClassOnOKWindow = res;
+  return;
+end;
+
+global
+function boolean CalcPayrollRClassOnOKWindow(integer wn)
+begin
+  boolean res;
+  record RcVc RepSpec;
+
+  res = true;
+  GetWindowRecord(wn,RepSpec);
+  if ((blankdate(RepSpec.sStartDate)) or (blankdate(RepSpec.sEndDate)) or (RepSpec.sStartDate>=RepSpec.sEndDate)) then begin
+    MessageBox(17258,"");
+    WindowFieldGoto(wn,RepSpec,-1,"period",true);
+    res = false;
     goto L8;
   end;
 L8:;
@@ -291,7 +445,7 @@ L8:;
 end;
 
 global
-function Boolean EmplHistRClassOnOKWindow(Integer wn)
+function boolean EmplHistRClassOnOKWindow(integer wn)
 begin
   boolean res;
   record RcVc RepSpec;
@@ -301,7 +455,7 @@ begin
   if ((blankdate(RepSpec.sStartDate)) or (blankdate(RepSpec.sEndDate)) or (RepSpec.sStartDate>=RepSpec.sEndDate)) then begin
     MessageBox(17258,"");
     WindowFieldGoto(wn,RepSpec,-1,"period",true);
-    res = -1;
+    res = false;
     goto L9;
   end;
 L9:;
@@ -310,17 +464,17 @@ L9:;
 end;
 
 global
-function Boolean PaymPayrollRClassOnOKWindow(Integer wn)
+function boolean PaymPayrollRClassOnOKWindow(integer wn)
 begin
   boolean res;
   record RcVc RepSpec;
 
   res = true;
   GetWindowRecord(wn,RepSpec);
-  if ((blankdate(RepSpec.sStartDate)) or (blankdate(RepSpec.sEndDate)) or (RepSpec.sStartDate>=RepSpec.sEndDate)) then begin
+  if ((blankdate(RepSpec.sStartDate)) or (blankdate(RepSpec.sEndDate)) or (RepSpec.sStartDate>RepSpec.sEndDate)) then begin
     MessageBox(17258,"");
     WindowFieldGoto(wn,RepSpec,-1,"period",true);
-    res = -1;
+    res = false;
     goto L10;
   end;
 L10:;
@@ -329,7 +483,7 @@ L10:;
 end;
 
 global
-function Boolean SalarySlipRClassOnOKWindow(Integer wn)
+function boolean SalarySlipRClassOnOKWindow(integer wn)
 begin
   boolean res;
   record RcVc RepSpec;
@@ -339,7 +493,7 @@ begin
   if ((blankdate(RepSpec.sStartDate)) or (blankdate(RepSpec.sEndDate)) or (RepSpec.sStartDate>=RepSpec.sEndDate)) then begin
     MessageBox(17258,"");
     WindowFieldGoto(wn,RepSpec,-1,"period",true);
-    res = -1;
+    res = false;
     goto L11;
   end;
 L11:;
@@ -348,7 +502,7 @@ L11:;
 end;
 
 global
-function Boolean SalarySlip2RClassOnOKWindow(Integer wn)
+function boolean SalSlipRClassOnOKWindow(integer wn)
 begin
   boolean res;
   record RcVc RepSpec;
@@ -358,22 +512,47 @@ begin
   if ((blankdate(RepSpec.sStartDate)) or (blankdate(RepSpec.sEndDate)) or (RepSpec.sStartDate>=RepSpec.sEndDate)) then begin
     MessageBox(17258,"");
     WindowFieldGoto(wn,RepSpec,-1,"period",true);
-    res = -1;
-    goto LSalarySlip2RClassOnOKWindow;
+    res = false;
+    goto LSalSlipRClassOnOKWindow;
   end;
-  if (blank(RepSpec.f1)) then begin
+  if (blank(RepSpec.f1)) and (blank(RepSpec.f2)) then begin
     MessageBox(1058,"");
     WindowFieldGoto(wn,RepSpec,-1,"f1",true);  
-    res = -1;
-    goto LSalarySlip2RClassOnOKWindow;
+    res = false;
+    goto LSalSlipRClassOnOKWindow;
   end;
-LSalarySlip2RClassOnOKWindow:;
-  SalarySlip2RClassOnOKWindow = res;
+LSalSlipRClassOnOKWindow:;
+  SalSlipRClassOnOKWindow = res;
   return;
 end;
 
 global
-function Boolean WorkedHoursRClassOnOKWindow(Integer wn)
+function boolean SalSlipToMailVClassOnOKWindow(integer wn)
+begin
+  boolean res;
+  record RcVc RepSpec;
+
+  res = true;
+  GetWindowRecord(wn,RepSpec);
+  if ((blankdate(RepSpec.sStartDate)) or (blankdate(RepSpec.sEndDate)) or (RepSpec.sStartDate>=RepSpec.sEndDate)) then begin
+    MessageBox(17258,"");
+    WindowFieldGoto(wn,RepSpec,-1,"period",true);
+    res = false;
+    goto LSalSlipToMailVClassOnOKWindow;
+  end;
+  if (blank(RepSpec.f1)) and (blank(RepSpec.f2)) then begin
+    MessageBox(1058,"");
+    WindowFieldGoto(wn,RepSpec,-1,"f1",true);  
+    res = false;
+    goto LSalSlipToMailVClassOnOKWindow;
+  end;
+LSalSlipToMailVClassOnOKWindow:;
+  SalSlipToMailVClassOnOKWindow = res;
+  return;
+end;
+
+global
+function boolean WorkedHoursRClassOnOKWindow(integer wn)
 begin
   boolean res;
   record RcVc RepSpec;
@@ -383,10 +562,124 @@ begin
   if (RepSpec.flags[2]>12) or (RepSpec.flags[2]<1) then begin 
     MessageBox(1500415,"");
     WindowFieldGoto(wn,RepSpec,-1,"flags[2]",true);
-    res = -1;
+    res = false;
     goto L12;
   end;
 L12:;
   WorkedHoursRClassOnOKWindow = res;
   return;
 end;
+
+global
+function boolean CreateVacReservMonthVClassOnOKWindow(integer wn)
+begin
+  record RcVc RepSpec;
+  boolean res;
+
+  res = true;
+  GetWindowRecord(wn,RepSpec);
+  if blank(RepSpec.d1) then begin 
+    MessageBox(1500342,"");
+    WindowFieldGoto(wn,RepSpec,-1,"d1",true);
+    res = false;
+    goto LCreateVacReservMonthVClassOnOKWindow;
+  end;
+  if blank(RepSpec.d2) then begin 
+    MessageBox(1500342,"");
+    WindowFieldGoto(wn,RepSpec,-1,"d2",true);
+    res = false;
+    goto LCreateVacReservMonthVClassOnOKWindow;
+  end;
+LCreateVacReservMonthVClassOnOKWindow:;
+  CreateVacReservMonthVClassOnOKWindow = res;
+  return;
+end;
+
+global
+function boolean CreateVacReservYearVClassOnOKWindow(integer wn)
+begin
+  record RcVc RepSpec;
+  boolean res;
+
+  res = true;
+  GetWindowRecord(wn,RepSpec);
+  if blank(RepSpec.d1) then begin 
+    MessageBox(1500342,"");
+    WindowFieldGoto(wn,RepSpec,-1,"d1",true);
+    res = false;
+    goto LCreateVacReservYearVClassOnOKWindow;
+  end;
+  if blank(RepSpec.d2) then begin 
+    MessageBox(1500342,"");
+    WindowFieldGoto(wn,RepSpec,-1,"d2",true);
+    res = false;
+    goto LCreateVacReservYearVClassOnOKWindow;
+  end;
+  if (RepSpec.flags[0]==0) and (RepSpec.flags[1]==0) then begin //vŠhemalt Ÿks valik
+    MessageBox(1500584,"");
+    WindowFieldGoto(wn,RepSpec,-1,"",true);
+    res = false;
+    goto LCreateVacReservYearVClassOnOKWindow;
+  end;
+LCreateVacReservYearVClassOnOKWindow:;
+  CreateVacReservYearVClassOnOKWindow = res;
+  return;
+end;
+
+global
+function boolean CreateVacReservMonthVClassAfterEditField(integer wn,string fieldname,integer fn,integer rownr,integer changed)
+begin
+  boolean res;
+  record RcVc RepSpec;
+
+  switch (fieldname) begin
+    case "d1":
+      GetWindowRecord(wn,RepSpec);
+      RepSpec.d2 = RepSpec.d1;
+      PutWindowRecord(wn,RepSpec);
+  end;
+  CreateVacReservMonthVClassAfterEditField = res;
+  return;
+end;
+
+global
+function boolean CreateVacReservYearVClassAfterEditField(integer wn,string fieldname,integer fn,integer rownr,integer changed)
+begin
+  boolean res;
+  record RcVc RepSpec;
+  
+  switch (fieldname) begin
+    case "d1":
+      GetWindowRecord(wn,RepSpec);
+      RepSpec.d2 = RepSpec.d1;
+      PutWindowRecord(wn,RepSpec);
+  end;
+  CreateVacReservYearVClassAfterEditField = res;
+  return;
+end;
+
+global
+function boolean CPForecastRClassOnOKWindow(integer wn)
+begin
+  boolean res;
+  record RcVc RepSpec;
+  
+  res = true;
+  GetWindowRecord(wn,RepSpec);
+  if ((blankdate(RepSpec.sStartDate)) or (blankdate(RepSpec.sEndDate)) or (RepSpec.sStartDate>=RepSpec.sEndDate)) then begin
+    MessageBox(17258,"");
+    WindowFieldGoto(wn,RepSpec,-1,"period",true);
+    res = false;
+    goto L1;
+  end;
+  if blankdate(RepSpec.d1) then begin 
+    MessageBox(1500377,"");
+    WindowFieldGoto(wn,RepSpec,-1,"d1",true);
+    res = false;
+    goto L1;
+  end;
+L1:;
+  CPForecastRClassOnOKWindow = res;
+  return;
+end;
+

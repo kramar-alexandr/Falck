@@ -1,0 +1,12 @@
+//Bk //tsekk.ee
+global
+procedure SimpleDebugMsg(string sourceName, string message)
+begin
+  record EInvoiceBlock EIb;
+  
+  BlockLoad(EIb);
+  if(EIb.DebugFlag == 1) then begin
+    LogText(0,sourceName & " *DEBUG* " & ": " & message & " comp=" & CurrentCompany & " ServerMode=" & ServerMode);
+  end; 
+  return;
+end;

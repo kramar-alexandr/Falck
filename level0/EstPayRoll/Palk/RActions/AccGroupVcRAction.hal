@@ -46,8 +46,8 @@ begin
   integer rwcnt,i;
   string 255 tstr;
   
-  insertmode=1;
-  updatemode=2;
+  insertmode = 1;
+  updatemode = 2;
   res = 0;
   if (blank(AGr.Code)) then begin
     if (stat==updatemode) and nonblank(AG2r.Code) then begin
@@ -70,7 +70,7 @@ begin
     goto LAccGroupVcRecordCheck;
   end;
 
-  rwcnt=MatRowCnt(AGr);
+  rwcnt = MatRowCnt(AGr);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(AGr,i,AGrw);
     if blank(AGrw.TaxCode) then begin
@@ -91,7 +91,7 @@ begin
         res = -1; 
         goto LAccGroupVcRecordCheck;
       end;
-      Taxr.Code=AGrw.TaxCode;
+      Taxr.Code = AGrw.TaxCode;
       if (ReadFirstMain(Taxr,1,true)==false) then begin
         RecordCheckError(1500303," " & AGrw.TaxCode,i,"TaxCode");      
         res = -1; 

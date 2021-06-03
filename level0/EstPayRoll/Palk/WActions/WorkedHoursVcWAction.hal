@@ -20,7 +20,6 @@ begin
   if (WHr.OKFlag!=0) then begin
     res = false;
   end;
-
   WorkedHoursDClassDeleteRowTest = res;
   return;
 end;
@@ -135,22 +134,21 @@ begin
     DeselectWindow(wn,false);
     if (WHr.Month>0) then begin
       if (len(WHr.Month)>2) then begin 
-        WHr.Month=GetMonth(CurrentDate);
+        WHr.Month = GetMonth(CurrentDate);
       end else begin
         switch (len(WHr.Month)) begin
           case 1: 
             tmp="0" & WHr.Month;
-            WHr.Month=StringToInt(tmp);
+            WHr.Month = StringToInt(tmp);
           case 2:
             if (WHr.Month>12) then begin
-              WHr.Month=GetMonth(CurrentDate);
+              WHr.Month = GetMonth(CurrentDate);
             end;
         end;
       end;
     end;
     PutWindowRecord(wn,WHr);
   end;
-
   WorkedHoursDClassMonthEFAfter = true;
   return;
 end;
@@ -187,7 +185,7 @@ begin
     pos = rownr;
     Contrr.SerNr = WHrw.ContrSerNr;
     if (ReadFirstMain(Contrr,1,true)) then begin
-      rwcnt=MatRowCnt(Contrr);
+      rwcnt = MatRowCnt(Contrr);
       for (i=0;i<rwcnt;i=i+1) begin
         MatRowGet(Contrr,i,Contrrw);
         contrSDate = Contrrw.SDate;
@@ -196,8 +194,8 @@ begin
         end else begin
           whdate.day = 01;
         end;
-        whdate.month=WHr.Month;
-        whdate.year=WHr.Year;
+        whdate.month = WHr.Month;
+        whdate.year = WHr.Year;
         if (IsWHPaymType(Contrrw.PaymTypeCode)) then begin
           if (DateInRange(whdate,Contrrw.SDate,Contrrw.EDate)) then begin
             ClearRow(WHr,WHrw,1);
@@ -229,12 +227,12 @@ begin
   if (changedf!=0) then begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
-    whdate.month=WHr.Month;
-    whdate.year=WHr.Year;
+    whdate.month = WHr.Month;
+    whdate.year = WHr.Year;
     MatRowGet(WHr,rownr,WHrw);
     WHTr.Code = WHrw.WorkHourTypeCode;
     if (ReadFirstMain(WHTr,1,true)) then begin
-      whdate.day=GetDay(WHTr.StartDate);
+      whdate.day = GetDay(WHTr.StartDate);
       if blank(WHTr.EndDate) then begin
         if (whdate>=WHTr.StartDate) then begin
           WHrw.Coefficient = WHTr.Coefficient;
@@ -263,14 +261,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d1;
+    tmp = StringToVal(WHrw.d1,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d1=0;
+      WHrw.d1 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -289,14 +287,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d2;
+    tmp = StringToVal(WHrw.d2,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d2=0;
+      WHrw.d2 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -315,14 +313,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d3;
+    tmp = StringToVal(WHrw.d3,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d3=0;
+      WHrw.d3 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -341,14 +339,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d4;
+    tmp = StringToVal(WHrw.d4,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d4=0;
+      WHrw.d4 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -367,14 +365,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d5;
+    tmp = StringToVal(WHrw.d5,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d5=0;
+      WHrw.d5 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -393,14 +391,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d6;
+    tmp = StringToVal(WHrw.d6,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d6=0;
+      WHrw.d6 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -419,14 +417,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d7;
+    tmp = StringToVal(WHrw.d7,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d7=0;
+      WHrw.d7 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -445,14 +443,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d8;
+    tmp = StringToVal(WHrw.d8,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d8=0;
+      WHrw.d8 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -471,14 +469,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d9;
+    tmp = StringToVal(WHrw.d9,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d9=0;
+      WHrw.d9 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -497,14 +495,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d10;
+    tmp = StringToVal(WHrw.d10,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d10=0;
+      WHrw.d10 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -523,14 +521,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d11;
+    tmp = StringToVal(WHrw.d11,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d11=0;
+      WHrw.d11 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -549,14 +547,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d12;
+    tmp = StringToVal(WHrw.d12,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d12=0;
+      WHrw.d12 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -575,14 +573,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d13;
+    tmp = StringToVal(WHrw.d13,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d13=0;
+      WHrw.d13 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -601,14 +599,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d14;
+    tmp = StringToVal(WHrw.d14,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d14=0;
+      WHrw.d14 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -627,14 +625,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d15;
+    tmp = StringToVal(WHrw.d15,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d15=0;
+      WHrw.d15 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -653,14 +651,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d16;
+    tmp = StringToVal(WHrw.d16,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d16=0;
+      WHrw.d16 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -679,14 +677,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d17;
+    tmp = StringToVal(WHrw.d17,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d17=0;
+      WHrw.d17 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -705,14 +703,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d18;
+    tmp = StringToVal(WHrw.d18,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d18=0;
+      WHrw.d18 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -731,14 +729,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d19;
+    tmp = StringToVal(WHrw.d19,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d19=0;
+      WHrw.d19 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -757,14 +755,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d20;
+    tmp = StringToVal(WHrw.d20,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d20=0;
+      WHrw.d20 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -783,14 +781,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d21;
+    tmp = StringToVal(WHrw.d21,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d21=0;
+      WHrw.d21 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -809,14 +807,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d22;
+    tmp = StringToVal(WHrw.d22,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d22=0;
+      WHrw.d22 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -835,14 +833,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d23;
+    tmp = StringToVal(WHrw.d23,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d23=0;
+      WHrw.d23 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -861,14 +859,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d24;
+    tmp = StringToVal(WHrw.d24,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d24=0;
+      WHrw.d24 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -887,14 +885,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d25;
+    tmp = StringToVal(WHrw.d25,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d25=0;
+      WHrw.d25 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -913,14 +911,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d26;
+    tmp = StringToVal(WHrw.d26,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d26=0;
+      WHrw.d26 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -939,14 +937,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d27;
+    tmp = StringToVal(WHrw.d27,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d27=0;
+      WHrw.d27 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -965,14 +963,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d28;
+    tmp = StringToVal(WHrw.d28,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d28=0;
+      WHrw.d28 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -991,14 +989,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d29;
+    tmp = StringToVal(WHrw.d29,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d29=0;
+      WHrw.d29 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -1017,14 +1015,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d30;
+    tmp = StringToVal(WHrw.d30,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d30=0;
+      WHrw.d30 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -1043,14 +1041,14 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    tmp=WHrw.d31;
+    tmp = StringToVal(WHrw.d31,M4Val);
     if ((tmp<0) or (tmp>24)) then begin
-      WHrw.d31=0;
+      WHrw.d31 = "0";
       MatRowPut(WHr,rownr,WHrw);
     end;
     GetDaysAndHoursTotal(WHr,rownr,htot,dtot);
-    WHrw.DaysTotal=dtot;
-    WHrw.HoursTotal=htot;
+    WHrw.DaysTotal = dtot;
+    WHrw.HoursTotal = htot;
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;
@@ -1069,37 +1067,37 @@ begin
     GetWindowRecord(wn,WHr);
     DeselectWindow(wn,false);
     MatRowGet(WHr,rownr,WHrw);
-    WHrw.d1=blankval;
-    WHrw.d2=blankval;
-    WHrw.d3=blankval;
-    WHrw.d4=blankval;
-    WHrw.d5=blankval;
-    WHrw.d6=blankval;
-    WHrw.d7=blankval;
-    WHrw.d8=blankval;
-    WHrw.d9=blankval;
-    WHrw.d10=blankval;
-    WHrw.d11=blankval;
-    WHrw.d12=blankval;
-    WHrw.d13=blankval;
-    WHrw.d14=blankval;
-    WHrw.d15=blankval;
-    WHrw.d16=blankval;
-    WHrw.d17=blankval;
-    WHrw.d18=blankval;
-    WHrw.d19=blankval;
-    WHrw.d20=blankval;
-    WHrw.d21=blankval;
-    WHrw.d22=blankval;
-    WHrw.d23=blankval;
-    WHrw.d24=blankval;
-    WHrw.d25=blankval;
-    WHrw.d26=blankval;
-    WHrw.d27=blankval;
-    WHrw.d28=blankval;
-    WHrw.d29=blankval;
-    WHrw.d30=blankval;
-    WHrw.d31=blankval;
+    WHrw.d1 = "";
+    WHrw.d2 = "";
+    WHrw.d3 = "";
+    WHrw.d4 = "";
+    WHrw.d5 = "";
+    WHrw.d6 = "";
+    WHrw.d7 = "";
+    WHrw.d8 = "";
+    WHrw.d9 = "";
+    WHrw.d10 = "";
+    WHrw.d11 = "";
+    WHrw.d12 = "";
+    WHrw.d13 = "";
+    WHrw.d14 = "";
+    WHrw.d15 = "";
+    WHrw.d16 = "";
+    WHrw.d17 = "";
+    WHrw.d18 = "";
+    WHrw.d19 = "";
+    WHrw.d20 = "";
+    WHrw.d21 = "";
+    WHrw.d22 = "";
+    WHrw.d23 = "";
+    WHrw.d24 = "";
+    WHrw.d25 = "";
+    WHrw.d26 = "";
+    WHrw.d27 = "";
+    WHrw.d28 = "";
+    WHrw.d29 = "";
+    WHrw.d30 = "";
+    WHrw.d31 = "";
     MatRowPut(WHr,rownr,WHrw);
     PutWindowRecord(wn,WHr);
   end;

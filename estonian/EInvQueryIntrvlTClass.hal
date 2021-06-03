@@ -1,0 +1,49 @@
+//Bk, lots of changes
+window EInvQueryIntrvlTClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h1,h2,l,v,vm,vs;
+  WindowBegin("E-teenuste ajastamine",EInvQueryIntrvlTClass,CGSbl,EServSYSCtrlType);
+  SetBlid(EInvQueryIntrvlBlock);
+  SetWRect(20,80,480,330);
+  vs = 20; h = 240; h1 = 20; h2 = 315; l = 70;
+  ButtonFrame(h1,v=26,413,1,"E-arvete saatmine");
+  EditField(h,v,l,"Päringu ajaintevall sekundites",Normal,EInvReq,true,0);
+  StaticText(h2,v+14,"(60 sek - 4 h)",false);
+  ButtonFrame(h1,v+=49,413,1,"E-arvete staatuse päring");
+  EditField(h,v,l,"Päringu ajaintevall sekundites",Normal,EInvStatReq,true,0);
+  StaticText(h2,v+14,"(60 sek - 4 h)",false);
+ //Bk - start
+  ButtonFrame(h1,v+=49,413,1,"E-arvete vastuvõtmine");
+  EditField(h,v,l,"Päringu ajaintevall sekundites",Normal,GetInvReq,true,0);
+  StaticText(h2,v+14,"(60 sek - 4 h)",false);
+  EditField(h,v+=vs,l,"Päringu (pdf) ajaintevall sekundites",Normal,GetInvPdfReq,true,0);
+  StaticText(h2,v+14,"(60 sek - 4 h)",false);
+  EndFrame;
+  //Bk - end
+  ButtonFrame(h1,v+=49,413,2,"Tarnija e-arvete vastuvõtmine"); //Bk
+  EditField(h,v,l,"Päringu ajaintevall sekundites",Normal,SupInvReq,true,0);
+  StaticText(h2,v+14,"(60 sek - 4 h)",false);
+  EditField(h,v+=vs,l,"Päringu (pdf) ajaintevall sekundites",Normal,SupInvPdfReq,true,0);
+  StaticText(h2,v+14,"(60 sek - 4 h)",false);
+  EndFrame;
+ //Bk - start
+  ButtonFrame(h1,v+=49,413,1,"Valuutakursside päring");
+  EditField(h,v,l,"Päringu ajaintevall sekundites",Normal,GetCurRateReq,true,0);
+  StaticText(h2,v+14,"(60 sek - 4 h)",false);
+  EndFrame;
+  ButtonFrame(h1,v+=49,413,1,"Üldine");
+  EditField(h,v,l,"Vaheserveri päringu intervall sekundites",Normal,StatusCheckReq,true,0);
+  StaticText(h2,v+14,"(60 s - 4 h)",false);
+  EndFrame;
+ //Bk - start KB 08.03.2019 //pangaliidestus
+  ButtonFrame(h1,v+=49,413,1,"Panga liidestus");
+  EditField(h,v,l,"Panga järjekorra intervall sekundites",Normal,BankQueueSend,true,0);
+  StaticText(h2,v+14,"(10 min - 4 h)",false);
+  EditField(h,v+=vs,l,"Panga väljavõte intervall sekundites",Normal,BankStmtRequest,true,0);
+  StaticText(h2,v+14,"(10 min - 4 h)",false);
+  EndFrame;
+ //Bk - end
+  EndWindow;
+end;
+

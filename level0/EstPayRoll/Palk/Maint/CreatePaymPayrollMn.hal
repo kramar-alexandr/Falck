@@ -2,6 +2,30 @@ external procedure PastePPrwsFromCPr(record PaymPayrollVc,var row PaymPayrollVc,
 external procedure PPrSumUp(var record PaymPayrollVc);
 external function boolean GetNextPaymPayrollSerNr(date,var LongInt);
 external function boolean OneEmplOnPaymPayroll(record PaymPayrollVc,var string);
+external procedure GetPMBankAccName(string,var string,var string,var string);
+
+function boolean EmplCheck(LongInt contrsernr,string frempl,string toempl,var string emplbankcode,boolean bankcodeflag)
+begin
+  record ContractVc Contrr;
+  record EmplVc Emplr;
+  boolean res;
+
+  res = true;
+  Contrr.SerNr = contrsernr;
+  if (ReadFirstMain(Contrr,1,true)) then begin
+    if ((Contrr.EmplCode<frempl) or (Contrr.EmplCode>toempl)) then begin
+      res = false;
+    end;
+    if (bankcodeflag) then begin
+      Emplr.Code = Contrr.EmplCode;
+      if (ReadFirstMain(Emplr,1,true)) then begin
+        emplbankcode = Emplr.BankCode; 
+      end;
+    end;
+  end;
+  EmplCheck = res;
+  return;
+end;
 
 global
 updating procedure CreatePaymPayrollMn(record RcVc RepSpec)
@@ -9,18 +33,21 @@ begin
   record CalcPayrollVc CPr;
   record PaymPayrollVc PPr;
   row PaymPayrollVc PPrw;
-  record ContractVc Contrr;
-  string 20 frempl,toempl;
+  string 20 frempl,toempl,bankacc,bankname,emplbankcode,bankcode;
   LongInt frcontr,tocontr;
-  boolean TrHs,testf,newrecord,grouppaym;
+  boolean TrHs,testf,newrecord,grouppaymflag,bankcodeflag,emplcheckflag;
   integer pprwnr;
   string 120 name;
-  
+
+  grouppaymflag = false;
+  bankcodeflag = false;
+  emplcheckflag = false;
   if (RepSpec.flags[0]!=0) then begin 
-    grouppaym = true;
-  end else begin
-    grouppaym = false;
+    grouppaymflag = true;
   end;  
+  if (RepSpec.flags[1]!=0) then begin
+    bankcodeflag = true;
+  end;
 
   frempl = FirstInRange(RepSpec.f1,20);
   toempl = LastInRange(RepSpec.f1,20);
@@ -40,12 +67,16 @@ begin
     end;
     if (TrHs) then begin
       testf = true;
+      if ((nonblank(frempl)) or (bankcodeflag)) then begin
+        emplcheckflag = EmplCheck(CPr.ContrSerNr,frempl,toempl,emplbankcode,bankcodeflag);
+      end;
       if (nonblank(frempl)) then begin
-        Contrr.SerNr = CPr.ContrSerNr;
-        if (ReadFirstMain(Contrr,1,true)) then begin
-          if (Contrr.EmplCode<frempl) or (Contrr.EmplCode>toempl) then begin
-            testf = false;
-          end;
+        testf = emplcheckflag;
+      end;
+      if (bankcodeflag) then begin
+        GetPMBankAccName(RepSpec.f3,bankacc,bankname,bankcode);
+        if (emplbankcode!=bankcode) then begin
+          testf = false;
         end;
       end;
       if ((frcontr>0)) then begin
@@ -60,10 +91,10 @@ begin
         testf = false;
       end;
       if (CPr.Invalid!=0) then begin
-        testf=false;
+        testf = false;
       end;
       if (testf) then begin
-        if (grouppaym==false) then begin
+        if (grouppaymflag==false) then begin
           newrecord = true;        
         end else begin
           if (MatRowCnt(CPr)>(99-pprwnr)) then begin
@@ -72,17 +103,17 @@ begin
           end;
         end;
         if (newrecord) then begin
-          pprwnr=0;
+          pprwnr = 0;
           RecordNew(PPr);
-          PPr.SerNr=-1;
+          PPr.SerNr = -1;
           if blankdate(RepSpec.d1) then begin
-            PPr.PaymDate=CurrentDate;
+            PPr.PaymDate = CurrentDate;
           end else begin
-            PPr.PaymDate=RepSpec.d1;
+            PPr.PaymDate = RepSpec.d1;
           end;          
-          PPr.PMCode=RepSpec.f3;
+          PPr.PMCode = RepSpec.f3;
           if (GetNextPaymPayrollSerNr(PPr.PaymDate,PPr.SerNr)) then begin end;
-          if (grouppaym) then begin
+          if (grouppaymflag) then begin
             newrecord = false;
          /* //ts 2018/09, Ÿhel vŠljamaksel v›ib olla mitu arvestust
           end else begin
@@ -97,7 +128,7 @@ begin
         end else begin
           PPr.Name = "";
         end;
-        if (grouppaym) then begin
+        if (grouppaymflag) then begin
           if (pprwnr==99) then begin
             if (RecordInsert(PPr,true)) then begin end; 
             newrecord = true;
@@ -110,7 +141,7 @@ begin
       end;
     end;
   end;
-  if (grouppaym) then begin
+  if (grouppaymflag) then begin
     if (pprwnr>0) and (pprwnr<99) then begin
       if (RecordInsert(PPr,true)) then begin end; 
     end;

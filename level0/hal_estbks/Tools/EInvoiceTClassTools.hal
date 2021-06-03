@@ -1,0 +1,372 @@
+//pangaliidestus KB 08.03.2019
+//scoro liidestus KB 25.06.2019
+external function Boolean CheckInternetEnabler();
+external updating procedure ServiceSelectWClassSendMulti(string,string);
+external updating procedure CloseServiceSelectWClassMulti(string,string);//ts - 2018/04, added parameter for partner, due to new index in click server
+external function string 255 AddStr(string,string,string);
+external procedure GetUserEmail(string,var string);
+external procedure OpenSmailyActWindow();
+/* disabled, only in BK 
+external updating procedure SendTelemaActivRequest();
+external updating procedure SendTelemaCloseRequest();
+*/
+external procedure OpenBankActivWindow();
+external updating procedure SendBankSendCloseRequest();
+/* disabled, only in BK 
+external updating procedure SendScoroActivRequest();
+external updating procedure SendScoroCloseRequest();
+*/
+
+//ts - 2018/04, corrections in e-invoice services close or change
+//in case it was activated Omvina sending E-Invoice, changed to Fitek sending E-Invoice, receiving Supplier Invoices
+//changes to close proper Service Usage Status on Click server
+global
+updating procedure SendActivationRequestsEInv()
+begin
+  integer wn,mwn;
+  record RcVc RepSpec;
+  string 255 tstr,closelist,partner;
+  
+  wn = CurWindow;
+  mwn = MotherWindow(wn);
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  if (RepSpec.flags[1] <> 0) then begin
+    switch (RepSpec.flags[0]) begin
+      case 0: tstr = AddStr(tstr,"EARVEKESKUS",",");
+      case 1: tstr = AddStr(tstr,"FITEK",",");
+      case 2: tstr = AddStr(tstr,"ENVOICE",",");
+      case 3: ; //tstr = AddStr(tstr,"TELEMAEARVE",","); //KB 31.07.2018 - disabled until Telema supports sending
+    end;
+    if (RepSpec.flags[10]!=RepSpec.flags[0]) then begin
+      if (nonblank(RepSpec.f2)) then begin
+        closelist = AddStr(closelist,"0",",");
+        partner = AddStr(partner,RepSpec.f2,",");
+      end;
+    end;
+  end else begin
+    if (nonblank(RepSpec.f2)) then begin
+      closelist = AddStr(closelist,"0",",");
+      partner = AddStr(partner,RepSpec.f2,",");
+    end;
+  end;
+  if (RepSpec.flags[2] <> 0) then begin
+    switch (RepSpec.flags[0]) begin
+      case 0: tstr = AddStr(tstr,"EARVEKESKUS2",",");
+      case 1: tstr = AddStr(tstr,"FITEK2",",");
+      case 2: tstr = AddStr(tstr,"ENVOICE2",",");
+      case 3: tstr = AddStr(tstr,"TELEMAEARVE2",",");
+    end;
+    if (RepSpec.flags[10]!=RepSpec.flags[0]) then begin
+      if (nonblank(RepSpec.f3)) then begin
+        closelist = AddStr(closelist,"1",",");
+        partner = AddStr(partner,RepSpec.f3,",");
+      end;
+    end;
+  end else begin
+    if (nonblank(RepSpec.f3)) then begin
+      closelist = AddStr(closelist,"1",",");
+      partner = AddStr(partner,RepSpec.f3,",");
+    end;
+  end;
+  if (RepSpec.flags[3] <> 0) then begin
+    switch (RepSpec.flags[0]) begin
+      case 0: tstr = AddStr(tstr,"EARVEKESKUS3",",");
+      case 2: tstr = AddStr(tstr,"ENVOICE3",",");
+    end;
+    if (RepSpec.flags[10]!=RepSpec.flags[0]) then begin
+      if (nonblank(RepSpec.f4)) then begin
+        closelist = AddStr(closelist,"12",",");
+        partner = AddStr(partner,RepSpec.f4,",");
+      end;
+    end;
+  end else begin
+    if (nonblank(RepSpec.f4)) then begin
+      closelist = AddStr(closelist,"12",",");
+      partner = AddStr(partner,RepSpec.f4,",");
+    end;
+  end;
+//Bk - start: ts - 2018/07
+  if (RepSpec.flags[4] <> 0) then begin
+    switch (RepSpec.flags[0]) begin
+      case 0: tstr = AddStr(tstr,"EARVEKESKUS4",",");
+    end;
+    if (RepSpec.flags[10]!=RepSpec.flags[0]) then begin
+      if (nonblank(RepSpec.f5)) then begin
+        closelist = AddStr(closelist,"14",",");
+        partner = AddStr(partner,RepSpec.f5,",");
+      end;
+    end;
+  end else begin
+    if (nonblank(RepSpec.f5)) then begin
+      closelist = AddStr(closelist,"14",",");
+      partner = AddStr(partner,RepSpec.f5,",");
+    end;
+  end;
+//Bk - end
+  ServiceSelectWClassSendMulti(tstr,RepSpec.f1);
+  CloseServiceSelectWClassMulti(closelist,partner);//ts - 2018/04, added parameter for partner, due to new index in click server
+  MessageBox(1500000,"");
+  CloseWindow(wn);
+  CloseWindow(mwn);
+  return;
+end;
+
+global
+updating procedure SendActivationRequestEInvOther(string service)
+begin
+  integer wn;
+  
+  wn = CurWindow;
+  ServiceSelectWClassSendMulti(service,"");
+  MessageBox(1500000,"");
+  CloseWindow(wn);
+  return;
+end;
+
+global
+updating procedure SendActivationRequestEInv4()
+begin
+  integer wn;
+  
+  wn = CurWindow;
+  SendActivationRequestEInvOther("ESTCCLOOKUP");
+  MessageBox(1500000,"");
+  CloseWindow(wn);
+  return;
+end;
+
+global
+updating procedure StopServiceRequestEInv4()
+begin
+  integer wn;
+  
+  wn = CurWindow;
+  CloseServiceSelectWClassMulti("4","");//ts - 2018/04, added parameter for partner, due to new index in click server
+  MessageBox(1500000,"");
+  CloseWindow(wn);
+  return;
+end;
+
+global
+updating procedure SendActivationRequestEInv5()
+begin
+  SendActivationRequestEInvOther("ESTADRLOOKUP");
+  return;
+end;
+
+global
+updating procedure StopServiceRequestEInv5()
+begin
+  integer wn;
+  
+  wn = CurWindow;
+  CloseServiceSelectWClassMulti("5","");//ts - 2018/04, added parameter for partner, due to new index in click server
+  MessageBox(1500000,"");
+  CloseWindow(wn);
+  return;
+end;
+
+global
+updating procedure SendActivationRequestEInv6()
+begin
+  SendActivationRequestEInvOther("ESTCURRATELOOKUP");
+  return;
+end;
+
+global
+updating procedure StopServiceRequestEInv6()
+begin
+  integer wn;
+  
+  wn = CurWindow;
+  CloseServiceSelectWClassMulti("6","");//ts - 2018/04, added parameter for partner, due to new index in click server
+  MessageBox(1500000,"");
+  CloseWindow(wn);
+  return;
+end;
+
+/* disabled, only in BK 
+global
+updating procedure ActivateServiceRequest15() //Telema API
+begin
+  SendTelemaActivRequest;
+  return;
+end;
+*/
+/* disabled, only in BK 
+global
+updating procedure StopServiceRequest15() //Telema API
+begin
+  SendTelemaCloseRequest;
+  return;
+end;
+*/
+
+global
+updating procedure ActivateServiceRequest20() //pangaliidestus
+begin
+  OpenBankActivWindow;
+  return;
+end;
+
+global
+updating procedure StopServiceRequest20() //pangaliidestus
+begin
+  SendBankSendCloseRequest;
+  return;
+end;
+
+/* disabled, only in BK 
+global
+updating procedure ActivateServiceRequest30() //scoro liidestus
+begin
+  SendScoroActivRequest;
+  return;
+end;
+*/
+
+/* disabled, only in BK 
+global
+updating procedure StopServiceRequest30() //scoro liidestus
+begin
+  SendScoroCloseRequest;
+  return;
+end;
+*/
+
+global
+updating procedure SendActivationRequestEInv40() //smaily
+begin
+  OpenSmailyActWindow;
+  return;
+end;
+
+global
+updating procedure StopServiceRequestEInv40()
+begin
+  integer wn;
+  
+  wn = CurWindow;
+  CloseServiceSelectWClassMulti("40","");
+  MessageBox(1500000,"");
+  CloseWindow(wn);
+  return;
+end;
+
+global
+procedure OpenRegWindowEInv()
+begin
+  record RcVc RepSpec;
+  integer wn;
+  record EInvoiceBlock EIb;
+  string 100 tstr;
+
+  wn = CurWindow;
+  BlockLoad(EIb);
+  if (EIb.TestFlag==0) then begin
+    if (CheckInternetEnabler==false) then begin
+      MessageBox(1500007,"");
+      CloseWindow(wn);
+      goto LOpenTermsWindowEInv;
+    end;
+  end;
+  GetUserEmail(CurrentUser,tstr);
+  RepSpec.f1 = tstr;
+  RepSpec.flags[1] = EIb.OutEstEInvoices;
+  RepSpec.flags[2] = EIb.InEstEInvoices;
+  RepSpec.flags[3] = EIb.InIVEstEInvoices;
+  RepSpec.flags[4] = EIb.InEstExp;
+//ts - 2018/04, operator should be selected by default according to previously activated operator
+  RepSpec.f2 = EIb.EInvoicePartner;
+  RepSpec.f3 = EIb.SuppInvoicePartner;
+  RepSpec.f4 = EIb.EInInvoicePartner;
+  RepSpec.f5 = EIb.EExpPartner;
+  if (RepSpec.flags[1]==1) then begin
+    tstr = RepSpec.f2;
+  end;
+  if (RepSpec.flags[2]==1) then begin
+    tstr = RepSpec.f3;
+  end;
+  if (RepSpec.flags[3]==1) then begin
+    tstr = RepSpec.f4;
+  end;
+  if (RepSpec.flags[4]==1) then begin
+    tstr = RepSpec.f5;
+  end;
+  RepSpec.flags[0] = 0;
+  if (Left(tstr,7)=="ENVOICE") then begin
+    RepSpec.flags[0] = 2;
+  end;  
+  if (Left(tstr,5)=="FITEK") then begin
+    RepSpec.flags[0] = 1;
+  end;  
+  if (Left(tstr,6)=="TELEMA") then begin
+    RepSpec.flags[0] = 3;
+  end;
+  RepSpec.flags[10] = RepSpec.flags[0];//ts - 2018/04, in order to control if operator has changed
+  OpenWindow("EInvRegisterWClass",0,wn,"","",RepSpec);
+LOpenTermsWindowEInv:;
+  return;
+end;
+
+global
+procedure CloseActiveWindowEInv()
+begin
+  integer wn;
+
+  wn = CurWindow;
+  CloseWindow(wn); 
+  return;
+end;
+
+global
+function boolean EServiceActivated(string serviceName)
+begin
+  boolean res;
+  record EInvoiceBlock EIb;
+  
+  res = false;
+  if (nonblank(serviceName)) then begin
+    BlockLoad(EIb);
+    switch(serviceName) begin
+      case "SENDESTADRLOOKUP":
+        if (EIb.Service5Flag!=0) then begin res = true; end;
+      case "SENDESTCCLOOKUP":
+        if (EIb.Service4Flag!=0) then begin res = true; end;
+      case "SENDESTEINVOICE":
+        if (EIb.OutEstEInvoices!=0) then begin res = true; end;
+      case "RECEIVEESTEINVOICE":
+        if (EIb.InEstEInvoices!=0) then begin res = true; end;
+      case "RECEIVEESTEINVOICEPDF":
+        if (EIb.InEstEInvoices!=0) and (EIb.StopInEstEInvPdf!=1) then begin res = true; end;
+      case "GETESTEINVOICE":
+        if (EIb.InIVEstEInvoices!=0) then begin res = true; end;
+      case "GETESTEINVOICEPDF":
+        if (EIb.InIVEstEInvoices!=0) and (EIb.StopInIVEstEInvPdf!=1) then begin res = true; end;
+      case "GETESTEXP":
+        if (EIb.InEstExp!=0) then begin res = true; end;
+    end;
+  end;
+  EServiceActivated = res;
+  return;
+end;
+
+//Bk - start: ts 2019/10
+global
+function boolean EServiceStopped(string serviceName)
+begin
+  Boolean res;
+  record EInvoiceBlock EIb;
+  
+  res = false;
+  if (EServiceActivated(serviceName)) then begin
+    BlockLoad(EIb);
+    if (EIb.TestFlag==0) and (CheckInternetEnabler==false) then begin
+      res = true;
+    end;
+  end;
+  EServiceStopped = res;
+  return;
+end;
+//Bk - end

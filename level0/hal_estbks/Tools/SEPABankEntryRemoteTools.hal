@@ -1,0 +1,874 @@
+//from bk build 85321107 + a lot of cust
+//sepa import
+//inners
+external function LongInt TRVcRecordCheck(record TRVc,record TRVc,LongInt,LongInt);
+external function LongInt TRVcRecordRemoveTest(var record TRVc,record TRVc,LongInt,LongInt);
+remote function Boolean TRVc_PasteAccNumber(var record TRVc,Integer,Integer,Boolean);
+remote function Boolean TRVc_PasteObjects(var record TRVc,Integer);
+external procedure GetFullCurncyRate (var string,Date,var val,var val,var val,var val,var val);
+external procedure TRUpdateDebRows(var row TRVc,Date);
+external function Integer Norm2Cont(string,val,val);
+external procedure TRSumup(var record TRVc,var val);
+external procedure TRUpdateCredRows(var row TRVc,Date);
+external function Integer StrToYc(string);
+external procedure YcToStr(Integer,var string);
+external updating procedure AddSEPABankEntryToOPVc(record SEPABankEntryVc,record SEPABankFileBlock,var record OPVc,var boolean,boolean,string,boolean,var boolean);
+external updating procedure AddSEPABankEntryToIPVc(record SEPABankEntryVc,record SEPABankFileBlock,var record IPVc,var boolean,boolean,string,boolean,var boolean);
+external function string 5 FindPMbyIBANCode(string);
+external procedure IPSumup(var record IPVc);
+external procedure OPSumup(var record OPVc,Boolean);
+external updating procedure SEPACreateTR(record TRVc);
+external function boolean TRIdentSameRowExist(record TRIdentBlock,row TRIdentBlock,integer,var integer);
+//cust - start KB 13.12.2019
+external procedure NoDupObjs(string,var string);
+external function string 255 StrReplace(string,string,string);
+external procedure ExtractObjWithSeparator(string,string,Boolean,var Integer,var string);
+external function string 60 AddObjectToObjectList(string,string);
+forward procedure TRVc_PasteDebVal(var record TRVc,Integer);
+forward procedure TRVc_PasteCredVal(var record TRVc,Integer);
+external procedure TRUpdateDebRows2(var row TRVc,Date);
+external procedure TRUpdateCredRows2(var row TRVc,Date);
+external function Integer CheckObjs(string,string,var string);
+//cust - end
+//new dev
+external function boolean GetSEPAEntryIdentRow(record SEPABankEntryVc,boolean,var row TRIdentBlock,var integer);
+external procedure TRIdentPasteBankTransDesc(var row TRIdentBlock);
+
+//cust - start KB 13.12.2019
+global
+function boolean CanManualMakeTRFromBankEntry(record RcVc RepSpec, var string errMsg)
+begin
+  boolean res;
+  integer err;
+  string 255 errstr;
+  
+  res = true;
+  if (blank(RepSpec.f1) OR blank(RepSpec.f2)) then begin
+    res = false;
+    errMsg = USetStr(1005);
+    goto LCanManualMakeTRFromBankEntry;
+  end;
+  err = CheckObjs(RepSpec.f1,RepSpec.f3,errstr);
+  if (err!=0) then begin
+    errMsg = USetStr(err) & " " & errstr;
+    res = false;
+    goto LCanManualMakeTRFromBankEntry;
+  end;
+  err = CheckObjs(RepSpec.f2,RepSpec.f4,errstr);
+  if (err!=0) then begin
+    errMsg = USetStr(err) & " " & errstr;
+    res = false;
+    goto LCanManualMakeTRFromBankEntry;
+  end;
+LCanManualMakeTRFromBankEntry:;
+  CanManualMakeTRFromBankEntry = res;
+  return;
+end;
+
+procedure TRVc_PasteDebVal2(var record TRVc TRp,Integer rownr)
+BEGIN
+  Integer res;
+  record CYBlock CompYear;
+  row TRVc TRrr;
+  val t;
+
+  BlockLoad(CompYear);
+  MatRowGet(TRp,rownr,TRrr);
+  TRUpdateDebRows2(TRrr,TRp.TransDate);
+  if (CompYear.trDoNVTest==1) then begin
+    res = Norm2Cont(TRrr.AccNumber,TRrr.DebVal2,t);
+    if (res!=0) then begin
+      MessageBox(res,"");
+    end;
+  end;
+  MatRowPut(TRp,rownr,TRrr);
+  TRSumup(TRp,t);
+  RETURN;
+END;
+
+procedure TRVc_PasteCredVal2(var record TRVc TRp,Integer rownr)
+BEGIN
+  Integer res;
+  record CYBlock CompYear;
+  row TRVc TRrr;
+  val t;
+
+  BlockLoad(CompYear);
+  MatRowGet(TRp,rownr,TRrr);
+  TRUpdateCredRows2(TRrr,TRp.TransDate);
+  if (CompYear.trDoNVTest==1) then begin
+    res = Norm2Cont(TRrr.AccNumber,t,TRrr.CredVal2);
+    if (res!=0) then begin
+      MessageBox(res,"");
+    end;
+  end;
+  MatRowPut(TRp,rownr,TRrr);
+  TRSumup(TRp,t);
+  RETURN;
+END;
+
+
+function boolean IsFalckDataCorrect(record SEPABankEntryVc SEPABankEntryr, var string errMsg)
+begin
+  boolean res;
+  string 255 tstr,singleObj;
+  integer pos;
+  record ObjVc Objr;
+  
+  res = true;
+  //disabled 29.10.2020 KB, Swedbank changed their PrtryRef for bank card payments
+  /*
+  tstr = SEPABankEntryr.PrtryRef;
+  tstr = StrReplace(tstr,":","");
+  pos = 0;
+  ExtractObjWithSeparator(";",tstr,true,pos,singleObj);
+  while (nonblank(singleObj)) begin
+    Objr.Code = singleObj;
+    if (ReadFirstMain(Objr,1,true) == false) then begin
+      errMsg = USetStr(1043) & ":" & singleObj;
+      res = false;
+      goto LIsFalckDataCorrect;
+    end;
+    ExtractObjWithSeparator(";",tstr,true,pos,singleObj);
+  end;
+  */
+LIsFalckDataCorrect:;
+  IsFalckDataCorrect = res;
+  return;
+end;
+
+global
+function boolean IsFalckPOSPaym(record SEPABankEntryVc SEPABankEntryr)
+begin
+  boolean res;
+
+  if (SEPABankEntryr.DomainCode == "PMNT" AND
+      SEPABankEntryr.FamilyCode == "MCRD" AND
+      SEPABankEntryr.SubfamilyCode == "POSP") then begin
+    res = true;
+  end;
+  IsFalckPOSPaym = res;
+  return;
+end;
+
+global
+procedure Falck_PasteCustObjects(var string objects, record SEPABankEntryVc SEPABankEntryr)
+begin
+  string 255 tstr,singleObj;
+  integer pos;
+  
+  //disabled 29.10.2020 KB, Swedbank changed their PrtryRef for bank card payments
+  /*
+  tstr = SEPABankEntryr.PrtryRef;
+  tstr = StrReplace(tstr,":","");
+  pos = 0;
+  ExtractObjWithSeparator(";",tstr,true,pos,singleObj);
+  while (nonblank(singleObj)) begin
+    objects = AddObjectToObjectList(singleObj,objects);
+    ExtractObjWithSeparator(";",tstr,true,pos,singleObj);
+  end;
+  */
+  return;
+end;
+
+procedure Falck_PasteServFeeRow(var record TRVc TRr, record SEPABankEntryVc SEPABankEntryr, string objDeb, integer packMethod)
+begin
+  integer rwcnt;
+  record AccBlock Accbl;
+  row TRVc TRrw;
+
+  BlockLoad(Accbl);
+  rwcnt = MatRowCnt(TRr);
+  if (packMethod == 0 AND MatRowCnt(TRr) > 1) then begin 
+    rwcnt = 1;
+    MatRowGet(TRr,rwcnt,TRrw);
+  end else begin
+    ClearRow(TRr,TRrw,1);
+  end;
+  TRrw.AccNumber = Accbl.CommisionAcc;
+  MatRowPut(TRr,rwcnt,TRrw);
+  TRVc_PasteAccNumber(TRr,Rs_insert,rwcnt,true)
+  MatRowGet(TRr,rwcnt,TRrw);
+  TRrw.DebVal = TRrw.DebVal + (SEPABankEntryr.InstdAmt - SEPABankEntryr.TxAmt); //will just be blank if new row, so ok to sum
+  MatRowPut(TRr,rwcnt,TRrw);
+  TRVc_PasteDebVal(TRr,rwcnt);
+  MatRowGet(TRr,rwcnt,TRrw);
+  TRrw.Objects = objDeb;
+  Falck_PasteCustObjects(TRrw.Objects,SEPABankEntryr)
+  TRVc_PasteObjects(TRr,rwcnt);
+  NoDupObjs(TRrw.Objects,TRrw.Objects);
+  MatRowPut(TRr,rwcnt,TRrw);
+  return;
+end;
+
+global
+procedure Falck_CheckBase2Rounding(var record TRVc TRr)
+begin
+  val diff;
+  row TRVc roundTRrw;
+  record AccBlock Accbl;
+  integer rwcnt;
+
+  rwcnt = MatRowCnt(TRr);
+  diff = TRr.DSum2 - (-TRr.CSum2);
+  if (diff != 0) then begin
+    BlockLoad(Accbl);
+    ClearRow(TRr,roundTRrw,1);
+    roundTRrw.AccNumber = Accbl.BaseRoundOffAcc;
+    MatRowPut(TRr,rwcnt,roundTRrw);
+    TRVc_PasteAccNumber(TRr,Rs_insert,rwcnt,true)
+    MatRowGet(TRr,rwcnt,roundTRrw);
+    if (diff > 0) then begin
+      roundTRrw.CredVal = 0;
+      MatRowPut(TRr,rwcnt,roundTRrw);
+      TRVc_PasteCredVal(TRr,rwcnt);
+      MatRowGet(TRr,rwcnt,roundTRrw);
+      roundTRrw.CredVal2 = diff;
+      MatRowPut(TRr,rwcnt,roundTRrw);
+      TRVc_PasteCredVal2(TRr,rwcnt);
+      MatRowGet(TRr,rwcnt,roundTRrw);
+    end else begin
+      roundTRrw.DebVal = 0;
+      MatRowPut(TRr,rwcnt,roundTRrw);
+      TRVc_PasteDebVal(TRr,rwcnt);
+      MatRowGet(TRr,rwcnt,roundTRrw);
+      roundTRrw.DebVal2 = diff * (-1);
+      MatRowPut(TRr,rwcnt,roundTRrw);
+      TRVc_PasteDebVal2(TRr,rwcnt);
+      MatRowGet(TRr,rwcnt,roundTRrw);
+    end;
+    MatRowGet(TRr,rwcnt,roundTRrw);
+    MatRowPut(TRr,rwcnt,roundTRrw);
+  end;
+  return;
+end;
+//cust - end
+
+function boolean EntryGrThanNext(record SEPABankEntryVc prevSEPABankEntryr,record SEPABankEntryVc nextSEPABankEntryr)
+begin
+  boolean res;
+
+  if (prevSEPABankEntryr.BookgDt > nextSEPABankEntryr.BookgDt) then begin
+    res = true;
+    goto LEntryGrThanNext;
+  end;
+  if (prevSEPABankEntryr.DomainCode > nextSEPABankEntryr.DomainCode AND
+    prevSEPABankEntryr.BookgDt >= nextSEPABankEntryr.BookgDt) then begin
+    res = true;
+    goto LEntryGrThanNext;
+  end;
+  if (prevSEPABankEntryr.FamilyCode > nextSEPABankEntryr.FamilyCode AND
+    prevSEPABankEntryr.BookgDt >= nextSEPABankEntryr.BookgDt AND
+    prevSEPABankEntryr.DomainCode >= nextSEPABankEntryr.DomainCode) then begin
+    res = true;
+    goto LEntryGrThanNext;
+  end;
+  if (prevSEPABankEntryr.SubfamilyCode > nextSEPABankEntryr.SubfamilyCode AND
+    prevSEPABankEntryr.BookgDt >= nextSEPABankEntryr.BookgDt AND
+    prevSEPABankEntryr.DomainCode >= nextSEPABankEntryr.DomainCode AND
+    prevSEPABankEntryr.FamilyCode >= nextSEPABankEntryr.FamilyCode) then begin
+    res = true;
+    goto LEntryGrThanNext;
+  end;
+  if (prevSEPABankEntryr.OurIBAN > nextSEPABankEntryr.OurIBAN AND
+    prevSEPABankEntryr.BookgDt >= nextSEPABankEntryr.BookgDt AND
+    prevSEPABankEntryr.DomainCode >= nextSEPABankEntryr.DomainCode AND
+    prevSEPABankEntryr.FamilyCode >= nextSEPABankEntryr.FamilyCode AND
+    prevSEPABankEntryr.SubfamilyCode >= nextSEPABankEntryr.SubfamilyCode) then begin
+    res = true;
+    goto LEntryGrThanNext;
+  end;
+  if (prevSEPABankEntryr.DbtrAcctIBAN > nextSEPABankEntryr.DbtrAcctIBAN AND
+    prevSEPABankEntryr.BookgDt >= nextSEPABankEntryr.BookgDt AND
+    prevSEPABankEntryr.DomainCode >= nextSEPABankEntryr.DomainCode AND
+    prevSEPABankEntryr.FamilyCode >= nextSEPABankEntryr.FamilyCode AND
+    prevSEPABankEntryr.SubfamilyCode >= nextSEPABankEntryr.SubfamilyCode AND
+    prevSEPABankEntryr.OurIBAN >= nextSEPABankEntryr.OurIBAN) then begin
+    res = true;
+    goto LEntryGrThanNext;
+  end;
+  if (prevSEPABankEntryr.CdtrAcctIBAN > nextSEPABankEntryr.CdtrAcctIBAN AND
+    prevSEPABankEntryr.BookgDt >= nextSEPABankEntryr.BookgDt AND
+    prevSEPABankEntryr.DomainCode >= nextSEPABankEntryr.DomainCode AND
+    prevSEPABankEntryr.FamilyCode >= nextSEPABankEntryr.FamilyCode AND
+    prevSEPABankEntryr.SubfamilyCode >= nextSEPABankEntryr.SubfamilyCode AND
+    prevSEPABankEntryr.OurIBAN >= nextSEPABankEntryr.OurIBAN AND
+    prevSEPABankEntryr.DbtrAcctIBAN >= nextSEPABankEntryr.DbtrAcctIBAN) then begin
+    res = true;
+    goto LEntryGrThanNext;
+  end;
+  if (prevSEPABankEntryr.RmtInfUstrd > nextSEPABankEntryr.RmtInfUstrd AND
+    prevSEPABankEntryr.BookgDt >= nextSEPABankEntryr.BookgDt AND
+    prevSEPABankEntryr.DomainCode >= nextSEPABankEntryr.DomainCode AND
+    prevSEPABankEntryr.FamilyCode >= nextSEPABankEntryr.FamilyCode AND
+    prevSEPABankEntryr.SubfamilyCode >= nextSEPABankEntryr.SubfamilyCode AND
+    prevSEPABankEntryr.OurIBAN >= nextSEPABankEntryr.OurIBAN AND
+    prevSEPABankEntryr.DbtrAcctIBAN >= nextSEPABankEntryr.DbtrAcctIBAN AND
+    prevSEPABankEntryr.CdtrAcctIBAN >= nextSEPABankEntryr.CdtrAcctIBAN) then begin
+    res = true;
+    goto LEntryGrThanNext;
+  end;
+LEntryGrThanNext:;
+  EntryGrThanNext = res;
+  return;
+end;
+
+global
+procedure SortTRBankEntriesByDateType(var array record SEPABankEntryVc SEPABankEntryr)
+begin
+  integer i,j,rwcnt,buffPos;
+  boolean someRowMoved;
+  record SEPABankEntryVc tempSEPABankEntryr;
+
+  //Bubble sorting
+  someRowMoved = true; //to enter loop
+  while(someRowMoved) begin
+    someRowMoved = false;
+    for (i=0;i<SEPABankEntryr.length - 1;i=i+1) begin
+      if (EntryGrThanNext(SEPABankEntryr[i],SEPABankEntryr[i+1])) then begin
+        someRowMoved = true;
+        //swap the values
+        tempSEPABankEntryr = SEPABankEntryr[i];
+        SEPABankEntryr[i] = SEPABankEntryr[i+1];
+        SEPABankEntryr[i+1] = tempSEPABankEntryr;
+      end;
+    end;
+  end;
+  return;
+end;
+
+//copy from std, as not global
+procedure TRVc_PasteDebVal(var record TRVc TRp,Integer rownr)
+BEGIN
+  Integer res;
+  record CYBlock CompYear;
+  record BaseCurBlock BaseCurRec;
+  row TRVc TRrw;
+  val t;
+
+  BlockLoad(CompYear);
+  BlockLoad(BaseCurRec);
+  MatRowGet(TRp,rownr,TRrw);
+  if (blank(TRrw.AccNumber)) or (blank(TRrw.Curncy)) then begin
+    GetFullCurncyRate(TRrw.Curncy,TRp.TransDate,TRrw.FrRate,TRrw.ToRateB1,TRrw.ToRateB2,TRrw.BaseRate1,TRrw.BaseRate2);
+  end;
+  TRUpdateDebRows(TRrw,TRp.TransDate);
+  if (CompYear.trDoNVTest==1) then begin
+    res = Norm2Cont(TRrw.AccNumber,TRrw.DebVal,t);
+    if (res!=0) then begin
+      MessageBox(res,"");
+    end;
+  end;
+  if (blank(BaseCurRec.BaseCur2)) then begin
+    TRrw.DebVal2 = blankval;
+  end;
+  MatRowPut(TRp,rownr,TRrw);
+  TRSumup(TRp,t);
+  RETURN;
+END;
+
+//copy from std, as not global
+procedure TRVc_PasteCredVal(var record TRVc TRp,Integer rownr)
+BEGIN
+  Integer res;
+  record CYBlock CompYear;
+  record BaseCurBlock BaseCurRec;
+  row TRVc TRrw;
+  val t;
+
+  BlockLoad(CompYear);
+  BlockLoad(BaseCurRec);
+  MatRowGet(TRp,rownr,TRrw);
+  if (blank(TRrw.AccNumber)) or (blank(TRrw.Curncy)) then begin
+    GetFullCurncyRate(TRrw.Curncy,TRp.TransDate,TRrw.FrRate,TRrw.ToRateB1,TRrw.ToRateB2,TRrw.BaseRate1,TRrw.BaseRate2);
+  end;
+  TRUpdateCredRows(TRrw,TRp.TransDate);
+  if (CompYear.trDoNVTest==1) then begin
+    res = Norm2Cont(TRrw.AccNumber,t,TRrw.CredVal);
+    if (res!=0) then begin
+      MessageBox(res,"");
+    end;
+  end;
+  if (blank(BaseCurRec.BaseCur2)) then begin
+    TRrw.CredVal2 = blankval;
+  end;
+  MatRowPut(TRp,rownr,TRrw);
+  TRSumup(TRp,t);
+  RETURN;
+END;
+
+function boolean OtherTypeInTrIdentBlock(record SEPABankEntryVc SEPABankEntryr, record SEPABankFileBlock SEPABankFileBl, var record RcVc RepSpec, integer recordType, var string typeName)
+begin
+  boolean res;
+  row TRIdentBlock TRIdentblrw;
+  integer rowNr;
+
+  if (GetSEPAEntryIdentRow(SEPABankEntryr,SEPABankFileBl.UseMainIdentBlock == 1,TRIdentblrw,rowNr)) then begin
+    if (TRIdentblrw.RecType != recordType) then begin
+      res = true;
+      RepSpec.f1 = TRIdentblrw.CredAccNumTR;
+      RepSpec.f3 = TRIdentblrw.ObjectsTRCred;
+      RepSpec.f2 = TRIdentblrw.DebAccNumTR;
+      RepSpec.f4 = TRIdentblrw.ObjectsTRDeb;
+      if (blank(SEPABankEntryr.DbtrAcctIBAN)) then begin
+        RepSpec.f5 = SEPABankEntryr.CdtrAcctIBAN;
+      end else begin
+        RepSpec.f5 = SEPABankEntryr.DbtrAcctIBAN;
+      end;
+      RepSpec.f6 = SEPABankEntryr.OurIBAN;
+      RepSpec.f7 = SEPABankEntryr.RmtInfUstrd;
+      switch(TRIdentblrw.RecType) begin
+        case 0: typeName = USetStr(1501102);
+        case 1: typeName = USetStr(14161);
+        case OPYc: typeName = USetStr(16490);
+        case IPYc: typeName = USetStr(16491);
+      end;
+    end;
+  end;
+  OtherTypeInTrIdentBlock = res;
+  return;
+end;
+
+global updating
+procedure MarkSEPAEntryDone(var record SEPABankEntryVc SEPABankEntryr, integer recType)
+begin
+  record SEPABankEntryVc oldSEPABankEntryr;
+
+  RecordCopy(oldSEPABankEntryr,SEPABankEntryr);
+  SEPABankEntryr.DoneFlag = 1;
+  SEPABankEntryr.DoneDate = CurrentDate;
+  SEPABankEntryr.DoneTime = CurrentTime;
+  SEPABankEntryr.RecType = recType;
+  if (RecordUpdate(oldSEPABankEntryr,SEPABankEntryr,true) == 0) then begin
+  end;
+  return;
+end;
+
+updating
+procedure AssociateBankEntryWithType(record SEPABankEntryVc SEPABankEntryr, boolean useMainComp, boolean overwrite, integer recordType, record RcVc RepSpec, string descr)
+begin
+  record TRIdentBlock TRIdentbl;
+  row TRIdentBlock newTRIdentblrw,TRIdentblrw;
+  record CompaniesBlock CompaniesRec;
+  row CompaniesBlock comprw;
+  integer curcomp,rowNr;
+
+  curcomp = CurrentCompany;  
+  //switch company if set so
+  if (useMainComp) then begin
+    if (ServerMode OR SingleUserMode) then begin
+      BlockLoad(CompaniesRec);
+      MatRowGet(CompaniesRec,0,comprw);
+      SetCompanyCode(comprw.CompCode,false);
+    end;
+  end;
+  //prefill the new row
+  newTRIdentblrw.DomainCode = SEPABankEntryr.DomainCode;
+  newTRIdentblrw.FamilyCode = SEPABankEntryr.FamilyCode;
+  newTRIdentblrw.SubfamilyCode = SEPABankEntryr.SubfamilyCode;
+  newTRIdentblrw.RecType = recordType;
+  TRIdentPasteBankTransDesc(newTRIdentblrw);
+  if (blank(descr)) then begin
+    newTRIdentblrw.DefDescr = USetStr(16480);
+  end else begin
+    newTRIdentblrw.DefDescr = descr;
+  end;
+  if (recordType == 1) then begin //set 1670
+    newTRIdentblrw.CredAccNumTR = RepSpec.f1;
+    newTRIdentblrw.DebAccNumTR = RepSpec.f2;
+    newTRIdentblrw.ObjectsTRCred = RepSpec.f3;
+    newTRIdentblrw.ObjectsTRDeb = RepSpec.f4;
+  end;
+  if (RepSpec.flags[3] == 1) then begin
+    newTRIdentblrw.TheirIBAN = RepSpec.f5;
+  end;
+  if (RepSpec.flags[4] == 1) then begin
+    newTRIdentblrw.OurIBAN = RepSpec.f6;
+  end;
+  if (RepSpec.flags[5] == 1) then begin
+    newTRIdentblrw.RmtInfUstrd = RepSpec.f7;
+  end;
+  //check the existing rows
+  BlockLoad(TRIdentbl);
+  if (overwrite) then begin //then delete the existing if found
+    if (TRIdentSameRowExist(TRIdentbl,newTRIdentblrw,-1,rowNr)) then begin
+      MatRowDelete(TRIdentbl,rowNr);
+    end;
+  end;
+  MatRowPut(TRIdentbl,MatRowCnt(TRIdentbl),newTRIdentblrw);
+  BlockStore(TRIdentbl);
+  ResetCompany(curcomp);
+  return;
+end;
+
+global
+function boolean CanMakeIPFromBankEntry(record SEPABankEntryVc SEPABankEntryr, var record RcVc RepSpec, var string errMsg, var longint errCode)
+begin
+  boolean res;
+  record SEPABankFileBlock SEPABankFileBl;
+  string 30 typeName;
+  
+  BlockLoad(SEPABankFileBl);  
+  res = true;
+  if (SEPABankEntryr.DoneFlag == 1) then begin
+    res = false;
+    errCode = 1500252;
+    errMsg = USetStr(errCode);
+    goto LCanMakeIPFromBankEntry;
+  end;
+  if (OtherTypeInTrIdentBlock(SEPABankEntryr,SEPABankFileBl,RepSpec,IPYc,typeName)) then begin
+    res = false;
+    errCode = 1500253;
+    errMsg = USetStr(errCode) & typeName;
+    goto LCanMakeIPFromBankEntry;
+  end;
+  if (SEPABankFileBl.CreateIPVc != 1) then begin
+    res = false;
+    errCode = 1500254;
+    errMsg = USetStr(errCode);
+    goto LCanMakeIPFromBankEntry;
+  end;
+  //TODO when else false?
+LCanMakeIPFromBankEntry:;
+  CanMakeIPFromBankEntry = res;
+  return;
+end;
+
+global updating
+procedure CreateIPFromBankEntry(var record IPVc IPr, var record SEPABankEntryVc SEPABankEntryr, boolean overwrite, boolean saveAssociation, record RcVc RepSpec, var string errMsg)
+begin
+  record IPVc oldIPr;
+  record SEPABankEntryVc oldSEPABankEntryr;
+  record SEPABankFileBlock SEPABankFileBl;
+  boolean processed,newip,newtype,doOK;
+  string 5 payMode;
+
+  BlockLoad(SEPABankFileBl);
+  payMode = FindPMbyIBANCode(SEPABankEntryr.OurIBAN);
+  newip = true;
+  newtype = false;
+  doOK = false;
+  SEPABankEntryr.DbtrNm = USetStr(16480); //adding as AddSEPABankEntryToIPVc requires it
+  AddSEPABankEntryToIPVc(SEPABankEntryr,SEPABankFileBl,IPr,newip,doOK,payMode,newtype,processed);
+  if (processed) then begin
+    IPSumup(IPr);
+    IPr.SerNr = NextSerNr("IPVc",IPr.TransDate,-1,false,"");
+    if (RecordInsert(IPr,false)) then begin
+      if (saveAssociation) then begin
+        AssociateBankEntryWithType(SEPABankEntryr,SEPABankFileBl.UseMainIdentBlock == 1,overwrite,IPYc,RepSpec,"");
+      end;
+      MarkSEPAEntryDone(SEPABankEntryr,IPYc); 
+    end;
+  end else begin
+    errMsg = USetStr(1281);
+  end;
+  return;
+end;
+
+global
+function boolean CanMakeOPFromBankEntry(record SEPABankEntryVc SEPABankEntryr, var record RcVc RepSpec, var string errMsg, var longint errCode)
+begin
+  boolean res;
+  record SEPABankFileBlock SEPABankFileBl;
+  string 30 typeName;
+  
+  BlockLoad(SEPABankFileBl);
+  res = true;
+  if (SEPABankEntryr.DoneFlag == 1) then begin
+    res = false;
+    errCode = 1500252; 
+    errMsg = USetStr(errCode);
+    goto LCanMakeOPFromBankEntry;
+  end;
+  if (OtherTypeInTrIdentBlock(SEPABankEntryr,SEPABankFileBl,RepSpec,OPYc,typeName)) then begin
+    res = false;
+    errCode = 1500253; 
+    errMsg = USetStr(errCode) & typeName;
+    goto LCanMakeOPFromBankEntry;
+  end;
+  if (SEPABankFileBl.CreateOPVc != 1) then begin
+    res = false;
+    errCode = 1500255; 
+    errMsg = USetStr(errCode);
+    goto LCanMakeOPFromBankEntry;
+  end;
+  //TODO when else false?
+LCanMakeOPFromBankEntry:;
+  CanMakeOPFromBankEntry = res;
+  return;
+end;
+
+global updating
+procedure CreateOPFromBankEntry(var record OPVc OPr, var record SEPABankEntryVc SEPABankEntryr, boolean overwrite, boolean saveAssociation, record RcVc RepSpec, var string errMsg)
+begin
+  record OPVc oldOPr;
+  record SEPABankEntryVc oldSEPABankEntryr;
+  record SEPABankFileBlock SEPABankFileBl;
+  boolean processed,newop,newtype,doOK;
+  string 5 payMode;
+
+  BlockLoad(SEPABankFileBl);  
+  payMode = FindPMbyIBANCode(SEPABankEntryr.OurIBAN);
+  newop = true;
+  newtype = false;
+  doOK = false;
+  SEPABankEntryr.CdtrNm = USetStr(16480); //adding as AddSEPABankEntryToOPVc requires it
+  AddSEPABankEntryToOPVc(SEPABankEntryr,SEPABankFileBl,OPr,newop,doOK,payMode,newtype,processed);
+  if (processed) then begin
+    OPSumup(OPr,true);
+    OPr.SerNr = NextSerNr("OPVc",OPr.TransDate,-1,false,"");
+    if (RecordInsert(OPr,false)) then begin
+      if (saveAssociation) then begin
+        AssociateBankEntryWithType(SEPABankEntryr,SEPABankFileBl.UseMainIdentBlock == 1,overwrite,OPYc,RepSpec,"");
+      end;
+      MarkSEPAEntryDone(SEPABankEntryr,OPYc);
+    end;
+  end else begin
+    errMsg = USetStr(1281);
+  end;
+  return;
+end;
+
+global
+function boolean CanMakeTRFromBankEntry(record SEPABankEntryVc SEPABankEntryr, var record RcVc RepSpec, var string errMsg, var longint errCode)
+begin
+  boolean res;
+  record SEPABankFileBlock SEPABankFileBl;
+  string 30 typeName;
+  
+  BlockLoad(SEPABankFileBl);
+  res = true;
+  if (SEPABankEntryr.DoneFlag == 1) then begin
+    res = false;
+    errCode = 1500252; 
+    errMsg = USetStr(errCode);
+    goto LCanMakeTRFromBankEntry;
+  end;
+  if (OtherTypeInTrIdentBlock(SEPABankEntryr,SEPABankFileBl,RepSpec,1,typeName)) then begin // 1 = TRVc, see set 1670
+    res = false;
+    errCode = 1500253; 
+    errMsg = USetStr(errCode) & typeName;
+    goto LCanMakeTRFromBankEntry;
+  end;
+  if (SEPABankFileBl.CreateTRVc != 1) then begin
+    res = false;
+    errCode = 1500256; 
+    errMsg = USetStr(errCode);
+    goto LCanMakeTRFromBankEntry;
+  end;
+  //TODO when else false?
+LCanMakeTRFromBankEntry:;
+  CanMakeTRFromBankEntry = res;
+  return;
+end;
+
+global updating
+procedure AddSEPABankEntryToTRVc(record SEPABankEntryVc SEPABankEntryr, var record TRVc TRr,
+                                string debAcc, string credAcc, string objDeb, string objCred,
+                                string comment, var string errMsg,
+                                var boolean newtr, boolean typeDiffThanPrev, var boolean processed)
+begin
+  record TRVc oldTRr;
+  row TRVc TRrw;
+  record SEPABankEntryVc oldSEPABankEntryr;
+  integer rwcnt;
+  date bankdate;
+  record SEPABankFileBlock SEPABankFileBl;
+  //cust - start KB 13.12.2019
+  integer debRwCntFalck;
+
+  debRwCntFalck = 1;
+  if (IsFalckDataCorrect(SEPABankEntryr,errMsg) == false) then begin
+    processed = false;
+    goto LAddSEPABankEntryToTRVc;
+  end;
+  //cust - end
+  BlockLoad(SEPABankFileBl);
+  rwcnt = MatRowCnt(TRr);
+  bankdate = SEPABankEntryr.BookgDt;
+  if (typeDiffThanPrev) then begin
+    SEPACreateTR(TRr);
+    newtr = true;
+  end;
+  if (newtr==false) then begin 
+    if (TRr.TransDate != bankdate) AND (rwcnt > 0) then begin 
+      SEPACreateTR(TRr);
+      newtr = true;
+    end;
+  end;
+  if (newtr == false) then begin 
+    if (rwcnt >= 199) then begin 
+      SEPACreateTR(TRr);
+      newtr = true;
+    end;
+  end;
+  if (newtr) then begin 
+    RecordNew(TRr);
+    TRr.TransDate = bankdate;
+    TRr.Number = NextSerNr("TRVc",TRr.TransDate,-1,false,"");
+    if (blank(comment)) then begin
+      TRr.Comment = SEPABankEntryr.RmtInfUstrd;
+    end else begin
+      TRr.Comment = comment;
+    end;
+    TRr.RefStr = SEPABankEntryr.RmtInfStrdCdtr;
+    newtr = false;
+    rwcnt = 0;
+  end;
+
+  //deb row
+  if (SEPABankFileBl.TRVcPackMethod == 0 AND MatRowCnt(TRr) > 0) then begin //as we check that only similar bank entries go to single TR, then sum it up
+    rwcnt = 0;
+    MatRowGet(TRr,rwcnt,TRrw);
+  end else begin
+    ClearRow(TRr,TRrw,1);
+  end;
+  TRrw.AccNumber = debAcc;
+  MatRowPut(TRr,rwcnt,TRrw);
+  TRVc_PasteAccNumber(TRr,Rs_insert,rwcnt,true)
+  MatRowGet(TRr,rwcnt,TRrw);
+  TRrw.DebVal = TRrw.DebVal + SEPABankEntryr.TxAmt; //will just be blank if new row, so ok to sum
+  MatRowPut(TRr,rwcnt,TRrw);
+  TRVc_PasteDebVal(TRr,rwcnt);
+  MatRowGet(TRr,rwcnt,TRrw);
+  TRrw.Objects = objDeb;
+//cust - start KB 13.12.2019
+  if (IsFalckPOSPaym(SEPABankEntryr)) then begin
+    Falck_PasteCustObjects(TRrw.Objects,SEPABankEntryr)
+  end;
+//cust - end
+  TRVc_PasteObjects(TRr,rwcnt);
+//cust - start KB 13.12.2019
+  NoDupObjs(TRrw.Objects,TRrw.Objects);
+//cust - end
+  MatRowPut(TRr,rwcnt,TRrw);
+//cust - start KB 13.12.2019
+  if (IsFalckPOSPaym(SEPABankEntryr) AND SEPABankEntryr.InstdAmt != 0 AND SEPABankEntryr.InstdAmt != blankval) then begin
+    Falck_PasteServFeeRow(TRr,SEPABankEntryr,objDeb,SEPABankFileBl.TRVcPackMethod);
+    rwcnt = rwcnt + 1;
+    debRwCntFalck = 2;
+  end;
+//cust - end
+
+  //cred row
+  rwcnt = rwcnt + 1;
+//cust - start KB 13.12.2019
+  if (SEPABankFileBl.TRVcPackMethod == 0 AND MatRowCnt(TRr) > debRwCntFalck) then begin //as we check that only similar bank entries go to single TR, then sum it up
+//cust - end
+    MatRowGet(TRr,rwcnt,TRrw);
+  end else begin
+    ClearRow(TRr,TRrw,1);
+  end;
+  TRrw.AccNumber = credAcc;
+  MatRowPut(TRr,rwcnt,TRrw);
+  TRVc_PasteAccNumber(TRr,Rs_insert,rwcnt,true)
+  MatRowGet(TRr,rwcnt,TRrw);
+//cust - start KB 13.12.2019
+  if (IsFalckPOSPaym(SEPABankEntryr) AND SEPABankEntryr.InstdAmt != 0 AND SEPABankEntryr.InstdAmt != blankval) then begin
+    TRrw.CredVal = TRrw.CredVal + SEPABankEntryr.InstdAmt; //will just be blank if new row, so ok to sum
+  end else begin
+    TRrw.CredVal = TRrw.CredVal + SEPABankEntryr.TxAmt; //will just be blank if new row, so ok to sum
+  end;
+//cust - end
+  MatRowPut(TRr,rwcnt,TRrw);
+  TRVc_PasteCredVal(TRr,rwcnt);
+  MatRowGet(TRr,rwcnt,TRrw);
+  TRrw.Objects = objCred;
+//cust - start KB 13.12.2019
+  if (IsFalckPOSPaym(SEPABankEntryr)) then begin
+    Falck_PasteCustObjects(TRrw.Objects,SEPABankEntryr)
+  end;
+//cust - end
+  TRVc_PasteObjects(TRr,rwcnt);
+//cust - start KB 13.12.2019
+  NoDupObjs(TRrw.Objects,TRrw.Objects);
+//cust - end
+  MatRowPut(TRr,rwcnt,TRrw);
+  processed = true;
+//cust - start KB 13.12.2019
+LAddSEPABankEntryToTRVc:;
+//cust - end
+  return;
+end;
+
+global updating
+function boolean CreateTRFromBankEntry(var record TRVc TRr, var record SEPABankEntryVc SEPABankEntryr, boolean overwrite, boolean saveAssociation,
+                                       record RcVc RepSpec, var string errMsg)
+begin
+  boolean res;
+  record TRVc oldTRr;
+  row TRVc TRrw;
+  record SEPABankEntryVc oldSEPABankEntryr;
+  integer rwnr;
+  boolean typeDiffThanPrev,newtr,processed;
+  record SEPABankFileBlock SEPABankFileBl;
+  string 10 debAcc,credAcc;
+  string 60 objDeb,objCred;
+  string 20 theirIBAN,ourIBAN;
+  string 255 rmtInfUstrd,comment;
+
+  BlockLoad(SEPABankFileBl);
+  typeDiffThanPrev = false;
+  newtr = true;
+  credAcc = RepSpec.f1;
+  debAcc = RepSpec.f2;
+  objCred = RepSpec.f3; 
+  objDeb = RepSpec.f4;
+  comment = ""; //will use bank entry
+  AddSEPABankEntryToTRVc(SEPABankEntryr,TRr,debAcc,credAcc,objDeb,objCred,comment,errMsg,newtr,typeDiffThanPrev,processed);
+  if (processed) then begin
+    res = true;
+    SEPACreateTR(TRr);
+    if (saveAssociation) then begin
+      AssociateBankEntryWithType(SEPABankEntryr,SEPABankFileBl.UseMainIdentBlock == 1,overwrite,1,RepSpec,""); // 1 = TRVc, see set 1670
+    end;
+    MarkSEPAEntryDone(SEPABankEntryr,1);
+  end else begin
+//cust - start KB 12.02.2020
+    if (blank(errMsg)) then begin
+      errMsg = USetStr(1281);
+    end;
+//cust - end
+  end;
+  CreateTRFromBankEntry = res;
+  return;
+end;
+
+global
+function boolean CanMakeNoneFromBankEntry(record SEPABankEntryVc SEPABankEntryr, var record RcVc RepSpec, var string errMsg, var longint errCode)
+begin
+  boolean res;
+  record SEPABankFileBlock SEPABankFileBl;
+  string 30 typeName;
+  
+  BlockLoad(SEPABankFileBl);
+  res = true;
+  if (SEPABankEntryr.DoneFlag == 1) then begin
+    res = false;
+    errCode = 1500252;
+    errMsg = USetStr(errCode);
+    goto LCanMakeNoneFromBankEntry;
+  end;
+  if (OtherTypeInTrIdentBlock(SEPABankEntryr,SEPABankFileBl,RepSpec,0,typeName)) then begin // 0 = Do not create, see set 1670
+    res = false;
+    errCode = 1500253;
+    errMsg = USetStr(errCode) & typeName;
+    goto LCanMakeNoneFromBankEntry;
+  end;
+LCanMakeNoneFromBankEntry:;
+  CanMakeNoneFromBankEntry = res;
+  return;
+end;
+
+global updating
+procedure CreateNoneFromBankEntry(var record SEPABankEntryVc SEPABankEntryr, boolean overwrite, boolean saveAssociation, record RcVc RepSpec, var string errMsg)
+begin
+  record SEPABankFileBlock SEPABankFileBl;
+
+  BlockLoad(SEPABankFileBl);
+  if (saveAssociation) then begin
+    AssociateBankEntryWithType(SEPABankEntryr,SEPABankFileBl.UseMainIdentBlock == 1,overwrite,0,RepSpec,""); // 0 = Do not create, see set 1670
+  end;
+  MarkSEPAEntryDone(SEPABankEntryr,0);
+  return;
+end;

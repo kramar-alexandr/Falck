@@ -1,9 +1,15 @@
+//Bk //eteenused
+remote updating function Integer CreatePUFromVEIV(LongInt,var record PUVc); //Bk, external > remote
 external procedure LookupServiceAsync(string,string,Boolean);
 external updating function Boolean ServiceRequestAsync(string,string,Boolean,area,string);
 external updating procedure SendAsyncServiceRequestNew(string,area,string,Boolean);
 external procedure SendTextParameter(string,var Area);
 external procedure SendFunctionVersion(string,string,var Area);
-remote updating function LongInt CreateVIFromVEIV3(LongInt,var record VIVc);
+external updating function Boolean SendServiceRequest(string,Boolean,area,var Area);
+//Bk - start
+//remote updating function Integer CreateVIFromVEIV(LongInt,var record VIVc);
+remote updating function LongInt CreateVIFromVEIV2(LongInt,var record VIVc,Boolean); //##cc //Bk, return should be LongInt (orig Integer)
+//Bk - end
 remote function LongInt ValidateVEIV(record VEIVVc,var string,var Integer);
 external updating procedure VIFromPODExecute(LongInt);
 external function string 255 ReplaceCharByString(string,string,string);
@@ -11,13 +17,15 @@ external function date XmlGetDate(var xml,string,string);
 external function val XmlGetVal(var xml,string,Integer,string,string);
 external function Integer XmlGetInt(var xml,string);
 external function LongInt DateDiff(Date,Date);
-//Bk - fix
+//Bk - start //fix
 external procedure VIOpenPrepExists(string);
 external function Boolean DateLocked(Date,string);
 external function Boolean DateWarned(Date,string);
-//eteenused
+//Bk - end
+//Bk - start //eteenused
 remote procedure GetSingleSupplierEstEInvoicePdf(record CUIVVc,var Boolean);
-external function boolean IRServiceActivated(string);
+external function boolean EServiceActivated(string);
+//Bk - end
 
 function Boolean VEIVDClassArtCodeEFAfter(Integer wn,Integer rownr,Integer changed)
 begin
@@ -261,6 +269,26 @@ BEGIN
   RETURN;
 END;
 
+//Bk - start, ts 2018/08
+procedure SameInvoiceNoAllowed(LongInt VISerNr,string InvoiceNr,string VECode)
+begin
+  record APAccBlock APb;
+  record VIVc VIr;
+  
+  BlockLoad(APb);
+  if (APb.NoInvoiceWithSameInvoiceNr==1) then begin
+    VIr.InvoiceNr = InvoiceNr;
+    VIr.VECode = VECode;
+    if (ReadFirstKey("InvoiceNr",VIr,2,true)) then begin
+      if (VIr.SerNr!=VISerNr) then begin
+        MessageBox(1501009,VIr.SerNr);
+      end;
+    end;
+  end;
+  return;
+end;
+//Bk - end
+
 global
 updating procedure VIFromVEIVDsm()
 BEGIN
@@ -278,7 +306,10 @@ BEGIN
       if (VEIVr.NotPaidFlag==0) then begin
         r = ValidateVEIV(VEIVr,fieldname,rownr);
         if (r==0) then begin
-          r = CreateVIFromVEIV3(VEIVr.SerNr,VIr);
+         //Bk - start
+         // r = CreateVIFromVEIV(VEIVr.SerNr,VIr);
+          r = CreateVIFromVEIV2(VEIVr.SerNr,VIr,true);
+         //Bk - end
           if (r!=0) begin
             if (r>0) then begin
               MessageBox(r,"");
@@ -288,6 +319,7 @@ BEGIN
           end else begin
             nwn = OpenWindow("VIDClass",1,0,"","",VIr);
            //Bk - start: ts 2018/02
+            SameInvoiceNoAllowed(VIr.SerNr,VIr.InvoiceNr,VIr.VECode);
             VIOpenPrepExists(VIr.VECode);
             if (DateLocked(VIr.TransDate,"VIVc")) then begin
               WindowFieldGoto(nwn,VIr,-1,"TransDate",true); 
@@ -317,6 +349,48 @@ BEGIN
 END;
 
 global
+updating procedure PUFromVEIVDsm()
+begin
+  Integer wn,nwn,rownr;
+  record RcVc RepSpec;
+  record VEIVVc VEIVr;
+  record PUVc PUr;
+  LongInt r;
+  string 255 fieldname;
+
+  wn = CurWindow;
+  if (WindowState(wn)==Rs_normal) then begin
+    if (UserCanAction("VEIVToPU",true)) then begin
+      GetWindowRecord(wn,VEIVr);
+      if (VEIVr.NotPaidFlag==0) then begin
+        r = 0;
+        if (r==0) then begin
+          r = CreatePUFromVEIV(VEIVr.SerNr,PUr);
+          if (r!=0) begin
+            if (r>0) then begin
+              MessageBox(r,"");
+            end;
+          end else begin
+            nwn = OpenWindow("PUDClass",1,0,"","",PUr);
+            UpdateBrowses("VEIVVc");
+          end;      
+        end else begin
+          WindowFieldGoto(wn,VEIVr,rownr,fieldname,true); 
+          MessageBox(r,"");
+        end;      
+      end else begin
+        MessageBox(20556,"");
+      end;
+    end else begin
+      MessageBox(1274,StringFromStringSet(3,"VEIVToPU"));
+    end;
+  end else begin
+    Beep;
+  end;
+  return;
+end;
+
+global
 updating procedure CUFromVEIVDsm()
 begin
   Integer wn,nwn;
@@ -337,7 +411,7 @@ begin
         CUr.InvAddr3 = VEIVr.InvAddr3;
         CUr.InvAddr4 = VEIVr.InvAddr4;
         CUr.ExportFlag = VEIVr.ExportFlag;
-        CUr.RegNr1 = VEIVr.VERegNr1;//Books fix, ts - 2018/02
+        CUr.RegNr1 = VEIVr.VERegNr1;//Bk + //fix, ts - 2018/02
         CUr.VATNr = VEIVr.VEVATNr;
         CUr.Phone = VEIVr.VEPhone;
         CUr.Fax = VEIVr.VEFax;
@@ -737,7 +811,7 @@ begin
   end;
 end;
 
-//eteenused, manuse päring
+//Bk - start //eteenused, manuse päring
 global
 procedure GetEstVEEInvoicePdfDsm()
 begin
@@ -747,13 +821,13 @@ begin
   
   wn = CurWindow;
   if (WindowState(wn) == Rs_normal) then begin
-    if (IRServiceActivated("GETSUPPLIERESTEINVOICEPDF")) then begin
+    if (EServiceActivated("RECEIVEESTEINVOICEPDF")) then begin
       GetWindowRecord(wn,VEIVr);
       SetWindowState(wn,Rs_update);
       threadremote.GetSingleSupplierEstEInvoicePdf(VEIVr,errf);
       SetWindowState(wn,Rs_normal);
       if (errf) then begin
-        MessageBox(1500023,"");    
+        MessageBox(1501001,"");    
       end;
     end else begin
       MessageBox(1500005,"");
@@ -775,18 +849,18 @@ begin
   
   wn = CurWindow;
   if (WindowState(wn) == Rs_normal) then begin
-    if (IRServiceActivated("GETSUPPLIERESTEINVOICEPDF")) then begin
+    if (EServiceActivated("RECEIVEESTEINVOICEPDF")) then begin
       GetWindowRecord(wn,VIr);
       VEIVr.VISerNr = VIr.SerNr;
       if (ReadFirstKey("VISerNr",VEIVr,1,true)==false) then begin
-        MessageBox(1500024,"");    
+        MessageBox(1501002,"");    
         goto LGetEstVEEInvoicePdfDsm;
       end;
       SetWindowState(wn,Rs_update);
       threadremote.GetSingleSupplierEstEInvoicePdf(VEIVr,errf);
       SetWindowState(wn,Rs_normal);
       if (errf) then begin
-        MessageBox(1500023,"");    
+        MessageBox(1501001,"");    
       end;
     end else begin
       MessageBox(1500005,"");
@@ -797,3 +871,4 @@ begin
 LGetEstVEEInvoicePdfDsm:;
   return;
 end;
+//Bk - end

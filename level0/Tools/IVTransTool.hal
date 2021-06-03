@@ -276,9 +276,11 @@ already checked in IVVcRecordCheckRows
         testf = true;
       end;
     end else begin
-      if ((asalesacc[i]==ivraccno) and (asalesobj[i]==objstr) and (asalesvatcode[i]==IVrw.VATCode) and (asalesrvrsvatcode[i]==IVrw.RvrsVATCode) and (asalesperiodcode[i]==IVrw.PeriodCode) 
-          and (asalesstp[i]==stp)) then begin
-        testf = true;
+      if (ARAccb.SalesAccSeparateRows==0) then begin
+        if ((asalesacc[i]==ivraccno) and (asalesobj[i]==objstr) and (asalesvatcode[i]==IVrw.VATCode) and (asalesrvrsvatcode[i]==IVrw.RvrsVATCode) and (asalesperiodcode[i]==IVrw.PeriodCode) 
+            and (asalesstp[i]==stp)) then begin
+          testf = true;
+        end;
       end;
     end;
     if (testf) then begin
@@ -501,6 +503,11 @@ begin
       vatcodes = TaxTemplateVATCodeOnTRRows(TMr,vatcod);
     end;
     if (blank(vatcodes)) then begin vatcodes = vatcod; end;
+    if (HasLocalization("GBR")) then begin
+      if (IVp.IPBookVAT!=0 and IVp.InvType!=kInvoiceTypeCash) then begin
+        vatcodes = "";
+      end;
+    end;
     ivrwstp = asalesstp[i];
 /*
 
@@ -549,12 +556,13 @@ retention change
         if (CheckTTRPerRow("IVVc",ivraccno,objstr,dc2,taccnumber,0)) then begin end;
         rs = MulRateToBase1(IVp.CurncyCode,trev,frrate,torate1,torate2,baserate1,baserate2,DefaultCurRoundOff);
         negamf = NegativeAmountsOnIVTrans(IVp.InvType,rs);
+        if (nonblank(rvrsvatcode)) then begin vatcodes = ""; end;
         if (inclqty) then begin
-          AddEuroCurncyTrRow2(gTRp,ivraccno,objstr,vatcodes,rvrsvatcode,tstr,rs,true,dc2,TotSum,IVp.CurncyCode,
-                             frrate,torate1,torate2,baserate1,baserate2,trev,quant,-1,negamf,taccnumber);
+          AddEuroCurncyTrRow2(gTRp,ivraccno,objstr,vatcodes,rvrsvatcode,tstr,rs,ARAccb.SalesAccSeparateRows==0,dc2,TotSum,
+                              IVp.CurncyCode,frrate,torate1,torate2,baserate1,baserate2,trev,quant,-1,negamf,taccnumber);
         end else begin
-          AddEuroCurncyTrRow2(gTRp,ivraccno,objstr,vatcodes,rvrsvatcode,tstr,rs,true,dc2,TotSum,IVp.CurncyCode,
-                             frrate,torate1,torate2,baserate1,baserate2,trev,nilv,-1,negamf ,taccnumber);
+          AddEuroCurncyTrRow2(gTRp,ivraccno,objstr,vatcodes,rvrsvatcode,tstr,rs,ARAccb.SalesAccSeparateRows==0,dc2,TotSum,
+                              IVp.CurncyCode,frrate,torate1,torate2,baserate1,baserate2,trev,nilv,-1,negamf ,taccnumber);
         end;
       end else begin
 /*    
@@ -652,10 +660,10 @@ retention change
             end;
             if (CheckTTRPerRow("IVVc",ivraccno,objstr,dc2,taccnumber,0)) then begin end;
             if (inclqty) then begin
-              AddEuroCurncyTrRow(gTRp,ivraccno,objstr,vatcodes,tstr,rs,true,dc2,TotSum,IVp.CurncyCode,
+              AddEuroCurncyTrRow(gTRp,ivraccno,objstr,vatcodes,tstr,rs,ARAccb.SalesAccSeparateRows==0,dc2,TotSum,IVp.CurncyCode,
                                  frrate,torate1,torate2,baserate1,baserate2,trev,quant,-1,negamf,taccnumber);
             end else begin
-              AddEuroCurncyTrRow(gTRp,ivraccno,objstr,vatcodes,tstr,rs,true,dc2,TotSum,IVp.CurncyCode,
+              AddEuroCurncyTrRow(gTRp,ivraccno,objstr,vatcodes,tstr,rs,ARAccb.SalesAccSeparateRows==0,dc2,TotSum,IVp.CurncyCode,
                                  frrate,torate1,torate2,baserate1,baserate2,trev,nilv,-1,negamf ,taccnumber);
             end;
           end;
@@ -669,10 +677,10 @@ retention change
               end;
               if (CheckTTRPerRow("IVVc",ARAccb.VATBAcc,"",dc1,taccnumber,0)) then begin end;
               if (inclqty) then begin
-                AddEuroCurncyTrRow(gTRp,ARAccb.VATBAcc,"","",tstr,btvat,true,dc1,TotSum,IVp.CurncyCode,
+                AddEuroCurncyTrRow(gTRp,ARAccb.VATBAcc,"","",tstr,btvat,ARAccb.SalesAccSeparateRows==0,dc1,TotSum,IVp.CurncyCode,
                                    frrate,torate1,torate2,baserate1,baserate2,tvat,quant,-1,(IVp.InvType==kInvoiceTypeCredit or IVp.InvType==kInvoiceTypeCreditSpecialSales) and btvat>0,taccnumber);
               end else begin
-                AddEuroCurncyTrRow(gTRp,ARAccb.VATBAcc,"","",tstr,btvat,true,dc1,TotSum,IVp.CurncyCode,
+                AddEuroCurncyTrRow(gTRp,ARAccb.VATBAcc,"","",tstr,btvat,ARAccb.SalesAccSeparateRows==0,dc1,TotSum,IVp.CurncyCode,
                                    frrate,torate1,torate2,baserate1,baserate2,tvat,nilv,-1,(IVp.InvType==kInvoiceTypeCredit or IVp.InvType==kInvoiceTypeCreditSpecialSales) and btvat>0,taccnumber);
               end;
             end;
@@ -689,10 +697,10 @@ retention change
             end;
             if (CheckTTRPerRow("IVVc",ivraccno,objstr,dc2,taccnumber,0)) then begin end;
             if (inclqty) then begin
-              AddEuroCurncyTrRow(gTRp,ivraccno,objstr,vatcodes,tstr,rs,true,dc2,TotSum,
+              AddEuroCurncyTrRow(gTRp,ivraccno,objstr,vatcodes,tstr,rs,ARAccb.SalesAccSeparateRows==0,dc2,TotSum,
                                  IVp.CurncyCode,frrate,torate1,torate2,baserate1,baserate2,trev,quant,-1,negamf,taccnumber);
             end else begin
-              AddEuroCurncyTrRow(gTRp,ivraccno,objstr,vatcodes,tstr,rs,true,dc2,TotSum,
+              AddEuroCurncyTrRow(gTRp,ivraccno,objstr,vatcodes,tstr,rs,ARAccb.SalesAccSeparateRows==0,dc2,TotSum,
                                  IVp.CurncyCode,frrate,torate1,torate2,baserate1,baserate2,trev,nilv,-1,negamf,taccnumber);
             end;                     
           end;

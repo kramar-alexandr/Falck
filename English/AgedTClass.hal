@@ -1,0 +1,40 @@
+external function Boolean HasAdvancedAccounting();
+external function Boolean HasAccPeriods();
+external function Boolean StandardHansa();
+
+window AgedTClass:1
+  wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real f,h,v,vs;
+  WindowBegin("Age Limits",AgedTClass,CGSbl,AgedType);
+  SetBlid(AgedBlock);
+  SetWRect(64,80,509,400);
+  v = 6; vs = 20; h = 180; f = 100;
+  EditField(h,v,f,"Period 1",Normal,Per1,true,0);
+  EditField(h,v+=vs,f,"Period 2",Normal,Per2,true,0);
+  if (HasAdvancedAccounting) then begin
+    EditField(h,v+=vs,f,"Period 3",Normal,Per3,true,0);
+    EditField(h,v+=vs,f,"Period 4",Normal,Per4,true,0);
+    EditField(h,v+=vs,f,"Period 5",Normal,Per5,true,0);
+    EditField(h,v+=vs,f,"Period 6",Normal,Per6,true,0);
+    //cust - start - BPI comment added KB 04.11.2019
+    EditField(h,v+=vs,f,"Period 7",Normal,Per7,true,0);
+		EditField(h,v+=vs,f,"Period 8",Normal,Per8,true,0);
+    //cust - end
+    StaticText(50,v+=40,"Setting more than 2 periods demands Landscape Printing",false);
+    ButtonFrame(h,v+=26,120,2,"Show Delay Days");
+    RadioButton(h,v,0,0,"Open and Overdue",ShowDelayDays);
+    RadioButton(h,v+=16,1,0,"Overdue Only",ShowDelayDays);
+    if (StandardHansa==false) then begin
+      CheckBox(100,v+=30,0,"Show Invoices Due on Specified Date as Current Invoices",ActualInvoices);
+      CheckBox(100,v+=16,0,"Use Accounting Periods in #N/L# instead of Age Limits",UseAccPeriod);
+      EditField(350,v+=vs,30,"Accounting Periods to use, maximum 6",Normal,AccPeriods,true,0);
+      CheckBox(100,v+=16,0,"Separate column for unallocated payments",SeparateOnAcc);
+    end;
+  end else begin 
+    if (HasAccPeriods) then begin
+      CheckBox(100,v+=vs,0,"Use Accounting Periods in #N/L# instead of Age Limits",UseAccPeriod);
+    end;
+  end;
+  EndWindow;
+end;

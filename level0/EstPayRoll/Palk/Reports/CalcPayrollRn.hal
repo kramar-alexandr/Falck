@@ -1,4 +1,6 @@
 external function integer GetDelimiter(string);
+external function string 255 AddStr(string,string,string);
+external procedure HTObj(string,var string);
 
 global
 procedure CalcPayrollRn(record RcVc RepSpec)
@@ -7,18 +9,19 @@ begin
   row CalcPayrollVc CPrw;
   record EmplVc Emplr;
   record ContractVc Contrr;
-  row ContractVc Contrrw;
   record PaymTypeVc PTr;
   string 20 frempl,toempl,tstr,key;
-  string 200 emplname;
+  string 200 emplname,objects;
   LongInt frcontr,tocontr;
   integer rwcnt,i,j,rw,ptcnt,v,emplcnt;
   boolean TrHs, TrHs1,TrHs2,testf,testf1;
-  val bruto,pension,unemplins,inctaxfreemin,inctax,neto,soctax,emplunemplins;
-  val brutotot,pensiontot,unemplinstot,inctaxfreemintot,inctaxtot,netotot,soctaxtot,emplunemplinstot;
-  val brutototal,pensiontotal,unemplinstotal,inctaxfreemintotal,inctaxtotal,netototal,soctaxtotal,emplunemplinstotal;
+  val CPBrutoTotal,CPPensionTotal,CPUnemplInsTotal,CPIncTaxFreeMinTotal,CPAddTaxSumTotal,CPIncTaxTotal,CPNetoTotal,CPSocTaxTotal,CPEmplUnemplInsTotal;
+  val bruto,pension,unemplins,inctaxfreemin,inctax,neto,soctax,emplunemplins,detention;
+  val brutotot,pensiontot,unemplinstot,inctaxfreemintot,inctaxtot,netotot,netosum,soctaxtot,emplunemplinstot;
+  val brutototal,pensiontotal,unemplinstotal,inctaxfreemintotal,inctaxtotal,netototal,totalsum,soctaxtotal,emplunemplinstotal;
   array string 20 ptcode;
   array val ptsum,ptsumtot,ptsumtotal;
+  array boolean ptneto,ptneg;
   LongInt frcpr,tocpr;
 
   rw = 1;
@@ -27,8 +30,8 @@ begin
   toempl = LastInRange(RepSpec.f1,20);
   frcontr = FirstInRange(RepSpec.f2,20);
   tocontr = LastInRange(RepSpec.f2,20);
-  frcpr=FirstInRange(RepSpec.f3,20);
-  tocpr=LastInRange(RepSpec.f3,20);
+  frcpr = FirstInRange(RepSpec.f3,20);
+  tocpr = LastInRange(RepSpec.f3,20);
 
   tstr = USetStr(5261);
   tstr = tstr & RepSpec.sStartDate & " : " & RepSpec.sEndDate;
@@ -44,7 +47,7 @@ begin
   end;
   Header(rw,tstr,1);
   rw = rw + 1;
-  
+
   if (blank(RepSpec.f2)) then begin
     tstr = USetStr(1500386);
   end else begin
@@ -60,12 +63,21 @@ begin
     Header(rw,tstr,1);
     rw = rw + 1;
   end;
+   
+  if (nonblank(RepSpec.ObjStr)) then begin
+    HTObj(RepSpec.ObjStr,tstr);
+    if ((blank(tstr)) and (nonblank(RepSpec.ObjStr))) then begin
+      tstr = USetStr(5062) & ": " & RepSpec.ObjStr;
+    end;
+    Header(rw,tstr,1);
+    rw = rw + 1;
+  end;    
 
   if (RepSpec.flags[1]!=0) then begin
     tstr = USetStr(1500504);
+    Header(rw,tstr,1);
+    rw = rw + 1; 
   end;
-  Header(rw,tstr,1);
-  rw = rw + 1; 
 
   if (RepSpec.flags[0]==0) then begin
     tstr = USetStr(1500403);
@@ -109,24 +121,32 @@ begin
   end else begin
     OutString(4,0,USetStr(1500412),false);
     if (RepSpec.Media==mtFile) or (RepSpec.Media==mtExcel) then begin
-      ptcnt=0;
-      v=230;
+      ptcnt = 0;
+      v = 230;
       ResetLoop(PTr);
-      PTr.Code="";
+      PTr.Code = "";
       while (LoopMain(PTr,1,true)) begin
-        v=v+ptcnt;
+        v = v + ptcnt;
         OutString(v,0,PTr.Code,true);
-        ptcode[ptcnt]=PTr.Code;
-        ptcnt=ptcnt+1;
+        ptcode[ptcnt] = PTr.Code;
+        if (PTr.PaymTypeFlag==1) then begin
+          ptneg[ptcnt] = true;
+        end;
+        if (PTr.PaymTypeFlag==2) or (PTr.PaymTypeFlag==3) then begin
+          ptneto[ptcnt] = true;
+          ptneg[ptcnt] = true;
+        end;
+        ptcnt = ptcnt + 1;
       end;
       OutString(420,0,USetStr(1500405),true);
       OutString(430,0,USetStr(1500406),true);
       OutString(440,0,USetStr(1500407),true);
       OutString(450,0,USetStr(1500408),true);
       OutString(460,0,USetStr(1500413),true);
-      OutString(470,0,USetStr(1500409),true);
+      OutString(470,0,USetStr(1500560),true);
       OutString(480,0,USetStr(1500410),true);
       OutString(1,0,USetStr(1500411),true);
+      OutString(1,0,USetStr(1500427),true);
     end else begin
       OutString(5,0,USetStr(1500405),true);
       OutString(6,0,USetStr(1500406),true);
@@ -158,7 +178,7 @@ begin
         end;
       end;
       if (TrHs) then begin
-        testf=true;
+        testf = true;
         if (Emplr.ClosedFlag!=0) then begin
           testf = false;
         end;
@@ -168,7 +188,7 @@ begin
           end;
         end; 
         if (testf) then begin
-          TrHs1=true;
+          TrHs1 = true;
           ResetLoop(Contrr);
           Contrr.EmplCode = Emplr.Code;
           while (LoopKey("EmplCode",Contrr,1,TrHs1)) begin
@@ -176,7 +196,7 @@ begin
               TrHs1 = false;
             end;
             if (TrHs1) then begin
-              testf=true;
+              testf = true;
               if (GetDelimiter(RepSpec.f2)!=2) then begin
                 if ((frcontr>0)) then begin
                   if ((Contrr.SerNr<frcontr) or (Contrr.SerNr>tocontr)) then begin
@@ -194,42 +214,42 @@ begin
                 end;
               end;
               if (testf) then begin
-                TrHs2=true;
+                TrHs2 = true;
                 ResetLoop(CPr);
                 CPr.ContrSerNr=Contrr.SerNr;
                 if (RepSpec.flags[0]==0) then begin
-                  key="CalcDate";
+                  key = "CalcDate";
                   CPr.CalcDate=RepSpec.sStartDate;
                 end else begin
-                  key="PaymDate";
-                  CPr.PaymDate=RepSpec.sStartDate;
+                  key = "PaymDate";
+                  CPr.PaymDate = RepSpec.sStartDate;
                 end;
-                CPr.OKFlag=1;
+                CPr.OKFlag = 1;
                 while (LoopKey(key,CPr,3,TrHs2)) begin
                   if (RepSpec.flags[0]==0) then begin
                     if ((DateInRange(CPr.CalcDate,RepSpec.sStartDate,RepSpec.sEndDate))==false) then begin
-                      TrHs2=false;  
+                      TrHs2 = false;  
                     end;
                   end else begin
                     if ((DateInRange(CPr.PaymDate,RepSpec.sStartDate,RepSpec.sEndDate))==false) then begin
-                      TrHs2=false;  
+                      TrHs2 = false;  
                     end;
                   end;
                   if (TrHs2) then begin
-                    testf1=true;  
+                    testf1 = true;  
                     if (RepSpec.flags[2]==1) then begin                  
                       if (CPr.PaymFlag==1) then begin
                         testf1 = false;                     
                       end;  
                     end;                    
                     if (CPr.ContrSerNr!=Contrr.SerNr) then begin
-                      testf1=false;
+                      testf1 = false;
                     end;
                     if (CPr.OKFlag!=1) then begin
-                      testf1=false;
+                      testf1 = false;
                     end;
                     if (CPr.Invalid==1) then begin
-                      testf1=false;
+                      testf1 = false;
                     end;
                     if (GetDelimiter(RepSpec.f3)!=2) then begin
                       if ((frcpr>0)) then begin
@@ -243,167 +263,220 @@ begin
                       end;
                     end;
                     if (testf1) then begin
-                      if (RepSpec.ArtMode==0) then begin //Kokkuv›te
-                        bruto=bruto+CPr.BrutoTotal;
-                        pension=pension+CPr.PensionTotal;
-                        unemplins=unemplins+CPr.UnemplInsTotal;
-                        inctaxfreemin=inctaxfreemin+CPr.IncTaxFreeMinTotal-CPr.AddTaxSumTotal;//ts, 2018/01
-                        inctax=inctax+CPr.IncTaxTotal;
-                        neto=neto+CPr.NetoTotal;
-                        soctax=soctax+CPr.SocTaxTotal;
-                        emplunemplins=emplunemplins+CPr.EmplUnemplInsTotal;
-                        brutototal=brutototal+CPr.BrutoTotal;
-                        pensiontotal=pensiontotal+CPr.PensionTotal;
-                        unemplinstotal=unemplinstotal+CPr.UnemplInsTotal;
-                        inctaxfreemintotal=inctaxfreemintotal+CPr.IncTaxFreeMinTotal-CPr.AddTaxSumTotal;//ts, 2018/01
-                        inctaxtotal=inctaxtotal+CPr.IncTaxTotal;
-                        netototal=netototal+CPr.NetoTotal;
-                        soctaxtotal=soctaxtotal+CPr.SocTaxTotal;
-                        emplunemplinstotal=emplunemplinstotal+CPr.EmplUnemplInsTotal;
-                      end else begin //Detailne
-                        StartFormat(15);
-                        OutString(0,0,Contrr.EmplCode,false);
-                        OutString(2,0,CPr.ContrSerNr,false);
-                        emplname=CPr.Firstname & " " & CPr.Surname;
-                        OutString(3,0,emplname,false);
-                        OutLongInt(4,"DblCalcPayrollVc",CPr.SerNr,false);
-                        if (RepSpec.Media==mtFile) or (RepSpec.Media==mtExcel) then begin
-                          for (i=0;i<ptcnt;i=i+1) begin
-                            ptsum[i]=blankval;
-                          end;
-                          rwcnt=MatRowCnt(CPr);
-                          for (j=0;j<rwcnt;j=j+1) begin
-                            MatRowGet(CPr,j,CPrw);
-                            for (i=0;i<ptcnt;i=i+1) begin
-                              if (CPrw.PaymTypeCode==ptcode[i]) then begin
-                                ptsum[i]=CPrw.BrutoSum;
-                                ptsumtot[i]=ptsumtot[i]+CPrw.BrutoSum;
-                                ptsumtotal[i]=ptsumtotal[i]+CPrw.BrutoSum;
+                      ClearArray(ptsum);
+                      detention = blankval;
+                      if (blank(RepSpec.ObjStr) or (nonblank(RepSpec.ObjStr) and (SetInSet(RepSpec.ObjStr,CPr.ObjCode)))) then begin
+                        CPBrutoTotal = CPr.BrutoTotal;
+                        CPPensionTotal = CPr.PensionTotal;
+                        CPUnemplInsTotal = CPr.UnemplInsTotal;
+                        CPIncTaxFreeMinTotal = CPr.IncTaxFreeMinTotal;
+                        CPAddTaxSumTotal = CPr.AddTaxSumTotal;
+                        CPIncTaxTotal = CPr.IncTaxTotal;
+                        CPNetoTotal = CPr.NetoTotal;
+                        CPSocTaxTotal = CPr.SocTaxTotal;
+                        CPEmplUnemplInsTotal = CPr.EmplUnemplInsTotal;
+                        if (RepSpec.ArtMode==1) and ((RepSpec.Media==mtFile) or (RepSpec.Media==mtExcel)) then begin //Detailne 
+                          rwcnt = MatRowCnt(CPr);
+                          for (i=0;i<rwcnt;i=i+1) begin
+                            MatRowGet(CPr,i,CPrw);
+                            for (j=0;j<ptcnt;j=j+1) begin
+                              if (CPrw.PaymTypeCode==ptcode[j]) then begin
+                                ptsum[j] = CPrw.BrutoSum;
+                                if (ptneto[j]==true) then begin
+                                  ptsum[j] = CPrw.NetoSum; 
+                                  detention = detention - ptsum[j];                           
+                                end;
+                                if (ptneg[j]==true) then begin
+                                  ptsum[j] = -ptsum[j]; 
+                                end;
+                                ptsumtot[j] = ptsumtot[j] + ptsum[j];
+                                ptsumtotal[j] = ptsumtotal[j] + ptsum[j];
                               end;
                             end;
                           end;
-                          v=230;
+                        end;
+                      end else begin
+                        rwcnt = MatRowCnt(CPr);
+                        for (i=0;i<rwcnt;i=i+1) begin
+                          MatRowGet(CPr,i,CPrw);
+                          objects = AddStr(CPr.ObjCode,CPrw.ObjCode,",");
+                          if (SetInSet(RepSpec.ObjStr,objects)) then begin
+                            CPBrutoTotal = CPBrutoTotal + CPrw.BrutoSum;
+                            CPPensionTotal = CPPensionTotal + CPrw.PensionSum;
+                            CPUnemplInsTotal = CPUnemplInsTotal + CPrw.UnemplInsSum;
+                            CPIncTaxFreeMinTotal = CPIncTaxFreeMinTotal + CPrw.IncTaxFreeMinSum;
+                            CPAddTaxSumTotal = CPAddTaxSumTotal + CPrw.AddTaxSum;
+                            CPIncTaxTotal = CPIncTaxTotal + CPrw.IncTaxSum;
+                            CPNetoTotal = CPNetoTotal + CPrw.NetoSum;
+                            CPSocTaxTotal = CPSocTaxTotal + CPrw.SocTaxSum;
+                            CPEmplUnemplInsTotal = CPEmplUnemplInsTotal + CPrw.EmplUnemplInsSum;
+                            if (RepSpec.ArtMode==1) and ((RepSpec.Media==mtFile) or (RepSpec.Media==mtExcel)) then begin //Detailne 
+                              for (j=0;j<ptcnt;j=j+1) begin
+                                if (CPrw.PaymTypeCode==ptcode[j]) then begin
+                                  ptsum[j] = CPrw.BrutoSum;
+                                  if (ptneto[j]==true) then begin
+                                    ptsum[j] = -CPrw.NetoSum; 
+                                    detention = detention + ptsum[j];                           
+                                  end;
+                                  ptsumtot[j] = ptsumtot[j] + ptsum[j];
+                                  ptsumtotal[j] = ptsumtotal[j] + ptsum[j];
+                                end;
+                              end;
+                            end;
+                          end;
+                        end;
+                      end;
+                      if (RepSpec.ArtMode==1) then begin//Detailne                         
+                        StartFormat(15);
+                        OutString(0,0,Contrr.EmplCode,false);
+                        OutString(2,0,CPr.ContrSerNr,false);
+                        emplname = CPr.Firstname & " " & CPr.Surname;
+                        OutString(3,0,emplname,false);
+                        OutLongInt(4,"DblCalcPayrollVc",CPr.SerNr,false);
+                        if (RepSpec.Media==mtFile) or (RepSpec.Media==mtExcel) then begin
+                          v = 230;
                           for (i=0;i<ptcnt;i=i+1) begin
-                            v=v+i;
+                            v = v + i;
                             OutVal(v,0,ptsum[i],M4Val,true);
                           end;
-                          OutVal(420,0,CPr.BrutoTotal,M4Val,true);
-                          OutVal(430,0,CPr.PensionTotal,M4Val,true);
-                          OutVal(440,0,CPr.UnemplInsTotal,M4Val,true);
-                          OutVal(450,0,CPr.IncTaxFreeMinTotal-CPr.AddTaxSumTotal,M4Val,true);//ts, 2018/01
-                          OutVal(460,0,CPr.IncTaxTotal,M4Val,true);
-                          OutVal(470,0,CPr.NetoTotal,M4Val,true);
-                          OutVal(480,0,CPr.SocTaxTotal,M4Val,true);
-                          OutVal(1,0,CPr.EmplUnemplInsTotal,M4Val,true);
-                        end else begin
-                          OutVal(5,0,CPr.BrutoTotal,M4Val,true);
-                          OutVal(6,0,CPr.PensionTotal,M4Val,true);
-                          OutVal(7,0,CPr.UnemplInsTotal,M4Val,true);
-                          OutVal(8,0,CPr.IncTaxFreeMinTotal-CPr.AddTaxSumTotal,M4Val,true);//ts, 2018/01
-                          OutVal(9,0,CPr.IncTaxTotal,M4Val,true);
-                          OutVal(390,0,CPr.NetoTotal,M4Val,true);
-                          OutVal(430,0,CPr.SocTaxTotal,M4Val,true);
-                          OutVal(1,0,CPr.EmplUnemplInsTotal,M4Val,true);
+                        end;
+                        OutVal(5,0,CPBrutoTotal,M4Val,true);
+                        OutVal(6,0,CPPensionTotal,M4Val,true);
+                        OutVal(7,0,CPUnemplInsTotal,M4Val,true);
+                        OutVal(8,0,CPIncTaxFreeMinTotal-CPAddTaxSumTotal,M4Val,true);//ts, 2018/01
+                        OutVal(9,0,CPIncTaxTotal,M4Val,true);
+                        OutVal(390,0,CPNetoTotal+detention,M4Val,true);
+                        OutVal(430,0,CPSocTaxTotal,M4Val,true);
+                        OutVal(1,0,CPEmplUnemplInsTotal,M4Val,true);
+                        if (RepSpec.Media==mtFile) or (RepSpec.Media==mtExcel) then begin
+                          OutVal(1,0,CPNetoTotal,M4Val,true);
                         end;
                         EndFormat;
-                        brutotot=brutotot+CPr.BrutoTotal;
-                        pensiontot=pensiontot+CPr.PensionTotal;
-                        unemplinstot=unemplinstot+CPr.UnemplInsTotal;
-                        inctaxfreemintot=inctaxfreemintot+CPr.IncTaxFreeMinTotal-CPr.AddTaxSumTotal;//ts, 2018/01
-                        inctaxtot=inctaxtot+CPr.IncTaxTotal;
-                        netotot=netotot+CPr.NetoTotal;
-                        soctaxtot=soctaxtot+CPr.SocTaxTotal;
-                        emplunemplinstot=emplunemplinstot+CPr.EmplUnemplInsTotal;
-                        brutototal=brutototal+CPr.BrutoTotal;
-                        pensiontotal=pensiontotal+CPr.PensionTotal;
-                        unemplinstotal=unemplinstotal+CPr.UnemplInsTotal;
-                        inctaxfreemintotal=inctaxfreemintotal+CPr.IncTaxFreeMinTotal-CPr.AddTaxSumTotal;//ts, 2018/01
-                        inctaxtotal=inctaxtotal+CPr.IncTaxTotal;
-                        netototal=netototal+CPr.NetoTotal;
-                        soctaxtotal=soctaxtotal+CPr.SocTaxTotal;
-                        emplunemplinstotal=emplunemplinstotal+CPr.EmplUnemplInsTotal;
                       end;
+                      if (RepSpec.ArtMode==0) then begin//Kokkuv›ttev                         
+                        bruto = bruto + CPBrutoTotal;
+                        pension = pension + CPPensionTotal;
+                        unemplins = unemplins + CPUnemplInsTotal;
+                        inctaxfreemin = inctaxfreemin + CPIncTaxFreeMinTotal - CPAddTaxSumTotal;//ts, 2018/01
+                        inctax = inctax + CPIncTaxTotal;
+                        neto = neto + CPNetoTotal;
+                        soctax = soctax + CPSocTaxTotal;
+                        emplunemplins = emplunemplins + CPEmplUnemplInsTotal;
+                      end;
+                      brutotot = brutotot + CPBrutoTotal;
+                      pensiontot = pensiontot + CPPensionTotal;
+                      unemplinstot = unemplinstot + CPUnemplInsTotal;
+                      inctaxfreemintot = inctaxfreemintot + CPIncTaxFreeMinTotal - CPAddTaxSumTotal;//ts, 2018/01
+                      inctaxtot = inctaxtot + CPIncTaxTotal;
+                      netotot = netotot + CPNetoTotal + detention;
+                      netosum = netosum + CPNetoTotal;
+                      soctaxtot = soctaxtot + CPSocTaxTotal;
+                      emplunemplinstot = emplunemplinstot + CPEmplUnemplInsTotal;
+                      brutototal = brutototal + CPBrutoTotal;
+                      pensiontotal = pensiontotal + CPPensionTotal;
+                      unemplinstotal = unemplinstotal + CPUnemplInsTotal;
+                      inctaxfreemintotal = inctaxfreemintotal + CPIncTaxFreeMinTotal - CPAddTaxSumTotal;//ts, 2018/01
+                      inctaxtotal = inctaxtotal + CPIncTaxTotal;
+                      netototal = netototal + CPNetoTotal + detention;
+                      totalsum = totalsum + CPNetoTotal;
+                      soctaxtotal = soctaxtotal + CPSocTaxTotal;
+                      emplunemplinstotal = emplunemplinstotal + CPEmplUnemplInsTotal;
+                      CPBrutoTotal = blankval;
+                      CPPensionTotal = blankval;
+                      CPUnemplInsTotal = blankval;
+                      CPIncTaxFreeMinTotal = blankval;
+                      CPAddTaxSumTotal = blankval;
+                      CPIncTaxTotal = blankval;
+                      CPNetoTotal = blankval;
+                      CPSocTaxTotal = blankval;
+                      CPEmplUnemplInsTotal = blankval;
                     end;
                   end;
                 end;
               end;
             end;  
-            if (RepSpec.ArtMode==0) and ((bruto!=0) or (neto!=0)) then begin //Kokkuv›te
-              StartFormat(15);
-              OutString(0,0,Emplr.Code,false);
-              OutString(2,0,Contrr.SerNr,false);
-              emplname=Emplr.Firstname & " " & Emplr.Surname;
-              OutString(3,0,emplname,false);
-              OutVal(5,0,bruto,M4Val,true);
-              OutVal(6,0,pension,M4Val,true);
-              OutVal(7,0,unemplins,M4Val,true);
-              OutVal(8,0,inctaxfreemin,M4Val,true);
-              OutVal(9,0,inctax,M4Val,true);
-              OutVal(390,0,neto,M4Val,true);
-              OutVal(430,0,soctax,M4Val,true);
-              OutVal(1,0,emplunemplins,M4Val,true);
-              EndFormat;
-              bruto=0;
-              pension=0;
-              unemplins=0;
-              inctaxfreemin=0;
-              inctax=0;
-              neto=0;
-              soctax=0;
-              emplunemplins=0;
-              emplcnt=emplcnt+1;
+            if (RepSpec.ArtMode==0) then begin //Kokkuv›te
+              if ((bruto!=0) or (neto!=0) or (soctax!=0)) then begin
+                StartFormat(15);
+                OutString(0,0,Emplr.Code,false);
+                OutString(2,0,Contrr.SerNr,false);
+                emplname = Emplr.Firstname & " " & Emplr.Surname;
+                OutString(3,0,emplname,false);
+                OutVal(5,0,bruto,M4Val,true);
+                OutVal(6,0,pension,M4Val,true);
+                OutVal(7,0,unemplins,M4Val,true);
+                OutVal(8,0,inctaxfreemin,M4Val,true);
+                OutVal(9,0,inctax,M4Val,true);
+                OutVal(390,0,neto,M4Val,true);
+                OutVal(430,0,soctax,M4Val,true);
+                OutVal(1,0,emplunemplins,M4Val,true);
+                EndFormat;
+                emplcnt = emplcnt + 1;
+              end;
+              bruto = 0;
+              pension = 0;
+              unemplins = 0;
+              inctaxfreemin = 0;
+              inctax = 0;
+              neto = 0;
+              soctax = 0;
+              emplunemplins = 0;
             end;
           end;
         end;
       end;
     end;
-    if (RepSpec.ArtMode!=0) and ((brutotot!=0) or (netotot!=0)) then begin //Detailne -> tšštaja kokku
-      Black_Divider(130,1);
-      StartFormat(15);
-      OutString(0,0,"",false);
-      OutString(2,0,"",false);
-      OutString(3,0,"",false);
-      OutString(4,0,USetStr(20537),false);
-      if (RepSpec.Media==mtFile) or (RepSpec.Media==mtExcel) then begin
-        v=230;
-        for (i=0;i<ptcnt;i=i+1) begin
-          v=v+i;
-          OutVal(v,0,ptsumtot[i],M4Val,true);
+    if (RepSpec.ArtMode!=0) then begin //Detailne -> tšštaja kokku
+      if ((brutotot!=0) or (netotot!=0) or (soctaxtot!=0)) then begin
+        Black_Divider(130,1);
+        StartFormat(15);
+        OutString(0,0,"",false);
+        OutString(2,0,"",false);
+        OutString(3,0,"",false);
+        OutString(4,0,USetStr(20537),false);
+        if (RepSpec.Media==mtFile) or (RepSpec.Media==mtExcel) then begin
+          v = 230;
+          for (i=0;i<ptcnt;i=i+1) begin
+            v = v + i;
+            OutVal(v,0,ptsumtot[i],M4Val,true);
+          end;
+          OutVal(420,0,brutotot,M4Val,true);
+          OutVal(430,0,pensiontot,M4Val,true);
+          OutVal(440,0,unemplinstot,M4Val,true);
+          OutVal(450,0,inctaxfreemintot,M4Val,true);
+          OutVal(460,0,inctaxtot,M4Val,true);
+          OutVal(470,0,netotot,M4Val,true);
+          OutVal(480,0,soctaxtot,M4Val,true);
+          OutVal(1,0,emplunemplinstot,M4Val,true);
+          OutVal(1,0,netosum,M4Val,true);
+        end else begin
+          OutVal(5,0,brutotot,M4Val,true);
+          OutVal(6,0,pensiontot,M4Val,true);
+          OutVal(7,0,unemplinstot,M4Val,true);
+          OutVal(8,0,inctaxfreemintot,M4Val,true);
+          OutVal(9,0,inctaxtot,M4Val,true);
+          OutVal(390,0,netotot,M4Val,true);
+          OutVal(430,0,soctaxtot,M4Val,true);
+          OutVal(1,0,emplunemplinstot,M4Val,true);
         end;
-        OutVal(420,0,brutotot,M4Val,true);
-        OutVal(430,0,pensiontot,M4Val,true);
-        OutVal(440,0,unemplinstot,M4Val,true);
-        OutVal(450,0,inctaxfreemintot,M4Val,true);
-        OutVal(460,0,inctaxtot,M4Val,true);
-        OutVal(470,0,netotot,M4Val,true);
-        OutVal(480,0,soctaxtot,M4Val,true);
-        OutVal(1,0,emplunemplinstot,M4Val,true);
-      end else begin
-        OutVal(5,0,brutotot,M4Val,true);
-        OutVal(6,0,pensiontot,M4Val,true);
-        OutVal(7,0,unemplinstot,M4Val,true);
-        OutVal(8,0,inctaxfreemintot,M4Val,true);
-        OutVal(9,0,inctaxtot,M4Val,true);
-        OutVal(390,0,netotot,M4Val,true);
-        OutVal(430,0,soctaxtot,M4Val,true);
-        OutVal(1,0,emplunemplinstot,M4Val,true);
+        EndFormat;
+        StartFormat(15);
+        EndFormat;
+        Gray_Divider(0,1);
+        emplcnt = emplcnt + 1;
       end;
-      EndFormat;
-      StartFormat(15);
-      EndFormat;
-      Gray_Divider(0,1);
       for (i=0;i<ptcnt;i=i+1) begin
-        ptsumtot[i]=blankval;
+        ptsumtot[i] = blankval;
       end;
-      brutotot=0;
-      pensiontot=0;
-      unemplinstot=0;
-      inctaxfreemintot=0;
-      inctaxtot=0;
-      netotot=0;
-      soctaxtot=0;
-      emplunemplinstot=0;
-      emplcnt=emplcnt+1;
+      brutotot = 0;
+      pensiontot = 0;
+      unemplinstot = 0;
+      inctaxfreemintot = 0;
+      inctaxtot = 0;
+      netotot = 0;
+      netosum = 0;
+      soctaxtot = 0;
+      emplunemplinstot = 0;
     end;
   end;
   if ((RepSpec.ArtMode!=0) and (emplcnt>1)) then begin //Detailne Kokku
@@ -414,9 +487,9 @@ begin
      OutString(3,0,USetStr(20537),false);
     OutString(4,0,"",false);
     if (RepSpec.Media==mtFile) or (RepSpec.Media==mtExcel) then begin
-      v=230;
+      v = 230;
       for (i=0;i<ptcnt;i=i+1) begin
-        v=v+i;
+        v = v + i;
         OutVal(v,0,ptsumtotal[i],M4Val,true);
       end;
       OutVal(420,0,brutototal,M4Val,true);
@@ -427,6 +500,7 @@ begin
       OutVal(470,0,netototal,M4Val,true);
       OutVal(480,0,soctaxtotal,M4Val,true);
       OutVal(1,0,emplunemplinstotal,M4Val,true);
+      OutVal(1,0,totalsum,M4Val,true);
     end else begin
       OutVal(5,0,brutototal,M4Val,true);
       OutVal(6,0,pensiontotal,M4Val,true);

@@ -43,10 +43,10 @@ function boolean AccGroupDClassPaymTypeCodeEFAfter(integer wn,integer rownr,inte
     GetWindowRecord(wn,AGr);
     DeselectWindow(wn,false);
     MatRowGet(AGr,rownr,AGrw);
-    ptcode=AGrw.PaymTypeCode;
+    ptcode = AGrw.PaymTypeCode;
     ClearRow(AGr,AGrw,1);
-    AGrw.PaymTypeCode=ptcode;
-    AGrw.Name=GetPaymTypeName(ptcode);
+    AGrw.PaymTypeCode = ptcode;
+    AGrw.Name = GetPaymTypeName(ptcode);
     MatRowPut(AGr,rownr,AGrw);
     PutWindowRecord(wn,AGr);
   end;

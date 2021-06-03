@@ -12,7 +12,7 @@ begin
   end else begin
     ATr.Code = "";
   end;
-  ATr.AbsTypeFlag=2;
+  ATr.AbsTypeFlag = 2;
   
   AbsTypeVcRecordDefaults = res; 
   return;
@@ -40,12 +40,12 @@ begin
   record AbsTypeVc AT3r;
   LongInt updatemode,insertmode;
   
-  insertmode=1;
-  updatemode=2;
+  insertmode = 1;
+  updatemode = 2;
   res = 0;
   if (blank(ATr.Code)) then begin
     if (stat==updatemode) and nonblank(AT2r.Code) then begin
-      ATr.Code=AT2r.Code;
+      ATr.Code = AT2r.Code;
     end else begin
       if (GetNextAbsTypeNr(ATr.Code)) then begin end;
     end;

@@ -1,3 +1,4 @@
+external function LongInt FindLocation(string);
 external function string 60 AddStringToStringList(string,string);
 external function Boolean FindLocationAccRow(string,row LocationAccBlock);
 external function Integer CountObjects(string);
@@ -388,8 +389,9 @@ LORDelWithTBIV:;
 end;
 
 global
-procedure ORVc_PasteLocation(var record ORVc ORr,Integer rownr)
+function LongInt ORVc_PasteLocation2(var record ORVc ORr,Integer rownr,var string errlocation)
 begin
+  LongInt res;
   row ORVc ORrw;
   Integer i,rwcnt;
   Integer exportflag;
@@ -400,13 +402,26 @@ begin
   Time blankt;
   row LocationAccBlock LAbrw;
   
+  res = 0;
   if (rownr<0) then begin
     rwcnt = MatRowCnt(ORr);
+    if (rwcnt==0) then begin
+      res = FindLocation(ORr.Location);  
+      if (res!=0) then begin 
+        errlocation = ORr.Location;
+        goto LORVc_PasteLocation2; 
+      end;
+    end;
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(ORr,i,ORrw);
       location = ORrw.Location;
       if (blank(location)) then begin
         location = ORr.Location;
+      end;
+      res = FindLocation(location);  
+      if (res!=0) then begin 
+        errlocation = location;
+        goto LORVc_PasteLocation2; 
       end;
 /*
       exportflag = ORr.ExportFlag;
@@ -438,6 +453,11 @@ begin
     if (blank(location)) then begin
       location = ORr.Location;
     end;
+    res = FindLocation(location);  
+    if (res!=0) then begin 
+      errlocation = location;
+      goto LORVc_PasteLocation2; 
+    end;
 /*
     exportflag = ORr.ExportFlag;
     GetItemPriceDiscount3(ORrw.ArtCode,ORrw.Quant,INr,ORr.CurncyCode,
@@ -461,6 +481,17 @@ begin
       end;
     end;
   end;
+LORVc_PasteLocation2:;  
+  ORVc_PasteLocation2 = res;
+  return;
+end;
+
+global
+procedure ORVc_PasteLocation(var record ORVc ORr,Integer rownr)
+begin
+  string 255 tstr;
+  
+  ORVc_PasteLocation2(ORr,rownr,tstr);
   return;
 end;
 
@@ -470,8 +501,11 @@ begin
   record UserVc Userr;
   string 255 salesman;
   Integer pos;
+  record IVTBlock IVTb;
+  record MainStockBlock MSb;
     
   if (HasSalesmanChanged(ORp.SalesMan,oldsalesmen)) then begin
+    BlockLoad(IVTb);
     pos = 0;
     ExtractObj(oldsalesmen,pos,salesman);
     while (nonblank(salesman)) begin
@@ -487,8 +521,18 @@ begin
       if (ReadFirstMain(Userr,1,true)) then begin
         ORp.SalesGroup = AddStringToStringList(ORp.SalesGroup,Userr.SalesGroup);                
         ORp.Objects = AddObjectToObjectList(ORp.Objects,Userr.PersObjx);        
+        if (IVTb.CurOurContactFromSalesman) then begin
+          ORp.OurContact = Userr.CurOurContact;
+        end;
+        if (IVTb.LocationFromSalesman) then begin
+          ORp.Location = Userr.Location;
+        end;        
       end;
       ExtractObj(ORp.SalesMan,pos,salesman);
+    end;
+    if (blank(ORp.Location)) then begin
+      BlockLoad(MSb);
+      ORp.Location = MSb.MainStock;
     end;
   end;
   return;

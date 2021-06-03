@@ -1,0 +1,598 @@
+remote function Boolean TaskExistsRemote(string);
+external procedure SetupColumWithKeypadWindow(var real,var real,var real,var real,var real,var real,var real);
+external function Integer POSFontSize();
+external function string 255 F_Label(string);
+external procedure SplitButton(LongInt,LongInt,LongInt,LongInt,LongInt,string,string,string,string,LongInt);
+external procedure POSKeyPad(LongInt,LongInt,LongInt,LongInt,LongInt,string,LongInt);
+external function string 255 GetChangePaswordLink();
+remote function UUID GetServerUUIDRemote();
+external function string 255 RemainingEinvoicesQuantity;
+external function Boolean DisplayAdditionalFields();
+remote function Integer MailAcceptanceStatus(LongInt);
+external function Boolean IsMoveToCloud(record SetupStatusBlock);
+external function Boolean IsMoveToCloudB();
+//external function Boolean IsCloudControllerClient(); //##cc
+external function string 255 GetCurrentStoreName();
+external function Boolean CompaniesInClientMode();
+external function Boolean ProductInDemoMode();
+remote function string 255 GetCompanyShortCode(string);
+external function Boolean AnyModuleAvailable();
+external function Boolean AcceptanceStatusColumnTest(string);
+external function Integer FlipCharCode(Integer,Integer);
+external procedure RateField(real,real,real,string,integer,string,boolean,real,real,string,boolean);
+external function boolean AddBicToMasterWindow(integer,var real,var real,real,real,real,real);
+external function Boolean IsIntEnabActive(var string,var string,var Boolean,var string);
+external function Boolean TouchScreenLookVertical();
+external procedure SysEClass_Tool(Integer,var real,var real);
+external procedure GTransEClass_Tool(Integer,var real,var real);
+external procedure GTrans2EClass_Tool(Integer,var real,var real,var real);
+external procedure GBaseEClass_Tool(Integer,var real,var real);
+external procedure TransGenVClass_Tool(Integer,var real,var real);
+external procedure GetCurUser(var record UserVc);
+external function string 60 UserDefined(string,string);
+external function string 60 RestPMCashModePayMode();
+external function string 255 MasterBannerURL();
+external procedure ItemStatusUserSettings(string,var Boolean,var Boolean,var Boolean,var Boolean,var Boolean,var Boolean,var Boolean,var Boolean,var Boolean,var Boolean,var Boolean,var Boolean,var Boolean,var Boolean);
+external function Boolean AllowedInCountry(integer);
+external function Integer ResourceWindowResourceType();
+external function Boolean ResPlan_Rental();
+external function Boolean ResPlan_ProdOperations();
+external function Boolean ReadPOSButtons(string,string,longint,var string,var string,var string,var record POSButtonsVc);
+external function Boolean ReadNPTSWindowData(string,string,longint,string,string,Date,Time,var Boolean,var string,var string,var string,var record POSButtonsVc);
+external function Boolean TouchScreenLook();
+external procedure ExtractObj(string,var Integer,var string);
+external function Boolean IsSessionOpen(string,string,Date,Time);
+external procedure CntNPTSPaymentCurrencies(var Array string,var Array string,var Array Integer,var Array string,var Integer);
+remote procedure CntPOSCurrencies(var Array string,var Array Boolean,var Integer);
+external function Boolean CheckOffLineRecords(Boolean);
+external function string 60 TileUserDefined(string,Integer,var Integer);
+external function Boolean CUVATNrColumn;
+external function Integer GetInternetEnablerCountry();
+external function Integer CntVarietyCode(Integer,var Array string);
+external function Integer VarietyMatMax(Integer);
+external function Boolean UseTaxTemplatesforTaxCalc();
+remote procedure TablesViewWClassDo(record LocalMachineBlock,string,Array string,Array string,Array string,Array string,Array Integer,var Integer,var LongInt);
+external function string 20 GetMenuCode(string);
+external procedure DrawModifierButtons(var Integer);
+remote procedure ForkLiftQueueArray(string,string,var Array string,var Array string,var Array string,var Array string,var Array val,var Array Integer,var Array string,var Integer,Boolean,LongInt,LongInt,string);
+
+external function Boolean DisplayLoginButtons();
+external function Integer LoginShortcutsLines(Integer);
+external function Integer LoginShortcutsPos(Real,Integer);
+
+external procedure DefineTTRRowTypes(Integer);
+external function real ItemButtons(string,Integer);
+external procedure HWStoreWClassAddProducts(Integer);
+external function Boolean HasYodlee();
+external function Boolean HasAvalara();
+external function Boolean HasCharts();
+external function Boolean HasDetailedCharts();
+external function Boolean HasSiteMinder();
+external function Boolean HasNewRegistration();
+external function Boolean ActivityIsForAcceptanceOrFYI(record ActVc,Boolean,Boolean);
+// TravelLog
+external function Integer LoginShortcuts();
+external function Boolean TestConfigurationEnabler(string);
+remote function Integer CustomerSalesPaymentTermType(string);
+// POS Standalone
+external function Boolean DefCustCodeSetup();
+// in-apps
+external function Boolean HasInAppsAvailable();
+external function Integer CountCountries();
+
+// Language functions EST
+external function Boolean DisplayLoginKeyPad_EST();
+external function string 255 VATZoneEditFieldLabel_EST(Integer);
+external function real VATZoneButtonsLabelsEST(real,real,real,real);
+external procedure LoginButtons2_EST(Real,Real);
+external procedure FORMDEF_EST();
+external function string 255 DemoMsgWClassTitle_EST(Boolean,Boolean);
+external procedure TBEClassDef_EST();
+external function string 255 VATZoneNameEST();
+external procedure TSERW_EST();
+external procedure TSERWNT_EST();
+external procedure TSERWTouch_EST();
+external procedure TSERWTEST_EST();
+external procedure INVFORM_EST(Boolean);
+external procedure DisplayRecordDetails_EST(LongInt,LongInt,string,date,time,string,string,string,string,string,string,string,string,string,string,string,Integer,string,string,string,val,string,Boolean,string,string);
+external procedure DrawPOSInterface2_EST(string,string,record POSButtonsVc,string,Integer,Integer);
+external procedure DisplayRecordDetailsCustDisplay_EST(LongInt,LongInt,string,date,time,string,string,string,string,string,string,Integer,string,string,string,val);
+external function string 255 ResDayWClassWindowTitle_EST();
+external function string 255 ResMonWClassWindowTitle_EST();
+external function string 255 RTMonWClassWindowTitle_EST();
+external procedure SetupNightAuditWindowControls_EST(Boolean);
+external procedure CURClassDefinitionEST();
+external function real DrawPaymentModesButtons_IV_EST(real);
+external function real FunctionButtons_EST(string);
+external procedure CreditCardWindowHeader_EST(Boolean,Boolean,Real);
+external procedure CreditCardWindowButtons_EST(string,string,real);
+external procedure CreditCardWindowInvoiceDetail_EST(Real);
+external procedure CreditCardWindowDeliveryDetail_EST(Real);
+external function real DrawPaymentModesButtons_EST();
+external procedure DrawBarMenuTiles_EST(string);
+external procedure DrawRestPMOtherPay_EST();
+external procedure DisplayRecordDetailsRA_EST2(LongInt,LongInt,string,date,time,string,string,string,string,string,string,Integer,string,LongInt,Date,string,LongInt,string,string); //ENG - DisplayRecordDetailsRA_ENG2, so here too //##cc
+external procedure DrawModifierButtons2_EST(var integer,var integer);
+external procedure OKCancel_EST();
+external procedure DefineElearningURLCacheLClass_EST();
+external procedure DefineElearningURLCacheDClass_EST();
+external function real TravelLogDeductions_EST(real,real);
+external procedure LoginButtons_EST(Real);
+external procedure FORMDEF2_EST();
+external procedure FORMDEF3_EST();
+external procedure ARS2RClass_EST();
+external procedure ALLVATRClass_EST();
+
+external function Boolean IsStandardUnused();
+external function Boolean IsEnterprise();
+external function Boolean StandardHansa();
+external function Boolean HasATOL();
+
+external function Boolean HasAccPeriods();
+external function Boolean HasAccessGroups();
+external function Boolean HasAddFee();
+external function Boolean HasApprovals();
+external function Boolean HasCCPayments();
+external function Boolean HasAdvancedAccounting();
+external function Boolean HasAdvancedCRM();
+external function Boolean HasAdvancedPricing();
+external function Boolean HasAdvancedProduction();
+external function Boolean HasAdvancedStock();
+external function Boolean HasAged();
+external function Boolean HasBar();
+external function Boolean HasBase2();
+external function Boolean HasBranch();
+external function Boolean HasBuyBack();
+external function Boolean HasCategories();
+//external function Boolean HasConsigmentStock();
+external function Boolean HasCommunicator();
+external function Boolean HasConsignmentStock();
+external function Boolean HasContactClassification();
+external function Boolean HasContactRelations();
+external function Boolean HasConsolidation();
+external function Boolean HasCountryPerCustomer();
+external function Boolean HasCreditLimit();
+external function Boolean HasCustItem();
+external function Boolean HasCustomerSearchKey();
+external function Boolean HasCustomerStatusReport();
+external function Boolean HasDownpayments();
+external function Boolean HasDefineColumns();
+external function Boolean HasDeliveryAddress();
+external function Boolean HasDepartments();
+external function Boolean HasETaxDocuments();
+external function Boolean HasEInvoicing();
+external function Boolean HasEndorsedChecks();
+external function Boolean HasExtraNLComment();
+external function Boolean HasExtTax();
+external function Boolean HasFavouriteActTypes();
+external function Boolean HasFiscalPrinter();
+external function Boolean HasFormEditor();
+external function Boolean HasFreightAdvanced();
+external function Boolean HasHideCostPrice();
+external function Boolean HasHotelInterface();
+external function Boolean HasGuestUserDefined();
+external function Boolean HasJewelleryInterface();
+external function Boolean HasIncomeAndExpenseBook();
+external function Boolean HasIOUChecks();
+external function Boolean HasItemClassification();
+external function Boolean HasItemGroups();
+external function Boolean HasKPIs();
+external function Boolean HasLanguages();
+external function Boolean HasLimitedAccess();
+external function Boolean HasLocalMachines();
+external function Boolean HasLoyaltyCards();
+external function Boolean HasMailTags();
+external function Boolean HasMainPartner();
+external function Boolean HasMultiCurrency();
+external function Boolean HasMultiLocations();
+external function Boolean HasNLBudget();
+external function Boolean HasNLBudgetClass();
+external function Boolean HasObjects();
+external function Boolean HasInvoiceOfficialSerNr();
+external function Boolean HasOfficialSerNr();
+external function Boolean HasOrderClasses();
+external function Boolean HasPreferedOfficialSerNr();
+external function Boolean HasNumberSeries();
+external function Boolean HasPersons();
+external function Boolean HasPocketScreen();
+external function Boolean HasPositions();
+external function Boolean HasPrepayments();
+external function Boolean HasProjects();//very strange tag
+external function Boolean HasPriceLists();
+external function Boolean HasQualityControl();
+external function Boolean HasReconLevel2();
+external function Boolean HasReminderLevel();
+external function Boolean HasRemoteBackup();
+external function Boolean HasResourceDisplayGroups();
+external function Boolean HasRussianPrepayment();
+external function Boolean HasRetGoodsToSupp();
+external function Boolean HasReturnedGoods();
+external function Boolean HasRoomPackages();
+external function Boolean HasRoomTypes();
+external function Boolean HasRoute();
+external function Boolean HasSalesman();
+external function Boolean HasSalesmanBonus();
+external function Boolean HasSalesGroup();
+external function Boolean HasSecondQuantity();
+external function Boolean HasSerialNumbers();
+external function Boolean HasServerInCloud();
+external function Boolean HasSettlementDiscount();
+external function Boolean HasSimulations();
+external function Boolean hasSimAccruals();
+external function Boolean HasSkypeConnection();
+external function Boolean HasSIPServerConnection();
+external function Boolean HasStrAsSignFType();
+external function Boolean HasTouchScreenDevice();
+external function Boolean HasTaxMatrix();
+external function Boolean HasTestFeatures();
+external function Boolean HasMetroTestFeatures();
+external function Boolean HasWorkOrders();
+external function Boolean HasThrouLocation();
+external function Boolean HasTouchScreenLook();
+external function Boolean HasTREO();
+external function Boolean HasVarieties();
+external function Boolean HasVATZone();
+external function Boolean HasWithholdingTax();
+external function Boolean HasWithholdingTaxAdvanced();
+external function Boolean HasWorkOrders();
+external function Boolean HasWorkflowOverview();
+
+external function Boolean HasStandardCRM();
+external function Boolean HasStandardOrganizer();
+external function Boolean HasStandardCommunicator();
+
+external function Boolean HasEMail();
+external function Boolean HasExternalEMail();
+
+external function Boolean HasModMForms();
+external function Boolean HasModAT2();
+external function Boolean HasModBA();
+external function Boolean HasModCheck();
+external function Boolean HasModCL();
+external function Boolean HasModCO();
+external function Boolean HasModCons();
+external function Boolean HasModCourses();
+external function Boolean HasModCredMan();
+external function Boolean HasModCRM();
+external function Boolean HasModEDI();
+external function Boolean HasModExp();
+external function Boolean HasModHotel();
+external function Boolean HasModHRM();
+external function Boolean HasModIN();
+external function Boolean HasModIntStock();
+external function Boolean HasModNL();
+external function Boolean HasPaymentGateway();
+external function Boolean HasModPO();
+external function Boolean HasModPOS();
+external function Boolean HasModPL();
+external function Boolean HasModPOProg();
+external function Boolean HasModPP();
+external function Boolean HasModProd();
+external function Boolean HasModQT();
+external function Boolean HasModRent();
+external function Boolean HasModRest();
+external function Boolean HasModRsrt();
+external function Boolean HasModSO();
+external function Boolean HasModSL();
+external function Boolean HasModSVO();
+external function Boolean HasModTS();
+external function Boolean HasModWHM();
+external function Boolean HasModDI();
+external function Boolean UsePostOKButton();
+external function Boolean HasBankImport();
+external function Boolean HasPLIntegratedWithNL();
+external function Boolean HasSLIntegratedWithNL();
+external function Boolean HasIntegratedNL();
+external function Boolean HasConsStockMoveInvoices();
+external function Boolean HasSingleStartingModule();
+external function Boolean HasBoughtAdditionalModules();
+external function Boolean HasNavCentreBanner();
+external function Boolean HasClockInClockOut();
+external function Boolean HasResetPassword();
+external function Boolean IsASPVersion();
+external function Boolean FreightCompanyIsFedex(string);
+
+//Bk, "Süsteemi teade"
+//Bk, "Reg. nr."
+//Bk, "Hank. Reg. nr."
+//Bk, SpecialMenu("PDFi päring"
+//Bk, SpecialMenu("Kulutus"
+window VEIVDClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real f,h,h1,h2,h3,t,v,vm,vs;
+  WindowBegin("Tarnija e-arve",VEIVDClass,CGview,-);
+  //Bk - start KB 20.05.2019
+  SetWRect(20,80,770,420);
+  //Bk - end
+  Sizeable(-1,-1,0,0);
+  UseView(VEIVVc);
+  ActiveFieldOnNew("OurCustCode");  
+  CommunicateButton;
+  FormName(VEIVForm);
+  vs=20;
+  Tile(0,48+22,false,"",OurCustCode);
+  EditField(75,vm=(v=6), 82,"Nr.",Normal,SerNr,false,TSerSClass);
+  EditField(316,v,95, "Tarnija arve nr.",Normal,VESerNr,false,0);
+  EditField(550,v,95, "#Supplier# arve nr 2",Normal,InvoiceNr,false,0);
+  EditField(75,v+=vs,316+20,"Nimi",ViewOnly,VECompName,false,0);
+  EditField(550,v,95, "Versiooni nr.",Normal,VersionNr,false,0);
+  EnterSkip(PayDeal);
+//  EditField(h=216,v=vm,-40,"Name",Normal,Addr0,false,0);
+  v = v+24;
+  TileButton(1,"Tingimused");
+  TileButton(2,"Artiklid");
+  TileButton(3,"Tunnused");
+  TileButton(4,"Arve aadress");
+  TileButton(5,"Läh. aadress");
+  TileButton(6,"Meie andmed");
+  TileButton(7,"Lisainfo");
+  TileButton(8,"Tarnija andmed");
+//  CheckBox(210,v,0,"OK",OKFlag);
+  Tile(1,92,false,"1",InvDate);
+  vs = 20; h1 = 110; h2 = 300; h3 = 480;
+  EditField(h1,vm=(v=6),82,"Arve kuupäev",Normal,InvDate,false,PasteCurDate);
+  EditField(h1,v+=vs,35,"Tasumistingimus",Normal,PayDeal,false,PDSClass);//PDMSClass);
+  EditField(h1,v+=vs,82,"Laekumistähtaeg",Normal,PayDate,false,PasteCurDate);
+  EditField(h1,v+=vs,82,"Kande kp.",Normal,TransDate,false,PasteCurDate);
+  EditField(h2,v, 135,"Tarnija esindaja",Normal,ClientContact,false,ContactSClass);
+  EditField(h2,v=vm,135,"Meie esindaja",Normal,OurContact,false,0);
+  EditField(h3,v,50,"Isik",Normal,SalesMan,false,0); //Bk
+  EditField(h2,v+=vs,135,"Tas.ting tekst",Normal,pdComment,false,0);
+  EditField(h2,v+=vs,135,"Ametlik seerianr.",Normal,OfficialSerNr,false,LegalInvNrSClass);
+  
+  //Bk - start KB 11.03.2019 - x pos
+  ButtonFrame(h3+75,v=vm+15,140,2,"Hetkeseis");
+  RadioButton(h3+75,v,1,0,"OK",OKStatus); 
+  RadioButton(h3+75,v+=16,2,0,"Tagasi lükatud",OKStatus); 
+  //Bk - end
+  EditField(h3+65,v+=29,-40,"Tag.lükk. põhjus",Normal,RejectReason,false,0); 
+  EditField(h1,v+vs,-40,"Süsteemi teade",Normal,Footer2,false,0);//Bk, reused ts - 2018/05
+  EnterSkip(Math);
+  Tile(2,190,true,"2",Math);
+  EditField(65,-41,50,"Valuuta",Normal,CurncyCode,false,CurncyCodeSClass);
+  EditField(190,-41,70,"Transport",Normal,FrPrice,true,0);
+  EditField(190,-21,70,"Lisamaks",ViewOnly,TAX1Sum,true,0);
+  EditField(310,-41,80,"KM",ViewOnly ,Sum3,true,0);
+  EditField(310,-21,80,"Maks 2",ViewOnly,TAX2Sum,true,0);
+  EditField(440,-21,95,"Baas",ViewOnly,BaseSum4,true,0);
+  EditField(-133,-41,95,"Summa",ViewOnly ,Sum1,true,0);
+  EditField(-133,-21,95,"KOKKU",ViewOnly ,Sum4,true,0);
+  v = 24;
+  MatrixBegin(4,v,-50,-49,-,200);
+  MatTypedRow(stp);
+  Flip(0);
+  MatCol(t=1,32,"Tarn.art.",0,VEArtCode,false,PISClass);
+  //Bk - start KB 20.05.2019
+  MatCol(t,134,"T.kogus",0,VEQuant,true,0);
+  //Bk - end
+  EnterSkip(VEArtCode);
+  MatText(t=3,32,"Kreedit arvele",true);
+  MatCol(t,208,"",0,VEOrdRow,false,ARSClass);
+  MatCol(t,-216,"",0,VESpec,false,0);//MatText(t,-216,"",true);
+  MatText(t=4,32,"Viivis",true);
+  MatCol(t,98,"",0,VEArtCode,false,0);
+  MatCol(t,153,"",0,VEQuant,true,0);
+  MatCol(t,188,"",0,VESpec,false,0);
+  MatText(t=5,32,"Ettemaks",true);
+  MatColTL(t,122,"",0,-1,ViewOnly,0,VEArtCode,true,0); 
+  MatColTL(t,188,"",0,-1,ViewOnly,0,VEQuant,true,0);
+  MatCol(t,238,"",0,VESpec,false,0);
+  MatColTL(t,-170,"",0,-1,Normal,0,VESum,true,0); //?? TL?
+  MatCol(t,-45,"",0,VEVATCode,true,0);
+  MatText(t=6,32,"Ettemaks nr.",true);
+  MatCol(t,170,"",0,VECUPNr,true,ARPaySClass);
+  MatCol(t,-300,"",0,VESpec,false,0);
+  MatCol(t,-170,"",0,VEPrice,true,0);// Price holds the VAT sum, Recipe holds the date of prepaym. 
+  MatCol(t,-100,"",0,VESum,true,0);
+  MatText(t=7,32,"Laen",true);
+  MatCol(t,-110,"",0,VESum,true,0);
+  MatCol(t,-45,"",0,VEVATCode,false,VATCodeSClass);
+  MatText(t=8,32,"Laenuint.",true);
+  MatCol(t,-110,"",0,VESum,true,0);
+  MatCol(t,-45,"",0,VEVATCode,false,VATCodeSClass);
+  MatText(t=9,32,"Vahesumma",true);
+  MatCol(t,100,"",0,VESpec,false,0);
+  MatCol(t,-140,"Summa",0,VESum,true,0);
+  MatText(t=10,32,"See ja kõik järgnevad read on väljatrükil varjatud",false);
+  MatText(t=11,32,"K",true);
+  MatCol(t,47,"Artikkel",0,VEArtCode,false,PISClass);
+  MatCol(t,94,"Kogus",0,VEQuant,true,0);
+  MatText(t=12,32,"Kinnipidamine",true);
+  MatCol(t,188,"",0,VESpec,false,0);
+  MatColTL(t,-170,"",0,-1,ViewOnly,0,VESum,true,0); //?? TL?
+  MatCol(t,-45,"",0,VATCode,false,VATCodeSClass);
+  MatText(t=13,32,"KK",true);
+  MatCol(t,-316,"",0,VESpec,false,0);
+  MatCol(t,-84,"Summa",0,VESum,true,0);
+  MatCol(t,-45,"",0,VEVATCode,false,VATCodeSClass);
+  MatText(t=14,32,"S.KK",true);
+  MatCol(t,-316,"",0,VESpec,false,0);
+  MatCol(t,-84,"Summa",0,VESum,true,0);
+  MatCol(t,-45,"",0,VEVATCode,false,VATCodeSClass);
+  MatText(t=15,32,"SULARAHA",true);
+  MatCol(t,68,"Summa",0,VESum,true,0);
+  MatCol(t,-280,"Kirj",0,VESpec,false,0);
+  MatText(t=16,32,"KrK",true);
+  MatCol(t,58,"Summa",0,VESum,true,0);
+  MatText(t=17,32,"Päis",true);
+  MatCol(t,100,"",0,VESpec,false,0);
+  // t=18
+  // t=19
+  // t=20
+  // t=21
+  // t=22
+  // t=23
+  // t=24
+  MatText(t=101,32,"KM Kokkuvõte",true);
+  MatCol(t,188,"",0,VESpec,false,0);
+  MatCol(t,-310,"",ViewOnly,VEVATPrc,true,0);
+  MatCol(t,-240,"",ViewOnly,VEPrice,true,0);
+  MatCol(t,-170,"",ViewOnly,VESum,true,0);
+  MatCol(t,-45,"",0,VATCode,false,VATCodeSClass);
+  MatText(t=102,32,"Osamakse",true);
+  MatCol(t,188,"",0,VESpec,false,0);
+  MatCol(t,-310,"",ViewOnly,VEServiceDelDate,true,0);
+  MatCol(t,-230,"",ViewOnly,VEPrice,true,0);
+  MatCol(t,-150,"",ViewOnly,VESum,true,0);
+  MatCol(t,-70,"",ViewOnly,VEVATSum,true,0);
+  Flip(1);
+  //Bk - start KB 20.05.2019
+  MatCol(t=1,184,"Nimetus",0,VESpec,false,0);
+  //Bk - end
+  MatCol(t,-325,"Ühikuhind",0,VEPrice,true,0);
+  MatCol(t,-265,"%",0,VEvRebate,true,0);
+  MatCol(t,-230,"Summa",0,VESum,true,0);
+  MatCol(t,-150,"Kulukonto",0,CostAcc,false,AccSClass);
+  MatCol(t,-100,"KM %",0,VEVATPrc,true,0);
+  MatCol(t,-45,"T.KM-k",0,VEVATCode,true,0);
+  MatCol(t=4,-260,"",0,VEOrdRow,true,0);
+  MatCol(t,-135,"",0,VEvRebate,true,0);
+  MatCol(t,-100,"",0,VESum,true,0);
+  MatCol(t=11,144,"Nimetus",0,VESpec,false,0);
+  MatCol(t,-235,"Ühikuhind",0,VEPrice,true,0);
+  MatCol(t,-135,"%",0,VEvRebate,true,0);
+  MatCol(t,-100,"Summa",0,VESum,true,0);
+  Flip(2);
+  //Bk - start KB 20.05.2019
+  MatCol(t=1,184,"Nimetus",0,VESpec,false,0);
+  //Bk - end
+  MatCol(t,-280,"Seerianr.",0,VESerialNr,false,SerialNrSClass);
+  MatCol(t,-180,"Hinnafaktor",0,VEPriceFactor,true,0);
+  MatCol(t,-100,"Tagatisraha",0,VERepaExVAT,true,0);
+  MatCol(t=11,144,"Nimetus",0,VESpec,false,0);
+  MatCol(t,-350,"Seerianr.",0,VESerialNr,false,SerialNrSClass);
+  MatCol(t,-250,"KM määr",0,VEVATPrc,true,0);
+  MatCol(t,-180,"Hinnafaktor",0,VEPriceFactor,true,0);
+  MatCol(t,-100,"Tagatisraha",0,VERepaExVAT,true,0);
+  Flip(3);
+  //Bk - start KB 20.05.2019
+  MatCol(t=1,184,"Artikkel",0,ArtCode,false,INSClass);
+  //Bk - end
+  MatCol(t,-400,"Kulukonto",0,CostAcc,false,AccSClass);
+  MatCol(t,-300,"Objektid",0,Objects,false,ObjSClass);
+  MatCol(t,-160,"Kogus",0,Quant,false,0);
+  MatCol(t,-100,"KM %",0,VEVATPrc,true,0);
+  MatCol(t,-45,"KM-k",0,VATCode,false,VATCodeSClass);
+/*  
+  Flip(5);
+  MatCol(t=1,144,"Description",0,Spec,false,0);
+  MatCol(t,-315,"Unit",0,UnitCode,false,UnitSClass);
+  MatCol(t,-260,"Unit Qty",0,UnitFactQuant,true,0);
+  MatCol(t,-200,"Width",0,UnitXval,true,0);
+  MatCol(t,-160,"Height",0,UnitYval,true,0);
+  MatCol(t,-120,"Depth",0,UnitZval,true,0);
+  MatCol(t,-80,"Unit Pr. of Unit",0,UnitFactPrice,true,0);
+  MatCol(t=11,144,"Description",0,Spec,false,0);//New Row Type..
+  MatCol(t,-315,"Unit",0,UnitCode,false,UnitSClass);
+  MatCol(t,-260,"Unit Qty",0,UnitFactQuant,true,0);
+  MatCol(t,-200,"Width",0,UnitXval,true,0);
+  MatCol(t,-160,"Height",0,UnitYval,true,0);
+  MatCol(t,-120,"Depth",0,UnitZval,true,0);
+  MatCol(t,-80,"Units Unit Price",0,UnitFactPrice,true,0);
+*/  
+  InsertRowTest;
+  DeleteRowTest;
+  EndMatrix;
+  vs = 22;
+  v = 18; VTab(-35,v,-16,v+vs,ToolFlip,1,"A");
+  v=v+ vs; VTab(-35,v,-16,v+vs,ToolFlip,2,"B");
+  v=v+ vs; VTab(-35,v,-16,v+vs,ToolFlip,3,"C");
+  Tile(3,130,false,"5",VEOrderNr); 
+  vs = 20; h = 110;
+  EditField(h,v=6,60,"Tarn. tell. nr.",ViewOnly,VEOrderNr,false,0);
+  EditField(h2,v,-20,"Meie tell. nr.",Normal,OurOrdNr,false,POSClass);
+  EditField(h,v+=vs,95,"Originaalklient",ViewOnly,OrgCust,false,0);
+//  EditField(h2,v,-20,"Sorting",Normal,Sorting,false,0);
+  EditField(h2+150,v,  -20,"Viide",Normal,CalcFinRef,false,0);
+  EditField(h2,v   ,50,"Teen.tell.",ViewOnly,SVONr,false,0);
+  EditField(h,v+=vs, -20,"Kommentaar",Normal,InvComment,false,0);
+  EditField(h,v+=vs,80,"Kogus kokku",ViewOnly,VETotQty,true,0);
+  EditField(h2,v,80,"Kaal kokku",ViewOnly,VETotWeight,true,0);
+  EditField(h3,v,80,"Maht kokku",ViewOnly,VETotVolume,true,0);
+  EditField(h,v+=vs,80,"Stat. väärtus",Normal,StatVal,true,0);
+  EditField(h2,v,80,"Teenuse läh.kp.",Normal,ServiceDelDate,false,PasteCurDate);
+  EditField(h3,v,80,"Viivis",ViewOnly,IntCode,true,0);
+  EditField(h,v+=vs,80,"Pangakood",Normal,VEBankCode,true,0);
+  EditField(h2,v,80,"Panganimi",Normal,VEBank1,false,0);
+  EditField(h3,v,140,"A/a | IBAN",ViewOnly,VEBank2,true,0); //Bk
+  //Bk - start KB 10.10.2019
+  EditField(h3,v+=vs,140,"Maksa nimele",Normal,VEPayToName,false,0);
+  //Bk - end
+
+  Tile(4,230,false,"6",Addr1); 
+  vs = 20; h2 = 350;
+  EditField(h=110,v=6,-20,"Nimi",Normal,Addr0,false,0);
+  EditField(h,v+=vs,-20,"Arve-",Normal,Addr1,false,0);
+  EditField(h,v+=vs, -20,"aadress",Normal,Addr2,false,0);
+  EditField(h,v+=vs, -20,"",Normal,Addr3,false,0);
+  EditField(h,v+=vs, -20,"",Normal,InvAddr3,false,0);
+  EditField(h,vm=(v+=vs), -20,"",Normal,InvAddr4,false,0);
+  v = VATZoneButtonsLabelsEST(h+4,v+=40,170,16);
+  EditField(h2,v=vm+vs, -20,"KMKR nr.",Normal,VATNr,false,0);
+  EditField(h2,v+=vs,100,"Reg. nr.",Normal,RegNr1,false,0); //Bk ts - 2018/01
+  EditField(h2,v+=vs,100,"Telefon",Normal,Phone,false,0);
+  EditField(h2,v+=vs,100,"Faks",Normal,Fax,false,0);
+  Tile(5,150,false,"7",ShipAddr0); vs = 20;
+  EditField(h=110,v=6,-20,"Lähetus-",Normal,ShipAddr0,false,0);
+  EditField(h,v+=vs, -20,"aadress",Normal,ShipAddr1,false,0);
+  EditField(h,v+=vs, -20,"",Normal,ShipAddr2,false,0);
+  EditField(h,v+=vs, -20,"",Normal,ShipAddr3,false,0);
+  EditField(h,v+=vs, -20,"",Normal,DelAddr3,false,0);
+  EditField(h,v+=vs, -20,"",Normal,DelAddr4,false,0);
+  EditField(h,v+=vs,80,"Aadress",Normal,DelAddrCode,false,DelAddrSClass);
+  EditField(h2,v,80,"Regioon",Normal,Region,false,RegionSClass); 
+  EnterSkip(InvDate);
+  Tile(6,130,false,"6",VEVATNr); 
+  vs = 20; h = 110; h2 = 300; h3 = 500;
+  EditField(h,v=6,60,"Tarn. arve nr.",ViewOnly,VESerNr,false,0);
+  EditField(h2-20,v,80,"Tarn. KMKR nr.",Normal,VEVATNr,false,0); //Bk
+  EditField(h3-30,v,80,"Tarn. Reg. nr.",Normal,VERegNr1,false,0); //Bk ts - 2018/01
+  EditField(h3+100,v,80,"Tarnija",Normal,VECode,false,VESClass); //Bk
+  EditField(h,v+=20,60,"Kulukonto",Normal,CostAcc,false,AccSClass);
+  EditField(h2-20,v,80,"Meie ostuarve nr.",Normal,VISerNr,false,0); //Bk
+  EditField(h3-30,v,80,"Meie ostutell. nr.",Normal,OurOrdNr,false,0); //Bk
+  /* disabled, only in BK
+  EditField(h,v+=20,60,"Ostuvõlad",Normal,APAcc,false,AccSClass); //Bk, ts 2019/10
+  */
+  ButtonFrame(h,v+=40,80,2,"Hetkeseis");
+  RadioButton(h,v,1,0,"Kinnitatud",OKStatus);
+  RadioButton(h,v+=16,2,0,"Tagasi lükatud",OKStatus);
+  EditField(h2,v,-40,"Põhjus",Normal,RejectReason,false,0);
+  Tile(7,200,false,"6",Header0); 
+  vs = 20; h = 110; h2 = 300; h3 = 500;
+  EditField(h,v=6,-40,"Päis",ViewOnly,Header0,false,0);
+  EditField(h,v+=20,-40,"",ViewOnly,Header1,false,0);
+  EditField(h,v+=20,-40,"",ViewOnly,Header2,false,0);
+  EditField(h,v+=20,-40,"Jalus",ViewOnly,Footer0,false,0);
+  EditField(h,v+=20,-40,"",ViewOnly,Footer1,false,0);
+  //EditField(h,v+=20,-40,"",ViewOnly,Footer2,false,0);//BK, reuse
+  ButtonFrame(h,v+=40,100,2,"HansaWorld");
+  RadioButton(h,v,0,0,"Ära blokeeri",NotPaidFlag);
+  RadioButton(h,v+=16,1,0,"Blokeeritud",NotPaidFlag);
+  Tile(8,200,false,"8",VECompName); 
+  vs = 20; h = 110; h2 = 500;
+  EditField(h,v=6,f=300,"Nimi",ViewOnly,VECompName,false,0);
+  EditField(h2,v,100,"Telefon",ViewOnly,VEPhone,false,0);
+  EditField(h,v+=20,f,"Aadress",ViewOnly,VEAddr0,false,0);
+  EditField(h2,v,100,"Faks",ViewOnly,VEFax,false,0);
+  EditField(h,v+=20,f,"",ViewOnly,VEAddr1,false,0);
+  EditField(h2,v,100,"E-mail",ViewOnly,VEeMail,false,0);
+  EditField(h,v+=20,f,"",ViewOnly,VEAddr2,false,0);
+  EditField(h,v+=20,f,"",ViewOnly,VEAddr3,false,0);
+  SpecialMenu("Ava ostutellimus",' ',2,"OpenPOFromVEIVDsm");
+//Bk - start: ts 2018/05, eteenused - manuse päring
+  if (HasLocalization("EST")) then begin 
+    SpecialMenu("PDFi päring",' ',9,"GetEstVEEInvoicePdfDsm");
+  end;
+//Bk - end
+  SpecMenuGroup("",kSpecMenuGroupTypeExtendedPlusMenu,0);
+  SpecialMenu("Ostuarve",'F',0,"VIFromVEIVDsm");
+  SpecialMenu("Laosissetulek",'L',0,"PUFromVEIVDsm");
+  SpecialMenu("Kontakt",' ',1,"CUFromVEIVDsm");
+  SpecialMenu("Ostutellimusest ostuarve",' ',3,"VIFromPO_VEIVDsm");
+  //Bk - start KB 04.12.2017 tsekk.ee
+  SpecialMenu("Kulutus",'',4,"ExpFromVEIVDsm");
+  //Bk - end
+  EndWindow;
+end;

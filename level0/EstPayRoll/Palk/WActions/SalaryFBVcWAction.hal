@@ -15,7 +15,6 @@ begin
   if (SFBr.OKFlag!=0) then begin
     res = false;
   end;
-
   SalaryFBDClassDeleteRowTest = res;
   return;
 end;
@@ -89,7 +88,6 @@ function boolean SalaryFBDClassContrSerNrEFAfter(integer wn,integer rownr,intege
     MatRowPut(SFBr,rownr,SFBrw);
     PutWindowRecord(wn,SFBr);
   end;
-
   SalaryFBDClassContrSerNrEFAfter = true;
   return;
 end;
@@ -102,7 +100,6 @@ begin
   switch (fieldname) begin
     case "ContrSerNr": res = SalaryFBDClassContrSerNrEFAfter(wn,rownr,changed);
   end;
-
   SalaryFBDClassAfterEditField = res;
   return;
 end;

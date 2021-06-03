@@ -1,3 +1,4 @@
+external function Boolean SetInSet2(string,string);
 external procedure SubAPPrePayments(record VIVc,var val,var val);
 external function val MulRateToBase1(var string,val,val,val,val,val,val,roundmode);
 external procedure GetAPInvBalance(record VIVc,Date,Integer,var val,var val,var LongInt);
@@ -46,7 +47,7 @@ begin
     end;
   end;
   if (nonblank(RepSpec.ObjStr))  then begin
-    if (SetInSet(RepSpec.ObjStr,IVr.Objects)==false) then begin testf = false; end;
+    if (SetInSet2(RepSpec.ObjStr,IVr.Objects)==false) then begin testf = false; end;
   end;
 /*        
   if (nonblank(RepSpec.TransStr)) then begin
@@ -82,7 +83,7 @@ begin
     end;
   end;
   if (nonblank(RepSpec.ObjStr))  then begin
-    if (SetInSet(RepSpec.ObjStr,VIr.Objects)==false) then begin testf = false; end;
+    if (SetInSet2(RepSpec.ObjStr,VIr.Objects)==false) then begin testf = false; end;
   end;
 /*        
   if (nonblank(RepSpec.TransStr)) then begin
@@ -139,7 +140,7 @@ begin
     end;  
   end;
   if(RepSpec.Media==mtExcel)then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 15 04 2019 y. at 2:04:46 PM
-  	OutString(345,0, "",true);
+    OutString(345,0, "",true);
   end;
   if (RepSpec.flags[2]==1) then begin
     OutValBiDi(450,0,rval,M4Val,true,490);

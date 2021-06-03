@@ -1,0 +1,42 @@
+//pangaliidestus
+external procedure AddBankStatementReqToCurCompany();
+remote function Boolean CheckInternetEnabler();
+remote function boolean IsPartnerStmtActive(string,string);
+remote function boolean IsBankQueueActive();
+
+global updating 
+procedure BankStmntMn(record RcVc RepSpec) begin
+  AddBankStatementReqToCurCompany;
+  return;
+end;
+
+global
+function Boolean BankStmntVClassOnOKWindow(Integer wn)
+begin
+  boolean res;
+  record BankServicesBlock BankServicesbl;
+  record RcVc RepSpec;
+  
+  res = true;
+  BlockLoad(BankServicesbl);
+  if (IsBankQueueActive == false) then begin
+    OpenWindow("BankInfoWClass",0,CurWindow,"","",RepSpec);
+    res = false;
+    goto LBankStmntVClassOnOKWindow;
+  end;
+  if (BankServicesbl.DebugFlag == 0) then begin
+    if (CheckInternetEnabler == false) then begin
+      MessageBox(20242,"");
+      res = false;
+      goto LBankStmntVClassOnOKWindow;
+    end;
+  end;
+  if (IsPartnerStmtActive("ANY","TodayStatement") == false) then begin
+    MessageBox(1501100,"");
+    res = false;
+    goto LBankStmntVClassOnOKWindow;
+  end;
+LBankStmntVClassOnOKWindow:;
+  BankStmntVClassOnOKWindow = res;
+  return;
+end;

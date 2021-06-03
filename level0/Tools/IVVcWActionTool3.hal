@@ -1,3 +1,5 @@
+external function LongInt FindLocation(string);
+external updating function Boolean FormLinkDocumentFilenames(record MailVc,string);
 external function Boolean HasEInvoiceExpired();
 external function Boolean HasEInvoicing();
 external function Boolean TouchScreenLook();
@@ -51,6 +53,7 @@ external procedure CalcSum(val,val,val,val,var val,Integer);
 external procedure FindUserMailboxName(string,var string,var string);
 external function Boolean FindCustomerRelation(string,string,var record CUVc);
 external procedure GetPayDealText(string,string,var string);
+external function string 255 AESEncryptString(string,string);
 external function string 60 AddObjectToObjectList(string,string);// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 25 June 2018 14:09:51
 
 function val FEIVQuantFract(LongInt curfeivnr,LongInt ordernr,LongInt ivsernr,Integer rownr)
@@ -615,6 +618,9 @@ begin
   CreditIVr.TransDate = CreditIVr.InvDate;
   CreditIVr.PayDate = CreditIVr.InvDate;
   CreditIVr.OKFlag = 0;
+  if (HasLocalization("RUS")) then begin
+    CreditIVr.OperationCode = "";
+  end;
   if (HasLocalization("POL")) then begin
     CreditIVr.FiscalFlag = 0;
   end;
@@ -698,6 +704,12 @@ LkInvoiceRowTypeNormal:;
         MatRowDelete(CreditIVr,i);
         rwcnt = MatRowCnt(CreditIVr);
       case kInvoiceRowTypeSwishPayment:
+        MatRowDelete(CreditIVr,i);
+        rwcnt = MatRowCnt(CreditIVr);
+      case kInvoiceRowTypeQRPayment:
+        MatRowDelete(CreditIVr,i);
+        rwcnt = MatRowCnt(CreditIVr);
+      case kInvoiceRowTypeCashWithdrawal:
         MatRowDelete(CreditIVr,i);
         rwcnt = MatRowCnt(CreditIVr);
     end;
@@ -929,6 +941,84 @@ LCreateExternalMailFromIVD:;
   return;
 end;
 
+function string 255 PlainTextInvoice(record IVVc IVr)
+begin
+  string 255 res,tstr;
+  LongInt rwcnt,i;
+  row IVVc IVrw;
+  string 1 CR,TAB;
+
+  CR = chr(13);
+  TAB = chr(9);
+
+  rwcnt = MatRowCnt(IVr);
+  for (i = 0; i<rwcnt; i = i + 1) begin
+    MatRowGet(IVr,i,IVrw);
+    if (IVrw.stp==10) then begin
+      goto LIVHIDDENLine;
+    end;
+    res = res & IVrw.ArtCode & TAB;
+    res = res & ValToString(IVrw.Quant,M4UVal,"",".",0) & TAB;
+    res = res & Left(IVrw.Spec,60) & TAB;
+    res = res & IVrw.Price & TAB;
+    if (IVrw.vRebate!=0) then begin
+      res = res & "-" & ValToString(IVrw.vRebate,M4UVal,"",".",0) & "%" &  TAB;
+    end;
+    res = res & IVrw.Sum & TAB;
+    res = res & CR;
+  end;
+LIVHIDDENLine:;
+  res = res & TAB & TAB & TAB & "=====" & CR;
+  res = res & TAB & TAB & TAB & USetStr(2685) & TAB & IVr.Sum1 & CR;
+  res = res & TAB & TAB & TAB & USetStr(2686) & TAB & IVr.Sum3 & CR;
+  res = res & TAB & TAB & TAB & USetStr(2687) & TAB & IVr.Sum4 & CR;
+  GetPayDealText(IVr.PayDeal,IVr.LangCode,tstr);
+  res = res & USetStr(3060) & " " & tstr;
+
+  PlainTextInvoice = res;
+end;
+
+function string 255 GeneratePaylink(LongInt ivnr)
+begin
+  string 255 res,unencrypted;
+  record IVVc IVr;
+  record InternetEnablerBlock IEb;
+  record CYBlock CYb;
+  record PayLinkBlock PayLinkb;
+
+  BlockLoad(IEb);
+  BlockLoad(CYb);
+  BlockLoad(PayLinkb);
+
+  IVr.SerNr = ivnr;
+
+  if (ReadFirstMain(IVr,1,true)) then begin
+    unencrypted = unencrypted & IVr.SerNr                             & ";";
+    unencrypted = unencrypted & BASE64ENCODE(PlainTextInvoice(IVr))   & ";";
+    unencrypted = unencrypted & ValToString(IVr.Sum4,M45Val,"",".",0) & ";";
+    unencrypted = unencrypted & "USD"                                 & ";"; // ## fix currency
+    unencrypted = unencrypted & PayLinkb.PayLinkID                    & ";";
+//  unencrypted = unencrypted & CYb.CompName                          & ";";
+    res = Base64Encode(AESEncryptString(unencrypted,"yuotg2co547gk8eoh4arshw0vc96cr1q"));
+  end else begin
+    res = "error";
+  end;
+
+  GeneratePaylink = res;
+end;
+
+global
+function string 255 MailFromIVReplaceToken(record MailVc Mailr,record RcVc RepSpec,string token)
+begin
+  string 255 res;
+
+  if (token=="PayButton") then begin
+    res = "<a style='background: #17c506; color: white; border-radius: 5px; padding: 5px 20px; width: 90px;' href='https://paylink.hansaworld.com/WebPayLinkForm.hal?data=" & GeneratePaylink(RepSpec.long1) & "'>" & USetStr(42280) & "</a>";
+  end;
+
+  MailFromIVReplaceToken = res;
+end;
+
 global
 updating function Integer CreateMailFromIVD(record IVVc IVr,var record MailVc Mailr,var string warning,Boolean additemstobodyf,string pdfform)
 begin
@@ -952,6 +1042,10 @@ begin
   Integer IgnoreRecordDetails;
   LongInt err;
   record COCUServiceBlock CSb;
+  transaction Boolean gPDFEmailf;
+  transaction string 255 gaPDFEmailFiles;
+  record RcVc RepSpec;
+  area a;
 
   res = 0;
   if (ReadFirstMain(IVr,0,true)) then begin end;  
@@ -1069,53 +1163,7 @@ begin
     end;
   end;
   if (additemstobodyf or IgnoreRecordDetails==0) then begin
-    rwcnt = MatRowCnt(IVr);
-    for (i=0;i<rwcnt;i=i+1) begin
-      MatRowGet(IVr,i,IVrw);
-      if (IVrw.stp==10) then begin 
-        goto LIVHIDDENLine;
-      end;
-      tstr = IVrw.ArtCode & TAB;
-      tstr = tstr & ValToString(IVrw.Quant,M4UVal,"",".",0) & TAB;
-      tstr = tstr & Left(IVrw.Spec,60) & TAB;
-      tstr = tstr & IVrw.Price & TAB;
-      if (IVrw.vRebate!=0) then begin
-        tstr = tstr & "-" & ValToString(IVrw.vRebate,M4UVal,"",".",0) & "%" &  TAB;
-      end;
-      tstr = tstr & IVrw.Sum & TAB;
-      if (Mailr.HtmlFlag==0) then begin
-        LineTextPut(Mailr,LineTextCnt(Mailr),tstr);
-      end else begin
-        LineTextPutToHtmlRecord(Mailr,tstr,false,true);
-      end;
-    end;
-LIVHIDDENLine:;  
-    tstr = TAB & TAB & TAB & "=====";
-    if (Mailr.HtmlFlag==0) then begin
-      LineTextPut(Mailr,LineTextCnt(Mailr),tstr);
-    end else begin
-      LineTextPutToHtmlRecord(Mailr,tstr,false,true);
-    end;
-    tstr = TAB & TAB & TAB & USetStr(2685) & TAB & IVr.Sum1;
-    if (Mailr.HtmlFlag==0) then begin
-      LineTextPut(Mailr,LineTextCnt(Mailr),tstr);
-    end else begin
-      LineTextPutToHtmlRecord(Mailr,tstr,false,true);
-    end;
-    tstr = TAB & TAB & TAB & USetStr(2686) & TAB & IVr.Sum3;
-    if (Mailr.HtmlFlag==0) then begin
-      LineTextPut(Mailr,LineTextCnt(Mailr),tstr);
-    end else begin
-      LineTextPutToHtmlRecord(Mailr,tstr,false,true);
-    end;
-    tstr = TAB & TAB & TAB & USetStr(2687) & TAB & IVr.Sum4;
-    if (Mailr.HtmlFlag==0) then begin
-      LineTextPut(Mailr,LineTextCnt(Mailr),tstr);
-    end else begin
-      LineTextPutToHtmlRecord(Mailr,tstr,false,true);
-    end;
-    GetPayDealText(IVr.PayDeal,IVr.LangCode,tstr);
-    tstr = USetStr(3060) & " " & tstr;
+    tstr = PlainTextInvoice(IVr);
     if (Mailr.HtmlFlag==0) then begin
       LineTextPut(Mailr,LineTextCnt(Mailr),tstr);
     end else begin
@@ -1143,7 +1191,20 @@ LIVHIDDENLine:;
       end;
     end;
   end;
-  
+
+  RecordUpdate(Mail2r,Mailr,false);
+
+  Mail2r = Mailr;
+
+  RepSpec.long1 = IVr.SerNr;
+  if (Mailr.HtmlFlag==0) then begin
+    ParseTextField(a,Mailr,RepSpec,"MailFromIVReplaceToken");
+    SetTextField(Mailr,"");
+    AddAreaToTextField(a,Mailr);
+  end else begin
+    ParseHtmlField(Mailr,RepSpec,"MailFromIVReplaceToken");
+  end;
+
   RecordUpdate(Mail2r,Mailr,false);
 
   docname = pdfform;
@@ -1162,21 +1223,18 @@ LIVHIDDENLine:;
       end;
     end;
   end;
-  fname = "tmp/" & USetStr(1803) & " " & IVr.SerNr & ".pdf";
-  SetDocumentFilename(fname);
+  gPDFEmailf = true;
   SetMedia(mtPdf);
   PrintDocument(IVr,docname,false);
-  if (FileExists(fname)) then begin
-    if (RecordLinkFile(fname,0,Mailr,CurrentCompany)) then begin
-      RecordCopy(oldIVr,IVr);
-      IVr.Prntdf = 1;
-      RecordUpdate(oldIVr,IVr,false);
-    end;
+  if (FormLinkDocumentFilenames(Mailr,gaPDFEmailFiles)) then begin
+    RecordCopy(oldIVr,IVr);
+    IVr.Prntdf = 1;
+    RecordUpdate(oldIVr,IVr,false);
   end;
-  SetDocumentFilename("");
-  Delete_File(fname);
+  SetDocumentFilename("");  
+  gPDFEmailf = false;
 
-LCreateMailFromIVD:;  
+LCreateMailFromIVD:;
   CreateMailFromIVD = res;
   return;
 end;
@@ -1264,6 +1322,8 @@ begin
   row MailTextVc MTrw;
   Integer IgnoreRecordDetails;
   record COCUServiceBlock CSb;
+  transaction Boolean gPDFEmailf;
+  transaction string 255 gaPDFEmailFiles;
 
   res = 0;
   if (IVSerNrs.length==0) then begin
@@ -1500,19 +1560,16 @@ LIVArrayHIDDENLine:;
           end;
         end;
       end;
-      fname = "tmp/" & USetStr(1803) & " " & IVr.SerNr & ".pdf";
-      SetDocumentFilename(fname);
+      gPDFEmailf = true;
       SetMedia(mtPdf);
       PrintDocument(IVr,docname,false);
-      if (FileExists(fname)) then begin
-        if (RecordLinkFile(fname,0,Mailr,CurrentCompany)) then begin
-          RecordCopy(oldIVr,IVr);
-          IVr.Prntdf = 1;
-          RecordUpdate(oldIVr,IVr,false);
-        end;
+      if (FormLinkDocumentFilenames(Mailr,gaPDFEmailFiles)) then begin
+        RecordCopy(oldIVr,IVr);
+        IVr.Prntdf = 1;
+        RecordUpdate(oldIVr,IVr,false);
       end;
-      SetDocumentFilename("");
-      Delete_File(fname);
+      SetDocumentFilename("");  
+      gPDFEmailf = false;
     end;
   end;
   
@@ -1652,7 +1709,7 @@ BEGIN
     goto LSkipMainCL;
   end;
   IVp.PayDeal = "";
-  goto LPastePDInInv;
+  goto LPastePDInInv;// if payment term not found, out
 
 LSkipMainCL:;
     BlockLoad(ARAccRec);
@@ -1753,6 +1810,7 @@ BEGIN
     IVr.Addr3 = CUr.InvAddr2;
     IVr.InvAddr3 = CUr.InvAddr3;
     IVr.InvAddr4 = CUr.InvAddr4;
+    IVr.InvCountry = CUr.CountryCode;
     IVr.ClientContact = CUr.Person;
     IVr.CustCat = CUr.CustCat;
     IVr.Objects = CUr.Objects;
@@ -1805,8 +1863,9 @@ BEGIN
 END;
 
 global
-procedure IVVc_PasteLocation(var record IVVc IVr,Integer rownr)
+function LongInt IVVc_PasteLocation2(var record IVVc IVr,Integer rownr,var string errlocation)
 begin
+  LongInt res;
   row IVVc IVrw;
   Integer i,rwcnt;
   Integer exportflag;
@@ -1816,13 +1875,26 @@ begin
   Boolean calcprice,dummyf;
   row LocationAccBlock LAbrw;
   
+  res = 0;
   if (rownr<0) then begin
     rwcnt = MatRowCnt(IVr);
+    if (rwcnt==0) then begin
+      res = FindLocation(IVr.Location);  
+      if (res!=0) then begin 
+        errlocation = IVr.Location;
+        goto LIVVc_PasteLocation2; 
+      end;
+    end;
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(IVr,i,IVrw);
       location = IVrw.Location;
       if (blank(location)) then begin
         location = IVr.Location;
+      end;
+      res = FindLocation(location);  
+      if (res!=0) then begin 
+        errlocation = location;
+        goto LIVVc_PasteLocation2; 
       end;
       exportflag = IVr.ExportFlag;
       if (IVr.InvType==kInvoiceTypeCredit or IVr.InvType==kInvoiceTypeCreditSpecialSales) then begin
@@ -1856,6 +1928,11 @@ begin
     if (blank(location)) then begin
       location = IVr.Location;
     end;
+    res = FindLocation(location);  
+    if (res!=0) then begin 
+      errlocation = location;
+      goto LIVVc_PasteLocation2; 
+    end;
     exportflag = IVr.ExportFlag;
     if (IVr.InvType==kInvoiceTypeCredit or IVr.InvType==kInvoiceTypeCreditSpecialSales) then begin
       exportflag = exportflag + AddPortugueseType;
@@ -1883,6 +1960,17 @@ begin
     end;
   end;
   IVSumup(IVr,true); 
+LIVVc_PasteLocation2:;  
+  IVVc_PasteLocation2 = res;
+  return;
+end;
+
+global
+procedure IVVc_PasteLocation(var record IVVc IVr,Integer rownr)
+begin
+  string 255 tstr;
+  
+  IVVc_PasteLocation2(IVr,rownr,tstr);
   return;
 end;
 

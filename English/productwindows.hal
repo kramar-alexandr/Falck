@@ -1,175 +1,4 @@
-external inner function Boolean AcceptanceStatusColumnTest(string);
-external inner procedure RateField(real,real,real,string,integer,string,boolean,real,real,string,boolean);
-external inner procedure DisplayRecordDetails_EST(LongInt,LongInt,string,date,time,string,string,string,string,string,string,string,string,string,string,string,Integer,string,string,string,val,string,Boolean,string,string);
-external inner procedure DrawPOSInterface2_EST(string,string,record POSButtonsVc,string,Integer,Integer);
-external inner function string 255 VATZoneEditFieldLabel_EST(Integer);
-external inner function string 255 VATZoneNameEST();
-external inner function string 60 UserDefined(string,string);
-external inner function Boolean IsMoveToCloud(record SetupStatusBlock);
-external inner function Boolean TouchScreenLookVertical();
-external inner function Boolean TouchScreenLookVertical();
-external inner function Boolean IsSessionOpen(string,string,Date,Time);
-external inner function Boolean UseTaxTemplatesforTaxCalc();
-external inner function real ItemButtons(string,Integer);
-external inner function Boolean HasCharts();
-external inner function Integer LoginShortcutsLines(Integer);
-external inner function real DrawPaymentModesButtons_IV_EST(real);
-external inner function real FunctionButtons_EST(string);
-external inner function Boolean IsEnterprise();
-external inner function Boolean StandardHansa();
-external inner function Boolean HasAdvancedAccounting();
-external inner function Boolean HasAdvancedStock();
-external inner function Boolean HasApprovals();
-external inner function Boolean HasBase2();
-external inner function Boolean HasCustomerStatusReport();
-external inner function Boolean HasDownpayments();
-external inner function Boolean HasExtTax();
-external inner function Boolean HasFiscalPrinter();
-external inner function Boolean HasIncomeAndExpenseBook();
-external inner function Boolean HasIntegratedNL();
-external inner function Boolean HasItemClassification();
-external inner function Boolean HasItemGroups();
-external inner function Boolean HasMultiCurrency();
-external inner function Boolean HasNumberSeries();
-external inner function Boolean HasNLBudget();
-external inner function Boolean HasLanguages();
-external inner function Boolean HasPersons();
-external inner function Boolean HasPrepayments();
-external inner function Boolean HasRussianPrepayment();
-external inner function Boolean HasSalesman();
-external inner function Boolean HasSalesmanBonus();
-external inner function Boolean HasSalesGroup();
-external inner function Boolean HasSerialNumbers();
-external inner function Boolean HasSimAccruals();
-external inner function Boolean HasTaxMatrix();
-external inner function Boolean HasVATZone();
-external inner function Boolean HasMetroTestFeatures();
-external inner function Boolean HasMultiLocations();
-external inner function Boolean HasObjects();
-external inner function Boolean HasWorkOrders();
-external inner function Boolean HasTouchScreenLook();
-external inner function Boolean HasTREO();
-external inner function Boolean HasVarieties();
-external inner function Boolean HasWithholdingTax();
-external inner function Boolean HasWorkOrders();
-external inner function Boolean HasModAT2();
-external inner function Boolean HasModCL();
-external inner function Boolean HasModCRM();
-external inner function Boolean HasModHotel();
-external inner function Boolean HasModHRM();
-external inner function Boolean HasModIN();
-external inner function Boolean HasModNL();
-external inner function Boolean HasModPL();
-external inner function Boolean HasModPO();
-external inner function Boolean HasModSL();
-external inner function Boolean HasModTS();
-remote inner function Boolean ReadPOSButtons(string,string,longint,var string,var string,var string,var record POSButtonsVc);  //Bk HAL //##cc
-external inner function real VATZoneButtonsLabelsEST(real,real,real,real);
-external inner function Boolean HasJewelleryInterface();
-external inner function string 5 GetCreditScoreString(val); //cust KB 1.06.2017
-external inner function integer CreditScoreToColor(val); //cust KB 1.06.2017
-remote inner procedure GetCredScoreAndDateFor(string, var val, var date); //cust KB 14.09.2017
-external inner function boolean CredScoreCanExist(record CUVc); //cust KB 18.04.2018
-external inner function Boolean HasLimitedAccess();
-external inner function Boolean HasEInvoicing();
-external inner function Boolean HasAdvancedPricing();
-external inner function Boolean HasContactClassification();
-external inner function Boolean HasPriceLists();
-external inner function Boolean HasAccPeriods();
-
-
-begin
-
-
-  return;
-end;
-
-window CCatDClass:2
-  wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
-begin
-  real h,h2,v,vs;
-  WindowBegin("Customer Category",CCatDClass,CGview,-);
-  SetWRect(64,80,600,330);
-  UseView(CCatVc);
-  v = 6; vs = 20; h = 100;
-  if (IsEnterprise) then begin
-    Tile(0,90,false,"",Code);
-    EditField(h,v, 70,"Code",Normal,Code,false,0);
-    EditField(h,v+=vs,-40,"Description",Normal,Comment,false,0);
-    if (StandardHansa==false) then begin
-      EditField(h,v+=vs,-40,"Class. Types",Normal,ClassType,false,CTypeSClass);
-    end;
-    TileButton(1,"Pricing");
-    TileButton(2,"Accounts");
-    if (StandardHansa==false) then begin
-      TileButton(3,"Web");
-    end;
-    if (HasCharts) then begin
-      TileButton(4,"BI");
-    end;
-    Tile(1,110,false,"1",PLCode);
-    v = 6; h = 200;
-    EditField(h,v,70,"Price List",Normal,PLCode,false,PLDefSClass);
-    if (HasAdvancedPricing) then begin
-      EditField(h,v+=vs,70,"Discount Matrix",Normal,RebCode,false,RebSClass);
-    end;
-    EditField(h,v+=vs,55,"Down Payment Percentage",Normal,DownPayPerc,false,0);
-    if (HasItemClassification) then begin
-      EditField(h,v+=vs,55,"Main Item Classification",Normal,MainDispGroup,false,DISClass);
-    end;
-    if (StandardHansa==false) then begin
-      EditField(h,v+=vs,55,"Web Order Class",Normal,WebOrderClass,false,OrderClassSClass);
-    end;
-  	EditField(h,v+=vs ,150,"Object",Normal,BPIObjects,false,ObjSClass);// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 25 June 2018 13:59:39
-
-//##  EditField(h,v+=vs ,70, "Commission Matrix",Normal,ComCode,false,ComSClass);
-    Tile(2,130,false,"2",ARAcc);
-    v = 6; h = 200;
-    EditField(h,v ,55,"Debtors Account",Normal,ARAcc,false,AccSClass);
-    EditField(h,v+=vs,55,"Bad Debtors Account",Normal,BadARAcc,false,AccSClass);
-    EditField(h,v+=vs,55,"Debtors On Account A/C",Normal,OnAccAcc,false,AccSClass);
-    EditField(h,v+=vs,55,"Creditors Account",Normal,AccAP,false,AccSClass);
-    EditField(h,v+=vs,55,"Creditors On Account A/C",Normal,OnAccAccAP,false,AccSClass);
-    EditField(h,v+=vs,55,"Retain Account",Normal,RetainAcc,false,AccSClass);
-    if (StandardHansa==false) then begin
-      Tile(3,50,false,"3",WebDisplays);
-      v = 6;
-      EditField(h,v,55,"Display on the Web",Normal,WebDisplays,false,WebDisplaySClass);
-      EditField(h,v+=vs,55,"Web Tag/Object Type",Normal,WebOTCode,false,OTSClass);
-    end;
-    if (HasCharts) then begin
-      Tile(4,400,false,"4",-);
-      ChartArea(10,6,-10,390,"$CCATDCLass_BIChart");
-    end;
-  end else begin
-    SetWRect(64,80,509,200);
-    UseView(CCatVc);
-    v = 10; vs = 20; h = 130; h2 = 320;
-    EditField(h,v, 70,"Code",Normal,Code,false,0);
-    EditField(h,v+=vs ,-40,"Description",Normal,Comment,false,0);
-    if (HasContactClassification) then begin
-      EditField(h,v+=vs ,-40,"Class. Types",Normal,ClassType,false,CTypeSClass);
-    end;
-    if (HasPriceLists) then begin
-      EditField(h,v+=vs ,70, "Price List",Normal,PLCode,false,PLDefSClass);
-    end;
-    if (HasModNL) then begin
-      EditField(h,v+=vs ,70,"Debtors A/C",Normal,ARAcc,false,AccSClass);
-      if (HasRussianPrepayment or HasPrepayments) then begin
-        if (HasModSL) then begin
-          EditField(h,v+=vs,70,"Debtors On Acc. A/C",Normal,OnAccAcc,false,AccSClass);
-        end;
-        if (HasModPL) then begin
-          EditField(h,v+=vs,70,"Creditors On Acc. A/C",Normal,OnAccAccAP,false,AccSClass);
-        end;
-      end;
-    end;
-    if (HasAdvancedPricing) then begin
-      EditField(h,v+=vs ,70, "Discount Matrix",Normal,RebCode,false,RebSClass);
-    end;
-  end;
-  EndWindow;
-end;
+//new cust windows
 
 window AutoCrObjTClass:1
   wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
@@ -185,50 +14,6 @@ begin
   EndWindow;
 end;
 
-window FormDefDClass:1
-  wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
-begin
-  real h,v,vs;
-  WindowBegin("Form Definition",FormDefDClass,CGview,-);
-  SetWRect(20,80,730,410);
-  UseView(FormDefVc);
-  v = 6; vs = 20; h = 100;
-  if (IsEnterprise) then begin
-    EditField(h,v ,80,"Form Template",ViewOnly,repname,false,0);
-    EditField(h+=160,v,80,"Specification",ViewOnly,critname,false,0);
-    EditField(h+=160,v,80,"Definition",ViewOnly,defname,false,0);
-    EditField(h+=160,v,80,"Module",ViewOnly,modname,false,0);
-  end;
-//  FORMDEF_ENG;
-  MatrixBegin(6,v+=40,-24,-20,FormDefRowType,99);
-  h = 24;
-  MatCol(1,h,"Seq.",0,intdocnr,false,0);
-  h = h + 30;
-  if (HasLanguages) then begin
-    MatCol(1,h,"Lang.",0,LangCode,false,LangSClass);
-    h = h + 40;
-  end;
-  if (IsEnterprise) then begin
-    MatCol(1,h,"Acss. Gr.",0,UserGroup,false,AccessSClass);
-    h = h + 60;
-  end;
-  if (HasNumberSeries) then begin
-    MatCol(1,h,"No. Series",0,SerNr,false,0);
-    h = h + 70;
-  end;
-  MatCol(1,h,"Form Template",0,FPCode,false,DocSClass);
-  h = h + 160;
-/* No code behind this */
-//  MatCol(1,324,"E-Form",0,EformCode,false,0);
-  if (IsEnterprise) then begin
-    MatCol(1,h,"Printer",0,PrintGroupCode,false,PrintGroupSClass);
-  end;
-  MatCol(1,-170,"Legal record No. row",0,LegalRecNo,false,BPILegalInvNrSClass);// Edit ************************** BPI Ukraine - KramarAlexandr - Tuesday, 9 October 2018 10:19:01
-  MatCol(1,-60,"Status",0,Typ,false,SetSClass);
-  EndMatrix;
-  EndWindow;
-end;
-
 window BPILegalInvNrSClass:1
   wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")// Edit ************************** BPI Ukraine - KramarAlexandr - Tuesday, 9 October 2018 10:24:25
 begin
@@ -239,67 +24,35 @@ begin
   EndWindow;
 end;
 
-window PurInvVClass:1// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 11:37:53 AM
+window VINoVATPayTClass:1
   wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
 begin
-  real h,v,vm,vs;
-  WindowBegin("Create Payments Suggestion",PurInvVClass,CGMnt,RcType);
-  SetWRect(20,93,412,370);
-  vs=20;
-  EditFieldTL(h=150,v=6, 82,"From Due Date",M4Date,Normal,0,d1,false,PasteCurDate);
-  EditFieldTL(h,v+=20, 82,"To Due Date",M4Date,Normal,0,d2,false,PasteCurDate);
-  EditFieldTL(h,v+=20 ,82,"#Supplier#",M4UStr,Normal,41,f1,false,VESClass);
-  EditFieldTL(h,v+=vs ,82,"Category",   M4UStr,Normal,10,LastAcc,false,VGSClass);
-  EditFieldTL(h,v+=20 ,82,"Classification",M4UStr,Normal,60,f4,false,CClassSClass);
-  EditFieldTL(h,v+=20 ,82,"Currency",M4UStr,Normal,5,f2,false,CurncyCodeSClass);
-  EditFieldTL(h,v+=20 ,100,"Maximum Amount",M4Str,Normal,255,f3,true,0);
-  EditFieldTL(h,v+=20 ,30,"Pay Mode",M4Code,Normal,2,FirstAcc,false,PMSClass);
-  EditFieldTL(h,v+=20 ,82,"Pay Date",M4Date,Normal,0,RegDate,false,PasteCurDate);
-  EditFieldTL(h,v+=20 ,82,"Factoring company",M4UStr,Normal,41,f10,false,VESClass);// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 11:38:51 AM
-  CheckBox(20,vm=(v+=22),0,"Pay On Due Date",flags[2]);
-  CheckBox(20,v+=16,0,"Use Settlement Discount",flags[1]);
-  CheckBox(20,v+=16,0,"Incl. Credit Invoices",flags[3]);
-  CheckBox(20,v+=16,0,"One #Supplier# Per Payment",flags[4]);
-  if (StandardHansa==false) then begin
-    CheckBox(20,v+=16,0,"Create part Payments",flags[6]);
-  end;
-  ButtonFrame(h=250,v=vm+16,123,2,"Sorting");
-  RadioButton(h,v,0,0,"Due Date",flags[5]);
-  RadioButton(h,v+=16,1,0,"#Supplier#",flags[5]);
+  real h,h1,h2,l,v,vm,vs;
+  WindowBegin("Falck - Non-VAT Payer Supplier Class",VINoVATPayTClass,CGSbl,-);
+  SetBlid(VINoVATPayBlock);
+  SetWRect(20,80,480,330);
+  vs = 20; h = 140; h1 = 20; h2 = 315; l = 70;
+  v = 10;
+  EditField(h,v,120,"Non-VAT Payer Class",Normal,Classification,false,CClassSClass);
+
   EndWindow;
 end;
 
-window AgedTClass:1
+window FLComparisonRClass:1
   wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
 begin
-  real f,h,v,vs;
-  WindowBegin("Age Limits",AgedTClass,CGSbl,AgedType);
-  SetBlid(AgedBlock);
-  SetWRect(64,80,509,400);
-  v = 6; vs = 20; h = 180; f = 100;
-  EditField(h,v,f,"Period 1",Normal,Per1,true,0);
-  EditField(h,v+=vs,f,"Period 2",Normal,Per2,true,0);
-  if (HasAdvancedAccounting) then begin
-    EditField(h,v+=vs,f,"Period 3",Normal,Per3,true,0);
-    EditField(h,v+=vs,f,"Period 4",Normal,Per4,true,0);
-    EditField(h,v+=vs,f,"Period 5",Normal,Per5,true,0);
-    EditField(h,v+=vs,f,"Period 6",Normal,Per6,true,0);
-    EditField(h,v+=vs,f,"Period 7",Normal,Per7,true,0);
-		EditField(h,v+=vs,f,"Period 8",Normal,Per8,true,0);
-    StaticText(50,v+=40,"Setting more than 2 periods demands Landscape Printing",false);
-    ButtonFrame(h,v+=26,120,2,"Show Delay Days");
-    RadioButton(h,v,0,0,"Open and Overdue",ShowDelayDays);
-    RadioButton(h,v+=16,1,0,"Overdue Only",ShowDelayDays);
-    if (StandardHansa==false) then begin
-      CheckBox(100,v+=30,0,"Show Invoices Due on Specified Date as Current Invoices",ActualInvoices);
-      CheckBox(100,v+=16,0,"Use Accounting Periods in #N/L# instead of Age Limits",UseAccPeriod);
-      EditField(350,v+=vs,30,"Accounting Periods to use, maximum 6",Normal,AccPeriods,true,0);
-      CheckBox(100,v+=16,0,"Separate column for unallocated payments",SeparateOnAcc);
-    end;
-  end else begin 
-    if (HasAccPeriods) then begin
-      CheckBox(100,v+=vs,0,"Use Accounting Periods in #N/L# instead of Age Limits",UseAccPeriod);
-    end;
-  end;
+  real h,v,vm,vs;
+  WindowBegin("Falck - PL/SL Comparison",FLComparisonRClass,CGRcW,RcType);
+  SetWRect(20,80,400,280);
+  v = 20; vs = 20; h = 130;
+  PeriodField(h,v,"Period");
+  EditFieldTL(h,v+=vs,100,"From:to",M4Str,Normal,50,f1,false,AccSClass); 
+  EditFieldTL(h,v+=vs,100,"Tag/Objects",M4UStr,Normal,50,f2,false,ObjSClass);
+  EditFieldTL(h,v+=vs,100,"Tag/Object Types",M4UStr,Normal,50,f3,false,OTSClass);
+  EditFieldTL(h,v+=vs,100,"Cons. Tag/Object Type",M4UStr,Normal,50,f4,false,OTSClass);
+  CheckBox(h=h-10,v+=vs,0,"Used Accounts Only",flags[1]);
+  CheckBox(h,v+=vs,0,"Show Tag/Object",flags[2]);
+  CheckBox(h,v+=30,0,"Reconciled",flags[3]);
+  CheckBox(h,v+=vs,0,"Not Reconciled",flags[4]);
   EndWindow;
 end;

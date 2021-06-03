@@ -1,4 +1,3 @@
-//Bk
 event startup
 begin
   SetLangMode(LangEstonian,"EST",0);
@@ -130,7 +129,7 @@ begin
   SString(1500424,"T……ANDJA MAKSUD");
   SString(1500425,"Arvestatud kokku:");
   SString(1500426,"Kinnipeetud kokku:");
-  SString(1500427,"VŠljamakstav summa:");
+  SString(1500427,"VŠljamakstav summa");
   SString(1500428,"Palgasedel");
   SString(1500429,"Vorm TSD");
   SString(1500430,"Aasta: ");
@@ -179,11 +178,11 @@ begin
   SString(1500473,"%");
   SString(1500474,"Palga vŠljamaksed");
   SString(1500475,"K›ik palga vŠljamaksed");
-  SString(1500476,"VŠljamakse nr.");
+  SString(1500476,"VŠljam.nr.");
   SString(1500477,"Tasumisviis");
   SString(1500478,"Tšštaja");
-  SString(1500479,"Tasuliigi kood");
-  SString(1500480,"Netosumma");
+  SString(1500479,"Kp.");
+  SString(1500480,"Ei kuulu vŠljamaksmisele");
   SString(1500481,"Brutosumma");
   SString(1500482,"Puhkusereserv");
   SString(1500483,"Ei tohi sulgeda, tššleping on aktiivne");
@@ -260,6 +259,40 @@ begin
   SString(1500554,"Brutopalgast kinnipidamised:"); 
   SString(1500555,"Netopalgast kinnipidamised:"); 
   SString(1500556,"Palun ava lisatud fail palgasedeli vaatamiseks");
+  SString(1500557,"Tšštaja v›i tššleping peab olema mŠŠratud");
+  SString(1500558,"Palun sisesta kinnipidamise tasuliik");
+  SString(1500559,"Sisesta tasuliik");
+  SString(1500560,"Netotasu");
+  SString(1500561,"Tasuliikide aruanne");
+  SString(1500562,"Nimetus");
+  SString(1500563,"Arvestuse kp.");
+  SString(1500564,"Arveldusarve | IBAN");
+  SString(1500565,"Tšštasu saaja A/a | IBAN");
+  SString(1500566,"Tššlepingu algus");
+  SString(1500567,"Tššlepingu l›pp");
+  SString(1500569,"Puhkuse pŠevi aastas");
+  SString(1500570,"Peatatud");
+  SString(1500571,"Planeeritud puudumised");
+  SString(1500572,"Ainult planeeritud");
+  SString(1500573,"Planeeritud ja kinnitatud");
+  SString(1500574,"Brutotasu kokku");
+  SString(1500575,"Sotsiaalmaks");
+  SString(1500576,"Tššandja tšštuskindlustus");
+  SString(1500577,"Tššlep.nr.");
+  SString(1500578,"Arvest.nr.");
+  SString(1500579,"Tšštaja nimi");
+  SString(1500580,"Grupeeri tšštaja l›ikes");
+  SString(1500581,"Tasumisviisil puudub pangakood");
+  SString(1500582,"Puhkusereservi arvestamine");
+  SString(1500583,"Aastal›pu puhkusereservi arvestamine");
+  SString(1500584,"VŠhemalt Ÿks valik peab olema mŠŠratud: 'Koosta kanded objekti p›hiselt' v›i 'Summeeri kandel maksu read, kui kontod on samad'");
+  SString(1500585,"HaigushŸvitise arvutuskŠik"); 
+  SString(1500586,"Tšštasude prognoos"); 
+  SString(1500587,"Haigus"); 
+  SString(1500588,"HaigushŸvitise arvestuse aluseks");
+  SString(1500589,"Kokku haigushŸvitise arvestuse aluseks:"); 
+  SString(1500590,"Kokku pŸsitasusid haigushŸvitise arvestuse aluseks:"); 
+  //SString(1500591,"Kinnipidamise tasuliigi tŸŸp peab olema: Kinnipidamine (neto)");//Bk,ts 2020/06 removed, reuse
 
  //EstCCLookup//Contribution Contract Lookup
   SString(1500600,"PŠringu saatmisel esines t›rkeid!");

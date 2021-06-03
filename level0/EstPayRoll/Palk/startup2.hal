@@ -1,0 +1,111 @@
+event startup
+begin
+
+  SetLangMode(LangEstonian,"EST",0);
+
+  Module("Palk","",730,modSAL);
+
+  RegisterWS("Tšštajad","Tšštajad","Uus tšštaja",EmplVc,modSAL);
+  RegisterWS("Tššlepingud","Tššlepingud","Uus tššleping",ContractVc,modSAL);
+  RegisterWS("Arvestused","Arvestused","Uus arvestus",CalcPayrollVc,modSAL);
+  RegisterWS("VŠljamaksed","VŠljamaksed","Uus vŠljamakse",PaymPayrollVc,modSAL);
+  RegisterWS("Avatud kanded","Avatud kanded","Uus avatud kanne",OpenTransVc,modSAL);
+  RegisterWS("Puudumised","Puudumised","Uus puudumine",AbsenceVc,modSAL);
+  RegisterWS("TŸkitššd","TŸkitššd","Uus tŸkitšš",PieceWorkVc,modSAL);
+  RegisterWS("Tššajatabelid","Tššajatabelid","Uus tššajatabel",WorkedHoursVc,modSAL);
+/* //Bk
+  Setting("*Arvestuse abiregister - testimiseks",CPUnpaidLClass,modSAL);//test
+  Setting("*Arvestuste/VŠljamaksete ajalugu - testimiseks",CPPPHistLClass,modSAL);//test
+  Setting("*Avatud kannete abiregister - testimiseks",CPOTLClass,modSAL);//test
+  Setting("*Puudumiste abiregister - testimiseks",CPAbsLClass,modSAL);//test
+  Setting("*TM vaba miinimumi abiregister - testimiseks",ITFMUsedLClass,modSAL);//test
+  Setting("*Tššajatabeli abiregister - testimiseks",CPWHLClass,modSAL);//test
+  Setting("*Tššv›imetuspensionŠri soodustuse abiregister - testimiseks",DPDUsedLClass,modSAL);//test
+  Setting("*TŸkitšš abiregister - testimiseks",CPPWLClass,modSAL);//test
+*/  
+  Setting("Algsaldod Ð Kasutamata puhkusejŠŠk",VacDaysFBLClass,modSAL);
+  Setting("Algsaldod Ð Puudumised",AbsenceFBLClass,modSAL);
+  Setting("Algsaldod Ð Tšštasud",SalaryFBLClass,modSAL);
+  Setting("Ametid",PositionLClass,modSAL);
+  Setting("Riiklikud pŸhad, palk",ExceptDatesLClass,modSAL);
+  Setting("ISCO koodid",ISCOCodeLClass,modSAL);
+  Setting("Kehtivad TSD reakoodid",TSDRowsTClass,modSAL);
+  Setting("KohtutŠiturite kinnipidamised",BailiffLClass,modSAL);
+  Setting("Konteerimine, puhkusereserv",VacReservLClass,modSAL);
+  Setting("Konteerimisgrupid",AccGroupLClass,modSAL);
+  Setting("Konverteerimine, Tasuliigid",OldPRPayTypesTClass,modSAL);
+  Setting("Lausendamine, palk",SalSettingTClass,modSAL);
+  Setting("Maksud",TaxLClass,modSAL);
+  Setting("Minimaalne sots.maksu summa",MinSocTaxTClass,modSAL);
+  Setting("Minimaalne tšštasu",MinSalaryTClass,modSAL);
+  Setting("Numbriseeriad - Arvestused",CalcPayrollSerTClass,modSAL);
+  Setting("Numbriseeriad - Avatud kanded",OpenTransSerTClass,modSAL);
+  Setting("Numbriseeriad - Planeeritud puudumised",PlanAbsenceSerTClass,modSAL);
+  Setting("Numbriseeriad - Puudumised",AbsenceSerTClass,modSAL);
+  Setting("Numbriseeriad - Tššajatabelid",WorkedHoursSerTClass,modSAL);
+  Setting("Numbriseeriad - Tššlepingud",ContractSerTClass,modSAL);
+  Setting("Numbriseeriad - TŸkitššd",PieceWorkSerTClass,modSAL);
+  Setting("Numbriseeriad - VŠljamaksed",PaymPayrollSerTClass,modSAL);
+  Setting("Planeeritud puudumised",PlanAbsenceLClass,modSAL);
+  Setting("Puhkuse saldod",VacBalanceLClass,modSAL);
+  Setting("Puudumise tŸŸbid",AbsTypeLClass,modSAL);
+  Setting("Tasuliigid",PaymTypeLClass,modSAL);
+  Setting("TSD paranduse veakoodid",TSDErrorTClass,modSAL);
+  Setting("Tulumaksuvaba miinimumi summa",IncTaxFreeMinTClass,modSAL);
+  Setting("Tšštaja TMV miinimumi summa",ProgTaxLClass,modSAL);
+  Setting("Tšštundide tŸŸbid",WorkHourTypeLClass,modSAL);
+  Setting("TŸkitšš liigid",PieceWorkTypeLClass,modSAL);
+  Setting("†mardamine, palk",SalaryRoundTClass,modSAL);
+
+//  Document("Palga arvestamine",SalaryCalcRClass,SalaryCalcForm,SalaryCalcFClass,modSAL);
+
+  Export("TSD eksport maksuametile",TSDEClass,TSDEn,modSAL);
+  Export("VŠljamaksete eksport XML faili",PaymPayrollXMLEClass,PaymPayrollXMLEn,modSAL);
+  Export("Palgamooduli andmed",PayRollDataEClass,PayRollDataEn,modSAL);
+
+//  Import("Import,faili otsimisega TEST",AutIn,AutIn,modSAL);
+
+  Report("HaigushŸvitise arvutuskŠik",IllCalcRClass,IllCalcRn,0,modSAL);
+  Report("Palgaleht",CalcPayrollRClass,CalcPayrollRn,0,modSAL);
+  Report("Palgasedel",SalarySlipRClass,SalarySlipRn,0,modSAL);
+  Report("Palga vŠljamaksed",PaymPayrollRClass,PaymPayrollRn,0,modSAL);
+  Report("Planeeritud puudumised",PlanAbsencesRClass,PlanAbsencesRn,0,modSAL);
+  Report("Puhkusearvestuse arvutuskŠik",VacCalcRClass,VacCalcRn,0,modSAL);
+  Report("Puhkusereserv",VacBalToUseRClass,VacBalToUseRn,0,modSAL);
+  Report("Puhkuse saldo hetkeseis",VacBalanceRClass,VacBalanceRn,0,modSAL);
+  Report("Puudumised",AbsencesRClass,AbsencesRn,0,modSAL);
+  Report("Tasuliikide aruanne",PayTypesRClass,PayTypesRn,0,modSAL);
+  Report("Tššajatabelid ",WorkedHoursRClass,WorkedHoursRn,0,modSAL);
+  Report("Tšštasude prognoos",CPForecastRClass,CPForecastRn,0,modSAL);
+  Report("Tšštaja ajalugu",EmplHistRClass,EmplHistRn,0,modSAL);
+  Report("Vorm TSD",TSDRClass,TSDRn,0,modSAL);
+  Report("Tšštajate nimekiri",EmplListRClass,EmplListRn,0,modSAL);
+  Report("Tššlepingute nimekiri",ContrListRClass,ContrListRn,0,modSAL);
+
+  Document("Arvestused",CPayrollRClass,CPayrollForm,CPayrollFClass,modSAL);
+  Document("Palgasedel",SalSlipRClass,SalSlipForm,SalSlipFClass,modSAL);
+  Document("VŠljamaksed",PPayrollRClass,PPayrollForm,PPayrollFClass,modSAL);
+
+  Maintenance("Kinnita palgaarvestuse kaardid",OkCalcPayrollVClass,OkCalcPayrollMn,modSAL);
+  Maintenance("Kinnita puhkuse saldo kaardid",OkVacBalanceVClass,OkVacBalanceMn,modSAL);
+  Maintenance("Kinnita vŠljamakse kaardid",OkPaymPayrollVClass,OkPaymPayrollMn,modSAL);
+  Maintenance("Kogumispensioni liitumispŠring",CheckContributoryVClass,CheckContributoryMn,modSAL); 
+  Maintenance("Konverteerimine, PŸsiandmed",ConvertOldPayrollDataVClass,ConvertOldPayrollDataMn,modSAL);
+  Maintenance("Koosta avatud kanne mŸŸgimehe preemiast",CreateOpenTransFrSLBonusVClass,CreateOpenTransFrSLBonusMn,modSAL);
+  Maintenance("Koosta e-mailid palgaarvestustest",CalcPayrollToMailVClass,CalcPayrollToMailMn,modSAL);
+  Maintenance("Koosta l›pparve",CreateCalcPayrollEndVClass,CreateCalcPayrollEndMn,modSAL);
+  Maintenance("Koosta palgaarvestuse kaardid",CreateCalcPayrollVClass,CreateCalcPayrollMn,modSAL);
+  Maintenance("Koosta palgasedeli e-mailid",SalSlipToMailVClass,SalSlipToMailMn,modSAL);
+  Maintenance("Koosta palgavŠljamakse kaardid",CreatePaymPayrollVClass,CreatePaymPayrollMn,modSAL);
+  Maintenance("Koosta puhkusearvestuse kaardid",CreateVacCalcPayrollVClass,CreateVacCalcPayrollMn,modSAL);
+  Maintenance("Koosta puhkuse saldod",CreateVacBalanceVClass,CreateVacBalanceMn,modSAL);
+  Maintenance("Koosta puhkusereservi aastal›pukanne",CreateVacReservYearVClass,CreateVacReservYearMn,modSAL);
+  Maintenance("Koosta puhkusereservi igakuised kanded",CreateVacReservMonthVClass,CreateVacReservMonthMn,modSAL);
+  Maintenance("Koosta tššajatabelid",CreateWorkedHoursVClass,CreateWorkedHoursMn,modSAL);
+  if (IsStdBooks) then begin//Bk, ts 2020/04, moved
+//cust    Maintenance("Saada palgavŠljamaksed panka",BankPayRollVClass,BankPayRollsMn,modSAL); //pangaliidestus koodist Šra v›etud
+  end;
+  Maintenance("Uuenda abiregistrite andmed",UpdateHistoryRegistersVClass,UpdateHistoryRegistersMn,modSAL);
+
+  return;
+end;

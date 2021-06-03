@@ -1,40 +1,16 @@
-external procedure SetMarkFlag(integer,var integer);
-
-global
-updating function Boolean RecordAction_rlVBrLOK(var record VacBalanceVc VBr,Boolean readf,var Integer flushcnt)
-begin
-  Boolean res;
-  record VacBalanceVc oldVBr;
-  
-  if (IsRecordLocked(VBr)==false) then begin
-    if (readf) then begin
-      if (ReadFirstMain(VBr,0,true)) then begin end;  
-    end;
-    RecordCopy(oldVBr,VBr);
-    if (VBr.OKFlag==0) then begin
-      VBr.OKFlag = 1;
-      SetMarkFlag(VBr.OKFlag,VBr.OKMark);
-      if (RecordUpdate(oldVBr,VBr,true)==0) then begin
-        res = true;
-      end;
-    end;
-  end;  
-  RecordAction_rlVBrLOK = res;
-  return;
-end;
+remote updating function Boolean RecordAction_rlVBrLOK(var record VacBalanceVc,Boolean);
 
 global
 updating procedure OKVBrLsm()
 begin
   Integer wn;
   record VacBalanceVc VBr;
-  Integer flushcnt;
   LongInt i;
   
   wn = CurWindow;
   i = 1;
   while (GetRecordFromBrowse(VBr,wn,i)) begin
-    if (RecordAction_rlVBrLOK(VBr,true,flushcnt)) then begin end;
+    if (RecordAction_rlVBrLOK(VBr,true)) then begin end; //Bk, ts 2019/01
 LOKVBrLsm:;      
     i = i + 1;
   end;

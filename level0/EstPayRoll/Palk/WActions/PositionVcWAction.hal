@@ -31,7 +31,6 @@ function boolean PositionDClassISCOCodeEFAfter(integer wn,integer rownr,integer 
     end;
     PutWindowRecord(wn,Posr);
   end;
-
   PositionDClassISCOCodeEFAfter = true;
   return;
 end;
@@ -44,7 +43,6 @@ begin
   switch (fieldname) begin
     case "ISCOCode": res = PositionDClassISCOCodeEFAfter(wn,rownr,changed);
   end;
-
   PositionDClassAfterEditField = res;
   return;
 end;

@@ -38,28 +38,28 @@ begin
 //avatud kanded
   OTr.PaymTypeCode = ptcode;
   if (ReadFirstKey("PaymTypeCode",OTr,1,true)) then begin
-    res=true;
+    res = true;
     goto LPTrInUse;
   end;
 
 //Puudumise tŸŸbid
   ATr.PaymTypeCode = ptcode;
   if (ReadFirstKey("PaymTypeCode",ATr,1,true)) then begin
-    res=true;
+    res = true;
     goto LPTrInUse;
   end;
 
 //Tšštundide tŸŸbid
   WHTr.PaymTypeCode = ptcode;
   if (ReadFirstKey("PaymTypeCode",WHTr,1,true)) then begin
-    res=true;
+    res = true;
     goto LPTrInUse;
   end;
 
 //TŸkitšš liigid
   PWTr.PaymTypeCode = ptcode;
   if (ReadFirstKey("PaymTypeCode",PWTr,1,true)) then begin
-    res=true;
+    res = true;
     goto LPTrInUse;
   end;
 
@@ -67,11 +67,11 @@ begin
   ResetLoop(Contrr);
   Contrr.SerNr = -1;
   while (LoopMain(Contrr,1,true)) begin  
-    rwcnt=MatRowCnt(Contrr);
+    rwcnt = MatRowCnt(Contrr);
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(Contrr,i,Contrrw);
       if (Contrrw.PaymTypeCode==ptcode) then begin
-        res=true;
+        res = true;
         goto LPTrInUse;
       end;
     end;
@@ -81,11 +81,11 @@ begin
   ResetLoop(AGr);
   AGr.Code = "";
   while (LoopMain(AGr,1,true)) begin  
-    rwcnt=MatRowCnt(AGr);
+    rwcnt = MatRowCnt(AGr);
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(AGr,i,AGrw);
       if (AGrw.PaymTypeCode==ptcode) then begin
-        res=true;
+        res = true;
         goto LPTrInUse;
       end;
     end;
@@ -95,11 +95,11 @@ begin
   ResetLoop(CPr);
   CPr.SerNr = -1;
   while (LoopMain(CPr,1,true)) begin  
-    rwcnt=MatRowCnt(CPr);
+    rwcnt = MatRowCnt(CPr);
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(CPr,i,CPrw);
       if (CPrw.PaymTypeCode==ptcode) then begin
-        res=true;
+        res = true;
         goto LPTrInUse;
       end;
     end;
@@ -109,11 +109,11 @@ begin
   ResetLoop(PPr);
   PPr.SerNr = -1;
   while (LoopMain(PPr,1,true)) begin  
-    rwcnt=MatRowCnt(PPr);
+    rwcnt = MatRowCnt(PPr);
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(PPr,i,PPrw);
       if (PPrw.PaymTypeCode==ptcode) then begin
-        res=true;
+        res = true;
         goto LPTrInUse;
       end;
     end;
@@ -122,12 +122,12 @@ begin
 //Lausendamine, Palk
   BlockLoad(SalSettingRec);
   if (SalSettingRec.AdvPaymTypeCode==ptcode) then begin
-    res=true;
+    res = true;
     goto LPTrInUse;
   end;
 
   if (SalSettingRec.DeductAdvPaymTypeCode==ptcode) then begin
-    res=true;
+    res = true;
     goto LPTrInUse;
   end;
 LPTrInUse:;

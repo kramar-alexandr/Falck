@@ -1,5 +1,41 @@
 external function LongInt DateDiff(date,date);
 external function LongInt GetExceptDays(date,var date);
+external function boolean GetBackXMonthsPeriod(var date,var date,integer);
+external function boolean GetRightPeriod(var date,var date,date,date);
+external function integer CountVacDaysNorm(LongInt,integer,date,date,var val);
+
+
+global
+function Boolean No6Month(LongInt contrsernr,date abssd)
+begin
+  Boolean res;
+  record ContractVc Contrr;
+  date sdate, edate,contrsd;
+  
+  res = false;
+  Contrr.SerNr = contrsernr;
+  if (ReadFirstMain(Contrr,1,true)) then begin
+    edate = abssd;    
+    if (GetBackXMonthsPeriod(sdate,edate,6)) then begin
+      if (sdate<Contrr.StartDate) then begin
+        res = true;
+      end;
+    end;
+  end;
+  No6Month = res;
+  return;
+end;
+
+global
+procedure PasteInfoFlag(var record AbsenceVc Absr)
+begin
+  if (No6Month(Absr.ContrSerNr,Absr.StartDate)) then begin
+    Absr.InfoFlag = 1;
+  end else begin
+    Absr.InfoFlag = 0;
+  end;
+  return;
+end;
 
 global
 function Boolean SerNrTestAbsenceVc(LongInt sernr,Date tdp)
@@ -19,7 +55,7 @@ begin
     res = true;
     goto L1;
   end;
-  for (i=0; i<rwcnt ;i=i+1) begin
+  for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(AbsSerr,i,AbsSerrw);
     if ((sernr<AbsSerrw.TSerStart) or (sernr>AbsSerrw.TSerEnd)) then begin
       goto L2;
@@ -46,16 +82,16 @@ begin
   record ContractVc Contrr;  
   string 20 res;
      
-  res="";
-  Contrr.SerNr=contrsernr;
+  res = "";
+  Contrr.SerNr = contrsernr;
   if (ReadFirstMain(Contrr,1,true)) then begin
-    res=Contrr.VacAbsTypeCode;
+    res = Contrr.VacAbsTypeCode;
   end;
   if blank(res) then begin
     BlockLoad(SalSettingRec);
-    res=SalSettingRec.VacAbsTypeCode;
+    res = SalSettingRec.VacAbsTypeCode;
   end;
-  GetVacAbsTypeCode=res;
+  GetVacAbsTypeCode = res;
   return;
 end;
 
@@ -65,9 +101,9 @@ begin
   record SalSettingBlock SalSettingRec;
 
   BlockLoad(SalSettingRec);
-  dayspaid=SalSettingRec.DaysPaid;
-  daysnotpaid=SalSettingRec.DaysNotPaid;
-  perc=SalSettingRec.Percent;
+  dayspaid = SalSettingRec.DaysPaid;
+  daysnotpaid = SalSettingRec.DaysNotPaid;
+  perc = SalSettingRec.Percent;
   GetIllAbsTypeCode = SalSettingRec.IllAbsTypeCode;
   return;
 end;
@@ -81,17 +117,17 @@ begin
   integer tmpint;
   val tmpval;
   
-  res=false;
+  res = false;
   if (prevabssernr!=abssernr) then begin
     illabstype = GetIllAbsTypeCode(tmpint,tmpint,tmpval);
-    Absr.SerNr=prevabssernr;
+    Absr.SerNr = prevabssernr;
     if (ReadFirstMain(Absr,1,true)) then begin
       if ((Absr.OKFlag!=0) and (Absr.AbsTypeCode==illabstype) and (Absr.EmplCode==emplcode)) then begin
-        res=true;
+        res = true;
       end;
     end;
   end;
-  PrevIllAbsSerNrOK=res;
+  PrevIllAbsSerNrOK = res;
   return;
 end;
 
@@ -136,59 +172,59 @@ begin
       GetPrevIllAbsDays(Absr.PrevAbsSerNr,dayspaid,daysnotpaid);
     end;
   end;  
-  Absr.Period1=blankval;
-  Absr.StartDate1=blnkdate;
-  Absr.EndDate1=blnkdate;
-  Absr.Period2=blankval;
-  Absr.StartDate2=blnkdate;
-  Absr.EndDate2=blnkdate;
-  Absr.Period3=blankval;
-  Absr.StartDate3=blnkdate;
-  Absr.EndDate3=blnkdate;
+  Absr.Period1 = blankval;
+  Absr.StartDate1 = blnkdate;
+  Absr.EndDate1 = blnkdate;
+  Absr.Period2 = blankval;
+  Absr.StartDate2 = blnkdate;
+  Absr.EndDate2 = blnkdate;
+  Absr.Period3 = blankval;
+  Absr.StartDate3 = blnkdate;
+  Absr.EndDate3 = blnkdate;
 
   if (Absr.AbsTypeCode==illabstype) then begin
     if (Absr.CalendarDays>0) then begin
       if (Absr.AbsPaymDate<Absr.EndDate) then begin
-        Absr.AbsPaymDate=Absr.EndDate;
+        Absr.AbsPaymDate = Absr.EndDate;
       end;
       if (Absr.CalendarDays>daysnotpaid+dayspaid) then begin
-        Absr.StartDate1=Absr.StartDate;
-        Absr.EndDate1=AddDay(Absr.StartDate,daysnotpaid-1);
-        Absr.Period1=daysnotpaid;
+        Absr.StartDate1 = Absr.StartDate;
+        Absr.EndDate1 = AddDay(Absr.StartDate,daysnotpaid-1);
+        Absr.Period1 = daysnotpaid;
 
-        Absr.StartDate2=AddDay(Absr.EndDate1,1);
-        Absr.EndDate2=AddDay(Absr.StartDate2,dayspaid-1);
-        Absr.Period2=dayspaid;
+        Absr.StartDate2 = AddDay(Absr.EndDate1,1);
+        Absr.EndDate2 = AddDay(Absr.StartDate2,dayspaid-1);
+        Absr.Period2 = dayspaid;
 
-        Absr.StartDate3=AddDay(Absr.EndDate2,1);
-        Absr.EndDate3=Absr.EndDate;
-        Absr.Period3=DateDiff(AddDay(Absr.EndDate3,1),Absr.StartDate3);
+        Absr.StartDate3 = AddDay(Absr.EndDate2,1);
+        Absr.EndDate3 = Absr.EndDate;
+        Absr.Period3 = DateDiff(AddDay(Absr.EndDate3,1),Absr.StartDate3);
       end else begin
         if (Absr.CalendarDays>daysnotpaid) then begin
-          Absr.StartDate1=Absr.StartDate;
-          Absr.EndDate1=AddDay(Absr.StartDate,daysnotpaid-1);
-          Absr.Period1=daysnotpaid;
+          Absr.StartDate1 = Absr.StartDate;
+          Absr.EndDate1 = AddDay(Absr.StartDate,daysnotpaid-1);
+          Absr.Period1 = daysnotpaid;
 
-          Absr.StartDate2=AddDay(Absr.EndDate1,1);
-          Absr.EndDate2=Absr.EndDate;
-          Absr.Period2=DateDiff(AddDay(Absr.EndDate2,1),Absr.StartDate2);
+          Absr.StartDate2 = AddDay(Absr.EndDate1,1);
+          Absr.EndDate2 = Absr.EndDate;
+          Absr.Period2 = DateDiff(AddDay(Absr.EndDate2,1),Absr.StartDate2);
         end else begin
-          Absr.StartDate1=Absr.StartDate;
-          Absr.EndDate1=Absr.EndDate;
-          Absr.Period1=DateDiff(AddDay(Absr.EndDate1,1),Absr.StartDate1);
+          Absr.StartDate1 = Absr.StartDate;
+          Absr.EndDate1 = Absr.EndDate;
+          Absr.Period1 = DateDiff(AddDay(Absr.EndDate1,1),Absr.StartDate1);
         end;
       end;
       if (Absr.Period1<=0) then begin
-        Absr.StartDate1=blnkdate;
-        Absr.EndDate1=blnkdate;
+        Absr.StartDate1 = blnkdate;
+        Absr.EndDate1 = blnkdate;
       end;
       if (Absr.Period2<=0) then begin
-        Absr.StartDate2=blnkdate;
-        Absr.EndDate2=blnkdate;
+        Absr.StartDate2 = blnkdate;
+        Absr.EndDate2 = blnkdate;
       end;
     end;
   end else begin
-    Absr.AbsPaymDate=blnkdate;
+    Absr.AbsPaymDate = blnkdate;
   end;  
   return;
 end;
@@ -204,66 +240,108 @@ begin
   
   illabstype = GetIllAbsTypeCode(dayspaid,daysnotpaid,perc);
 
-  Absr.StartDate1=blnkdate;
-  Absr.EndDate1=blnkdate;
-  Absr.StartDate2=blnkdate;
-  Absr.EndDate2=blnkdate;
-  Absr.StartDate3=blnkdate;
-  Absr.EndDate3=blnkdate;
-  Absr.Period3=blankval;
+  Absr.StartDate1 = blnkdate;
+  Absr.EndDate1 = blnkdate;
+  Absr.StartDate2 = blnkdate;
+  Absr.EndDate2 = blnkdate;
+  Absr.StartDate3 = blnkdate;
+  Absr.EndDate3 = blnkdate;
+  Absr.Period3 = blankval;
 
   if (Absr.AbsTypeCode==illabstype) then begin
     if (Absr.CalendarDays>0) then begin
-      daysnotpaid=Absr.Period1;
-      dayspaid=Absr.Period2;
+      daysnotpaid = Absr.Period1;
+      dayspaid = Absr.Period2;
       if (Absr.AbsPaymDate<Absr.EndDate) then begin
-        Absr.AbsPaymDate=Absr.EndDate;
+        Absr.AbsPaymDate = Absr.EndDate;
       end;
       if (Absr.CalendarDays>daysnotpaid+dayspaid) then begin
         if (daysnotpaid>0) then begin
-          Absr.StartDate1=Absr.StartDate;
-          Absr.EndDate1=AddDay(Absr.StartDate,daysnotpaid-1);
+          Absr.StartDate1 = Absr.StartDate;
+          Absr.EndDate1 = AddDay(Absr.StartDate,daysnotpaid-1);
 
           if (dayspaid>0) then begin
-            Absr.StartDate2=AddDay(Absr.EndDate1,1);
-            Absr.EndDate2=AddDay(Absr.StartDate2,dayspaid-1);
-            Absr.StartDate3=AddDay(Absr.EndDate2,1);
-            Absr.EndDate3=Absr.EndDate;
-            Absr.Period3=DateDiff(AddDay(Absr.EndDate3,1),Absr.StartDate3);
+            Absr.StartDate2 = AddDay(Absr.EndDate1,1);
+            Absr.EndDate2 = AddDay(Absr.StartDate2,dayspaid-1);
+            Absr.StartDate3 = AddDay(Absr.EndDate2,1);
+            Absr.EndDate3 = Absr.EndDate;
+            Absr.Period3 = DateDiff(AddDay(Absr.EndDate3,1),Absr.StartDate3);
           end else begin
-            Absr.StartDate3=AddDay(Absr.EndDate1,1);
-            Absr.EndDate3=Absr.EndDate;
-            Absr.Period3=DateDiff(AddDay(Absr.EndDate3,1),Absr.StartDate3);
+            Absr.StartDate3 = AddDay(Absr.EndDate1,1);
+            Absr.EndDate3 = Absr.EndDate;
+            Absr.Period3 = DateDiff(AddDay(Absr.EndDate3,1),Absr.StartDate3);
           end;
         end else begin
           if (dayspaid>0) then begin
-            Absr.StartDate2=Absr.StartDate;
-            Absr.EndDate2=AddDay(Absr.StartDate2,dayspaid-1);
-            Absr.StartDate3=AddDay(Absr.EndDate2,1);
-            Absr.EndDate3=Absr.EndDate;
-            Absr.Period3=DateDiff(AddDay(Absr.EndDate3,1),Absr.StartDate3);
+            Absr.StartDate2 = Absr.StartDate;
+            Absr.EndDate2 = AddDay(Absr.StartDate2,dayspaid-1);
+            Absr.StartDate3 = AddDay(Absr.EndDate2,1);
+            Absr.EndDate3 = Absr.EndDate;
+            Absr.Period3 = DateDiff(AddDay(Absr.EndDate3,1),Absr.StartDate3);
           end else begin
-            Absr.StartDate3=Absr.StartDate;
-            Absr.EndDate3=Absr.EndDate;
-            Absr.Period3=DateDiff(AddDay(Absr.EndDate3,1),Absr.StartDate3);
+            Absr.StartDate3 = Absr.StartDate;
+            Absr.EndDate3 = Absr.EndDate;
+            Absr.Period3 = DateDiff(AddDay(Absr.EndDate3,1),Absr.StartDate3);
           end;
         end;
       end else begin
         if (Absr.CalendarDays>daysnotpaid) then begin
-          Absr.StartDate1=Absr.StartDate;
-          Absr.EndDate1=AddDay(Absr.StartDate,daysnotpaid-1);
-          Absr.StartDate2=AddDay(Absr.EndDate1,1);
-          Absr.EndDate2=Absr.EndDate;
-          Absr.Period2=DateDiff(AddDay(Absr.EndDate2,1),Absr.StartDate2);
+          Absr.StartDate1 = Absr.StartDate;
+          Absr.EndDate1 = AddDay(Absr.StartDate,daysnotpaid-1);
+          Absr.StartDate2 = AddDay(Absr.EndDate1,1);
+          Absr.EndDate2 = Absr.EndDate;
+          Absr.Period2 = DateDiff(AddDay(Absr.EndDate2,1),Absr.StartDate2);
         end else begin
-          Absr.StartDate1=Absr.StartDate;
-          Absr.EndDate1=Absr.EndDate;
+          Absr.StartDate1 = Absr.StartDate;
+          Absr.EndDate1 = Absr.EndDate;
         end;
       end;
     end;  
   end else begin
-    Absr.AbsPaymDate=blnkdate;
+    Absr.AbsPaymDate = blnkdate;
   end;
+  return;
+end;
+
+global
+function LongInt GetByDateVacDaysToUse(LongInt contrsernr,date contrsd,date contred,date todate,var LongInt vbnr)
+begin
+  integer res;
+  record VacBalanceVc VBr;
+  row VacBalanceVc VBrw;
+  integer rwcnt,i,vacdaystouse,vacdaysused,toyear;
+  date sd,ed;
+  val tmpval;
+
+  res = 0;
+  toyear = GetYear(todate);
+  VBr.OKFlag = 1;
+  VBr.ContrSerNr = contrsernr;
+  if (ReadFirstKey("OKFlag",VBr,2,true)) then begin
+    vbnr = VBr.SerNr;
+    rwcnt = MatRowCnt(VBr);
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(VBr,i,VBrw);
+      if (VBrw.Year<toyear) then begin
+        if (VBrw.VacDaysStatus==1) then begin
+          vacdaystouse = vacdaystouse + VBrw.VacDaysToUse;
+        end;
+      end else begin
+        if (VBrw.Year==toyear) then begin
+          vacdaysused = vacdaysused + VBrw.VacDaysUsed;
+        end;
+      end;
+    end;
+  end;
+  vacdaystouse = vacdaystouse - vacdaysused;
+  sd.day = 1;
+  sd.month = 1;
+  sd.year = toyear;
+  ed = todate;
+  if (GetRightPeriod(sd,ed,contrsd,contred)) then begin
+    res = vacdaystouse + CountVacDaysNorm(contrsernr,toyear,sd,ed,tmpval);
+  end;
+  GetByDateVacDaysToUse = res;
   return;
 end;
 
@@ -275,15 +353,15 @@ begin
   row VacBalanceVc VBrw;
   integer rwcnt,i;
 
-  res=-1;
-  VBr.OKFlag=1;
-  VBr.ContrSerNr=contsernr;
+  res = -1;
+  VBr.OKFlag = 1;
+  VBr.ContrSerNr = contsernr;
   if (ReadFirstKey("OKFlag",VBr,2,true)) then begin
-    rwcnt=MatRowCnt(VBr);
+    rwcnt = MatRowCnt(VBr);
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(VBr,i,VBrw);
       if ((VBrw.Year==year) and (VBrw.VacDaysStatus==1)) then begin
-        res=VBrw.VacDaysToUse;
+        res = VBrw.VacDaysToUse;
       end;
     end;
   end;
@@ -297,27 +375,27 @@ begin
   integer vacdaystmp,cnt,i;
   date thedat;
 
-  vacdaystouse=GetYearVacDaysToUse(contrsernr,year);
-  hdays=GetExceptDays(sd,enddate);
-  vacdaystmp=vacdaystot-hdays;
+  vacdaystouse = GetYearVacDaysToUse(contrsernr,year);
+  hdays = GetExceptDays(sd,enddate);
+  vacdaystmp = vacdaystot - hdays;
   
   if (vacdaystmp<=vacdaystouse) then begin
-    vacdaysyear=vacdaystmp;
-    vacdaystot=0;
+    vacdaysyear = vacdaystmp;
+    vacdaystot = 0;
   end else begin
-    cnt=vacdaystouse;
-    thedat=AddDay(sd,-1);
+    cnt = vacdaystouse;
+    thedat = AddDay(sd,-1);
     for (i=0;i<cnt;i=i+1) begin
       thedat = AddDay(thedat,1);
-      hdays=GetExceptDays(thedat,thedat);
+      hdays = GetExceptDays(thedat,thedat);
       if (hdays>0) then begin
-        cnt=cnt+1;
+        cnt = cnt + 1;
       end;
     end;  
-    ed=thedat;
-    vacdaysyear=vacdaystouse; 
-    hdays=GetExceptDays(sd,ed);
-    vacdaystot=vacdaystot-vacdaystouse-hdays; 
+    ed = thedat;
+    vacdaysyear = vacdaystouse; 
+    hdays = GetExceptDays(sd,ed);
+    vacdaystot = vacdaystot - vacdaystouse - hdays; 
   end; 
   return;
 end;
@@ -335,9 +413,9 @@ begin
   date sd,ed;
   string 20 vacabstype;
   
-  vacabstype=GetVacAbsTypeCode(Absr.ContrSerNr);
-  yearcnt=0;
-  rwcnt=MatRowCnt(Absr);
+  vacabstype = GetVacAbsTypeCode(Absr.ContrSerNr);
+  yearcnt = 0;
+  rwcnt = MatRowCnt(Absr);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowDelete(Absr,i);
     i = i - 1;
@@ -345,26 +423,26 @@ begin
   end;
 
   if (Absr.AbsTypeCode==vacabstype) then begin
-    vacdaystot=Absr.CalendarDays;
+    vacdaystot = Absr.CalendarDays;
     if (vacdaystot>0) then begin
       VBr.ContrSerNr = Absr.ContrSerNr;
-      VBr.OKFlag=1;
+      VBr.OKFlag = 1;
       if (ReadFirstKey("OKFlag",VBr,2,true)) then begin
-        rwcnt=MatRowCnt(VBr);
+        rwcnt = MatRowCnt(VBr);
         for (i=0;i<rwcnt;i=i+1) begin
           MatRowGet(VBr,i,VBrw);  
           if ((VBrw.VacDaysToUse>0) and (VBrw.VacDaysStatus==1)) then begin
             vbyear[yearcnt] = VBrw.Year;
-            yearcnt=yearcnt+1;
+            yearcnt = yearcnt + 1;
           end;
         end;
         //array sorting
         for (k=0;k<yearcnt-1;k=k+1) begin
           for (i=k+1;i<yearcnt;i=i+1) begin
             if (vbyear[k]>vbyear[i]) then begin
-              tmpyear=vbyear[i];
-              vbyear[i]=vbyear[k];
-              vbyear[k]=tmpyear;
+              tmpyear = vbyear[i];
+              vbyear[i] = vbyear[k];
+              vbyear[k] = tmpyear;
             end;
           end;
         end;
@@ -372,22 +450,22 @@ begin
 
       for (k=0;k<yearcnt;k=k+1) begin
         if (vacdaystot>0) then begin
-          year=vbyear[k];
+          year = vbyear[k];
           if (k>0) then begin
             MatRowGet(Absr,k-1,Abs2rw);
-            sd=AddDay(Abs2rw.EDate,1);
+            sd = AddDay(Abs2rw.EDate,1);
           end else begin
-            sd=Absr.StartDate;
+            sd = Absr.StartDate;
           end;
-          ed=Absr.EndDate;
+          ed = Absr.EndDate;
           ClearRow(Absr,Absrw,1);
           GetVacDates(Absr.ContrSerNr,year,vacdaystouse,vacdaysyear,vacdaystot,hdays,sd,ed,Absr.EndDate);
-          Absrw.Year=year;
-          Absrw.Days=vacdaysyear;
-          Absrw.HDays=hdays;
-          Absrw.VacDaysToUse=vacdaystouse-Absrw.Days;
-          Absrw.SDate=sd;
-          Absrw.EDate=ed;
+          Absrw.Year = year;
+          Absrw.Days = vacdaysyear;
+          Absrw.HDays = hdays;
+          Absrw.VacDaysToUse = vacdaystouse - Absrw.Days;
+          Absrw.SDate = sd;
+          Absrw.EDate = ed;
           MatRowInsert(Absr,k,Absrw);
         end;
       end;

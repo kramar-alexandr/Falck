@@ -3,10 +3,10 @@ external procedure GetLangNr(string,var record LangNrVc);
 external procedure CommonDocumentFields(record RcVc);
 external function Integer NumberofDocumentPages(string,Integer);
 external function Boolean Getformcode(Integer,Integer,string,string,string,LongInt,LongInt,string,string,Integer,string,var string);
-external function val GetEmplTaxPercent(string,date,integer,val,var string,var string,var string);
+external function val GetEmplTaxPercent(string,date,integer,val,var string,var string,var string,var string);
 
 global
-procedure GetPMBankAccName(string macc,var string banknr,var string bankname)
+procedure GetPMBankAccName(string macc,var string banknr,var string bankname,var string bankcode)
 begin
   Integer i,rwcnt;
   record PMBlock PMRec;
@@ -14,6 +14,7 @@ begin
   
   bankname = "";
   banknr = "";
+  bankcode = "";
   BlockLoad(PMRec);
   rwcnt = MatRowCnt(PMRec);
   for (i=0 ;i<rwcnt;i=i+1) begin
@@ -21,6 +22,7 @@ begin
     if (pmrw.Code==macc) then begin
       banknr = pmrw.BankNr;
       bankname = pmrw.Comment;
+      bankcode = pmrw.BankCode;
       goto LGetPMBankAccName;
     end;
   end;
@@ -35,7 +37,7 @@ begin
   record DocVc Docr;
   record ContractVc Contrr;
   row PaymPayrollVc PPrw;
-  string 255 tstr,pmacc,pmname,tmpstr;
+  string 255 tstr,pmacc,pmname,tmpstr,bankacc,bankcode;
   Integer i,rwcnt;
   val percent;
   string 30 idcode;
@@ -50,7 +52,7 @@ begin
   OUTFORMFIELD("F_PP_SERNR",PPr.SerNr);
   OUTFORMFIELD("F_PP_PAYMDATE",PPr.PaymDate);
   OUTFORMFIELD("F_PP_PMCODE",PPr.PMCode);
-  GetPMBankAccName(PPr.PMCode,pmacc,pmname);
+  GetPMBankAccName(PPr.PMCode,pmacc,pmname,bankcode);
   OUTFORMFIELD("F_PP_PMACC",pmacc);
   OUTFORMFIELD("F_PP_PMNAME",pmname);
   OUTFORMFIELD("F_PP_OBJCODE",PPr.ObjCode);
@@ -60,16 +62,17 @@ begin
   rwcnt = MatRowCnt(PPr);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(PPr,i,PPrw);
-    Contrr.SerNr=PPrw.ContrSerNr;
-    idcode="";
-    percent=0;
+    Contrr.SerNr = PPrw.ContrSerNr;
+    idcode = ""; bankacc = "";
+    percent = 0;
     if (ReadFirstMain(Contrr,1,true)) then begin
-      percent=GetEmplTaxPercent(Contrr.EmplCode,PPrw.PDate,2,PPrw.BrutoSum,tmpstr,tmpstr,idcode);//kogumispension
+      percent = GetEmplTaxPercent(Contrr.EmplCode,PPrw.PDate,2,PPrw.BrutoSum,tmpstr,tmpstr,idcode,bankacc);//kogumispension
     end;
     OUTFORMFIELD("F_PP_CONTRSERNR",PPrw.ContrSerNr);
     OUTFORMFIELD("F_PP_CALCSERNR",PPrw.CalcSerNr);
     OUTFORMFIELD("F_PP_EMPLNAME",PPrw.Firstname & " " & PPrw.Surname);
     OUTFORMFIELD("F_PP_IDCODE",idcode);
+    OUTFORMFIELD("F_PP_BANKACC",bankacc);
     OUTFORMFIELD("F_PP_PENSION",percent);
     OUTFORMFIELD("F_PP_PAYMTYPECODE",PPrw.PaymTypeCode);
     OUTFORMFIELD("F_PP_PAYMTYPENAME",PPrw.PaymTypeName);

@@ -1,9 +1,8 @@
 // <halrule>server-only</halrule>
-
 external updating procedure StoreCUServiceUsage(date,string,Integer,string,Integer,Integer);//ts - 2018/04, e-service statistic
 
 global
-function Boolean DoSendCCRequestToPartner(string usercode,string regnr,string service,var LongInt response,var date sd,var date ed) 
+function Boolean DoSendCCRequestToPartner(string usercode,string regnr,string service,var LongInt response,var date sd,var date ed,var string y_2020) 
 begin
   record ServiceCacheVc SCr;
   Boolean res,found;
@@ -16,7 +15,7 @@ begin
   found = ReadFirstMain(SCr,1,true);
   if (found) then begin   
     arg = "?PERSON_CODE="&regnr;
-    res = SendWebRequest(SCr.ServiceHost,SCr.ServicePort,-1,false,"GET",SCr.FuncName & "" & arg,"text/xml; charset=utf-8","",false,a,reply,10);
+    res = SendWebRequest(SCr.ServiceHost,443,-1,true,"GET",SCr.FuncName & "" & arg,"text/xml; charset=utf-8","",false,a,reply,10);
     if (res) then begin
       response = 0;
       xmlReply = ParseXmlArea(reply);
@@ -37,6 +36,7 @@ begin
           ed.Month = StringToInt(Mid(tstr,4,2));
           ed.Day = StringToInt(Right(tstr,2));
         end;
+        y_2020 = XmlGetAttribute(xmlReply,"FIND_CONTRIBUTION_TERMS/PERSON","Y_2020");//Bk, ts 2020/11
       end;
     end else begin
       LogText(0,"DoSendContrContrRequestToPartner: Sending HALTED.");
@@ -49,13 +49,22 @@ begin
 end;
 
 global
-procedure SendCCRequestToPartner(string usercode,string regnr,string service,var LongInt response,var date sd,var date ed) 
+procedure SendCCRequestToPartner2(string usercode,string regnr,string service,var LongInt response,var date sd,var date ed,var string y_2020) 
 begin
   record CYBlock CYb;
 
-  if (DoSendCCRequestToPartner(usercode,regnr,service,response,sd,ed)) then begin
+  if (DoSendCCRequestToPartner(usercode,regnr,service,response,sd,ed,y_2020)) then begin
     BlockLoad(CYb);
     queued.StoreCUServiceUsage(CurrentDate,CYb.OrgNr,4,"ESTCCLOOKUP",1,1);//ts - 2018/04, e-service statistic
   end;
+  return;
+end;
+
+global
+procedure SendCCRequestToPartner(string usercode,string regnr,string service,var LongInt response,var date sd,var date ed) 
+begin
+  string 10 tmp;
+  
+  SendCCRequestToPartner2(usercode,regnr,service,response,sd,ed,tmp); 
   return;
 end;

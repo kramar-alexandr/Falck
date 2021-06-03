@@ -20,8 +20,7 @@ begin
   boolean dc,cc;
   integer i,rwcnt,cnt,cnt2;
   string 20 emplcode,poscode,tmpstr;
-  val frrate,to1,to2,br1,br2;
-  val sumtot;
+  val sumtot,br1,br2;
   date calcdate;
   string 255 ftxt,tstr,accgroup,debitacc,creditacc,accruedacc,objcode,rwobjcode;
   array string 64 TRrwacc,TRrwobj,TR2rwacc,TR2rwobj;
@@ -44,31 +43,31 @@ begin
       end;
     end;
     if (true) then begin
-      gTRp.IntYc=SalaryPaymentYc; 
-      gTRp.Number=PPr.SerNr;
-      gTRp.RefStr="";
+      gTRp.IntYc = SalaryPaymentYc; 
+      gTRp.Number = PPr.SerNr;
+      gTRp.RefStr = "";
     end;
     if (rpt==false) then begin
-      lTRr.IntYc=gTRp.IntYc;
+      lTRr.IntYc = gTRp.IntYc;
       lTRr.Number = gTRp.Number;
       if (ReadFirstMain(lTRr,2,true)) then begin
         res = 1032;
         goto LMakeTransFromPaymPayroll;
       end;
     end;
-    gTRp.RegDate=CurrentDate;
+    gTRp.RegDate = CurrentDate;
     gTRp.RegTime = CurrentTime;
-    gTRp.TransDate=PPr.PaymDate;
+    gTRp.TransDate = PPr.PaymDate;
     if (TransInFiscal(gTRp.TransDate)==false) then begin
-      res=1075;
+      res = 1075;
       goto LMakeTransFromPaymPayroll;
     end;
-    ftxt="VŠljamakse";
-    gTRp.Comment=ftxt;
-    dc=true;
-    cc=false;
+    ftxt = "VŠljamakse";
+    gTRp.Comment = ftxt;
+    dc = true;
+    cc = false;
     sumtot = 0;
-    creditacc="";
+    creditacc = "";
     GetPM(PPr.PMCode,creditacc,tmpstr);
     rwcnt = MatRowCnt(PPr);
     prevcontrnr=-1;
@@ -84,14 +83,14 @@ begin
           end;
           objcode = objcode & PPr.ObjCode;          
         end;
-        accgroup="";
-        debitacc="";
-        accgroup=GetContrAccGroupCode(PPrw.ContrSerNr,poscode,PPrw.PaymTypeCode,calcdate,emplcode);
-        debitacc=GetAccGroupPaymDebitAccCode(accgroup);
-        prevcontrnr=PPrw.ContrSerNr;
+        accgroup = "";
+        debitacc = "";
+        accgroup = GetContrAccGroupCode(PPrw.ContrSerNr,poscode,PPrw.PaymTypeCode,calcdate,emplcode);
+        debitacc = GetAccGroupPaymDebitAccCode(accgroup);
+        prevcontrnr = PPrw.ContrSerNr;
       end;
       if (MakeArrayArrangement(TRrwacc,TRrwobj,TR2rwacc,TR2rwobj,TRrwdsum,TRrwcsum,TR2rwdsum,TR2rwcsum,debitacc,creditacc,accruedacc,objcode,PPrw.NetoSum,cnt,cnt2,true)==false) then begin
-        res=1500433;
+        res = 1500433;
         goto LMakeTransFromPaymPayroll;
       end;
     end;
@@ -109,6 +108,6 @@ begin
     end;
   end;
 LMakeTransFromPaymPayroll:;
-  MakeTransFromPaymPayroll=res;
+  MakeTransFromPaymPayroll = res;
   return;
 end;

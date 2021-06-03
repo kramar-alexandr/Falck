@@ -1,0 +1,161 @@
+//pangaliidestus
+external function Boolean CheckInternetEnabler();
+external function boolean IsBankQueueActive();
+external function boolean IsPartnerStmtActive(string,string);
+external function boolean BankQueueActiveInAnyComp();
+external function boolean BankStmtActiveInAnyComp();
+external procedure CheckBankRepliesForCurCompany();
+external procedure SendBankRequestsForCurCompany();
+external procedure AddBankStatementReqToCurCompany();
+external procedure BankingDebugMsg(string,string);
+
+procedure RemoveAllBankIdleTasks()
+begin
+  RemoveTask("SendBankRequestsIdleTask");
+  BankingDebugMsg("BANK SERVICES","SendBankRequestsIdleTask removed");
+  RemoveTask("BankStateReqToQueueIdleTask");
+  BankingDebugMsg("BANK SERVICES","BankStateReqToQueueIdleTask removed");
+  return;
+end;
+
+global
+procedure SendBankRequestsIdleTask(string arg)
+begin
+  boolean testf,stopidletaskf;
+  integer i,rwcnt;
+  integer oldcomp;
+  record CompaniesBlock Compb;
+  row CompaniesBlock Comprw;
+  record EInvoiceBlock EIb;
+
+  stopidletaskf = true; //stop unless some company will change it to false below
+  oldcomp = CurrentCompany;  
+  BlockLoad(Compb);
+  rwcnt = MatRowCnt(Compb);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(Compb,i,Comprw);
+    if (blank(Comprw.TCPIP)) then begin
+      if (SetCompanyCode(Comprw.CompCode,false)) then begin
+        BlockLoad(EIb);
+        BankingDebugMsg("BANK SERVICES","Switched to company " & Comprw.CompCode & " " & Comprw.CompName);
+        testf = true;
+        if (!IsBankQueueActive) then begin
+          testf = false;
+          BankingDebugMsg("BANK SERVICES","Service is disabled in company " & Comprw.CompCode & " " & Comprw.CompName);
+        end else begin
+          stopidletaskf = false;
+        end;
+        if (EIb.TestFlag == 0) then begin
+          if (CheckInternetEnabler == false) then begin
+            LogText(0,"BANK SERVICES" & " " & USetStr(20242));
+            goto LSKIPCompanySending;
+          end;
+        end;
+        if (testf) then begin
+          BankingDebugMsg("BANK SERVICES","Service is activated in company " & Comprw.CompCode & " " & Comprw.CompName);
+          CheckBankRepliesForCurCompany;
+          SendBankRequestsForCurCompany;
+        end;
+      end;
+    end;
+LSKIPCompanySending:;
+  end;
+  ResetCompany(oldcomp);
+  //This check should happen regardless of other conditions
+  if (stopidletaskf) then begin
+    BankingDebugMsg("BANK SERVICES","Service is inactive in all companies");
+    RemoveAllBankIdleTasks;
+  end;
+  return;
+end;
+
+procedure BankStateReqIdleTaskRemove()
+begin
+  RemoveTask("BankStateReqToQueueIdleTask");
+  BankingDebugMsg("BANK SERVICES","BankStateReqToQueueIdleTask removed");
+  return;
+end;
+
+global
+procedure BankStateReqToQueueIdleTask(string arg)
+begin
+  boolean testf,stopidletaskf;
+  integer i,rwcnt;
+  integer oldcomp;
+  record CompaniesBlock Compb;
+  row CompaniesBlock Comprw;
+  record EInvoiceBlock EIb;
+
+  stopidletaskf = true; //stop unless some company will change it to false below
+  oldcomp = CurrentCompany;  
+  BlockLoad(Compb);
+  rwcnt = MatRowCnt(Compb);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(Compb,i,Comprw);
+    if (blank(Comprw.TCPIP)) then begin
+      if (SetCompanyCode(Comprw.CompCode,false)) then begin
+        BlockLoad(EIb);
+        BankingDebugMsg("BANK STATEMENT","Switched to company " & Comprw.CompCode & " " & Comprw.CompName);
+        testf = true;
+        if (!IsPartnerStmtActive("ANY","ANY")) then begin
+          testf = false;
+          BankingDebugMsg("BANK STATEMENT","Service is disabled in company " & Comprw.CompCode & " " & Comprw.CompName);
+        end else begin
+          stopidletaskf = false;
+        end;
+        if (EIb.TestFlag == 0) then begin
+          if (CheckInternetEnabler == false) then begin
+            LogText(0,"BANK STATEMENT" & " " & USetStr(20242));
+            goto LSKIPCompanyStatement;
+          end;
+        end;
+        if (testf) then begin
+          BankingDebugMsg("BANK STATEMENT","Service is activated in company " & Comprw.CompCode & " " & Comprw.CompName);
+          AddBankStatementReqToCurCompany;
+        end;
+      end;
+    end;
+LSKIPCompanyStatement:;
+  end;
+  ResetCompany(oldcomp);
+  //This check should happen regardless of other conditions
+  if (stopidletaskf) then begin
+    BankingDebugMsg("BANK STATEMENT","Service is inactive in all companies");
+    BankStateReqIdleTaskRemove;
+  end;
+  return;
+end;
+
+global
+procedure InitBankRequestsIdleTasks(boolean forced)
+begin
+  record EInvQueryIntrvlBlock EInvQueryIntrvlr;
+  integer sendQueuePeriod,accStatePeriod;
+  
+  BlockLoad(EInvQueryIntrvlr);
+  sendQueuePeriod = EInvQueryIntrvlr.BankQueueSend;
+  if ((sendQueuePeriod < 60) or (sendQueuePeriod > 14400)) then begin 
+    sendQueuePeriod = 600;
+  end;
+  accStatePeriod = EInvQueryIntrvlr.BankStmtRequest;
+  if ((accStatePeriod < 60) or (accStatePeriod > 14400)) then begin 
+    accStatePeriod = 600;
+  end;
+  if (ServerMode or SingleUserMode) then begin
+    if (BankQueueActiveInAnyComp OR forced) then begin
+      //this will process the request queue, which includes payments, statement requests etc
+      if(TaskExists("SendBankRequestsIdleTask") == false) then begin
+        NewPeriodicTask2("SendBankRequestsIdleTask","Sending queued requests to bank","SendBankRequestsIdleTask","",sendQueuePeriod,"");
+        BankingDebugMsg("BANK SERVICES","SendBankRequestsIdleTask started with period " & sendQueuePeriod);
+      end;
+    end;
+    if (BankStmtActiveInAnyComp OR forced) then begin
+      //this will only add account statement record to request queue above if needed
+      if(TaskExists("BankStateReqToQueueIdleTask") == false) then begin
+        NewPeriodicTask2("BankStateReqToQueueIdleTask","Adding account statement request to queue","BankStateReqToQueueIdleTask","",accStatePeriod,"");
+        BankingDebugMsg("BANK SERVICES","BankStateReqToQueueIdleTask started with period " & accStatePeriod);
+      end;
+    end;
+  end;
+  return;
+end;

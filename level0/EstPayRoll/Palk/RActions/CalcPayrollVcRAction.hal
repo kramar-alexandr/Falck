@@ -43,6 +43,8 @@ begin
   
   CPr.SerNr = -1;
   CPr.CalcDate = CurrentDate;
+  CPr.RegDate = CurrentDate; //nk 30.11.2018
+  CPr.RecSign = CurrentUser; //nk 30.11.2018
   CPr.OKFlag = 0;
   SetMarkFlag(CPr.OKFlag,CPr.OKMark);
   CPr.PaymFlag = 0;
@@ -75,17 +77,19 @@ begin
  
   CPr.SerNr = -1;
   CPr.CalcDate = CurrentDate;
+  CPr.RegDate = CurrentDate; //nk 30.11.2018
+  CPr.RecSign = CurrentUser; //nk 30.11.2018
   CPr.OKFlag = 0;
   SetMarkFlag(CPr.OKFlag,CPr.OKMark);
   CPr.PaymFlag = 0;
   SetMarkFlag(CPr.PaymFlag,CPr.PaymMark);
-  tmpdate.day=1;
-  tmpdate.month=GetMonth(CPr.CalcDate);
-  tmpdate.year=GetYear(CPr.CalcDate);
-  CPr.StartDate=tmpdate;
-  tmpdate.day=DaysInMonth(GetYear(tmpdate),GetMonth(tmpdate));
-  CPr.EndDate=tmpdate;
-  CPr.PaymDate=tmpdate;
+  tmpdate.day = 1;
+  tmpdate.month = GetMonth(CPr.CalcDate);
+  tmpdate.year = GetYear(CPr.CalcDate);
+  CPr.StartDate = tmpdate;
+  tmpdate.day = DaysInMonth(GetYear(tmpdate),GetMonth(tmpdate));
+  CPr.EndDate = tmpdate;
+  CPr.PaymDate = tmpdate;
   CPr.Invalid = 0;
   CPr.Mailf = 0;
   if (SingleUserMode) then begin
@@ -121,8 +125,8 @@ begin
   boolean otflag,absflag,advpaymflag,transf;
   boolean gentrans;
   
-  insertmode=1;
-  updatemode=2;
+  insertmode = 1;
+  updatemode = 2;
   res = 0;
   if (CP2r.Invalid!=0) then begin
     RecordCheckError(1282,"",0,"");      
@@ -214,19 +218,19 @@ begin
     goto LCalcPayrollVcRecordCheck;
   end;
 
-  rwcnt=MatRowCnt(CPr);
+  rwcnt = MatRowCnt(CPr);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(CPr,i,CPrw);
-    absflag=(CPrw.AbsNr!=-1);
+    absflag = (CPrw.AbsNr!=-1);
     if (absflag==false) then begin 
       if blank(CPrw.PosCode) then begin
         RecordCheckError(1500307," " & CPrw.PosCode,i,"PosCode");      
         res = -1; 
         goto LCalcPayrollVcRecordCheck;
       end else begin
-        otflag=(CPrw.OTNr!=-1);
+        otflag = (CPrw.OTNr!=-1);
         if (otflag) then begin
-          Posr.Code=CPrw.PosCode;
+          Posr.Code = CPrw.PosCode;
           if (ReadFirstMain(Posr,1,true)==false) then begin
             RecordCheckError(1500324," " & CPrw.PosCode,i,"PosCode");      
             res = -1; 
@@ -289,7 +293,7 @@ begin
     end;  
   end;
   if ((transf) and (gentrans)) then begin
-    errcode=MakeTransFromCalcPayroll(gTRp,gTR2p,CPr,false,true);
+    errcode = MakeTransFromCalcPayroll(gTRp,gTR2p,CPr,false,true);
     tstr = CheckTrans(gTRp,2,true);
     if (nonblank(tstr)) then begin
       RecordCheckError(1085,tstr,-1,"SerNr");      
@@ -317,7 +321,7 @@ begin
   end;
 LCalcPayrollVcRecordCheck:;
   if (res==-1) then begin
-    CPr.OKFlag=0;
+    CPr.OKFlag = 0;
     SetMarkFlag(CPr.OKFlag,CPr.OKMark);
   end;
   CalcPayrollVcRecordCheck = res;
@@ -351,7 +355,7 @@ begin
   Boolean handled,checkrowflag,okf;
   
   rwcnt = MatRowCnt(CPr);
-  for (i=rownr; i<rwcnt; i=i+1) begin
+  for (i=rownr;i<rwcnt;i=i+1) begin
     MatRowGet(CPr,i,CPrw);
     handled = false;
     if (CPrw.OTNr!=-1) and (otf) then begin
@@ -370,7 +374,7 @@ begin
         if (addf) then begin
           okf = true;
           rwcnt2 = MatRowCnt(OTr);
-          for (j=0; j<rwcnt2; j=j+1) begin
+          for (j=0;j<rwcnt2;j=j+1) begin
             MatRowGet(OTr,j,OTrw);
             if (OTrw.CalcSerNr<=0) then begin
               okf = false;
@@ -489,7 +493,7 @@ begin
   rwcnt = MatRowCnt(CPr);
   rwcnt2 = MatRowCnt(CP2r);
   loopcnt = rwcnt;
-  if (rwcnt2 < rwcnt) then begin
+  if (rwcnt2<rwcnt) then begin
     loopcnt = rwcnt2;
   end;
   for (i=0;i<loopcnt;i=i+1) begin
@@ -654,6 +658,6 @@ begin
     UpdateDPDUsedFromCPr(CPr,true); //Tššv›imetuspensionŠri soodustuse abiregister
     UpdateCPPPHistFromCPr(CPr,false); //Arvestuste/VŠljamaksete ajalugu - testimiseks
   end;
-  CalcPayrollVcRecordImportAfter=res;
+  CalcPayrollVcRecordImportAfter = res;
   return;
 end;

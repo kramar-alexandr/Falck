@@ -55,10 +55,12 @@ begin
     switch (fieldname) begin
       case "Sum": res = false;
       case "CalcSerNr": res = false;
+/* //ts 2019/02
       case "SerNr": 
         if (wnst==Rs_update) then begin
           res = false;
         end;
+*/
     end;
   end;  
   OpenTransDClassActiveEditField = res;
@@ -124,12 +126,12 @@ function boolean OpenTransDClassContrSerNrEFAfter(integer wn,integer rownr,integ
     end else begin
       OTrw.Firstname = "";
       OTrw.Surname = "";
-      OTrw.PosCode="";
-      OTrw.Tariff=blankval;
-      OTrw.Amount=blankval;
-      OTrw.Sum=blankval;
-      OTrw.ObjCode="";
-      OTrw.CalcSerNr=-1;
+      OTrw.PosCode = "";
+      OTrw.Tariff = blankval;
+      OTrw.Amount = blankval;
+      OTrw.Sum = blankval;
+      OTrw.ObjCode = "";
+      OTrw.CalcSerNr = -1;
       MatRowPut(OTr,rownr,OTrw);
     end;      
     PutWindowRecord(wn,OTr);
@@ -147,7 +149,7 @@ function boolean OpenTransDClassTariffEFAfter(integer wn,integer rownr,integer c
     GetWindowRecord(wn,OTr);
     DeselectWindow(wn,false);
     MatRowGet(OTr,rownr,OTrw);
-    OTrw.Sum=round((OTrw.Tariff*OTrw.Amount),GetSalaryRoundMode("2"));
+    OTrw.Sum = round((OTrw.Tariff*OTrw.Amount),GetSalaryRoundMode("2"));
     MatRowPut(OTr,rownr,OTrw);
     OTSumup(OTr);
     PutWindowRecord(wn,OTr);
@@ -163,10 +165,9 @@ begin
   if (changedf!=0) then begin
     GetWindowRecord(wn,OTr);
     DeselectWindow(wn,false);
-    OTr.Comment=GetPaymTypeName(OTr.PaymTypeCode);
+    OTr.Comment = GetPaymTypeName(OTr.PaymTypeCode);
     PutWindowRecord(wn,OTr);
   end;
-
   OpenTransDClassPaymTypeCodeEFAfter = true;
   return;
 end;

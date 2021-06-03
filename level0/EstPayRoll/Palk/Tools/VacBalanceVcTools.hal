@@ -1,4 +1,3 @@
-external function LongInt DaysInYear(integer);
 external function roundmode SetRoundModeD(Integer);
 external function LongInt GetCalendarDays(date,date);
 external procedure GetFullYear(integer,var date,var date);
@@ -6,6 +5,8 @@ external function val GetAbsenceFBDaysForPeriod(LongInt,string,date,date,var int
 external function val GetVacDaysFBDaysForPeriod(LongInt,LongInt,date,date);
 external function string 20 GetVacAbsTypeCode(LongInt);
 external function LongInt GetVacAbsDays(LongInt,integer,string);
+external procedure SetMarkFlag(integer,var integer);
+external function LongInt GetMonthDiff(Date,Date);
 
 global
 function boolean GetNextVacBalSerNr(var LongInt vbsernr)
@@ -25,7 +26,7 @@ begin
 end;
 
 global
-function integer CountVacDaysNorm(LongInt contrsernr,integer year,date sd,date ed)
+function integer CountVacDaysNorm(LongInt contrsernr,integer year,date sd,date ed,var val vacdaysval)
 begin
   integer res;
   record ContractVc Contrr;
@@ -35,8 +36,9 @@ begin
   if (ReadFirstMain(Contrr,1,true)) then begin
     vacdaysnorm = Contrr.VacDaysNorm;
     curdaysnorm = GetCalendarDays(sd,ed);
-    tmp = vacdaysnorm/DaysInYear(year);
-    res = round(tmp*curdaysnorm,SetRoundModeD(0));
+    tmp = vacdaysnorm/365;//Bk, ts 2020/06 //DaysInYear(year);
+    vacdaysval = tmp*curdaysnorm;
+    res = round(vacdaysval,SetRoundModeD(0));
   end;
   CountVacDaysNorm = res;
   return;
@@ -47,12 +49,13 @@ procedure InsertVacBalRow(record VacBalanceVc VBr,var row VacBalanceVc VBrw,inte
 begin
   string 20 vacabstype;
   integer vacabsdays,abscalfbnoexcdays,abscalfbdays,tmpint;
-  
+  val tmpval;
+
   ClearRow(VBr,VBrw,1);
   VBrw.Year = year;
   VBrw.SDate = sd;
   VBrw.EDate = ed;
-  VBrw.VacDaysNorm = CountVacDaysNorm(VBr.ContrSerNr,VBrw.Year,VBrw.SDate,VBrw.EDate);
+  VBrw.VacDaysNorm = CountVacDaysNorm(VBr.ContrSerNr,VBrw.Year,VBrw.SDate,VBrw.EDate,tmpval);
   //Algsaldod - Puudumised (puhkus)
   vacabstype = GetVacAbsTypeCode(VBr.ContrSerNr);
   abscalfbdays = GetAbsenceFBDaysForPeriod(VBr.ContrSerNr,vacabstype,VBrw.SDate,VBrw.EDate,tmpint,abscalfbnoexcdays);
@@ -79,3 +82,27 @@ begin
   rw = rw + 1;
 end;
 
+//Bk - start: ts 2019/01
+global
+updating function Boolean RecordAction_rlVBrLOK(var record VacBalanceVc VBr,Boolean readf)
+begin
+  Boolean res;
+  record VacBalanceVc oldVBr;
+  
+  if (IsRecordLocked(VBr)==false) then begin
+    if (readf) then begin
+      if (ReadFirstMain(VBr,0,true)) then begin end;  
+    end;
+    RecordCopy(oldVBr,VBr);
+    if (VBr.OKFlag==0) then begin
+      VBr.OKFlag = 1;
+      SetMarkFlag(VBr.OKFlag,VBr.OKMark);
+      if (RecordUpdate(oldVBr,VBr,true)==0) then begin
+        res = true;
+      end;
+    end;
+  end;  
+  RecordAction_rlVBrLOK = res;
+  return;
+end;
+//Bk - end

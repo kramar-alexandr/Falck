@@ -1,0 +1,275 @@
+external function LongInt DateDiff(Date,Date);
+external function LongInt GetCalendarDays(date,date);
+external function LongInt GetWorkingDays(date,date);
+external procedure PasteIllPeriods(var record AbsenceVc);
+external procedure PasteIllDates(var record AbsenceVc);
+external function LongInt GetYearVacDaysToUse(LongInt,LongInt);
+external procedure PasteVacDates(var record AbsenceVc);
+external function LongInt GetYearVacDaysToUse(LongInt,LongInt);
+external function string 20 GetVacAbsTypeCode(LongInt);
+external function boolean PrevIllAbsSerNrOK(LongInt,LongInt,string);
+external procedure YearCheck(var LongInt);
+external function boolean IsVacAbsTypeFlag(string);
+remote function Boolean CheckIfSamePeriodAbsExists(LongInt,LongInt,date,date);//ts - 2018/01
+external function LongInt DateDiff(Date,Date);
+remote updating function Integer RecordAction_rlPlanAbsToAbs(var record PlanAbsenceVc,var string);
+
+function LongInt GetVacDaysTouse(LongInt contsernr)
+begin
+  record VacBalanceVc VBr;
+  row VacBalanceVc VBrw;
+  integer rwcnt,i;
+  longint res;
+
+  VBr.OKFlag = 1;
+  VBr.ContrSerNr = contsernr;
+  if (ReadFirstKey("OKFlag",VBr,2,true)) then begin
+    rwcnt = MatRowCnt(VBr);
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(VBr,i,VBrw);
+      if (VBrw.VacDaysStatus==1) then begin
+        res = res + VBrw.VacDaysToUse;
+      end;
+    end;
+  end;
+  GetVacDaysTouse = res;
+  return;
+end;
+
+global
+function Boolean PlanAbsenceDClassSwitchRow(Integer wn,Integer rownr)
+begin
+  record PlanAbsenceVc Absr;
+  row PlanAbsenceVc Absrw;
+  integer rwcnt,i;
+//clear trash rows
+  if (rownr>0) then begin
+    GetWindowRecord(wn,Absr);
+    DeselectWindow(wn,false);
+    rwcnt = MatRowCnt(Absr);
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(Absr,i,Absrw);
+      if ((Absrw.ContrSerNr)<=0) then begin
+        MatRowDelete(Absr,i);
+        i = i - 1;
+        rwcnt = MatRowCnt(Absr);
+      end;
+      PutWindowRecord(wn,Absr);
+    end; 
+  end; 
+  PlanAbsenceDClassSwitchRow = true;
+  return;
+end;
+
+global 
+function Boolean PlanAbsenceDClassDeleteRowTest(Integer wn,Integer rownr)
+begin
+  record PlanAbsenceVc Absr;
+  integer updatemode;
+  boolean res;
+
+  res = true;
+  updatemode = 2;
+  if (WindowState(wn)==updatemode) then begin
+    GetPrevWindowRecord(wn,Absr);
+  end else begin
+    GetWindowRecord(wn,Absr);
+  end;
+  if (Absr.OKFlag!=0) then begin
+    res = false;
+  end;
+  PlanAbsenceDClassDeleteRowTest = res;
+  return;
+end;
+
+global
+function boolean PlanAbsenceDClassActiveEditField(integer wn,string fieldname,integer fn,integer wnst,integer rownr,integer changed)
+begin
+  boolean res;
+  record PlanAbsenceVc Absr;
+  integer updatemode;
+    
+  res = true;
+  GetWindowRecord(wn,Absr);
+  if (Absr.OKFlag!=0) then begin
+    res = false;
+  end;  
+  PlanAbsenceDClassActiveEditField = res;
+  return;
+end;
+
+global
+function boolean PlanAbsenceDClassOKFlagButtonAction(integer wn,integer value)
+begin
+  boolean res;
+  record PlanAbsenceVc Absr;
+  row PlanAbsenceVc Absrw;
+  integer rwcnt,i;
+  integer normalmode,updatemode;
+  
+  res = true;
+  normalmode = 0;
+  updatemode = 2;
+  if (WindowState(wn)==normalmode) then begin
+    GetWindowRecord(wn,Absr);
+    if (Absr.OKFlag!=0) then begin
+      res = false;
+      if (UserCanAction("UnOKAll",false)) then begin
+        rwcnt = MatRowCnt(Absr);
+        res = true;
+        for (i=0; i<rwcnt; i=i+1) begin
+          MatRowGet(Absr,i,Absrw);
+          if (Absrw.AbsenceNr>0) then begin
+            res = false;
+            i = rwcnt;
+          end;
+        end;
+      end;
+    end;
+  end;  
+  if (WindowState(wn)==updatemode) then begin
+    GetPrevWindowRecord(wn,Absr);
+    if (Absr.OKFlag!=0) then begin
+      res = false;
+    end;
+  end;  
+  PlanAbsenceDClassOKFlagButtonAction = res;
+  return;
+end;
+
+function boolean PlanAbsenceDClassContrSerNrEFAfter(integer wn,integer rownr,integer changedf)
+  begin  
+  record PlanAbsenceVc Absr;
+  row PlanAbsenceVc Absrw;
+  integer rwcnt;
+  string 20 vacabstype;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,Absr);
+    if (rownr>-1) then begin
+      MatRowGet(Absr,rownr,Absrw);
+      if (Absrw.ContrSerNr>0) then begin
+        Absrw.AbsTypeCode = GetVacAbsTypeCode(Absrw.ContrSerNr);
+        MatRowPut(Absr,rownr,Absrw);        
+        PutWindowRecord(wn,Absr);
+      end;
+    end;
+  end;
+  PlanAbsenceDClassContrSerNrEFAfter = true;
+  return;
+end;
+
+function boolean PlanAbsenceDClassStartDate1EFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record PlanAbsenceVc Absr;
+  row PlanAbsenceVc Absrw;
+  string 20 vacabstype;
+  LongInt days,vacdays;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,Absr);
+    if (rownr!=-1) then begin
+      MatRowGet(Absr,rownr,Absrw);
+      DeselectWindow(wn,false);
+      if (Absrw.EndDate1<Absrw.StartDate1) then begin
+        Absrw.EndDate1 = Absrw.StartDate1;
+        MatRowPut(Absr,rownr,Absrw);
+      end;
+      if (Absrw.ContrSerNr>0) and nonblank(Absrw.AbsTypeCode) then begin
+        if (IsVacAbsTypeFlag(Absrw.AbsTypeCode)) then begin
+          vacabstype = GetVacAbsTypeCode(Absrw.ContrSerNr);
+          if (Absrw.AbsTypeCode!=vacabstype) then begin
+            MessageBox(1500501,vacabstype);
+          end;
+        end;
+      end;
+      if (CheckIfSamePeriodAbsExists(-1,Absrw.ContrSerNr,Absrw.StartDate1,Absrw.EndDate1)) then begin
+        MessageBox(1500548,"");
+      end;
+      days = DateDiff(Absrw.EndDate1,Absrw.StartDate1);
+      vacdays = GetVacDaysTouse(Absrw.ContrSerNr);
+      if (vacdays<days) then begin
+        MessageBox(1500362,"");
+      end;
+      PutWindowRecord(wn,Absr);
+    end;
+  end;
+  PlanAbsenceDClassStartDate1EFAfter = true;
+  return;
+end;
+
+function boolean PlanAbsenceDClassAbsTypeCodeEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record PlanAbsenceVc Absr;
+  row PlanAbsenceVc Absrw;
+  string 20 vacabstype;
+  
+  if (changedf!=0) then begin
+    if (rownr!=-1) then begin
+      MatRowGet(Absr,rownr,Absrw);
+      if (Absrw.ContrSerNr>0) and nonblank(Absrw.AbsTypeCode) then begin
+        if (IsVacAbsTypeFlag(Absrw.AbsTypeCode)) then begin
+          vacabstype = GetVacAbsTypeCode(Absrw.ContrSerNr);
+          if (Absrw.AbsTypeCode!=vacabstype) then begin
+            MessageBox(1500501,vacabstype);
+          end;
+        end;
+      end;
+    end;
+  end;
+  PlanAbsenceDClassAbsTypeCodeEFAfter = true;
+  return;
+end;
+
+global
+function boolean PlanAbsenceDClassAfterEditField(integer wn,string fieldname,integer fn, integer rownr,integer changed)
+begin
+  boolean res;
+
+  switch (fieldname) begin
+    case "ContrSerNr": res = PlanAbsenceDClassContrSerNrEFAfter(wn,rownr,changed);
+    case "StartDate1": res = PlanAbsenceDClassStartDate1EFAfter(wn,rownr,changed);
+    case "EndDate1": res = PlanAbsenceDClassStartDate1EFAfter(wn,rownr,changed);
+    case "AbsTypeCode": res = PlanAbsenceDClassAbsTypeCodeEFAfter(wn,rownr,changed);
+  end;
+  PlanAbsenceDClassAfterEditField = res;
+  return;
+end;
+
+global
+updating procedure AbsFromPlanAbsDsm()
+begin
+  record PlanAbsenceVc PlanAbsr;
+  Integer wn;
+  LongInt r;
+  string 255 errstr;
+
+  wn = CurWindow;
+  if (WindowState(wn)==Rs_normal) then begin
+    GetWindowRecord(wn,PlanAbsr);  
+    r = RecordAction_rlPlanAbsToAbs(PlanAbsr,errstr);
+    if (r!=0) then begin
+      MessageBox(r," " & errstr);
+    end;
+  end;
+  return;
+end;
+
+global
+updating procedure AbsFromPlanAbsLsm()
+begin
+  record PlanAbsenceVc PlanAbsr;
+  Integer wn,i;
+  LongInt r;
+  string 255 errstr;
+
+  i = 1;
+  wn = CurWindow;
+  while (GetRecordFromBrowse(PlanAbsr,wn,i)) begin
+    r = RecordAction_rlPlanAbsToAbs(PlanAbsr,errstr);
+    if (r!=0) then begin
+      MessageBox(r," " & errstr);
+    end;
+  end;
+  return;
+end;

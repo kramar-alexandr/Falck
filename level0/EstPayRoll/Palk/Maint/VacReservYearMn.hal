@@ -1,0 +1,254 @@
+external function roundmode GetSalaryRoundMode(string);
+external function val GetCPSumForPeriod(LongInt,date,date);
+external function Boolean TransInFiscal(Date);
+external procedure CheckFlush(var Integer,Integer);
+external updating procedure SaveTrans(record TRVc);
+external function boolean GetAccName(string,Var string,integer);
+external procedure AddEuroTrRow(record TRVc,string,string,string,string,val,val,val,boolean,boolean,var val,boolean,string,string,string);
+external function val GetTaxPercent(string,date,val);
+external function boolean GetRightPeriod(var date,var date,date,date);
+external function boolean GetBackXMonthsPeriod(var date,var date,integer);
+external function val GetSalaryFBSumForPeriod(LongInt,date,date);
+external function LongInt GetAbsenceDays(LongInt,string,date,date,var LongInt,var LongInt);
+external function LongInt GetCalendarDays(date,date);
+external function val GetAbsenceFBDaysForPeriod(LongInt,string,date,date,var integer,var integer);
+external function LongInt GetExceptDays(date,var date);
+external function LongInt GetByDateVacDaysToUse(LongInt,date,date,date,var LongInt);
+external procedure GetAccTurnover(string,string,Date,Date,record ObjBalVc,string,Integer,Integer,Integer,var val,var val);
+external function boolean ArrangeArray(var array string,var array string,var array val,var array val,string,string,string,val,var integer,boolean,boolean,boolean,var string);
+external procedure GroupArray(var array string,var array string,var array val,var integer,string,string,val,boolean,boolean,boolean);
+
+updating procedure GetAccBalance(var record TRVc gTRr,record VacReservVc VRr,date ed,array string TRrwacc,array string TRrwobj,array val TRrwdsum,array val TRrwcsum,var integer cnt,val br1,val br2,boolean dc,boolean cc,boolean objf,boolean accf,boolean incltaxf,boolean notaxobjf)
+begin
+  record ObjBalVc ObjBalr;
+  row VacReservVc VRrw;
+  string 255 creditacc,debitacc,tstr,object;
+  Integer i,rwcnt,j,arrcnt;
+  val sum,sum1,prc,t,v,s,bruto;
+  date sd;
+  array string 64 arracc,arrobj;
+  array val arrdsum,arrcsum;
+  
+  sd = ed;
+  sd = AddMonth(sd,-11);
+  sd.day = 1;
+  creditacc = VRr.CreditAccCode;
+
+  for (i=0;i<cnt;i=i+1) begin
+    sum = 0;
+/*
+    object = TRrwobj[i];
+    if ((objf==false) and (accf==true)) then begin //€ra koosta kanded objekti p›hiselt
+      object = "";
+    end;
+*/
+    ObjBalr.AccNumber = creditacc;
+//    ObjBalr.Object = object;
+    ObjBalr.Object = "";
+    if (ReadFirstMain(ObjBalr,2,true)) then begin end;  
+    t = blankval;
+    s = blankval;
+    GetAccTurnover(creditacc,object,sd,ed,ObjBalr,"",0,0,0,t,s);
+    s = -s;
+    sum = sum + s;
+
+    if (incltaxf) then begin
+      prc = 0;
+      sum1 = sum;
+      rwcnt = MatRowCnt(VRr);
+      for (j=0;j<rwcnt;j=j+1) begin
+        MatRowGet(VRr,j,VRrw);
+        prc = prc + GetTaxPercent(VRrw.TaxCode,gTRr.TransDate,sum1);        
+      end;
+      sum = round(((sum1*100)/(100+prc)),GetSalaryRoundMode("2")); 
+    end;
+    if (GetAccName(TRrwacc[i],tstr,60)==false) then begin
+      MessageBox(1500433,TRrwacc[i]);
+      goto LGetAccBalance;
+    end; 
+
+    if (TRrwdsum[i]!=0) then begin
+      TRrwdsum[i] = TRrwdsum[i] - sum;
+    end;
+    if (TRrwcsum[i]!=0) then begin
+      TRrwcsum[i] = TRrwcsum[i] - sum;
+    end;
+  end;
+
+  for (i=0;i<cnt;i=i+1) begin
+    arracc[i] = TRrwacc[i];
+    arrobj[i] = TRrwobj[i];      
+    arrdsum[i] = TRrwdsum[i];
+    arrcsum[i] = TRrwcsum[i];
+  end;
+  arrcnt = cnt;
+
+  rwcnt = MatRowCnt(VRr);
+  for (j=0;j<rwcnt;j=j+1) begin
+    MatRowGet(VRr,j,VRrw);
+    debitacc = VRrw.DebitAccCode;
+    creditacc = VRrw.CreditAccCode;
+    for (i=0;i<arrcnt;i=i+1) begin
+      if (arrdsum[i]!=0) then begin
+        if (arrdsum[i]<0) then begin 
+          bruto = -arrdsum[i]; 
+        end else begin
+          bruto = arrdsum[i];
+        end;
+        prc = GetTaxPercent(VRrw.TaxCode,gTRr.TransDate,bruto);
+        sum = round((bruto*prc/100),GetSalaryRoundMode("2")); 
+        if (arrdsum[i]<0) then begin 
+          sum = -sum; 
+        end;
+        GroupArray(TRrwacc,TRrwobj,TRrwdsum,cnt,debitacc,arrobj[i],sum,objf,accf,notaxobjf);
+      end;
+      if (arrcsum[i]!=0) then begin
+        if (arrcsum[i]<0) then begin 
+         bruto = -arrcsum[i]; 
+        end else begin
+          bruto = arrcsum[i];
+        end;
+        prc = GetTaxPercent(VRrw.TaxCode,gTRr.TransDate,bruto);
+        sum = round((bruto*prc/100),GetSalaryRoundMode("2")); 
+        if (arrcsum[i]<0) then begin 
+          sum = -sum; 
+        end;
+        GroupArray(TRrwacc,TRrwobj,TRrwcsum,cnt,creditacc,arrobj[i],sum,objf,accf,notaxobjf);
+      end;
+    end;
+  end;
+LGetAccBalance:;
+  return;
+end;
+
+global
+updating procedure CreateVacReservYearMn(record RcVc RepSpec)
+begin
+  record VacReservVc VRr;
+  row VacReservVc VRrw;
+  record ContractVc Contrr;
+  record TRVc gTRr;
+  record BaseERVc BaseERr;
+  record SalSettingBlock SalSettingRec;
+  boolean TrHs,TrHs1,testf,notaxobjf;
+  date sdate,edate,ed;
+  integer flushcnt,cnt,i,rwcnt,vacdaystouse,tmpint;
+  string 255 tstr,objstr,debitacc,creditacc,err;
+  val prc,br1,br2,bruto,brutotot,sum,sumtot,sumperday;
+  boolean dc,cc,accf,objf,incltaxf;
+  LongInt absworkdays,abscaldays,caldays,abscalnoexcdays,absfbdays,tmplong;
+  array string 64 TRrwacc,TRrwobj;
+  array val TRrwdsum,TRrwcsum;
+ 
+  ed = RepSpec.d1;
+  if (RepSpec.flags[0]==1) then begin
+    objf = true;
+  end;
+  if (RepSpec.flags[1]==1) then begin
+    accf = true;
+  end;
+  if (RepSpec.flags[2]==1) then begin
+    incltaxf = true;
+  end;
+  dc = true;
+  cc = false;
+
+  BaseERr.Date = ed;
+  if (ReadLastMain(BaseERr,1,false)) then begin
+    br1 = BaseERr.Rate1;
+    br2 = BaseERr.Rate2;
+  end;
+  BlockLoad(SalSettingRec);
+  if (SalSettingRec.NoObjOnCPTax==1) then begin
+    notaxobjf = true;
+  end;
+
+  VRr.Code = RepSpec.f3;
+  TrHs = true;
+  while (LoopMain(VRr,1,TrHs)) begin
+    if (nonblank(RepSpec.f3)) then begin
+      if (VRr.Code!=RepSpec.f3) then begin
+        TrHs = false;
+      end;
+    end;
+    if (TrHs) then begin
+      RecordNew(gTRr);
+      gTRr.IntYc = 0; 
+      gTRr.RegDate = CurrentDate;
+      gTRr.RegTime = CurrentTime;
+      gTRr.TransDate = RepSpec.d2;
+      if (TransInFiscal(gTRr.TransDate)==false) then begin
+        MessageBox(0,USetStr(1075));
+        goto LCreateVacReservYearMn;
+      end;
+      gTRr.Number = NextSerNr("TRVc",gTRr.TransDate,-1,false,"");
+      gTRr.Comment = USetStr(1500583) & " " & ed;
+      gTRr.RefStr = "";
+      cnt = 0;
+
+      ResetLoop(Contrr);
+      TrHs1 = true;
+      while (LoopMain(Contrr,1,TrHs1)) begin
+        if (TrHs1) then begin
+          testf = true;
+          if (Contrr.Status!=1) then begin
+            testf = false;
+          end;
+          if (Contrr.AccGroupCode!=VRr.Code) then begin
+            testf = false;
+          end;
+          if (nonblank(RepSpec.ObjStr)) then begin
+            if (SetInSet(RepSpec.ObjStr,Contrr.ObjCode)==false) then begin
+              testf = false;
+            end;        
+          end;
+          if (testf) then begin
+            objstr = Contrr.ObjCode;
+            edate = RepSpec.d1;
+            vacdaystouse = GetByDateVacDaysToUse(Contrr.SerNr,Contrr.StartDate,Contrr.EndDate,edate,tmplong);
+            if (GetBackXMonthsPeriod(sdate,edate,6)) then begin
+              if (GetRightPeriod(sdate,edate,Contrr.StartDate,Contrr.EndDate)) then begin
+                sumtot = GetCPSumForPeriod(Contrr.SerNr,sdate,edate);
+                sumtot = sumtot + GetSalaryFBSumForPeriod(Contrr.SerNr,sdate,edate);
+                abscaldays = GetAbsenceDays(Contrr.SerNr,"",sdate,edate,absworkdays,abscalnoexcdays);                    
+                absfbdays = GetAbsenceFBDaysForPeriod(Contrr.SerNr,"",sdate,edate,tmpint,tmpint);
+                caldays = ((GetCalendarDays(sdate,edate))-(GetExceptDays(sdate,edate))-abscalnoexcdays-absfbdays);
+                sumperday = round((sumtot/caldays),GetSalaryRoundMode("2"));
+                bruto = vacdaystouse*sumperday;
+                brutotot = brutotot + bruto;
+              end;
+            end;
+            debitacc = VRr.DebitAccCode; 
+            creditacc = VRr.CreditAccCode;
+            if (ArrangeArray(TRrwacc,TRrwobj,TRrwdsum,TRrwcsum,debitacc,creditacc,objstr,bruto,cnt,objf,accf,false,err)==false) then begin
+              MessageBox(1500433,err);
+              goto LCreateVacReservYearMn;
+            end;
+          end;
+        end;
+      end;
+
+      GetAccBalance(gTRr,VRr,ed,TRrwacc,TRrwobj,TRrwdsum,TRrwcsum,cnt,br1,br2,dc,cc,objf,accf,incltaxf,notaxobjf);     
+      if (cnt>0) then begin
+        for (i=0;i<cnt;i=i+1) begin
+          if (GetAccName(TRrwacc[i],tstr,60)==false) then begin
+            MessageBox(1500433,TRrwacc[i]);
+            goto LCreateVacReservYearMn;
+          end; 
+          if (TRrwdsum[i]!=0) then begin
+            AddEuroTrRow(gTRr,TRrwacc[i],TRrwobj[i],"",tstr,TRrwdsum[i],br1,br2,false,dc,brutotot,false,"","","");
+          end;
+          if (TRrwcsum[i]!=0) then begin
+            AddEuroTrRow(gTRr,TRrwacc[i],TRrwobj[i],"",tstr,TRrwcsum[i],br1,br2,false,cc,brutotot,false,"","","");
+          end;
+        end;
+        if (MatRowCnt(gTRr)>0) then begin
+          SaveTrans(gTRr);
+        end;
+        CheckFlush(flushcnt,10);
+      end;
+    end;
+  end;
+LCreateVacReservYearMn:;
+  return;
+end;

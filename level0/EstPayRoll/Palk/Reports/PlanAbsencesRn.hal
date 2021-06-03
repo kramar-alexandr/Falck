@@ -1,0 +1,142 @@
+external function boolean GetRightPeriod(var date,var date,date,date);
+external function LongInt GetCalendarDays(date,date);
+external function LongInt GetWorkingDays(date,date);
+external procedure DblAbsenceVc(string,string,integer);
+
+global
+procedure PlanAbsencesRn(record RcVc RepSpec)
+begin
+  record EmplVc Emplr;
+  record ContractVc Contrr;
+  record AbsenceVc Absr;
+  record AbsTypeVc ATr;
+  string 20 tstr;
+  string 200 emplname,absperiod;
+  LongInt frcontr,tocontr,caldays,workdays;
+  integer rwcnt,i,rw;
+  boolean TrHs,TrHs1,TrHs2,testf,testf1;
+  
+  frcontr = FirstInRange(RepSpec.f1,20);
+  tocontr = LastInRange(RepSpec.f1,20);
+
+  rw = 1;
+  StartReportJob(USetStr(1500571));
+  tstr = USetStr(5261);
+  tstr = tstr & RepSpec.sStartDate & " : " & RepSpec.sEndDate;
+  Header(rw,tstr,1);
+  rw = rw + 1;
+  if ((frcontr == -1) and (tocontr == -1)) then begin
+    tstr = USetStr(1500386);
+  end else begin
+    tstr = USetStr(1500414) & ": ";
+    tstr = tstr & frcontr;
+    if (frcontr<>tocontr) then begin
+    tstr = tstr & " : " & tocontr;
+    end;
+  end;
+  Header(rw,tstr,1);
+  rw = rw + 1;
+  switch (RepSpec.flags[0]) begin
+    case 1: tstr = USetStr(1500572);
+    case 2: tstr = USetStr(1500573);
+  end;
+  Header(rw,tstr,1);
+  rw = rw + 1; 
+  EndHeader;
+  
+  SetRepCol(2,50);
+  SetRepCol(3,100);
+  SetRepCol(4,150);
+  SetRepCol(5,220);
+  SetRepCol(6,270);
+  SetRepCol(7,350);
+  SetRepCol(8,390);
+
+  StartFormat(15);
+  OutString(0,0,USetStr(1500397),false);
+  OutString(2,0,USetStr(1500385),false);
+  OutString(3,0,USetStr(1500384),false);
+  OutString(4,0,USetStr(1500395),false);
+  OutString(5,0,USetStr(1500396),false);
+  OutString(6,0,USetStr(1500401),false);
+  OutString(7,0,USetStr(1500399),true);
+  OutString(8,0,USetStr(1500398),true);
+  OutString(1,0,USetStr(1500400),true);
+  EndFormat;
+  Gray_Divider(0,1);
+  StartFormat(15);
+  EndFormat;
+
+  ResetLoop(Emplr);
+  TrHs = true;
+  Emplr.Code = "";
+  while (LoopMain(Emplr,1,TrHs)) begin
+    if (TrHs) then begin
+      testf = true;
+      if (testf) then begin
+        TrHs1 = true;
+        ResetLoop(Contrr);
+        Contrr.EmplCode = Emplr.Code;
+        while (LoopKey("EmplCode",Contrr,1,TrHs1)) begin
+          if (Contrr.EmplCode!=Emplr.Code) then begin
+            TrHs1 = false;
+          end;
+          if (TrHs1) then begin
+            testf = true;
+            if ((frcontr>0)) then begin
+              if ((Contrr.SerNr<frcontr) or (Contrr.SerNr>tocontr)) then begin
+                testf = false;
+              end;
+            end;
+            if (testf) then begin
+              TrHs2 = true;
+              ResetLoop(Absr);
+              Absr.ContrSerNr = Contrr.SerNr;
+              while (LoopKey("ContrSerNr",Absr,1,TrHs2)) begin
+                if (Absr.ContrSerNr!=Contrr.SerNr) then begin
+                  TrHs2 = false;
+                end;
+                if (TrHs2) then begin
+                  testf1 = true;  
+                  testf1 = GetRightPeriod(Absr.StartDate,Absr.EndDate,RepSpec.sStartDate,RepSpec.sEndDate);
+                  if (testf1) then begin
+                    testf1 = false;
+                    if (RepSpec.flags[0]==0) and (Absr.PlanedFlag==1) and (Absr.OKFlag==0) then begin
+                      testf1 = true;
+                    end;
+                    if (RepSpec.flags[0]==1) and (Absr.PlanedFlag==1) and (Absr.OKFlag==1) then begin
+                      testf1 = true;
+                    end;
+                  end;
+                  if (testf1) then begin
+                    StartFormat(15);
+                    OutLongInt(0,"DblAbsenceVc",Absr.SerNr,false);
+                    OutString(2,0,Absr.EmplCode,false);
+                    OutString(3,0,Absr.ContrSerNr,false);
+                    emplname = Absr.Firstname & " " & Absr.Surname;
+                    OutString(4,0,emplname,false);
+                    OutString(5,0,Absr.ObjCode,false);
+                    OutString(6,0,Absr.AbsTypeCode,false);
+                    caldays = GetCalendarDays(Absr.StartDate,Absr.EndDate);
+                    workdays = GetWorkingDays(Absr.StartDate,Absr.EndDate);
+                    OutString(7,0,caldays,true);
+                    OutString(8,0,workdays,true);
+                    absperiod = Absr.StartDate & " : " & Absr.EndDate;
+                    OutString(1,0,absperiod,true);
+                    EndFormat;
+                  end;
+                end;
+              end;
+            end;  
+          end;
+        end;
+      end;
+    end;
+  end;
+  StartFormat(15);
+  EndFormat;
+  Gray_Divider(0,1);
+  EndJob;
+LAbsencesRn:;
+  return;
+end;

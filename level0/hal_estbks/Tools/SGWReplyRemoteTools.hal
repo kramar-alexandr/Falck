@@ -1,0 +1,361 @@
+//pangaliidestus
+external procedure SendTextParameter(string,var Area);
+external procedure ReadTXServiceReply(var record TXServiceReplyVc,var Area,Boolean);
+external updating procedure SEPAInXML(xml,var string);
+//new dev
+external updating procedure ReportReplyDateTimeStmtPartner(date,time,string,string);
+external procedure BankingDebugMsg(string,string);
+external function integer BankQueReplyProgress();
+external function integer BankQueReplySuccess();
+external function integer BankQueReplyError();
+
+global updating //for qupdating
+procedure ReportReplyDateTimeOP(longint opSerNr)
+begin
+  record BankServicesBlock BankServicesbl;
+  
+  BlockLoad(BankServicesbl);
+  BankServicesbl.Bank1EPayLastDate = CurrentDate;
+  BankServicesbl.Bank1EPayLastTime = CurrentTime;
+  BankServicesbl.Bank1EPayLastRecord = opSerNr;
+  BlockStore(BankServicesbl);
+  return;
+end;
+
+function string 255 SGWGetPayRejInf(xml parsedXML)
+begin
+  string 255 res;
+  string 255 nodeName;
+
+  nodeName  = "Document/CstmrPmtStsRpt/OrgnlPmtInfAndSts/";
+  if (XmlGet(parsedXML,nodeName & "PmtInfSts") == "RJCT") then begin
+    res = XmlGet(parsedXML,nodeName & "TxInfAndSts/StsRsnInf/AddtlInf");
+  end;
+  SGWGetPayRejInf = res;
+  return;
+end;
+
+global updating //for qupdating
+procedure UpdateBankReq(record BankReqQueVc oldBankReqQuer, var record BankReqQueVc BankReqQuer)
+begin
+  RecordUpdate(oldBankReqQuer,BankReqQuer,true);
+  ReadFirstMain(BankReqQuer,0,true); //read from main thread to get the latest state
+  return;
+end;
+
+procedure SGWProcessXMLreplyPmnt(var record BankReqQueVc BankReqQuer, longint serNr, xml parsedXML, var boolean replyIsOk, var boolean isFinalReply, var string statusMsg, var integer replyStatCode)
+begin
+  string 255 nodeName,subNode;
+  string 10 statusString;
+  record BankReqQueVc oldBankReqQuer;
+  integer i;
+
+  nodeName  = "Document/CstmrPmtStsRpt/OrgnlGrpInfAndSts";
+  //if normal payment XML reply received
+  if (XmlNodeExists(parsedXML,nodeName)) then begin
+    statusString = XmlGet(parsedXML,nodeName & "/GrpSts");
+    if (nonblank(statusString)) then begin //summary reply file after first sending
+      switch(statusString) begin
+        case "ACSC":
+          replyIsOk = true;
+          isFinalReply = true;
+          statusMsg = USetStr(1501070) & " " & CurrentDate; //accepted
+          replyStatCode = BankQueReplySuccess;
+        case "ACSP":
+          replyIsOk = true;
+          isFinalReply = false;
+          statusMsg = USetStr(1501071); //in progress, requires review by bank
+          replyStatCode = BankQueReplyProgress;
+        case "RJCT":
+          replyIsOk = false;
+          isFinalReply = true;
+          statusMsg = USetStr(1501072); //rejected
+          statusMsg = statusMsg & " " & SGWGetPayRejInf(parsedXML);
+          replyStatCode = BankQueReplyError;
+        case "ACTC":
+          replyIsOk = true;
+          isFinalReply = false;
+          statusMsg = USetStr(1501073); //accepted but requires signing in bank
+          replyStatCode = BankQueReplyProgress;
+        case "PART":
+          replyIsOk = false;
+          isFinalReply = true;
+          statusMsg = USetStr(1501074); //partially accepted
+          replyStatCode = BankQueReplyError;
+      end;
+    end else begin //detailed replies for each transaction status update
+      isFinalReply = false;
+      replyIsOk = true; //this is technical ok for XML, and is true until all trans replies received
+      replyStatCode = BankReqQuer.ReplyStatCode; //keep the general status for whole request until finished
+      statusMsg = BankReqQuer.StatusMessage; //keep the general message for whole request until finished
+      RecordCopy(oldBankReqQuer,BankReqQuer);
+      subNode  = "Document/CstmrPmtStsRpt/OrgnlPmtInfAndSts/TxInfAndSts[" & i & "]";
+      while (XmlNodeExists(parsedXML,subNode)) begin
+        statusString = XmlGet(parsedXML,subNode & "/TxSts");
+        switch(statusString) begin
+          case "RJCT":
+            BankReqQuer.NbOfTxsReject = BankReqQuer.NbOfTxsReject + 1;
+          case "PDNG":
+            ; //this means still waiting for this trans. reply
+          case "PART":
+            BankReqQuer.NbOfTxsReject = BankReqQuer.NbOfTxsReject + 1; //PART for single trans is effectively a reject
+          case "ACSP":
+              ; //this means still waiting for this trans. reply
+          case "ACSC":
+            BankReqQuer.NbOfTxsAccept = BankReqQuer.NbOfTxsAccept + 1;
+        end;
+        i = i + 1;
+        subNode  = "Document/CstmrPmtStsRpt/OrgnlPmtInfAndSts/TxInfAndSts[" & i & "]";
+      end;
+      qupdating.UpdateBankReq(oldBankReqQuer,BankReqQuer);
+    end;
+    //check if all replies are collected
+    if ((BankReqQuer.NbOfTxsAccept + BankReqQuer.NbOfTxsReject) == BankReqQuer.NbOfTxs) then begin
+      isFinalReply = true;
+      if (BankReqQuer.NbOfTxsAccept == BankReqQuer.NbOfTxs) then begin
+        replyStatCode = BankQueReplySuccess;
+        statusMsg = USetStr(1501070) & " " & CurrentDate; //accepted
+      end;
+      if (BankReqQuer.NbOfTxsReject == BankReqQuer.NbOfTxs) then begin
+        replyIsOk = false;
+        replyStatCode = BankQueReplyError;
+        statusMsg = USetStr(1501072); //rejected
+      end;
+      if (BankReqQuer.NbOfTxsReject > 0 AND BankReqQuer.NbOfTxsAccept > 0) then begin
+        replyIsOk = false;
+        replyStatCode = BankQueReplyError; //partial is effectively an error for user
+        statusMsg = USetStr(1501074); //partially accepted
+      end;
+    end;
+    qupdating.ReportReplyDateTimeOP(serNr);
+  end else begin
+    //then something went wrong with sending
+    statusMsg = "Unexpected XML recevied as payment reply.";
+    replyIsOk = false;
+    isFinalReply = true;
+    BankingDebugMsg("BANK SERVICES",statusMsg);
+  end;
+  return;
+end;
+
+global updating
+procedure ProcessStmntBalances(area replyFileArea, var string errMsg)
+begin
+  xml parsedXML;
+  integer i,j;
+  string 255 nodeName0,nodeName;
+
+  //TODO finish when ready
+  i = 0;
+  parsedXML = ParseXMLArea(replyFileArea);
+  nodeName0 = "Document/BkToCstmrAcctRpt/Rpt[" & i & "]";
+  while (XmlNodeExists(parsedXML,nodeName0)) begin
+    j = 0;
+    nodeName = nodeName0 & "/Bal[" & j & "]";
+    while (XmlNodeExists(parsedXML,nodeName)) begin
+      if (XmlGet(parsedXML,nodeName & "/Tp/CdOrPrtry/Cd") == "ITAV") then begin
+        //TODO what to do with balance
+      end;
+      j = j + 1;
+      nodeName = nodeName0 & "/Bal[" & j & "]";
+    end;
+    i = i + 1;
+    nodeName0 = "Document/BkToCstmrAcctRpt/Rpt[" & i & "]";
+  end;
+  return;
+end;
+
+global updating
+procedure CallSepaImport(area replyFileArea, var string errMsg)
+begin
+  xml parsedXML;
+  //parsing the area in this function, because passing parsed XML directly to SEPAInXML 
+  //from SGWProcessXMLReply did result in crash "SendStackItem, dtyp =  23"
+  parsedXML = ParseXMLArea(replyFileArea);
+  SEPAInXML(parsedXML,errMsg);
+  return;
+end;
+
+procedure SGWProcessXMLReplyStmnt(area replyFileArea, date stmtToDate, time stmtToTime, var boolean replyIsOk, var string statusMsg)
+begin
+  statusMsg = ""; //clear as sepa import will fill it with any errors
+  qupdating.CallSepaImport(replyFileArea,statusMsg);
+  if (blank(statusMsg)) then begin
+    statusMsg = USetStr(1501081);
+  end;
+  replyIsOk = true;
+  return;
+end;
+
+procedure SGWProcessXMLReplyAccRept(area replyFileArea, date stmtToDate, time stmtToTime, var boolean isAccReport, var boolean replyIsOk, var string statusMsg)
+begin
+  xml parsedXML;
+  statusMsg = ""; //clear as sepa import will fill it with any errors
+  qupdating.CallSepaImport(replyFileArea,statusMsg);
+  if (blank(statusMsg)) then begin
+    statusMsg = USetStr(1501083);
+  end;
+  //qupdating.ProcessStmntBalances(replyFileArea,statusMsg); //TODO enable when ready
+
+  parsedXML = ParseXMLArea(replyFileArea);
+  if (XmlNodeExists(parsedXML,"Document/BkToCstmrAcctRpt/Rpt/TxsSummry")) then begin 
+    isAccReport = true;
+  end;
+  replyIsOk = true;
+  return;
+end;
+
+procedure XMLStringToDateTime(string XMLdateTimeStr, var date datep, var time timep)
+begin
+  //2018-11-08T23:59:59
+  timep.hour = StringToInt(Mid(XMLdateTimeStr,11,2));
+  timep.minute = StringToInt(Mid(XMLdateTimeStr,14,2));
+  timep.second = StringToInt(Mid(XMLdateTimeStr,17,2));
+  datep.year = StringToInt(Mid(XMLdateTimeStr,0,4));
+  datep.month = StringToInt(Mid(XMLdateTimeStr,5,2));
+  datep.day = StringToInt(Mid(XMLdateTimeStr,8,2));
+  return;
+end;
+
+procedure SGWParseOtherXMLRepsonse(xml parsedXML, var string errMsg)
+begin
+  if (XmlNodeExists(parsedXML,"B4B/HGWError")) then begin
+    errMsg = XmlGet(parsedXML,"B4B/HGWError/Code") & ": " &  XmlGet(parsedXML,"B4B/HGWError/Message");
+  end else begin
+    errMsg = USetStr(1501085);
+  end;
+  return;
+end;
+
+function integer ExtractHTSFilesFromArea(var array record HTSFileVc arrHTSFr, area sourceArea)
+begin
+  integer res,i;
+  longint l,headersize;
+  area a_tmp;
+  string 255 fname;
+  record HTSFileVc HTSFr
+  
+  l = 0; //required
+  l = GetRecordFromArea(HTSFr,"HTSFileVc",l,sourceArea);
+  if (l > 0) then begin
+    arrHTSFr[i] = HTSFr;
+    i = i + 1;
+    while (l > 0 AND (l+2) != GetAreaLength(sourceArea)) begin
+      l = GetRecordFromArea(HTSFr,"HTSFileVc",l,sourceArea);
+      if (l > 0) then begin
+        arrHTSFr[i] = HTSFr;
+        i = i + 1;
+      end;
+    end;
+  end;
+  res = i;
+  ExtractHTSFilesFromArea = res;
+  return;
+end;
+
+global
+procedure SGWProcessXMLReply(var record BankReqQueVc BankReqQuer, area replyFilesArea, var boolean replyIsOk, var boolean isFinalReply, var string statusMsg, var integer replyStatCode)
+begin
+  xml parsedXML;
+  string 15 replyFormName;
+  longint recSerNr;
+  date stmtToDate;
+  time stmtToTime;
+  boolean isAccReport;
+  array record HTSFileVc arrHTSFr;
+  integer i,fileCnt;
+  area singleFileArea;
+
+  fileCnt = ExtractHTSFilesFromArea(arrHTSFr,replyFilesArea);
+  for (i=0;i<fileCnt;i=i+1) begin
+    BankingDebugMsg("BANK SERVICES","Request " & BankReqQuer.SerNr & ", processing reply file " & i + 1 & " of " & fileCnt);
+    SetAreaZeroSize(singleFileArea);
+    GetRecordBlob(arrHTSFr[i],"Math",singleFileArea);
+    parsedXML = ParseXMLArea(singleFileArea);
+    replyFormName = Right(XmlGetAttribute(parsedXML,"Document","xmlns"),15);
+    switch(replyFormName) begin
+      case "camt.053.001.02":
+        XMLStringToDateTime(XmlGet(parsedXML,"Document/BkToCstmrStmt/Stmt/FrToDt/ToDtTm"),stmtToDate,stmtToTime);
+        SGWProcessXMLReplyStmnt(singleFileArea,stmtToDate,stmtToTime,replyIsOk,statusMsg);
+        isFinalReply = true;
+        qupdating.ReportReplyDateTimeStmtPartner(stmtToDate,stmtToTime,BankReqQuer.BankReqType,"SGW");
+      case "camt.052.001.02": //this also processes the Balance request
+        XMLStringToDateTime(XmlGet(parsedXML,"Document/BkToCstmrAcctRpt/Rpt/FrToDt/ToDtTm"),stmtToDate,stmtToTime);
+        SGWProcessXMLReplyAccRept(singleFileArea,stmtToDate,stmtToTime,isAccReport,replyIsOk,statusMsg);
+        isFinalReply = true;
+        if (isAccReport) then begin
+          qupdating.ReportReplyDateTimeStmtPartner(stmtToDate,stmtToTime,BankReqQuer.BankReqType,"SGW");
+        end;
+      case "pain.002.001.03":
+        switch(BankReqQuer.RecordType) begin
+          case "OPVc":
+            //if (nonblank(BankReqQuer.RecordID)) then begin
+              recSerNr = StringToLongInt(BankReqQuer.RecordID);
+              SGWProcessXMLreplyPmnt(BankReqQuer,recSerNr,parsedXML,replyIsOK,isFinalReply,statusMsg,replyStatCode);
+            //end;
+          case "PPVc":
+            //if (nonblank(BankReqQuer.RecordID)) then begin
+              recSerNr = StringToLongInt(BankReqQuer.RecordID);
+              SGWProcessXMLreplyPmnt(BankReqQuer,recSerNr,parsedXML,replyIsOK,isFinalReply,statusMsg,replyStatCode);
+            //end;
+          case "PaymPayrollVc":
+            //if (nonblank(BankReqQuer.RecordID)) then begin
+              recSerNr = StringToLongInt(BankReqQuer.RecordID);
+              SGWProcessXMLreplyPmnt(BankReqQuer,recSerNr,parsedXML,replyIsOK,isFinalReply,statusMsg,replyStatCode);
+            //end;
+        end;
+      otherwise
+        replyIsOk = false;
+        SGWParseOtherXMLRepsonse(parsedXML,statusMsg);
+    end;
+  end;
+  return;
+end;
+
+function integer SGWGetReplyData(var area reply, var area replyFileArea, var string errMsg)
+begin
+  record TXServiceReplyVc TXServiceReplyr;
+  integer res;
+
+  ReadTXServiceReply(TXServiceReplyr,reply,true); //cuts the TXServiceReplyVc from area
+  switch(TXServiceReplyr.ErrorCode) begin
+    case 0:
+      BankingDebugMsg("BANK SERVICES",TXServiceReplyr.ErrorDescription & ", ErrorCode " &  TXServiceReplyr.ErrorCode);
+      InsertAreaBeforeArea(reply,replyFileArea);
+    case 1:
+      BankingDebugMsg("BANK SERVICES",TXServiceReplyr.ErrorDescription & ", ErrorCode " &  TXServiceReplyr.ErrorCode);
+    case 2:
+      BankingDebugMsg("BANK SERVICES",TXServiceReplyr.ErrorDescription & ", id = " & TXServiceReplyr.MsgID);
+    case 3:
+      BankingDebugMsg("BANK SERVICES",TXServiceReplyr.ErrorDescription & ", id = " & TXServiceReplyr.MsgID);
+  end;
+  errMsg = TXServiceReplyr.ErrorDescription;
+  res = TXServiceReplyr.ErrorCode;
+  SGWGetReplyData = res;
+  return;
+end;
+
+global
+function boolean SGWRequestHasReply(record BankReqQueVc BankReqQuer, var area replyFileArea, var string errMsg, var integer statusCode)
+begin
+  record ServiceCacheVc SCr;
+  area request,reply;
+  string 255 funcname;
+  boolean res;
+
+  SCr.Code = "BANKSERVICES";
+  SCr.Partner = "SGW";
+  funcname = "HTSCheckSGWForReply.hal"; //hardcoded to use same service cache code and partner but diff function
+  if (ReadFirstMain(SCr,2,true) == false) then begin
+    BankingDebugMsg("BANK SERVICES","SGW Service cache not found: BANKSERVICES, partner SGW");
+  end else begin
+    SendTextParameter(BankReqQuer.ReqUniqueID,request);
+    res = SendWebRequest(SCr.ServiceHost,SCr.ServicePort,-1,true,"POST","/" & funcname,"text/xml; charset=utf-8","",false,request,reply,20);
+    statusCode = SGWGetReplyData(reply,replyFileArea,errMsg);
+    if (statusCode != 0) then begin
+      res = false;
+    end;
+  end;
+  SGWRequestHasReply = res;
+  return;
+end;

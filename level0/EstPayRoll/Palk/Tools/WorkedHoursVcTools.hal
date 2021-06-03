@@ -16,7 +16,7 @@ begin
     res = true;
     goto L1;
   end;
-  for (i=0; i<rwcnt ;i=i+1) begin
+  for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(WHSerr,i,WHSerrw);
     if ((sernr<WHSerrw.TSerStart) or (sernr>WHSerrw.TSerEnd)) then begin
       goto L2;
@@ -40,133 +40,165 @@ global
 procedure GetDaysAndHoursTotal(record WorkedHoursVc WHr,integer rownr,var val htot,var integer dtot)
 begin
   row WorkedHoursVc WHrw;
-
+  val d1,d2,d3,d4,d5,d6,d7,d8,d9,d10,d11,d12,d13,d14,d15,d16,d17,d18,d19,d20,d21,d22,d23,d24,d25,d26,d27,d28,d29,d30,d31;
+  
   MatRowGet(WHr,rownr,WHrw);
-  htot=0;
-  dtot=0;
-  if (WHrw.d1>0) then begin
-    htot=htot+WHrw.d1;
-    dtot=dtot+1;
+  htot = 0;
+  dtot = 0;
+  d1 = StringToVal(WHrw.d1,M4Val);
+  if (d1>0) then begin
+    htot = htot + d1;
+    dtot = dtot + 1;
   end;
-  if (WHrw.d2>0) then begin
-    htot=htot+WHrw.d2;
-    dtot=dtot+1;
+  d2 = StringToVal(WHrw.d2,M4Val);
+  if (d2>0) then begin
+    htot = htot + d2;
+    dtot = dtot + 1;
   end;
-  if (WHrw.d3>0) then begin
-    htot=htot+WHrw.d3;
-    dtot=dtot+1;
+  d3 = StringToVal(WHrw.d3,M4Val);
+  if (d3>0) then begin
+    htot = htot  +d3;
+    dtot = dtot + 1;
   end;
-  if (WHrw.d4>0) then begin
-    htot=htot+WHrw.d4;
-    dtot=dtot+1;
+  d4 = StringToVal(WHrw.d4,M4Val);
+  if (d4>0) then begin
+    htot = htot + d4;
+    dtot = dtot + 1;
   end;
-  if (WHrw.d5>0) then begin
-    htot=htot+WHrw.d5;
-    dtot=dtot+1;
+  d5 = StringToVal(WHrw.d5,M4Val);
+  if (d5>0) then begin
+    htot = htot + d5;
+    dtot = dtot + 1;
   end;
-  if (WHrw.d6>0) then begin
-    htot=htot+WHrw.d6;
-    dtot=dtot+1;
+  d6 = StringToVal(WHrw.d6,M4Val);
+  if (d6>0) then begin
+    htot = htot + d6;
+    dtot = dtot + 1;
   end;
-  if (WHrw.d7>0) then begin
-    htot=htot+WHrw.d7;
-    dtot=dtot+1;
+  d7 = StringToVal(WHrw.d7,M4Val);
+  if (d7>0) then begin
+    htot = htot + d7;
+    dtot = dtot + 1;
   end;
-  if (WHrw.d8>0) then begin
-    htot=htot+WHrw.d8;
-    dtot=dtot+1;
+  d8 = StringToVal(WHrw.d8,M4Val);
+  if (d8>0) then begin
+    htot = htot + d8;
+    dtot = dtot + 1;
   end;
-  if (WHrw.d9>0) then begin
-    htot=htot+WHrw.d9;
-    dtot=dtot+1;
+  d9 = StringToVal(WHrw.d9,M4Val);
+  if (d9>0) then begin
+    htot = htot + d9;
+    dtot = dtot + 1;
   end;
-  if (WHrw.d10>0) then begin
-    htot=htot+WHrw.d10;
-    dtot=dtot+1;
+  d10 = StringToVal(WHrw.d10,M4Val);
+  if (d10>0) then begin
+    htot = htot + d10;
+    dtot = dtot + 1;
   end;
-  if (WHrw.d11>0) then begin
-    htot=htot+WHrw.d11;
-    dtot=dtot+1;
+  d11 = StringToVal(WHrw.d11,M4Val);
+  if (d11>0) then begin
+    htot = htot + d11;
+    dtot = dtot + 1;
   end;
-  if (WHrw.d12>0) then begin
-    htot=htot+WHrw.d12;
-    dtot=dtot+1;
+  d12 = StringToVal(WHrw.d12,M4Val);
+  if (d12>0) then begin
+    htot = htot + d12;
+    dtot = dtot + 1;
   end;
-  if (WHrw.d13>0) then begin
-    htot=htot+WHrw.d13;
-    dtot=dtot+1;
+  d13 = StringToVal(WHrw.d13,M4Val);
+  if (d13>0) then begin
+    htot = htot + d13;
+    dtot = dtot + 1;
   end;
-  if (WHrw.d14>0) then begin
-    htot=htot+WHrw.d14;
-    dtot=dtot+1;
+  d14 = StringToVal(WHrw.d14,M4Val);
+  if (d14>0) then begin
+    htot = htot + d14;
+    dtot = dtot + 1;
   end;
-  if (WHrw.d15>0) then begin
-    htot=htot+WHrw.d15;
-    dtot=dtot+1;
+  d15 = StringToVal(WHrw.d15,M4Val);
+  if (d15>0) then begin
+    htot = htot + d15;
+    dtot = dtot + 1;
   end;
-  if (WHrw.d16>0) then begin
-    htot=htot+WHrw.d16;
-    dtot=dtot+1;
+  d16 = StringToVal(WHrw.d16,M4Val);
+  if (d16>0) then begin
+    htot = htot + d16;
+    dtot = dtot + 1;
   end;
-  if (WHrw.d17>0) then begin
-    htot=htot+WHrw.d17;
-    dtot=dtot+1;
+  d17 = StringToVal(WHrw.d17,M4Val);
+  if (d17>0) then begin
+    htot = htot + d17;
+    dtot = dtot + 1;
   end;
-  if (WHrw.d18>0) then begin
-    htot=htot+WHrw.d18;
-    dtot=dtot+1;
+  d18 = StringToVal(WHrw.d18,M4Val);
+  if (d18>0) then begin
+    htot = htot + d18;
+    dtot = dtot + 1;
   end;
-  if (WHrw.d19>0) then begin
-    htot=htot+WHrw.d19;
-    dtot=dtot+1;
+  d19 = StringToVal(WHrw.d19,M4Val);
+  if (d19>0) then begin
+    htot = htot + d19;
+    dtot = dtot + 1;
   end;
-  if (WHrw.d20>0) then begin
-    htot=htot+WHrw.d20;
-    dtot=dtot+1;
+  d20 = StringToVal(WHrw.d20,M4Val);
+  if (d20>0) then begin
+    htot = htot + d20;
+    dtot = dtot + 1;
   end;
-  if (WHrw.d21>0) then begin
-    htot=htot+WHrw.d21;
-    dtot=dtot+1;
+  d21 = StringToVal(WHrw.d21,M4Val);
+  if (d21>0) then begin
+    htot = htot + d21;
+    dtot = dtot + 1;
   end;
-  if (WHrw.d22>0) then begin
-    htot=htot+WHrw.d22;
-    dtot=dtot+1;
+  d22 = StringToVal(WHrw.d22,M4Val);
+  if (d22>0) then begin
+    htot = htot + d22;
+    dtot = dtot + 1;
   end;
-  if (WHrw.d23>0) then begin
-    htot=htot+WHrw.d23;
-    dtot=dtot+1;
+  d23 = StringToVal(WHrw.d23,M4Val);
+  if (d23>0) then begin
+    htot = htot + d23;
+    dtot = dtot + 1;
   end;
-  if (WHrw.d24>0) then begin
-    htot=htot+WHrw.d24;
-    dtot=dtot+1;
+  d24 = StringToVal(WHrw.d24,M4Val);
+  if (d24>0) then begin
+    htot = htot + d24;
+    dtot = dtot + 1;
   end;
-  if (WHrw.d25>0) then begin
-    htot=htot+WHrw.d25;
-    dtot=dtot+1;
+  d25 = StringToVal(WHrw.d25,M4Val);
+  if (d25>0) then begin
+    htot = htot + d25;
+    dtot = dtot + 1;
   end;
-  if (WHrw.d26>0) then begin
-    htot=htot+WHrw.d26;
-    dtot=dtot+1;
+  d26 = StringToVal(WHrw.d26,M4Val);
+  if (d26>0) then begin
+    htot = htot + d26;
+    dtot = dtot + 1;
   end;
-  if (WHrw.d27>0) then begin
-    htot=htot+WHrw.d27;
-    dtot=dtot+1;
+  d27 = StringToVal(WHrw.d27,M4Val);
+  if (d27>0) then begin
+    htot = htot + d27;
+    dtot = dtot + 1;
   end;
-  if (WHrw.d28>0) then begin
-    htot=htot+WHrw.d28;
-    dtot=dtot+1;
+  d28 = StringToVal(WHrw.d28,M4Val);
+  if (d28>0) then begin
+    htot = htot + d28;
+    dtot = dtot + 1;
   end;
-  if (WHrw.d29>0) then begin
-    htot=htot+WHrw.d29;
-    dtot=dtot+1;
+  d29 = StringToVal(WHrw.d29,M4Val);
+  if (d29>0) then begin
+    htot = htot + d29;
+    dtot = dtot + 1;
   end;
-  if (WHrw.d30>0) then begin
-    htot=htot+WHrw.d30;
-    dtot=dtot+1;
+  d30 = StringToVal(WHrw.d30,M4Val);
+  if (d30>0) then begin
+    htot = htot + d30;
+    dtot = dtot + 1;
   end;
-  if (WHrw.d31>0) then begin
-    htot=htot+WHrw.d31;
-    dtot=dtot+1;
+  d31 = StringToVal(WHrw.d31,M4Val);
+  if (d31>0) then begin
+    htot = htot + d31;
+    dtot = dtot + 1;
   end;
   return;
 end;

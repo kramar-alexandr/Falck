@@ -1,68 +1,39 @@
-external procedure SetMarkFlag(integer,var integer);
-
-global
-updating procedure OKPPrLsm()
-begin
-  Integer wn;
-  record PaymPayrollVc PPr;
-  record PaymPayrollVc oldPPr; 
-  LongInt i;
-  boolean testf;
-  
-  wn = CurWindow;
-  i = 1;
-  while (GetRecordFromBrowse(PPr,wn,i)) begin
-    testf=true;
-    if (PPr.Invalid!=0) then begin testf = false; end;
-    if (PPr.OKFlag!=0) then begin testf = false; end;
-    if (testf) then begin
-       RecordCopy(oldPPr,PPr);
-       PPr.OKFlag = 1;
-       SetMarkFlag(PPr.OKFlag,PPr.OKMark);
-       if (RecordUpdate(oldPPr,PPr,true)==0) then begin
-       end;
-    end;
-    i = i + 1;
-  end;
-  UpdateBrowses("PaymPayrollVc");
-  return;
-end;
+external updating function Boolean RecordAction_rlPPrLOK(var record PaymPayrollVc,Boolean);
 
 global
 updating procedure OkPaymPayrollMn(record RcVc RepSpec)
 begin
   record PaymPayrollVc PPr;
-  record PaymPayrollVc oldPPr; 
   LongInt frppr,toppr;
   boolean TrHs;
   string 10 ckey;
   boolean testf;
  
-  frppr=FirstInRange(RepSpec.f1,20);
-  toppr=LastInRange(RepSpec.f1,20);
+  frppr = FirstInRange(RepSpec.f1,20);
+  toppr = LastInRange(RepSpec.f1,20);
   ResetLoop(PPr);
   if (nonblank(RepSpec.f1)) then begin
     ckey = "SerNr";
-    PPr.SerNr=frppr;
+    PPr.SerNr = frppr;
   end else begin
-    ckey="PaymDate";
+    ckey = "PaymDate";
     PPr.PaymDate = RepSpec.sStartDate;
   end;
-  TrHs=true;
+  TrHs = true;
   while (LoopKey(ckey,PPr,1,TrHs)) begin
     testf = true; 
     if (nonblank(RepSpec.f1)) then begin
       if (PPr.SerNr>toppr) then begin
          testf = false;
          if (ckey=="SerNr") then begin 
-           TrHs=false; 
+           TrHs = false; 
          end;   
       end;
     end else begin
       if (DateInRange(PPr.PaymDate,RepSpec.sStartDate,RepSpec.sEndDate)==false) then begin
         testf = false;
         if (ckey=="PaymDate") then begin 
-          TrHs=false; 
+          TrHs = false; 
         end;
       end;
     end;
@@ -70,10 +41,7 @@ begin
     if (PPr.OKFlag!=0) then begin testf = false; end;
 
     if (testf) then begin
-       RecordCopy(oldPPr,PPr);
-       PPr.OKFlag = 1;
-       SetMarkFlag(PPr.OKFlag,PPr.OKMark);
-       if (RecordUpdate(oldPPr,PPr,true)==0) then begin end;
+      if (RecordAction_rlPPrLOK(PPr,true)) then begin end; //Bk, ts 2019/01
     end;
   end;
 LOkPaymPayrollMn:;

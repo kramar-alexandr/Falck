@@ -14,7 +14,7 @@ BEGIN
   BlockLoad(PMRec);
   pmrwcnt = MatRowCnt(PMRec);
   rwcnt = MatRowCnt(OTSerr);
-  for (i=0; i<rwcnt;i=i+1) begin
+  for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(OTSerr,i,OTSerrw);
     if (OTSerrw.TSerStart<=0) then begin
       RecordCheckError(2210,"",i,"TSerStart");   

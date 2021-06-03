@@ -1,0 +1,207 @@
+event startup //keep for convenience
+begin
+  SetLangMode(LangRussian,"RUS",0);
+
+  StrSetAdd(3);
+  StrSetText(ExpFromVEIV,"Создание Авансовых отчетов из эл. счетов поставщиков");
+  StrSetText(RemoveAttachFiles,"Удаление присоед. файлов компании");
+  StrSetText(DisallowPrintEInvoicesFromIV,"Не разрешать распечатку электронных сч/ф из записей сч/ф.");
+  EndStrSet;
+
+//eteenused
+  SetBegin(10667);
+  SetText(0,"Выберите услугу");
+  SetText(1,"HansaWorld");
+  SetText(7,"Отправка счетов/ф (Fitek)");
+  SetText(2,"Отправка счетов/ф (Omniva)");
+  SetText(8,"Получение счетов поставщика (Fitek)");
+  SetText(3,"Получение счетов поставщика (Omniva)");
+  SetText(4,"Запрос о государственной пенсии");
+  SetText(5,"Запрос в бизнес-регистр");
+  SetText(6,"Запрос курсов валют");
+  EndSet;
+
+  //sepa import
+  SetBegin(1670);
+  SetText(0,"Не составл.");
+  SetText(1,"Запись");
+  SetText(IPYc,"Платеж клиента");
+  SetText(OPYc,"Платеж");
+  EndSet;
+
+  //smaily
+  SetBegin(1668);
+  SetText(0,"Содержимое поля");
+  SetText(1,"Описание из связанной карточки");
+  EndSet;
+
+  StrSetBegin(1669);
+  StrSetText("FiscalFlag","Только фискальные сч/ф");
+  StrSetText("ANACode","КПП");
+  StrSetText("InvoiceToCode","Получатель");
+  StrSetText("InvAddr0","Адрес счета 1");
+  StrSetText("InvAddr1","Адрес счета 2");
+  StrSetText("InvAddr2","Адрес счета 3");
+  StrSetText("InvAddr3","Адрес счета 4");
+  StrSetText("InvAddr4","Адрес счета 5");
+  StrSetText("BankAccount","Р/с");
+  StrSetText("Bank" ,"Р/с 2");
+
+  StrSetText("eMail","Электронная почта");
+  StrSetText("EDIFlag","Клиент EDI");
+  StrSetText("OnAccount","Счёт аванса");
+  StrSetText("Fax","Факс");
+
+  StrSetText("VEType","Поставщик");
+  StrSetText("SortCode","Код сорт-ки");
+  StrSetText("RebCode","Таблица скидок");
+  StrSetText("PLCode","Прейскурант");
+  StrSetText("WarnText1","Предупр. (пост.)");
+
+  StrSetText("IBANCode","IBAN код");
+  StrSetText("LangCode","Язык");
+  StrSetText("Classification","Классификация");
+  StrSetText("CustCat","Категория");
+  StrSetText("CUType","Клиент");
+  StrSetText("VATNr","ИНН");
+  StrSetText("Comment","Комментарий");
+  StrSetText("Comment0","Комментарий 1");
+  StrSetText("Comment1","Комментарий 2");
+  StrSetText("Comment2","Комментарий 3");
+  StrSetText("Code","Код");
+  StrSetText("DateCreated","Дата создания");
+  StrSetText("AccCost","Контрольный счет");
+
+  StrSetText("LocationCode","Склад");
+  StrSetText("DelAddr0","Фактический адрес 1");
+  StrSetText("DelAddr1","Фактический адрес 2");
+  StrSetText("DelAddr2","Фактический адрес 3");
+  StrSetText("DelAddr3","Фактический адрес 4");
+  StrSetText("DelAddr4","Фактический адрес 5");
+  StrSetText("ShipDeal","Условие отгр. (кл.)");
+  StrSetText("ShipMode","Способ отгр. (кл.)");
+
+  StrSetText("SearchKey","Кратко");
+
+  StrSetText("MinOrdSum","Мин. сумма заказа");
+  StrSetText("Mobile","#Mobile#");
+  StrSetText("AltPhone","Доп. телефон");
+  StrSetText("RemndrFlag","Напоминания");
+  StrSetText("CreditLimit","Лимит кредита (кл.)");
+  StrSetText("VATCode" ,"Код НДС (кл.)");
+  StrSetText("Objects","Объекты (кл.)");
+  StrSetText("PayDeal","Условие опл. (кл.)");
+  StrSetText("SalesGroup","Группа продаж");
+  StrSetText("SalesMan","Продавец");
+
+  StrSetText("TheirCode","Наш № у клиента");
+  StrSetText("Name","Имя");
+  StrSetText("WebDisplays","Отображать в WEB");
+
+  StrSetText("UserStr1","Пользовательское поле 1");
+  StrSetText("UserStr2","Пользовательское поле 2");
+  StrSetText("UserStr3","Пользовательское поле 3");
+  StrSetText("UserStr4","Пользовательское поле 4");
+  StrSetText("UserStr5","Пользовательское поле 5");
+  StrSetText("UserVal1","Пользовательское поле 6");
+  StrSetText("UserVal2","Пользовательское поле 7");
+  StrSetText("UserVal3","Пользовательское поле 8");
+  StrSetText("UserDate1","Пользовательское поле 9");
+  StrSetText("UserDate2","Пользовательское поле 1");
+  StrSetText("UserDate3","Пользовательское поле 1");
+  StrSetText("OnHoldFlag","Отложен");
+  StrSetText("Department","Отдел");
+  StrSetText("OnAccAccAP","Счёт аванса");
+  StrSetText("RefStr","Ссылка");
+  StrSetText("AccAP","Счёт кредиторов");
+
+  StrSetText("AccOperator","Оператор счета");
+  StrSetText("Person","Основное конт. лицо");
+  StrSetText("MainDispGroup","Главная классиф-ция");
+
+  StrSetText("RegNr1","ОКПО");
+  StrSetText("RegNr2","Рег. номер");
+  StrSetText("Region","Регион");
+  StrSetText("CountryCode","Страна");
+
+  StrSetText("SIPCode","SIP");
+  StrSetText("SkypeName","Skype имя");
+  StrSetText("blockedFlag","Закрыт");
+
+  StrSetText("Sorting","Маршрут");
+  StrSetText("Phone","Телефон");
+  StrSetText("OrderComment","Комментарий к счету");
+  StrSetText("Salutation1","Обращение 1");
+  StrSetText("Salutation2","Обращение 2");
+  StrSetText("Salutation3","Обращение 3");
+  StrSetText("FreightCode","Код доставки");
+  StrSetText("FreightNr","№ фрахта");
+  StrSetText("CustType","Тип");
+
+  StrSetText("CompItemCode","Товары по умолч.");
+  StrSetText("CurncyCode","Валюта (кл.)");
+  StrSetText("WebStartPage","Первая страница Web");
+  StrSetText("WebConf","Веб-конференция");
+  StrSetText("wwwAddr","Веб-сайт");
+  StrSetText("DateChanged","Послед. изменение");
+  StrSetText("Title","Должность");
+  StrSetText("InterestFlag","Пеня");
+  StrSetText("IntRate","Ставка пени");
+
+  StrSetText("NoLetterPosting","Не вкл. в рассылку");
+  StrSetText("NoMailPosting","Не вкл. в электр. рас-ку");
+  
+  EndStrSet;
+
+  //pangaliidestus
+  SetBegin(1671);
+  SetText(0,"Новый");
+  SetText(1,"Отплавл.");
+  SetText(2,"Отвечен");
+  SetText(3,"Ошибка");
+  EndSet;
+
+  SetBegin(1672);
+  SetText(0,"В процессе");
+  SetText(1,"Выполнено");
+  SetText(2,"Ошибка");
+  EndSet;
+
+  //scoro liidestus
+  SetBegin(1680);
+  SetText(0,"Новый");
+  SetText(1,"Отправлен");
+  SetText(2,"Отменен");
+  SetText(3,"Ошибка");
+  EndSet;
+
+  SetBegin(1681);
+  SetText(0,"Нет");
+  SetText(1,"Коды НДС");
+  SetText(2,"Сотрудники");
+  EndSet;
+
+  SetBegin(1682);
+  SetText(0,"Нет");
+  SetText(1,"Товары");
+  SetText(2,"Счета/ф");
+  SetText(3,"Счета/ф пост.");
+  EndSet;  
+
+//Bk SEPA start
+  StrSetBegin(668);
+  StrSetText(SEPA,"Зона платежей SEPA");
+  StrSetText(Foreign,"Иностранный банк");
+  EndStrSet;
+//Bk SEPA end
+
+//earvete erinouded
+  StrSetBegin(680);
+  StrSetText("ContractNumber","ContractNumber");
+  StrSetText("InvoiceContentCode","InvoiceContentCode");
+  EndStrSet;
+//earvete end
+
+  return;
+end;
+

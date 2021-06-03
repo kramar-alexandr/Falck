@@ -10,15 +10,14 @@ function boolean MinSalaryTClassSDateEFAfter(integer wn,integer rownr,integer ch
     DeselectWindow(wn,false);
     MatRowGet(MSr,rownr,MSrw);
     if NonBlankDate(MSrw.SDate) then begin
-      sdate.day=1;
-      sdate.month=GetMonth(MSrw.SDate);
-      sdate.year=GetYear(MSrw.SDate);
-      MSrw.SDate=sdate;
+      sdate.day = 1;
+      sdate.month = GetMonth(MSrw.SDate);
+      sdate.year = GetYear(MSrw.SDate);
+      MSrw.SDate = sdate;
       MatRowPut(MSr,rownr,MSrw);
       PutWindowRecord(wn,MSr);
     end;
   end;
-
   MinSalaryTClassSDateEFAfter = true;
   return;
 end;
@@ -35,15 +34,14 @@ function boolean MinSalaryTClassEDateEFAfter(integer wn,integer rownr,integer ch
     DeselectWindow(wn,false);
     MatRowGet(MSr,rownr,MSrw);
     if NonBlankDate(MSrw.EDate) then begin
-      sdate.day=DaysInMonth(GetYear(MSrw.EDate),GetMonth(MSrw.EDate));;
-      sdate.month=GetMonth(MSrw.EDate);
-      sdate.year=GetYear(MSrw.EDate);
-      MSrw.EDate=sdate;
+      sdate.day = DaysInMonth(GetYear(MSrw.EDate),GetMonth(MSrw.EDate));;
+      sdate.month = GetMonth(MSrw.EDate);
+      sdate.year = GetYear(MSrw.EDate);
+      MSrw.EDate = sdate;
       MatRowPut(MSr,rownr,MSrw);
       PutWindowRecord(wn,MSr);
     end;
   end;
-
   MinSalaryTClassEDateEFAfter = true;
   return;
 end;
@@ -57,7 +55,6 @@ begin
     case "SDate": res = MinSalaryTClassSDateEFAfter(wn,rownr,changed);
     case "EDate": res = MinSalaryTClassEDateEFAfter(wn,rownr,changed);
   end;
-
   MinSalaryTClassAfterEditField = res;
   return;
 end;

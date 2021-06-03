@@ -39,7 +39,7 @@ begin
   
 //Tšštajad
   ResetLoop(Emplr);
-  Emplr.Code="";
+  Emplr.Code = "";
   while (LoopMain(Emplr,1,true)) begin
     RecordDelete(Emplr);
     StepBack(Emplr);
@@ -47,7 +47,7 @@ begin
 
 //Lepingud
   ResetLoop(Contrr);
-  Contrr.SerNr=-1;
+  Contrr.SerNr = -1;
   while (LoopMain(Contrr,1,true)) begin
     RecordDelete(Contrr);
     StepBack(Contrr);
@@ -55,7 +55,7 @@ begin
 
 //Tasuliigid
   ResetLoop(PTr);
-  PTr.Code="";
+  PTr.Code = "";
   while (LoopMain(PTr,1,true)) begin
     RecordDelete(PTr);
     StepBack(PTr);
@@ -63,7 +63,7 @@ begin
 
 //Puudumised
   ResetLoop(Absr);
-  Absr.SerNr=-1;
+  Absr.SerNr = -1;
   while (LoopMain(Absr,1,true)) begin
     RecordDelete(Absr);
     StepBack(Absr);
@@ -71,7 +71,7 @@ begin
 
 //Puudumise tŸŸbid
   ResetLoop(ATr);
-  ATr.Code="";
+  ATr.Code = "";
   while (LoopMain(ATr,1,true)) begin
     RecordDelete(ATr);
     StepBack(ATr);
@@ -79,7 +79,7 @@ begin
 
 //Puhkuse saldod
   ResetLoop(VBr);
-  VBr.SerNr=-1;
+  VBr.SerNr = -1;
   while (LoopMain(VBr,1,true)) begin
     RecordDelete(VBr);
     StepBack(VBr);
@@ -87,24 +87,24 @@ begin
 
 //Lausendamine, Palk
   BlockLoad(SSBr);
-  SSBr.VacDaysNorm=1;
-  SSBr.WorkDaysNorm=blankval;
-  SSBr.VacAbsTypeCode="";
-  SSBr.IllAbsTypeCode="";
-  SSBr.StudyAbsTypeCode="";
-  SSBr.ChildAbsTypeCode="";
-  SSBr.AdvPaymTypeCode="";
-  SSBr.CalcTransDate="";
-  SSBr.PaymTransDate="";
-  SSBr.AccGroupCode="";
-  SSBr.DaysPaid=blankval;
-  SSBr.DaysNotPaid=blankval;
-  SSBr.Percent=blankval;
+  SSBr.VacDaysNorm = 1;
+  SSBr.WorkDaysNorm = blankval;
+  SSBr.VacAbsTypeCode = "";
+  SSBr.IllAbsTypeCode = "";
+  SSBr.StudyAbsTypeCode = "";
+  SSBr.ChildAbsTypeCode = "";
+  SSBr.AdvPaymTypeCode = "";
+  SSBr.CalcTransDate = "";
+  SSBr.PaymTransDate = "";
+  SSBr.AccGroupCode = "";
+  SSBr.DaysPaid = blankval;
+  SSBr.DaysNotPaid = blankval;
+  SSBr.Percent = blankval;
   BlockStore(SSBr);
 
 //Avatud kanded
   ResetLoop(OTr);
-  OTr.SerNr=-1;
+  OTr.SerNr = -1;
   while (LoopMain(OTr,1,true)) begin
     RecordDelete(OTr);
     StepBack(OTr);
@@ -112,7 +112,7 @@ begin
 
 //TŸkitššd
   ResetLoop(PWr);
-  PWr.SerNr=-1;
+  PWr.SerNr = -1;
   while (LoopMain(PWr,1,true)) begin
     RecordDelete(PWr);
     StepBack(PWr);
@@ -120,7 +120,7 @@ begin
 
 //Tššajatabelid
   ResetLoop(WHr);
-  WHr.SerNr=-1;
+  WHr.SerNr = -1;
   while (LoopMain(WHr,1,true)) begin
     RecordDelete(WHr);
     StepBack(WHr);
@@ -128,7 +128,7 @@ begin
 
 //Arvestused
   ResetLoop(CPr);
-  CPr.SerNr=-1;
+  CPr.SerNr = -1;
   while (LoopMain(CPr,1,true)) begin
     DeleteTransaction(CPr.SerNr,SalaryCalcYc);
     DeleteTransaction(CPr.SerNr,SalaryPayment2Yc);
@@ -138,7 +138,7 @@ begin
 
 //VŠlamaksed
   ResetLoop(PPr);
-  PPr.SerNr=-1;
+  PPr.SerNr = -1;
   while (LoopMain(PPr,1,true)) begin
     DeleteTransaction(PPr.SerNr,SalaryPaymentYc);
     RecordDelete(PPr);
@@ -147,7 +147,7 @@ begin
 
 //Maksud
   ResetLoop(Taxr);
-  Taxr.Code="";
+  Taxr.Code = "";
   while (LoopMain(Taxr,1,true)) begin
     RecordDelete(Taxr);
     StepBack(Taxr);
@@ -155,7 +155,7 @@ begin
 
 //Algsaldod - Tšštasu
   ResetLoop(SFBr);
-  SFBr.SerNr=-1;
+  SFBr.SerNr = -1;
   while (LoopMain(SFBr,1,true)) begin
     RecordDelete(SFBr);
     StepBack(SFBr);
@@ -163,7 +163,7 @@ begin
 
 //Algsaldod - Puudumised
   ResetLoop(AFBr);
-  AFBr.SerNr=-1;
+  AFBr.SerNr = -1;
   while (LoopMain(AFBr,1,true)) begin
     RecordDelete(AFBr);
     StepBack(AFBr);
@@ -171,7 +171,7 @@ begin
 
 //Algsaldod - PuhkusejŠŠk
   ResetLoop(VDFBr);
-  VDFBr.SerNr=-1;
+  VDFBr.SerNr = -1;
   while (LoopMain(VDFBr,1,true)) begin
     RecordDelete(VDFBr);
     StepBack(VDFBr);
@@ -179,7 +179,7 @@ begin
 
 //Arvestuse abiregister - testimiseks
   ResetLoop(CPUr);
-  CPUr.SerNr=-1;
+  CPUr.SerNr = -1;
   while (LoopMain(CPUr,1,true)) begin
     RecordDelete(CPUr);
     StepBack(CPUr);
@@ -187,7 +187,7 @@ begin
 
 //TM vaba miinimumi abiregister - testimiseks
   ResetLoop(ITFMUr);
-  ITFMUr.SerNr=-1;
+  ITFMUr.SerNr = -1;
   while (LoopMain(ITFMUr,1,true)) begin
     RecordDelete(ITFMUr);
     StepBack(ITFMUr);
@@ -195,7 +195,7 @@ begin
 
 //Tššv›imetuspensionŠri abiregister - testimiseks
   ResetLoop(DPDUr);
-  DPDUr.SerNr=-1;
+  DPDUr.SerNr = -1;
   while (LoopMain(DPDUr,1,true)) begin
     RecordDelete(DPDUr);
     StepBack(DPDUr);
@@ -203,7 +203,7 @@ begin
 
 //Tššajatabeli abiregister - testimiseks
   ResetLoop(CPWHr);
-  CPWHr.CalcSerNr=-1;
+  CPWHr.CalcSerNr = -1;
   while (LoopMain(CPWHr,1,true)) begin
     RecordDelete(CPWHr);
     StepBack(CPWHr);
@@ -211,7 +211,7 @@ begin
 
 //TŸkitšš abiregister - testimiseks
   ResetLoop(CPPWr);
-  CPPWr.CalcSerNr=-1;
+  CPPWr.CalcSerNr = -1;
   while (LoopMain(CPPWr,1,true)) begin
     RecordDelete(CPPWr);
     StepBack(CPPWr);
@@ -219,7 +219,7 @@ begin
 
 //Avatud kannete abiregister - testimiseks
   ResetLoop(CPOTr);
-  CPOTr.CalcSerNr=-1;
+  CPOTr.CalcSerNr = -1;
   while (LoopMain(CPOTr,1,true)) begin
     RecordDelete(CPOTr);
     StepBack(CPOTr);
@@ -227,7 +227,7 @@ begin
 
 //Puudumiste abiregister - testimiseks
   ResetLoop(CPAbsr);
-  CPAbsr.CalcSerNr=-1;
+  CPAbsr.CalcSerNr = -1;
   while (LoopMain(CPAbsr,1,true)) begin
     RecordDelete(CPAbsr);
     StepBack(CPAbsr);
@@ -270,7 +270,6 @@ begin
     rwcnt = MatRowCnt(MSTr);
   end;
   BlockStore(MSTr);
-
   return;
 end;
 
@@ -282,17 +281,17 @@ begin
   found = false;
   for (i=0;i<cnt;i=i+1) begin
     if ((contrcode[i]==ccode) and (year[i]==yyyy) and (month[i]==mm)) then begin
-      sum[i]=sum[i]+rwsum;
-      i=cnt;
+      sum[i] = sum[i] + rwsum;
+      i = cnt;
       found = true;
     end;
   end;
   if (found==false) then begin
-    contrcode[cnt]=ccode;
-    year[cnt]=yyyy;
-    month[cnt]=mm;
-    sum[cnt]=rwsum;
-    cnt=cnt+1;
+    contrcode[cnt] = ccode;
+    year[cnt] = yyyy;
+    month[cnt] = mm;
+    sum[cnt] = rwsum;
+    cnt = cnt + 1;
   end;
   return;
 end;
@@ -345,7 +344,7 @@ begin
     goto LConvertOldPayrollDataMn;
   end;  
   
-  yyyy=StringToVal(RepSpec.f2,M4Val);
+  yyyy = StringToVal(RepSpec.f2,M4Val);
   if blank(RepSpec.f2) or (yyyy==0) then begin
     MessageBox(1500337,"");
     goto LConvertOldPayrollDataMn;
@@ -357,132 +356,132 @@ begin
   end;
 
   BlockLoad(oldPTBr);
-  ptrwcnt=MatRowCnt(oldPTBr);
+  ptrwcnt = MatRowCnt(oldPTBr);
   if (ptrwcnt==0) then begin
-    PayTypeOk=false;
+    PayTypeOk = false;
     MessageBox(1500436,"");
   end else begin
-    PayTypeOk=true;
+    PayTypeOk = true;
   end;
 
   DeletePayrollDataMn;
      
 //Tasuliigid->Tasuliigid
   ResetLoop(oldPTr);
-  oldPTr.Code="";
+  oldPTr.Code = "";
   while (LoopMain(oldPTr,1,true)) begin
-    testf=true;
+    testf = true;
     if (oldPTr.Closed!=0) then begin
-      testf=false;
+      testf = false;
     end;
     if (oldPTr.Invalid!=0) then begin
-      testf=false;
+      testf = false;
     end;
     if (testf) then begin
       RecordNew(PTr);
-      PTr.Code=oldPTr.Code;
-      PTr.Name=oldPTr.Name;
-      PTr.TSDRowCode="01";
-      PTr.StandingChargeFlag=0;
-      PTr.PaymTypeFlag=0;
-      PTr.PaymFlag=0;
-      PTr.IncomeTaxFlag=1;
-      PTr.UnemplInsFlag=1;
-      PTr.PensionFlag=1;
-      PTr.SocialTaxFlag=1;
-      PTr.EmplUnemplInsFlag=1;
+      PTr.Code = oldPTr.Code;
+      PTr.Name = oldPTr.Name;
+      PTr.TSDRowCode = "01";
+      PTr.StandingChargeFlag = 0;
+      PTr.PaymTypeFlag = 0;
+      PTr.PaymFlag = 0;
+      PTr.IncomeTaxFlag = 1;
+      PTr.UnemplInsFlag = 1;
+      PTr.PensionFlag = 1;
+      PTr.SocialTaxFlag = 1;
+      PTr.EmplUnemplInsFlag = 1;
       if (RecordInsert(PTr,false)) then begin end;
     end;
   end;
 
 //Puudumise tŸŸbid->Puudumise tŸŸbid
   ResetLoop(MDTr);
-  MDTr.Code="";
+  MDTr.Code = "";
   while (LoopMain(MDTr,1,true)) begin
-    testf=true;
+    testf = true;
     if (MDTr.Invalid!=0) then begin
-      testf=false;
+      testf = false;
     end;
     if (testf) then begin
       RecordNew(ATr);
-      ATr.Code=MDTr.Code;
-      ATr.Name=MDTr.Name;
-      ATr.AbsTypeFlag=2;
+      ATr.Code = MDTr.Code;
+      ATr.Name = MDTr.Name;
+      ATr.AbsTypeFlag = 2;
       if (RecordInsert(ATr,false)) then begin end;
     end;
   end;
 
 //Kinnipidamised->Maksud
   ResetLoop(Deductr);
-  Deductr.Code="";
+  Deductr.Code = "";
   while (LoopMain(Deductr,1,true)) begin
-    testf=true;
+    testf = true;
     if (Deductr.Closed!=0) then begin
-      testf=false;
+      testf = false;
     end;
     if (Deductr.Type>2) then begin
-      testf=false;
+      testf = false;
     end;
     if (Deductr.Invalid!=0) then begin
-      testf=false;
+      testf = false;
     end;
     if (testf) then begin
       RecordNew(Taxr);
-      Taxr.Code=Deductr.Code;
-      Taxr.Name=Deductr.Name;
-      Taxr.TaxType=Deductr.Type;
+      Taxr.Code = Deductr.Code;
+      Taxr.Name = Deductr.Name;
+      Taxr.TaxType = Deductr.Type;
       if (RecordInsert(Taxr,false)) then begin end;
     end;
   end;
 
 //Tšštajad->Tšštajad
   ResetLoop(oldEmplr);
-  oldEmplr.Code="";
+  oldEmplr.Code = "";
   while (LoopMain(oldEmplr,1,true)) begin
-    testf=true;
+    testf = true;
     if (oldEmplr.Invalid!=0) then begin
-      testf=false;
+      testf = false;
     end;
     if (testf) then begin
       RecordNew(Emplr);
-      Emplr.Code=oldEmplr.Code;
-      Emplr.Firstname=oldEmplr.FirstName;
-      Emplr.Surname=oldEmplr.LastName;
-      Emplr.IDCode=oldEmplr.IDCode;
-      Emplr.BirthDate=oldEmplr.Birthday;
-      Emplr.ObjCode=oldEmplr.Objects;
-      Emplr.ClosedFlag=oldEmplr.Closed;
+      Emplr.Code = oldEmplr.Code;
+      Emplr.Firstname = oldEmplr.FirstName;
+      Emplr.Surname = oldEmplr.LastName;
+      Emplr.IDCode = oldEmplr.IDCode;
+      Emplr.BirthDate = oldEmplr.Birthday;
+      Emplr.ObjCode = oldEmplr.Objects;
+      Emplr.ClosedFlag = oldEmplr.Closed;
       SetMarkFlag(Emplr.ClosedFlag,Emplr.ClosedMark);
-      Emplr.Addr1=oldEmplr.Addr1;
-      Emplr.Addr2=oldEmplr.Addr2;
-      Emplr.Addr3=oldEmplr.Addr3 & " " & oldEmplr.Addr4;
-      Emplr.Phone=oldEmplr.Phone;
-      Emplr.Mail=oldEmplr.Email;
-      Emplr.BankCode=oldEmplr.BankCode;
-      Emplr.BankAccount=oldEmplr.BankAcc;
-      Emplr.RecipientName=oldEmplr.RecName;
-      Emplr.RecipientBankCode=oldEmplr.RecBankCode;
-      Emplr.RecipientBankAcc=oldEmplr.RecBankAcc;
+      Emplr.Addr1 = oldEmplr.Addr1;
+      Emplr.Addr2 = oldEmplr.Addr2;
+      Emplr.Addr3 = oldEmplr.Addr3 & " " & oldEmplr.Addr4;
+      Emplr.Phone = oldEmplr.Phone;
+      Emplr.Mail = oldEmplr.Email;
+      Emplr.BankCode = oldEmplr.BankCode;
+      Emplr.BankAccount = oldEmplr.BankAcc;
+      Emplr.RecipientName = oldEmplr.RecName;
+      Emplr.RecipientBankCode = oldEmplr.RecBankCode;
+      Emplr.RecipientBankAcc = oldEmplr.RecBankAcc;
       k=0;
-      rwcnt=MatRowCnt(Emplr);
+      rwcnt = MatRowCnt(Emplr);
       for (i=0;i<rwcnt;i=i+1) begin
         MatRowDelete(Emplr,i);
          i = i - 1;
          rwcnt = MatRowCnt(Emplr);
       end;
-      rwcnt=MatRowCnt(oldEmplr);
+      rwcnt = MatRowCnt(oldEmplr);
       for (i=0;i<rwcnt;i=i+1) begin
         MatRowGet(oldEmplr,i,oldEmplrw);    
         if nonblank(oldEmplrw.DeductCode) then begin
           Taxr.Code = oldEmplrw.DeductCode;
           if (ReadFirstMain(Taxr,1,true)) then begin 
             ClearRow(Emplr,Emplrw,1);
-            Emplrw.TaxCode=Taxr.Code;
-            Emplrw.TaxName=Taxr.Name;
-            Emplrw.SDate=oldEmplrw.StartDate;
-            Emplrw.EDate=oldEmplrw.EndDate;
+            Emplrw.TaxCode = Taxr.Code;
+            Emplrw.TaxName = Taxr.Name;
+            Emplrw.SDate = oldEmplrw.StartDate;
+            Emplrw.EDate = oldEmplrw.EndDate;
             MatRowInsert(Emplr,k,Emplrw);
-            k=k+1;
+            k = k + 1;
           end;
         end;
       end;
@@ -492,58 +491,58 @@ begin
 
 //Tššlepingud->Tššlepingud
   ResetLoop(oldContrr);
-  oldContrr.Code="";
+  oldContrr.Code = "";
   while (LoopMain(oldContrr,1,true)) begin
-    testf=true;
+    testf = true;
     Emplr.Code = oldContrr.Employee;
     if (ReadFirstMain(Emplr,1,true)==false) then begin 
-      testf=false;
+      testf = false;
     end;
     if (oldContrr.Invalid!=0) then begin
-      testf=false;
+      testf = false;
     end;
     if (testf) then begin
       RecordNew(Contrr);
-      Contrr.StartDate=oldContrr.StartDate;
-      Contrr.EndDate=oldContrr.EndDate;
+      Contrr.StartDate = oldContrr.StartDate;
+      Contrr.EndDate = oldContrr.EndDate;
       Contrr.SerNr = NextSerNr("ContractVc",Contrr.StartDate,-1,false,"");
-      Contrr.OfficialContrCode=oldContrr.Code;
-      Contrr.EmplCode=oldContrr.Employee;
-      Contrr.Firstname=oldContrr.FirstName;
-      Contrr.Surname=oldContrr.LastName;
-      Contrr.VacDaysNorm=oldContrr.VacDays;
+      Contrr.OfficialContrCode = oldContrr.Code;
+      Contrr.EmplCode = oldContrr.Employee;
+      Contrr.Firstname = oldContrr.FirstName;
+      Contrr.Surname = oldContrr.LastName;
+      Contrr.VacDaysNorm = oldContrr.VacDays;
       if (oldContrr.Closed!=0) then begin
-        Contrr.Status=3;
+        Contrr.Status = 3;
       end else begin
-        Contrr.Status=0;
+        Contrr.Status = 0;
       end;
-      Contrr.IncTaxFreeMinFlag=1;
-      Contrr.ITFStartDate=RepSpec.d1;
-      Contrr.AccGroupCode=RepSpec.f1;
-      k=0;
-      rwcnt=MatRowCnt(oldContrr);
+      Contrr.IncTaxFreeMinFlag = 1;
+      Contrr.ITFStartDate = RepSpec.d1;
+      Contrr.AccGroupCode = RepSpec.f1;
+      k = 0;
+      rwcnt = MatRowCnt(oldContrr);
       for (i=0;i<rwcnt;i=i+1) begin
         MatRowGet(oldContrr,i,oldContrrw);    
         ClearRow(Contrr,Contrrw,1);
         if nonblank(oldContrrw.PayType) then begin
           PTr.Code = oldContrrw.PayType;
           if (ReadFirstMain(PTr,1,true)) then begin 
-            Contrrw.PaymTypeCode=PTr.Code;
-            Contrrw.SDate=oldContrrw.ptStartDate;
-            Contrrw.EDate=oldContrrw.ptEndDate;
-            Contrrw.Sum=oldContrrw.Amount;
-            Contrrw.WorkLoad=1;
-            Contrrw.LoadSum=oldContrrw.Amount;
+            Contrrw.PaymTypeCode = PTr.Code;
+            Contrrw.SDate = oldContrrw.ptStartDate;
+            Contrrw.EDate = oldContrrw.ptEndDate;
+            Contrrw.Sum = oldContrrw.Amount;
+            Contrrw.WorkLoad = 1;
+            Contrrw.LoadSum = oldContrrw.Amount;
             AGr.Code = RepSpec.f1;
             if (ReadFirstMain(AGr,1,true)==false) then begin
               RecordNew(AGr);
               AGr.Code=RepSpec.f1;
               if (RecordInsert(AGr,false)) then begin end;
             end;
-            Contrrw.WeekLoad=8;
-            Contrrw.ObjCode=oldContrrw.Objects;
+            Contrrw.WeekLoad = 8;
+            Contrrw.ObjCode = oldContrrw.Objects;
             MatRowInsert(Contrr,k,Contrrw);
-            k=k+1;
+            k = k + 1;
           end;
         end;
       end;
@@ -554,45 +553,45 @@ begin
 //Puudumised->Algsaldod, Puudumised
   RecordNew(AFBr);
   if (GetNextAbsFBSerNr(AFBr.SerNr)) then begin end;
-  k=0;
+  k = 0;
   ResetLoop(MDr);
-  MDr.Employee="";
+  MDr.Employee = "";
   while (LoopKey("Employee",MDr,1,true)) begin
-    contrsernr=0;
-    testf=true;
+    contrsernr = 0;
+    testf = true;
     if (MDr.OKFlag==0) then begin
-      testf=false;
+      testf = false;
     end;
     if (MDr.Invalid!=0) then begin
-      testf=false;
+      testf = false;
     end;
     if (testf) then begin
-      Contrr.Status=0;
-      Contrr.EmplCode= MDr.Employee;
+      Contrr.Status = 0;
+      Contrr.EmplCode = MDr.Employee;
       if (ReadFirstKey("Status",Contrr,2,true)) then begin
-        contrsernr=Contrr.SerNr;
+        contrsernr = Contrr.SerNr;
       end else begin
-        Contrr.EmplCode= MDr.Employee;
+        Contrr.EmplCode = MDr.Employee;
         if (ReadFirstKey("EmplCode",Contrr,1,true)) then begin
-          contrsernr=Contrr.SerNr;
+          contrsernr = Contrr.SerNr;
         end;
       end;
       if (contrsernr>0) then begin
         ClearRow(AFBr,AFBrw,1);
-        AFBrw.ContrSerNr=contrsernr;
-        AFBrw.Firstname=Contrr.Firstname;
-        AFBrw.Surname=Contrr.Surname;
-        AFBrw.AbsTypeCode= MDr.Type;
-        AFBrw.SDate=MDr.StartDate;
-        AFBrw.EDate=MDr.EndDate;
+        AFBrw.ContrSerNr = contrsernr;
+        AFBrw.Firstname = Contrr.Firstname;
+        AFBrw.Surname = Contrr.Surname;
+        AFBrw.AbsTypeCode = MDr.Type;
+        AFBrw.SDate = MDr.StartDate;
+        AFBrw.EDate = MDr.EndDate;
         MatRowInsert(AFBr,k,AFBrw);
-        k=k+1;
+        k = k + 1;
       end;
       if (k==999) then begin
         if (RecordInsert(AFBr,false)) then begin end;
         RecordNew(AFBr);
         if (GetNextAbsFBSerNr(AFBr.SerNr)) then begin end;
-        k=0;
+        k = 0;
       end;
     end;
   end;
@@ -603,36 +602,36 @@ begin
 //Leping (PuhkusepŠevi saada)->Algsaldod, PuhkusejŠŠk
   RecordNew(VDFBr);
   if (GetNextVacDaysFBSerNr(VDFBr.SerNr)) then begin end;
-  VDFBr.Year=RepSpec.f2;
-  k=0;
+  VDFBr.Year = RepSpec.f2;
+  k = 0;
   ResetLoop(oldContrr);
-  oldContrr.Employee="";
+  oldContrr.Employee = "";
   while (LoopKey("Employee",oldContrr,1,true)) begin
-    contrsernr=0;
-    testf=true;
+    contrsernr = 0;
+    testf = true;
     if (oldContrr.Invalid!=0) then begin
-      testf=false;
+      testf = false;
     end;
     if (testf) then begin
-      Contrr.OfficialContrCode= oldContrr.Employee;
+      Contrr.OfficialContrCode = oldContrr.Employee;
       if (ReadFirstKey("OfficialContrCode",Contrr,1,true)) then begin
-        contrsernr=Contrr.SerNr;
+        contrsernr = Contrr.SerNr;
       end;
       if (contrsernr>0) then begin
         ClearRow(VDFBr,VDFBrw,1);
-        VDFBrw.ContrSerNr=contrsernr;
-        VDFBrw.Firstname=Contrr.Firstname;
-        VDFBrw.Surname=Contrr.Surname;
-        VDFBrw.VacDaysToUse= round(oldContrr.RealVacDays,SetRoundModeD(0));
+        VDFBrw.ContrSerNr = contrsernr;
+        VDFBrw.Firstname = Contrr.Firstname;
+        VDFBrw.Surname = Contrr.Surname;
+        VDFBrw.VacDaysToUse = round(oldContrr.RealVacDays,SetRoundModeD(0));
         MatRowInsert(VDFBr,k,VDFBrw);
-        k=k+1;
+        k = k + 1;
       end;
       if (k==999) then begin
         if (RecordInsert(VDFBr,false)) then begin end;
         RecordNew(VDFBr);
         if (GetNextVacDaysFBSerNr(VDFBr.SerNr)) then begin end;
-        VDFBr.Year=RepSpec.f2;
-        k=0;
+        VDFBr.Year = RepSpec.f2;
+        k = 0;
       end;
     end;
   end;
@@ -642,19 +641,19 @@ begin
 
 //Arvestused->Algsaldod, Tšštasu
   if (PayTypeOk) then begin
-    cnt=0;
+    cnt = 0;
     ResetLoop(SCr);
-    SCr.SerNr=-1;
+    SCr.SerNr = -1;
     while (LoopMain(SCr,1,true)) begin
-      testf=true;
+      testf = true;
       if (SCr.Invalid!=0) then begin
-        testf=false;
+        testf = false;
       end;
       if (SCr.OKFlag!=1) then begin
-        testf=false;
+        testf = false;
       end;
       if (testf) then begin
-        rwcnt=MatRowCnt(SCr);
+        rwcnt = MatRowCnt(SCr);
         for (i=0;i<rwcnt;i=i+1) begin
           MatRowGet(SCr,i,SCrw);    
           for (j=0;j<ptrwcnt;j=j+1) begin
@@ -670,18 +669,18 @@ begin
     for (j=0;j<cnt-1;j=j+1) begin
       for (i=j+1;i<cnt;i=i+1) begin
         if (contrcode[j]>contrcode[i]) then begin
-          tmpstr=contrcode[i];
-          contrcode[i]=contrcode[j];
-          contrcode[j]=tmpstr;
-          tmpint=year[i];
-          year[i]=year[j];
-          year[j]=tmpint;
-          tmpint=month[i];
-          month[i]=month[j];
-          month[j]=tmpint;
-          tmpval=sum[i];
-          sum[i]=sum[j];
-          sum[j]=tmpval;
+          tmpstr = contrcode[i];
+          contrcode[i] = contrcode[j];
+          contrcode[j] = tmpstr;
+          tmpint = year[i];
+          year[i] = year[j];
+          year[j] = tmpint;
+          tmpint = month[i];
+          month[i] = month[j];
+          month[j] = tmpint;
+          tmpval = sum[i];
+          sum[i] = sum[j];
+          sum[j] = tmpval;
         end;
       end;
     end;
@@ -689,25 +688,25 @@ begin
     for (j=0;j<cnt-1;j=j+1) begin
       for (i=j+1;i<cnt;i=i+1) begin
         if (contrcode[j]==contrcode[i]) then begin
-          tmpdate1.day=DaysInMonth(year[j],month[j]);
-          tmpdate1.month=month[j];
-          tmpdate1.year=year[j];
-          tmpdate2.day=DaysInMonth(year[i],month[i]);
-          tmpdate2.month=month[i];
-          tmpdate2.year=year[i];
+          tmpdate1.day = DaysInMonth(year[j],month[j]);
+          tmpdate1.month = month[j];
+          tmpdate1.year = year[j];
+          tmpdate2.day = DaysInMonth(year[i],month[i]);
+          tmpdate2.month = month[i];
+          tmpdate2.year = year[i];
           if (tmpdate1>tmpdate2) then begin
-            tmpstr=contrcode[i];
-            contrcode[i]=contrcode[j];
-            contrcode[j]=tmpstr;
-            tmpint=year[i];
-            year[i]=year[j];
-            year[j]=tmpint;
-            tmpint=month[i];
-            month[i]=month[j];
-            month[j]=tmpint;
-            tmpval=sum[i];
-            sum[i]=sum[j];
-            sum[j]=tmpval;
+            tmpstr = contrcode[i];
+            contrcode[i] = contrcode[j];
+            contrcode[j] = tmpstr;
+            tmpint = year[i];
+            year[i] = year[j];
+            year[j] = tmpint;
+            tmpint = month[i];
+            month[i] = month[j];
+            month[j] = tmpint;
+            tmpval = sum[i];
+            sum[i] = sum[j];
+            sum[j] = tmpval;
           end;
         end;
       end;
@@ -717,25 +716,25 @@ begin
     if (GetNextSalFBSerNr(SFBr.SerNr)) then begin end;
     k=0;
     for (j=0;j<cnt;j=j+1) begin
-      Contrr.OfficialContrCode=contrcode[j];
+      Contrr.OfficialContrCode = contrcode[j];
       if (ReadFirstKey("OfficialContrCode",Contrr,1,true)) then begin
         ClearRow(SFBr,SFBrw,1);
-        SFBrw.ContrSerNr=Contrr.SerNr;
-        SFBrw.Firstname=Contrr.Firstname;
-        SFBrw.Surname=Contrr.Surname;
-        tmpdate.day=DaysInMonth(year[j],month[j]);
-        tmpdate.month=month[j];
-        tmpdate.year=year[j];
-        SFBrw.FBDate=tmpdate;
-        SFBrw.BrutoSum=sum[j];
+        SFBrw.ContrSerNr = Contrr.SerNr;
+        SFBrw.Firstname = Contrr.Firstname;
+        SFBrw.Surname = Contrr.Surname;
+        tmpdate.day = DaysInMonth(year[j],month[j]);
+        tmpdate.month = month[j];
+        tmpdate.year = year[j];
+        SFBrw.FBDate = tmpdate;
+        SFBrw.BrutoSum = sum[j];
         MatRowInsert(SFBr,k,SFBrw);
-        k=k+1;
+        k = k + 1;
       end;
       if (k==999) then begin
         if (RecordInsert(SFBr,false)) then begin end;
         RecordNew(SFBr);
         if (GetNextSalFBSerNr(SFBr.SerNr)) then begin end;
-        k=0;
+        k = 0;
       end;
     end;
   end;

@@ -36,18 +36,18 @@ begin
   string 10 vacabstypecode;
   date tmpdate;
   
-  Contrr.SerNr=-1;
-  Contrr.StartDate=CurrentDate;
-  tmpdate.day=1;
-  tmpdate.month=GetMonth(CurrentDate);
-  tmpdate.year=GetYear(CurrentDate);
-  Contrr.ITFStartDate=tmpdate;
-  Contrr.DPDStartDate=tmpdate;
+  Contrr.SerNr = -1;
+  Contrr.StartDate = CurrentDate;
+  tmpdate.day = 1;
+  tmpdate.month = GetMonth(CurrentDate);
+  tmpdate.year = GetYear(CurrentDate);
+  Contrr.ITFStartDate = tmpdate;
+  Contrr.DPDStartDate = tmpdate;
   GetVacDaysData(vacdaysnorm,vacabstypecode);
-  Contrr.VacAbsTypeCode=vacabstypecode;
-  Contrr.VacDaysNorm=vacdaysnorm;
-  Contrr.IncTaxFreeMinFlag=1;
-  Contrr.AccGroupCode=GetAccGroupCode;
+  Contrr.VacAbsTypeCode = vacabstypecode;
+  Contrr.VacDaysNorm = vacdaysnorm;
+  Contrr.IncTaxFreeMinFlag = 1;
+  Contrr.AccGroupCode = GetAccGroupCode;
 
   if (SingleUserMode) then begin
     Contrr.SerNr = NextSerNr("ContractVc",Contrr.StartDate,-1,false,"");
@@ -62,8 +62,8 @@ function LongInt ContractVcRecordDuplicate(var record ContractVc Contrr,record C
 begin
   LongInt res;
  
-  Contrr.SerNr=-1;
-  Contrr.StartDate=CurrentDate;
+  Contrr.SerNr = -1;
+  Contrr.StartDate = CurrentDate;
   if (SingleUserMode) then begin
     Contrr.SerNr = NextSerNr("ContractVc",Contrr.StartDate,-1,false,"");
   end;
@@ -86,12 +86,25 @@ begin
   LongInt updatemode,insertmode,errcode;
   boolean flag;
   
-  insertmode=1;
-  updatemode=2;
+  insertmode = 1;
+  updatemode = 2;
   res = 0;
   
   if (stat!=insertmode) then begin
     if (Contrr.Status>1) then begin
+      if (Contrr.Status==3) and (Contr2r.Status!=3) then begin
+        if (blank(Contrr.EndDate)) then begin
+          rwcnt = MatRowCnt(Contrr);
+          for (i=0;i<rwcnt;i=i+1) begin
+            MatRowGet(Contrr,i,Contrrw);
+            if (blank(Contrrw.EDate)) then begin
+              RecordCheckError(1500334,"",-1,"EndDate");      
+              res = -1;
+              goto LContractVcRecordCheck;
+            end;
+          end;
+        end;
+      end;
       goto LContractVcRecordCheck;
     end;
   end;
@@ -221,7 +234,7 @@ begin
     end;
   end;   
   
-  rwcnt=MatRowCnt(Contrr);
+  rwcnt = MatRowCnt(Contrr);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(Contrr,i,Contrrw);
     if blank(Contrrw.PosCode) then begin
@@ -229,7 +242,7 @@ begin
       res = -1; 
       goto LContractVcRecordCheck;
     end else begin
-      Posr.Code=Contrrw.PosCode;
+      Posr.Code = Contrrw.PosCode;
       if (ReadFirstMain(Posr,1,true)==false) then begin
         RecordCheckError(1500324," " & Contrrw.PosCode,i,"PosCode");      
         res = -1; 
@@ -273,7 +286,7 @@ begin
     end;
   end;
   
-  rwcnt=MatRowCnt(Contrr);
+  rwcnt = MatRowCnt(Contrr);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(Contrr,i,Contrrw);
     if nonblank(Contrrw.PosCode) then begin
@@ -281,13 +294,13 @@ begin
         MatRowGet(Contrr,j,Contr2rw);
         if ((Contrrw.PosCode==Contr2rw.PosCode) and (Contrrw.PaymTypeCode==Contr2rw.PaymTypeCode)) then begin
           if (DateInRange(Contr2rw.SDate,Contrrw.SDate,Contrrw.EDate)) then begin
-            flag=true;
+            flag = true;
           end;
           if (DateInRange(Contr2rw.EDate,Contrrw.SDate,Contrrw.EDate)) then begin
-            flag=true;
+            flag = true;
           end;
           if ((Contr2rw.SDate<Contrrw.SDate) and (Contrrw.EDate>Contrrw.EDate)) then begin
-            flag=true;
+            flag = true;
           end;
           if (flag) then begin
             MessageBox(1500328,"");      
@@ -364,21 +377,21 @@ begin
 //Puudumised
   Absr.ContrSerNr = contrsernr;
   if (ReadFirstKey("ContrSerNr",Absr,1,true)) then begin
-    res=true;
+    res = true;
     goto LContrInUse;
   end;
 
 //Puhkuse saldod
   VBr.ContrSerNr = contrsernr;
   if (ReadFirstKey("ContrSerNr",VBr,1,true)) then begin
-    res=true;
+    res = true;
     goto LContrInUse;
   end;
 
 //Arvestused
   CPr.ContrSerNr = contrsernr;
   if (ReadFirstKey("ContrSerNr",CPr,1,true)) then begin
-    res=true;
+    res = true;
     goto LContrInUse;
   end;
 
@@ -386,11 +399,11 @@ begin
   ResetLoop(OTr);
   OTr.SerNr = -1;
   while (LoopMain(OTr,1,true)) begin  
-    rwcnt=MatRowCnt(OTr);
+    rwcnt = MatRowCnt(OTr);
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(OTr,i,OTrw);
       if (OTrw.ContrSerNr==contrsernr) then begin
-        res=true;
+        res = true;
         goto LContrInUse;
       end;
     end;
@@ -400,11 +413,11 @@ begin
   ResetLoop(PWr);
   PWr.SerNr = -1;
   while (LoopMain(PWr,1,true)) begin  
-    rwcnt=MatRowCnt(PWr);
+    rwcnt = MatRowCnt(PWr);
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(PWr,i,PWrw);
       if (PWrw.ContrSerNr==contrsernr) then begin
-        res=true;
+        res = true;
         goto LContrInUse;
       end;
     end;
@@ -414,11 +427,11 @@ begin
   ResetLoop(PWTr);
   PWTr.Code = "";
   while (LoopMain(PWTr,1,true)) begin  
-    rwcnt=MatRowCnt(PWTr);
+    rwcnt = MatRowCnt(PWTr);
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(PWTr,i,PWTrw);
       if (PWTrw.ContrSerNr==contrsernr) then begin
-        res=true;
+        res = true;
         goto LContrInUse;
       end;
     end;
@@ -428,11 +441,11 @@ begin
   ResetLoop(WHr);
   WHr.SerNr = -1;
   while (LoopMain(WHr,1,true)) begin  
-    rwcnt=MatRowCnt(WHr);
+    rwcnt = MatRowCnt(WHr);
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(WHr,i,WHrw);
       if (WHrw.ContrSerNr==contrsernr) then begin
-        res=true;
+        res = true;
         goto LContrInUse;
       end;
     end;

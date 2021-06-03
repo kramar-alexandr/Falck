@@ -1,0 +1,219 @@
+//pangaliidestus
+external updating procedure PP_MPEn(record RcVc);
+remote updating procedure StoreCUServiceUsage(date,string,Integer,string,Integer,Integer);
+external function string 255 GetUniqueFileNameForPP(record PPVc);
+external function integer BankReqTypeToHTSServNumber(string);
+remote updating function boolean PPAddToBankReqQueue(record PPVc,area,string,var record BankReqQueVc);
+remote function boolean PPCanAddToBankQueue(record PPVc,var string);
+remote procedure SendBdocToBankHTS(area,string,var record BankReqQueVc,var string);
+remote procedure BankingDebugFile(area,string);
+external function integer BankQueReplyProgress();
+external function integer BankQueReplySuccess();
+external function integer BankQueReplyError();
+remote function boolean IsBankQueueActive();
+external updating function boolean SignAreaWithIDCard(area,string,string,var area,var string,var string); //must not be remote
+
+updating
+procedure ExportPPSEPAForSign(record PPVc PPr, var string fileName, var area XMLPPArea)
+begin
+  record RcVc RepSpec;
+  string 20 tmpFolder;
+  record OPTBlock OPTb;
+  record LocalMachineBlock LMb;
+  record BankFileBlock BFb;
+  record MainCLBlock MainCLBl;
+  
+  BlockLoad(OPTb);
+  BlockLoad(BFb);
+  BlockLoad(LMb);
+  BlockLoad(MainCLBl);
+
+  tmpFolder = "tmp/";
+  fileName = GetUniqueFileNameForPP(PPr) & ".xml";
+  if (OpenExportFile(tmpFolder & filename,false) == false) then begin
+    MessageBox(1695," " & filename);
+  end;
+  ReportDefaults(RepSpec,"PP_MPEClass");
+  RepSpec.sStartDate = PPr.TransDate;
+  RepSpec.sEndDate = PPr.TransDate;
+  RepSpec.f1 = PPr.SerNr;
+  RepSpec.repname = "PP_MPEn";
+  RepSpec.Media = mtFile;
+
+  RepSpec.OnlyUnprntd = 1;
+  RepSpec.ArtMode = OPTb.DOSFlag;
+  RepSpec.flags[7] = OPTb.BatchBooking;
+  RepSpec.flags[4] = OPTb.Bankfees;
+  RepSpec.flags[0] = OPTb.OnDUEDate;
+  RepSpec.flags[5] = OPTb.PayPerSupplier;
+  RepSpec.f12 = LMb.DefExpCodepage;
+  RepSpec.Stext = BFb.BankBranchCode;
+  //Expences special
+  RepSpec.flags[29] = 1;
+  RepSpec.FirstAcc = PPr.PayMode;
+  PP_MPEn(RepSpec);
+  CloseFile;
+  AddFileToArea(tmpFolder & fileName,XMLPPArea,false);
+  BankingDebugFile(XMLPPArea,PPr.SerNr & "_pp_area.xml");
+  Delete_File(tmpFolder & fileName);
+  return;
+end;
+
+global updating
+procedure ExcPINWClassOKPP(record RcVc RepSpec)
+begin
+  record PPVc PPr;
+  string 5 pin;
+  area xmlFileArea,signedArea;
+  string 255 errMsg,fileName,signedFileName;
+  record BankReqQueVc BankReqQuer;
+
+  pin = RepSpec.f1;
+  PPr.SerNr = RepSpec.long1;
+  if (ReadFirstMain(PPr,1,true)) then begin
+    ExportPPSEPAForSign(PPr,fileName,xmlFileArea);
+    if (SignAreaWithIDCard(xmlFileArea,fileName,pin,signedArea,signedFileName,errMsg)) then begin
+      if (PPAddToBankReqQueue(PPr,xmlFileArea,signedFileName,BankReqQuer)) then begin
+        threadremoteasync.SendBdocToBankHTS(signedArea,signedFileName,BankReqQuer,errMsg); //run from non main thread, as involves web request
+        MessageBox(1501086,"");
+        StoreCUServiceUsage(CurrentDate,BankReqQuer.RegNr,BankReqTypeToHTSServNumber(BankReqQuer.BankReqType),BankReqQuer.Partner,1,1);
+      end else begin
+        MessageBox(23192,": " & USetStr(1501087));
+      end;
+    end else begin
+      MessageBox(1501088," " & errMsg);
+    end;
+  end else begin
+    MessageBox(28263,": " & PPr.SerNr);
+  end;
+  return;
+end;
+
+global updating
+procedure ExcPINWClassNoSignPP(record RcVc RepSpec)
+begin
+  record PPVc PPr;
+  area xmlFileArea;
+  string 255 errMsg,fileName;
+  record BankReqQueVc BankReqQuer;
+
+  PPr.SerNr = RepSpec.long1;
+  if (ReadFirstMain(PPr,1,true)) then begin
+    ExportPPSEPAForSign(PPr,fileName,xmlFileArea);
+    if (PPAddToBankReqQueue(PPr,xmlFileArea,fileName,BankReqQuer)) then begin
+      threadremoteasync.SendBdocToBankHTS(xmlFileArea,fileName,BankReqQuer,errMsg); //run from non main thread, as involves web request
+      MessageBox(1501086,"");
+      StoreCUServiceUsage(CurrentDate,BankReqQuer.RegNr,BankReqTypeToHTSServNumber(BankReqQuer.BankReqType),BankReqQuer.Partner,1,1);
+    end else begin
+      MessageBox(23192,": " & USetStr(1501087));
+    end;
+  end else begin
+    MessageBox(28263,": " & PPr.SerNr);
+  end;
+  return;
+end;
+
+procedure RequestEstIDCardPin2ForPP(record PPVc PPr)
+begin
+  record RcVc RepSpec;
+
+  RepSpec.long1 = PPr.SerNr;
+  RepSpec.f4 = "PPVc";
+  OpenWindow("ExcPINWClass",0,CurWindow,"","",RepSpec);
+  return;
+end;
+
+global
+updating procedure SignAndSendPPDsm()
+begin
+  integer wn;
+  record PPVc PPr;
+  record RcVc RepSpec;
+  area xmlFileArea;
+  string 255 errMsg,fileName;
+
+  wn = CurWindow;
+  if (wn > 0) then begin
+    if (GetWindowClass(wn)=="PPDClass") then begin
+      GetWindowRecord(wn,PPr);
+      if (PPCanAddToBankQueue(PPr,errMsg)) then begin
+        RequestEstIDCardPin2ForPP(PPr);
+      end else begin
+        MessageBox(0,errMsg);
+        if (IsBankQueueActive == false) then begin
+          OpenWindow("BankInfoWClass",0,CurWindow,"","",RepSpec);
+        end;
+      end;
+    end;
+  end;
+  return;
+end;
+
+global
+procedure BK_EPayStatusPPDsm()
+begin
+  Integer wn;
+  record PPVc PPr;
+  record RcVc RepSpec;
+  
+  if(IsBankQueueActive == false) then begin
+    OpenWindow("BankInfoWClass",0,CurWindow,"","",RepSpec);
+  end else begin
+    wn = CurWindow;
+    GetWindowRecord(wn,PPr);
+    ReportDefaults(RepSpec,"EPayStatRClass"); //reusing this window
+    RepSpec.f1 = PPr.SerNr;
+    RepSpec.Media = mtScreen;
+    RepSpec.repname = "BK_EPPStatRn";
+    RunReport(RepSpec,0);
+  end;
+  return;
+end;
+
+//this function is missing in std, only in Books HAL yet
+global
+function integer PPLClassRowColor(record PPVc PPr)
+begin
+  integer res;
+  record BankReqQueVc BankReqQuer;
+  
+  res = kRowColorNone;
+  BankReqQuer.RecordType = "PPVc";
+  BankReqQuer.RecordID = PPr.SerNr & "";
+  if (ReadFirstKey("RecordIDType",BankReqQuer,2,true)) then begin
+    if (BankReqQuer.ReplyStatCode == BankQueReplySuccess) begin
+      res = kRowColorGreen;
+      goto LPPLClassRowColor;
+    end;
+    if (BankReqQuer.ReplyStatCode == BankQueReplyProgress) begin
+      res = kRowColorYellow;
+      goto LPPLClassRowColor;
+    end;
+    if (BankReqQuer.ReplyStatCode == BankQueReplyError) begin
+      res = kRowColorRed;
+      goto LPPLClassRowColor;
+    end;
+  end else begin
+  //find in matrix
+    ResetLoop(BankReqQuer);
+    RecordClear(BankReqQuer);
+    BankReqQuer.RecordType = "PPVc";
+    if (ReadFirstKey("RowRecordIDType:" & PPr.SerNr,BankReqQuer,1,true)) then begin
+      if (BankReqQuer.ReplyStatCode == BankQueReplySuccess) begin
+        res = kRowColorGreen;
+        goto LPPLClassRowColor;
+      end;
+      if (BankReqQuer.ReplyStatCode == BankQueReplyProgress) begin
+        res = kRowColorYellow;
+        goto LPPLClassRowColor;
+      end;
+      if (BankReqQuer.ReplyStatCode == BankQueReplyError) begin
+        res = kRowColorRed;
+        goto LPPLClassRowColor;
+      end;
+    end;
+  end;
+LPPLClassRowColor:;
+  PPLClassRowColor = res;
+  return;
+end;

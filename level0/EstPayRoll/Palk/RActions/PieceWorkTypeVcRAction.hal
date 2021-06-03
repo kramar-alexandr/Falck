@@ -2,6 +2,7 @@ external function boolean GetNextPieceWorkTypeNr(var string);
 external function boolean PWTrInUse(string);
 external function boolean PositionExsistsAndActive(string,LongInt,date);
 external function boolean PaymTypeExsists(string);
+external function roundmode GetSalaryRoundMode(string);
 
 global
 function LongInt PieceWorkTypeVcRecordDefaults(var record PieceWorkTypeVc PWTr,record PieceWorkTypeVc PWT2r,LongInt stat,LongInt long4)
@@ -13,7 +14,6 @@ begin
   end else begin
     PWTr.Code = "";
   end;
-  
   PieceWorkTypeVcRecordDefaults = res; 
   return;
 end;
@@ -28,7 +28,6 @@ begin
   end else begin
     PWTr.Code = "";
   end;
-
   PieceWorkTypeVcRecordDuplicate = res; 
   return;
 end;
@@ -40,17 +39,16 @@ begin
   record PieceWorkTypeVc PWT3r;
   row PieceWorkTypeVc PWTrw;
   record ContractVc Contrr;
-  row ContractVc Contrrw;
   record PositionVc Posr;
   LongInt updatemode,insertmode;
   integer rwcnt,i;
   
-  insertmode=1;
-  updatemode=2;
+  insertmode = 1;
+  updatemode = 2;
   res = 0;
   if (blank(PWTr.Code)) then begin
     if (stat==updatemode) and nonblank(PWT2r.Code) then begin
-      PWTr.Code=PWT2r.Code;
+      PWTr.Code = PWT2r.Code;
     end else begin
       if (GetNextPieceWorkTypeNr(PWTr.Code)) then begin end;
     end;
@@ -80,7 +78,7 @@ begin
     goto LPieceWorkTypeVcRecordCheck;
   end;
 
-  rwcnt=MatRowCnt(PWTr);
+  rwcnt = MatRowCnt(PWTr);
   for (i=0;i<rwcnt;i=i+1) begin
    MatRowGet(PWTr,i,PWTrw);
     if (PWTrw.ContrSerNr<=0) then begin
@@ -149,5 +147,22 @@ begin
     res = 0;
   end;
   PieceWorkTypeVcRecordRemoveTest = res; 
+  return;
+end;
+
+global
+updating function LongInt PieceWorkTypeVcRecordImport(var record PieceWorkTypeVc PWTr,record PieceWorkTypeVc PWT2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+  row PieceWorkTypeVc PWTrw;
+  Integer i,rwcnt;
+
+  rwcnt = MatRowCnt(PWTr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(PWTr,i,PWTrw);
+    PWTrw.Tariff = round(PWTrw.Tariff,GetSalaryRoundMode("PWTariff"));
+    MatRowPut(PWTr,i,PWTrw);
+  end;
+  PieceWorkTypeVcRecordImport = res; 
   return;
 end;

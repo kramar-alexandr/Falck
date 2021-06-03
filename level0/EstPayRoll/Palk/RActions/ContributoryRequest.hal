@@ -1,12 +1,10 @@
-external function string 255 ConvertXml(string);
 //txt tools
-external procedure GetAreaFromFile(Area,string);
-external procedure ExtractObjWithSeparator(string,string,Boolean,var Integer,var string);
 external function string 255 AddStr(string,string,string);
-remote procedure SendCCRequestToPartner(string,string,string,var LongInt,var date,var date);
-remote function boolean IRServiceActivated(string); //##ii
+remote procedure SendCCRequestToPartner2(string,string,string,var LongInt,var date,var date,var string);
+remote function boolean EServiceActivated(string);
 
-procedure CollectCodeForContributory(var string tstr,var string code,var string name)
+global
+procedure CollectCodeForContributoryTax(var string tstr,var string code,var string name)
 begin
   record TaxVc Taxr;
   Boolean foundf;
@@ -29,7 +27,68 @@ end;
 global
 updating procedure SaveEmplRecord(record EmplVc Emplr)
 begin
-  WindowDoOK(CurWindow,0);    
+  record EmplVc oldEmplr;
+
+  RecordCopy(oldEmplr,Emplr);
+  RecordUpdate(oldEmplr,Emplr,true);
+  return;
+end;
+
+global
+function boolean FillContributoryTaxRow(var record EmplVc Emplr,string tstr,string tcode,string tname,date sdate,date edate,string y_2020,date sd,date ed)
+begin
+  Boolean res,addrwf;
+  row EmplVc Emplrw,newEmplrw;
+  Integer i,rwcnt;
+  
+  rwcnt = MatRowCnt(Emplr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(Emplr,i,Emplrw);
+    if nonblank(Emplrw.TaxCode) then begin
+      if (SetInSet(Emplrw.TaxCode,tstr)) then begin
+        if blankdate(Emplrw.EDate) or (Emplrw.EDate>sdate) then begin
+          res = true;
+          Emplrw.SDate = sdate;
+          Emplrw.EDate = edate;
+          if (y_2020=="y") and (blankdate(edate) or (edate>ed)) then begin
+            addrwf = true;
+            Emplrw.EDate = ed;
+          end;
+          MatRowPut(Emplr,i,Emplrw);
+          if (addrwf) then begin
+            ClearRow(Emplr,newEmplrw,1);
+            CopyRow(Emplr,Emplrw,newEmplrw);
+            newEmplrw.SDate = sd;
+            newEmplrw.EDate = edate;            
+            MatRowInsert(Emplr,i+1,newEmplrw);
+            rwcnt = rwcnt + 1;
+          end;
+          i = rwcnt;
+        end;
+      end;
+    end;
+  end;
+  if (res == false) then begin
+    ClearRow(Emplr,Emplrw,1);
+    Emplrw.TaxCode = tcode;
+    Emplrw.TaxName = tname;
+    Emplrw.SDate = sdate;
+    Emplrw.EDate = edate;
+    if (y_2020=="y") and (blankdate(edate) or (edate>ed)) then begin
+      addrwf = true;
+      Emplrw.EDate = ed;
+    end;
+    MatRowInsert(Emplr,rwcnt,Emplrw);        
+    if (addrwf) then begin
+      ClearRow(Emplr,newEmplrw,1);
+      CopyRow(Emplr,Emplrw,newEmplrw);
+      newEmplrw.SDate = sd;
+      newEmplrw.EDate = edate;            
+      MatRowInsert(Emplr,rwcnt+1,newEmplrw);
+    end;
+    res = true;
+  end;
+  FillContributoryTaxRow = res;
   return;
 end;
 
@@ -37,19 +96,25 @@ global
 procedure CheckForContributoryContractDsm()
 begin
   record EmplVc Emplr;
-  row EmplVc Emplrw;
-  Integer i,rwcnt;
-  string 255 tstr,tcode,tname;
+  string 60 tstr,tcode,tname,y_2020;
   LongInt responsecode;
-  date sdate,edate;
-  Boolean updf;
+  date sdate,edate,ed,sd;
+  Boolean res;
   
+  ed = "30.11.2020"; sd = "01.09.2021";
   GetWindowRecord(CurWindow,Emplr);
-  if (!IRServiceActivated("SENDESTCCLOOKUP")) then begin
+  if (Emplr.ClosedFlag!=0) then begin
+    goto LCheckForContributoryContractDsm;
+  end;
+  if (!EServiceActivated("SENDESTCCLOOKUP")) then begin
     MessageBox(1500005,"");
     goto LCheckForContributoryContractDsm;
   end;
-  threadremote.SendCCRequestToPartner(Emplr.Code,Emplr.IDCode,"SENDESTCCLOOKUP",responsecode,sdate,edate);
+  if (len(Emplr.IDCode)!=11) then begin
+    MessageBox(1500301,"");      
+    goto LCheckForContributoryContractDsm;
+  end;
+  threadremote.SendCCRequestToPartner2(Emplr.Code,Emplr.IDCode,"SENDESTCCLOOKUP",responsecode,sdate,edate,y_2020);
   switch (responsecode) begin
     case -1: Messagebox(1500600,"");
     case 40520: MessageBox(1500603,"");
@@ -57,33 +122,10 @@ begin
     case 41132: MessageBox(1500602,"");
     case 40552: MessageBox(1500605,"");
     case 0:
-      CollectCodeForContributory(tstr,tcode,tname);
-      rwcnt = MatRowCnt(Emplr);
-      for (i=0;i<rwcnt;i=i+1) begin
-        MatRowGet(Emplr,i,Emplrw);
-        if nonblank(Emplrw.TaxCode) then begin
-          if (SetInSet(Emplrw.TaxCode,tstr)) then begin
-            if blankdate(Emplrw.EDate) or (Emplrw.EDate>sdate) then begin
-              updf = true;
-              Emplrw.SDate = sdate;
-              Emplrw.EDate = edate;
-              MatRowPut(Emplr,i,Emplrw);
-              i = rwcnt;
-            end;
-          end;
-        end;
-      end;
-      if (updf == false) then begin
-        ClearRow(Emplr,Emplrw,1);
-        Emplrw.TaxCode = tcode;
-        Emplrw.TaxName = tname;
-        Emplrw.SDate = sdate;
-        Emplrw.EDate = edate;
-        MatRowInsert(Emplr,rwcnt,Emplrw);        
-        updf = true;
-      end;
-      if (updf) then begin
-        PutWIndowRecord(CurWindow,Emplr);
+      CollectCodeForContributoryTax(tstr,tcode,tname);
+      res = FillContributoryTaxRow(Emplr,tstr,tcode,tname,sdate,edate,y_2020,sd,ed);
+      if (res) then begin
+        PutWindowRecord(CurWindow,Emplr);
         qupdating.SaveEmplRecord(Emplr);
         MessageBox(1500606,"");
       end;

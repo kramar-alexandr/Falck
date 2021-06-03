@@ -17,7 +17,6 @@ begin
   if (Emplr.ClosedFlag!=0) then begin
     res = false;
   end;
-
   EmplDClassDeleteRowTest = res;
   return;
 end;
@@ -54,17 +53,17 @@ function boolean EmplDClassTaxCodeEFAfter(integer wn,integer rownr,integer chang
     GetWindowRecord(wn,Emplr);
     DeselectWindow(wn,false);
     MatRowGet(Emplr,rownr,Emplrw);
-    Taxr.Code=Emplrw.TaxCode;
+    Taxr.Code = Emplrw.TaxCode;
     if (ReadFirstMain(Taxr,1,true)) then begin
-      rwcnt=MatRowCnt(Taxr);
+      rwcnt = MatRowCnt(Taxr);
       for (i=0;i<rwcnt;i=i+1) begin
         MatRowGet(Taxr,i,Taxrw);
         if nonblank(Taxrw.Percent) then begin
           if (DateInRange(CurrentDate,Taxrw.SDate,Taxrw.EDate)) then begin
-            Emplrw.TaxCode=Taxr.Code;
-            Emplrw.TaxName=Taxr.Name;
-            Emplrw.SDate=Taxrw.SDate;
-            Emplrw.EDate=Taxrw.EDate;
+            Emplrw.TaxCode = Taxr.Code;
+            Emplrw.TaxName = Taxr.Name;
+            Emplrw.SDate = Taxrw.SDate;
+            Emplrw.EDate = Taxrw.EDate;
             MatRowPut(Emplr,rownr,Emplrw);
             PutWindowRecord(wn,Emplr);
           end;
@@ -85,9 +84,9 @@ function boolean EmplDClassIDCodeEFAfter(integer wn,integer rownr,integer change
     GetWindowRecord(wn,Emplr);
     DeselectWindow(wn,false);
     if nonblank(Emplr.IDCode) then begin
-      Emplr.BirthDate=GetBDateFromIDCode(Emplr.IDCode);
+      Emplr.BirthDate = GetBDateFromIDCode(Emplr.IDCode);
     end else begin
-      Emplr.BirthDate=bdate;
+      Emplr.BirthDate = bdate;
     end;
     PutWindowRecord(wn,Emplr);
   end;
@@ -104,7 +103,6 @@ begin
     case "TaxCode": res = EmplDClassTaxCodeEFAfter(wn,rownr,changed);
     case "IDCode": res = EmplDClassIDCodeEFAfter(wn,rownr,changed);
   end;
-
   EmplDClassAfterEditField = res;
   return;
 end;

@@ -1,0 +1,68 @@
+event startup
+begin
+  SetLangMode(LangEstonian,"EST",0);
+
+//eteenused
+  Setting("Imporditavate arvete töötlemine",EInvoiceSetTClass,modSL);
+  Setting("Ettevõtlusvormid",CompanyFormLClass,modSL);
+  Setting("Müügi e-arved",CUIVLClass,modSL);
+  Setting("Tarnija e-arvete töötlemine",SupEInvoiceSetTClass,modPL);
+  Setting("Ettevõtlusvormid",CompanyFormLClass,modPL);
+  Setting("E-teenuste ajastamine",EInvQueryIntrvlTClass,modTC);
+  Setting("E-teenuste statistika",CUServiceUsageLClass,modDBMain);
+  Import("E-arve",EArveXMLIn,EArveXMLIn,modSL);
+  Maintenance("Määra E-arve kanalid",DefEInvRcvPrefVClass,DefEInvRcvPrefMn,modSL);
+
+//earvete erinouded
+  Setting("E-arve objektitüübid",EInvObjTypeTCLass,modSY);
+
+//pangaliidestus
+  Register("Panga päringute järjekord","Panga päringute järjekord",BankReqQueVc,modTC);
+  Setting("Pangaliidestuste seadistused",BankServicesTClass,modTC);
+  Report("E-tasumiste hetkeseis (Books)",EPayStatRClass,BK_EPayStatRn,0,modPL);
+  Report("Pangaväljavõte hetkeseis",BankStmntStatRClass,BankStmntStatRn,0,modSL);
+  Report("Pangaväljavõte hetkeseis",BankStmntStatRClass,BankStmntStatRn,0,modPL);
+  Report("Pangaväljavõte hetkeseis",BankStmntStatRClass,BankStmntStatRn,0,modNL);
+  Maintenance("Pangaväljavõtte päring",BankStmntVClass,BankStmntMn,modNL);
+  //cust - start KB 04.11.2019 - customer also has //pangaliidestus, so adding it
+  //if (IsBooks) then begin //to avoid problems if modSAL is put to ERP
+    Maintenance("Saada palgaväljamaksed panka",BankPayRollVClass,BankPayRollsMn,modSAL);
+  //end;
+  //cust - end
+
+//rik
+  Setting("RIK päringu seadistus",TXTSerClass,modTC);
+  Report("Äriregistri info päring",EstAddrLookupRClass,EstAddrLookupRn,0,modCRM);
+  Report("Äriregistri info päring",EstAddrLookupRClass,EstAddrLookupRn,0,modSL);
+
+//sepa eksport
+  Report("Arvelduskontode konverteerimine (IBAN)",ConverttoIBANRClass,ConverttoIBANRn,0,modTC);
+  Report("Andmete kontroll (SEPA maksed)",FindMisMatchSEPARClass,FindMisMatchSEPARn,0,modTC);
+  Maintenance("Arvelduskontode konverteerimine (IBAN)",ConverttoIBANVClass,ConverttoIBANMn,modTC);
+
+//sepa import
+  Setting("SEPA pangafaili import",SEPABankFileTClass,modSL);
+  Setting("Väljavõtte arhiiv",BankImportArhiveLClass,modNL); //refers to register SEPABankEntryVc, but is setting to have different LClass
+  Setting("Pangakannete vastavused",TRIdentTCLass,modNL);
+  Import("Pangafail, SEPA",SEPAIn,SEPAIn,modSL);
+  Import("Pangafail, SEPA",SEPAIn,SEPAIn,modPL);
+  Import("Pangafail, SEPA",SEPAIn,SEPAIn,modNL);
+  Register("Töötlemata kanded","Töötlemata kanded",SEPABankEntryVc,modNL);
+  Report("Pangakannete impordi ajalugu",BankEntryHistRClass,BankEntryHistRn,0,modSL);
+  Report("Pangakannete impordi ajalugu",BankEntryHistRClass,BankEntryHistRn,0,modPL);
+  Report("Pangakannete impordi ajalugu",BankEntryHistRClass,BankEntryHistRn,0,modNL);
+
+//smaily
+  Setting("Smaily seadistused",SmailyTClass,modCRM);
+  Setting("Smaily päringu väljad",SmailyFieldsTClass,modCRM);
+  Maintenance("Kontaktide andmed Smaily keskkonda",CUtoSmailyVClass,CUtoSmailyMn,modCRM);
+
+//tsekk.ee
+  Setting("Costpocketi teenuse seadistused",TsekkSetTClass,modTC);
+
+//xml arve
+  Report("Andmete kontroll (XML arve)",FindMisMatchRClass,FindMisMatchRn,0,modDBMain);
+  Export("XML arve",eInvoiceEClass,eInvoiceEn,modInteg);
+
+  return;
+end;

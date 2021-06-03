@@ -1,0 +1,152 @@
+//pangaliidestus
+remote updating procedure StoreCUServiceUsage(date,string,Integer,string,Integer,Integer);
+external updating procedure MarkBankQueRecordSent(var record BankReqQueVc,string);
+external updating procedure MarkBankQueRecordFailed(var record BankReqQueVc,string);
+external updating procedure MarkBankQueRecordTried(var record BankReqQueVc,string);
+external function boolean SendStateRequestToBankHTS(record BankReqQueVc,var string,var string);
+external function boolean SendSignedFileToBankHTS(area,string,record BankReqQueVc,var string,var string);
+
+external procedure BankingDebugMsg(string,string);
+external function integer BankQueStatusNew();
+
+global
+procedure CopyAreaToServer(area fileArea, string path)
+begin
+  SetFileOnServer(true);
+  WriteAreaToFile(fileArea,path,0);
+  SetFileOnServer(false);
+  return;
+end;
+
+function boolean SendPmntStatReqToBankHTS(record BankReqQueVc BankReqQuer, var string uniqueID, var string errMsg)
+begin
+  boolean res;
+
+    switch(BankReqQuer.Partner) begin
+      case "SGW":
+        BankingDebugMsg("BANK SERVICES","Sending payment status request to SGW HTS server...");
+        res = false; //TODO call the real sending function
+    end;  
+    if (res) then begin
+      BankingDebugMsg("BANK SERVICES","Payment status request successfully sent");
+    end else begin
+      BankingDebugMsg("BANK SERVICES","Payment status request sending failed");
+    end;
+  SendPmntStatReqToBankHTS = res;
+  return;
+end;
+
+function boolean SendOneBankReqQueue(record BankReqQueVc BankReqQuer, var string uniqueID, var string errMsg)
+begin
+  boolean res;
+  record OPVc OPr;
+  area signedArea;
+
+  switch(BankReqQuer.BankReqType) begin //do not translate these types
+    case "Payment":
+      switch(BankReqQuer.RecordType) begin
+        case "OPVc":
+          AddFileToArea("tmp/" & BankReqQuer.ReqFileName,signedArea,false);
+          res = SendSignedFileToBankHTS(signedArea,BankReqQuer.ReqFileName,BankReqQuer,uniqueID,errMsg);
+        case "PPVc":
+          AddFileToArea("tmp/" & BankReqQuer.ReqFileName,signedArea,false);
+          res = SendSignedFileToBankHTS(signedArea,BankReqQuer.ReqFileName,BankReqQuer,uniqueID,errMsg);
+        case "PaymPayrollVc":
+          AddFileToArea("tmp/" & BankReqQuer.ReqFileName,signedArea,false);
+          res = SendSignedFileToBankHTS(signedArea,BankReqQuer.ReqFileName,BankReqQuer,uniqueID,errMsg);
+      end;
+    case "Statement":
+      res = SendStateRequestToBankHTS(BankReqQuer,uniqueID,errMsg);
+    case "TodayStatement":
+      res = SendStateRequestToBankHTS(BankReqQuer,uniqueID,errMsg);
+    case "Balance":
+      res = SendStateRequestToBankHTS(BankReqQuer,uniqueID,errMsg);
+    case "PaymentStatus":
+      res = SendPmntStatReqToBankHTS(BankReqQuer,uniqueID,errMsg);
+    otherwise
+      errMsg = USetStr(1501078) & BankReqQuer.BankReqType;
+  end;
+  SendOneBankReqQueue = res;
+  return;
+end;
+
+global
+function integer BankReqTypeToHTSServNumber(string reqType)
+begin
+  integer res;
+
+  switch(reqType) begin
+    case "Payment": res = 21;
+    case "PaymentStatus": res = 21;
+    case "Statement": res = 22;
+    case "TodayStatement": res = 23;
+    case "Balance": res = 24;
+    otherwise
+      res = 20;
+  end;
+  BankReqTypeToHTSServNumber = res;
+  return;
+end;
+
+procedure DeleteAssociatedFile(record BankReqQueVc BankReqQuer)
+begin
+  
+  if (FileExists("tmp/" & BankReqQuer.ReqFileName)) then begin
+    Delete_File("tmp/" & BankReqQuer.ReqFileName);
+  end;
+  return;
+end;
+
+global //for qupdating
+procedure CheckBankReqUpdMainThread(var record BankReqQueVc BankReqQuer)
+begin
+  ReadFirstMain(BankReqQuer,0,true);
+  return;
+end;
+
+global
+procedure SendBankRequestsForCurCompany()
+begin
+  record BankReqQueVc BankReqQuer;
+  boolean TrHs;
+  integer iterations,recordsPerRun,maxAttempts;
+  string 30 uniqueID;
+  string 255 errMsg;
+  
+  maxAttempts = 3;
+  recordsPerRun = 10;
+  TrHs = true;
+  BankReqQuer.Status = BankQueStatusNew;
+  while (LoopKey("StatusDateTime",BankReqQuer,1,TrHs)) begin
+    if (BankReqQuer.Status != BankQueStatusNew) then begin
+      TrHs = false;
+    end;
+    if (iterations >= recordsPerRun) then begin
+      TrHs = false; 
+    end;
+    if (TrHs) then begin
+      qupdating.CheckBankReqUpdMainThread(BankReqQuer); //get refreshed record from main thread in case it was modified
+      if (BankReqQuer.Status != BankQueStatusNew) then begin
+        goto LSednBankReqSkipRecord;
+      end;
+      if (SendOneBankReqQueue(BankReqQuer,uniqueID,errMsg)) then begin
+        BankingDebugMsg("BANK SERVICES","Request was sent to HTS server. Type = " & BankReqQuer.BankReqType & ", ser.nr = " & BankReqQuer.SerNr);
+        qupdating.MarkBankQueRecordSent(BankReqQuer,uniqueID);
+        DeleteAssociatedFile(BankReqQuer);
+        queued.StoreCUServiceUsage(CurrentDate,BankReqQuer.RegNr,BankReqTypeToHTSServNumber(BankReqQuer.BankReqType),BankReqQuer.Partner,1,1);
+      end else begin
+        if (BankReqQuer.SendAttempts >= (maxAttempts - 1)) then begin
+          BankingDebugMsg("BANK SERVICES","Request sending to HTS failed. Request cancelled. Type = " & BankReqQuer.BankReqType & ", ser.nr = " & BankReqQuer.SerNr);
+          qupdating.MarkBankQueRecordFailed(BankReqQuer,errMsg);
+          DeleteAssociatedFile(BankReqQuer);
+        end else begin
+          BankingDebugMsg("BANK SERVICES","Request sending to HTS failed. Will try again. Type = " & BankReqQuer.BankReqType & ", ser.nr = " & BankReqQuer.SerNr);
+          qupdating.MarkBankQueRecordTried(BankReqQuer,errMsg);
+        end;
+      end;
+      iterations = iterations + 1;
+    end;
+LSednBankReqSkipRecord:;
+  end;
+  return;
+end;

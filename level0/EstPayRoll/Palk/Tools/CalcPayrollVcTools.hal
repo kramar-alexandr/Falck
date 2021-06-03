@@ -1,5 +1,5 @@
 external updating procedure UpdateCPUnpaidVc(LongInt,string,string,longint,integer,string,var val,var val,var val,var val,var val,var val,var val,var val,var val,var val,boolean,string,LongInt,integer,var val);
-external procedure CalcPaymTypeSumsAndTaxes(record PaymTypeVc,val,var val,var val,var val,var val,val,val,var val,var val,var val,var val,var val,var val,var val,LongInt,integer,string,string,date,integer,var val,var val,var val,date,date,LongInt,integer,integer,integer,integer,var val,var LongInt,var LongInt,var LongInt);
+external procedure CalcPaymTypeSumsAndTaxes(record PaymTypeVc,val,var val,var val,var val,var val,val,val,var val,var val,var val,var val,var val,var val,var val,LongInt,integer,string,string,date,integer,var val,var val,var val,date,date,LongInt,integer,integer,integer,integer,var val,var LongInt,var LongInt,var LongInt,string);
 external procedure CalculateTaxes(val,var val,var val,var val,var val,val,val,val,var val,var val,var val,var val,var val,var val,string,string,date,integer,var val,var val);
 external procedure IncTaxFreeMinToUse(LongInt,LongInt,date,string,val,val,var val,var val,var val,var val);
 external function val DPDiscToUse(LongInt,LongInt,date,date,string,val,Boolean);
@@ -42,25 +42,25 @@ begin
   record TRVc TRr;
   LongInt tmp,tmp1,nrofCPrs;
   
-  cpsernr=-1;
+  cpsernr = -1;
   nrofCPrs = CountRecords("CalcPayrollVc");
   if (nrofCPrs==0) then begin
-    TRr.IntYc=SalaryCalcYc;
+    TRr.IntYc = SalaryCalcYc;
     TRr.Number = 99999999999;
     if (ReadLastMain(TRr,2,false)) then begin
-      tmp=TRr.Number+1;
+      tmp = TRr.Number+1;
     end;
-    TRr.IntYc=SalaryPayment2Yc;
+    TRr.IntYc = SalaryPayment2Yc;
     TRr.Number = 99999999999;
     if (ReadLastMain(TRr,2,false)) then begin
-      tmp1=TRr.Number+1;
+      tmp1 = TRr.Number+1;
     end;
     if (tmp<tmp1) then begin
-      tmp=tmp1;
+      tmp = tmp1;
     end;
     cpsernr = NextSerNr("CalcPayrollVc",calcdate,-1,false,"");
     if (cpsernr<tmp) then begin
-      cpsernr=tmp;
+      cpsernr = tmp;
     end;
   end else begin
     cpsernr = NextSerNr("CalcPayrollVc",calcdate,-1,false,"");
@@ -88,7 +88,7 @@ begin
     res = true;
     goto L1;
   end;
-  for (i=0; i<rwcnt ;i=i+1) begin
+  for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(CPSerr,i,CPSerrw);
     if ((sernr<CPSerrw.TSerStart) or (sernr>CPSerrw.TSerEnd)) then begin
       goto L2;
@@ -110,11 +110,11 @@ L1:;
 end;
 
 global
-updating procedure RemoveCPAbsVc(LongInt AbsSerNr)
+updating procedure RemoveCPAbsVc(LongInt abssernr)
 begin
   record CPAbsVc CPAbsr;
   
-  CPAbsr.AbsSerNr = AbsSerNr;
+  CPAbsr.AbsSerNr = abssernr;
   if (ReadFirstKey("AbsSerNr",CPAbsr,1,true)) then begin
     RecordDelete(CPAbsr);
   end;
@@ -151,9 +151,9 @@ begin
   record CPAbsVc CPAbsr;
 
   RecordNew(CPAbsr);
-  CPAbsr.CalcSerNr=calcsernr;
-  CPAbsr.CalcRowNr=calcrownr;
-  CPAbsr.AbsSerNr=abssernr;
+  CPAbsr.CalcSerNr = calcsernr;
+  CPAbsr.CalcRowNr = calcrownr;
+  CPAbsr.AbsSerNr = abssernr;
   if (RecordInsert(CPAbsr,false)) then begin end;
   return;
 end;
@@ -164,20 +164,20 @@ begin
   integer res;
   record PaymTypeVc PTr;
   
-  res=0;
-  PTr.Code=paymtypecode;
+  res = 0;
+  PTr.Code = paymtypecode;
   if (ReadFirstMain(PTr,1,true)) then begin
     if (PTr.PaymTypeFlag==1) then begin //Kinnipidamine (bruto)
-      res=1;  
+      res = 1;  
     end;
     if (PTr.PaymTypeFlag==2) then begin //Kinnipidamine (neto)
-      res=2;
+      res = 2;
     end;
     if (PTr.PaymTypeFlag==3) then begin //Kohtutäitur (kinnip.neto)
-      res=3;
+      res = 3;
     end;
     if (PTr.PaymTypeFlag==0) then begin //Tasu
-      res=7;  
+      res = 7;  
     end;
   end;
   GetPaymTypeFlag = res;
@@ -231,10 +231,10 @@ begin
   record CPOTVc CPOTr;
 
   RecordNew(CPOTr);
-  CPOTr.CalcSerNr=calcsernr;
-  CPOTr.CalcRowNr=calcrownr;
-  CPOTr.OTSerNr=otsernr;
-  CPOTr.OTRowNr=otrownr;
+  CPOTr.CalcSerNr = calcsernr;
+  CPOTr.CalcRowNr = calcrownr;
+  CPOTr.OTSerNr = otsernr;
+  CPOTr.OTRowNr = otrownr;
   if (RecordInsert(CPOTr,false)) then begin end;
 end;
 
@@ -285,10 +285,10 @@ begin
   record CPWHVc CPWHr;
 
   RecordNew(CPWHr);
-  CPWHr.CalcSerNr=calcsernr;
-  CPWHr.CalcRowNr=calcrownr;
-  CPWHr.WHSerNr=whsernr;
-  CPWHr.WHRowNr=whrownr;
+  CPWHr.CalcSerNr = calcsernr;
+  CPWHr.CalcRowNr = calcrownr;
+  CPWHr.WHSerNr = whsernr;
+  CPWHr.WHRowNr = whrownr;
   if (RecordInsert(CPWHr,false)) then begin end;
   return;
 end;
@@ -340,10 +340,10 @@ begin
   record CPPWVc CPPWr;
 
   RecordNew(CPPWr);
-  CPPWr.CalcSerNr=calcsernr;
-  CPPWr.CalcRowNr=calcrownr;
-  CPPWr.PWSerNr=pwsernr;
-  CPPWr.PWRowNr=pwrownr;
+  CPPWr.CalcSerNr = calcsernr;
+  CPPWr.CalcRowNr = calcrownr;
+  CPPWr.PWSerNr = pwsernr;
+  CPPWr.PWRowNr = pwrownr;
   if (RecordInsert(CPPWr,false)) then begin end;
   return;
 end;
@@ -405,38 +405,38 @@ begin
   boolean res,TrHs,TrHs1;
   date sd,ed;
   
-  res=false;
-  minsoctax=GetMinSocTax(calcdate);//ts - 2018/01, orig paymdate
+  res = false;
+  minsoctax = GetMinSocTax(paymdate);
   if (soctax<minsoctax) then begin
-    TrHs=true;
-    Contrr.EmplCode=emplcode;
+    TrHs = true;
+    Contrr.EmplCode = emplcode;
     while (LoopKey("EmplCode",Contrr,1,TrHs)) begin
       if (Contrr.EmplCode!=emplcode) then begin
-        TrHs=false;
+        TrHs = false;
       end;
       if (TrHs) then begin
-        sd=calcdate;
-        sd.day=1;
-        ed=calcdate;
-        ed.day=DaysInMonth(GetYear(ed),GetMonth(ed));
-        TrHs1=true;
+        sd = calcdate;
+        sd.day = 1;
+        ed = calcdate;
+        ed.day = DaysInMonth(GetYear(ed),GetMonth(ed));
+        TrHs1 = true;
         ResetLoop(CPr);
-        CPr.OKFlag=1;
-        CPr.ContrSerNr=Contrr.SerNr;
-        CPr.CalcDate=sd;
+        CPr.OKFlag = 1;
+        CPr.ContrSerNr = Contrr.SerNr;
+        CPr.CalcDate = sd;
         while (LoopKey("OKFlag",CPr,3,TrHs1)) begin
           if (CPr.OKFlag!=1) then begin
-            TrHs1=false;
+            TrHs1 = false;
           end;
           if (CPr.ContrSerNr!=Contrr.SerNr) then begin
-            TrHs1=false;
+            TrHs1 = false;
           end;         
           if (CPr.CalcDate>ed) then begin
-            TrHs1=false;
+            TrHs1 = false;
           end;         
           if (TrHs1) then begin
             if (CPr.Invalid==0) then begin
-              cpsoctaxtot=cpsoctaxtot+CPr.SocTaxTotal;
+              cpsoctaxtot = cpsoctaxtot + CPr.SocTaxTotal;
             end;
           end;
         end;
@@ -444,11 +444,11 @@ begin
     end;
 //NB    GetAdvPaymSum(CPr.ContrSerNr,bval,bval,bval,bval,bval,bval,advpsoctaxtot,bval);
     if ((cpsoctaxtot+advpsoctaxtot+soctax)<minsoctax) then begin
-      soctax=(minsoctax-(cpsoctaxtot+advpsoctaxtot));
-      res=true;
+      soctax = (minsoctax-(cpsoctaxtot+advpsoctaxtot));
+      res = true;
     end;
   end;
-  SocTaxMinCheck=res;
+  SocTaxMinCheck = res;
   return;
 end;
 
@@ -458,50 +458,42 @@ begin
   record EmplVc Emplr;
   boolean res;
   
-  Emplr.Code=emplcode;
+  Emplr.Code = emplcode;
   if (ReadFirstMain(Emplr,1,true)) then begin
     if (Emplr.SocTaxMinFlag!=0) then begin
-      res=true;
+      res = true;
     end; 
   end;
-  EmplSocTaxMin=res;
+  EmplSocTaxMin = res;
   return;
 end;
 
 global
-procedure CPrSocTaxCheck(longInt contrsernr,date paymdate,date calcdate,val brutotot,var val soctaxtot,var val newpercent,var boolean soctaxminflag,var boolean dispensflag)
+procedure CPrSocTaxCheck(longInt contrsernr,date paymdate,date calcdate,val brutotot,var val soctaxtot,var val newpercent,var boolean soctaxminflag,var boolean dispensflag,val dpdtouse)
 begin  
   record ContractVc Contrr;
-  
-  Contrr.SerNr=contrsernr;
+  val st,bt;
+
+  Contrr.SerNr = contrsernr;
   if (ReadFirstMain(Contrr,1,true)) then begin
     if (Contrr.DisPensFlag!=0) then begin
-      dispensflag=true;
+      dispensflag = true;
+      if (dpdtouse<soctaxtot) then begin
+        st = soctaxtot - dpdtouse;
+        bt = brutotot;
+      end else begin
+        st = 0;
+        bt = brutotot;
+      end;
+      newpercent = st*100/bt;
     end;
     if (EmplSocTaxMin(Contrr.EmplCode)) then begin
       if (SocTaxMinCheck(Contrr.EmplCode,paymdate,calcdate,soctaxtot)) then begin
-        soctaxminflag=true;
-        newpercent=(soctaxtot*100/brutotot);
+        soctaxminflag = true;
+        newpercent = soctaxtot*100/brutotot;
       end;
     end; 
   end;
-  return;
-end;
-
-global
-function val GetRowDPDisc(val rwsoctax,var val dpdtouse)
-begin
-  val res;
-     
-  res=0;
-  if (dpdtouse<rwsoctax) then begin
-    res=dpdtouse;
-    dpdtouse=0;
-  end else begin
-    res=rwsoctax;
-    dpdtouse=dpdtouse-rwsoctax;
-  end;
-  GetRowDPDisc=res;
   return;
 end;
 
@@ -510,75 +502,80 @@ procedure CPrSumUp(var record CalcPayrollVc CPr)
 begin
   row CalcPayrollVc CPrw;
   integer rwcnt,i;
-  val brutotot,netotot,addtaxsumtot,inctaxtot,inctaxfreemintot,unemplinstot,pensiontot,soctaxtot,emplunemplinstot,dpdisccurtot;
-  val newpercent,soctaxtottmp,soctax,dpdtouse,dpdisc,tmpval;
+  val brutotot,netotot,addtaxsumtot,inctaxtot,inctaxfreemintot,unemplinstot,pensiontot,soctaxtot,emplunemplinstot;
+  val newpercent,soctaxtottmp,soctax,dpdtouse,rwdpdtouse,tmpval,soctaxbruto,dpddisc;
   boolean soctaxminflag,dispensflag;
-  
-  newpercent=0; 
-  soctaxminflag=false;
-  dispensflag=false;
-  rwcnt=MatRowCnt(CPr);
+
+  newpercent = 0; 
+  soctaxminflag = false;
+  dispensflag = false;
+  rwcnt = MatRowCnt(CPr);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(CPr,i,CPrw);
-    netotot=netotot+CPrw.NetoSum;
-    brutotot=brutotot+CPrw.BrutoSum;
-    unemplinstot=unemplinstot+CPrw.UnemplInsSum;
-    pensiontot=pensiontot+CPrw.PensionSum;
-    inctaxtot=inctaxtot+CPrw.IncTaxSum;
-    addtaxsumtot=addtaxsumtot+CPrw.AddTaxSum;
-    inctaxfreemintot=inctaxfreemintot+CPrw.IncTaxFreeMinSum;
-    soctaxtot=soctaxtot+CPrw.SocTaxSum;
-    emplunemplinstot=emplunemplinstot+CPrw.EmplUnemplInsSum;
+    netotot = netotot + CPrw.NetoSum;
+    brutotot = brutotot + CPrw.BrutoSum;
+    unemplinstot = unemplinstot + CPrw.UnemplInsSum;
+    pensiontot = pensiontot + CPrw.PensionSum;
+    inctaxtot = inctaxtot + CPrw.IncTaxSum;
+    addtaxsumtot = addtaxsumtot + CPrw.AddTaxSum;
+    inctaxfreemintot = inctaxfreemintot + CPrw.IncTaxFreeMinSum;
+    soctaxtot = soctaxtot + CPrw.SocTaxSum;
+    emplunemplinstot = emplunemplinstot + CPrw.EmplUnemplInsSum;
+    if (CPrw.SocTaxSum!=0) then begin //sots.maksuga maksustatav bruto
+      soctaxbruto = soctaxbruto + CPrw.BrutoSum;
+    end;
   end;
-  soctaxtottmp=soctaxtot;
-  CPrSocTaxCheck(CPr.ContrSerNr,CPr.PaymDate,CPr.CalcDate,brutotot,soctaxtottmp,newpercent,soctaxminflag,dispensflag); //minimaalne sotsmaksu summa & töövõimetuspensionäri soodustus
+  soctaxtottmp = soctaxtot;
+  dpdtouse = DPDiscToUse(CPr.SerNr,CPr.ContrSerNr,CPr.EndDate,CPr.CalcDate,"CalcPayrollVc",tmpval,true);
+  rwdpdtouse = dpdtouse;
+  CPrSocTaxCheck(CPr.ContrSerNr,CPr.PaymDate,CPr.CalcDate,soctaxbruto,soctaxtottmp,newpercent,soctaxminflag,dispensflag,dpdtouse); //minimaalne sotsmaksu summa & töövõimetuspensionäri soodustus
   if ((soctaxminflag) or (dispensflag)) then begin //soctax muutub
-    soctaxtot=0;
+    soctaxtot = 0;
     if ((dispensflag==false) and (brutotot==0)) then begin
       if (rwcnt>0) then begin
         MatRowGet(CPr,0,CPrw);
-        CPrw.SocTaxSum=round(soctaxtottmp,GetSalaryRoundMode("2"));  
-        soctaxtot=CPrw.SocTaxSum;
+        CPrw.SocTaxSum = round(soctaxtottmp,GetSalaryRoundMode("2"));  
+        soctaxtot = CPrw.SocTaxSum;
         MatRowPut(CPr,0,CPrw);
       end;  
     end else begin 
-      dpdisccurtot=0;
       for (i=0;i<rwcnt;i=i+1) begin
         MatRowGet(CPr,i,CPrw);
-        dpdisc=0;
-        soctax=CPrw.SocTaxSum;
-        if ((soctaxminflag) and (dispensflag==false)) then begin
-          soctax=round((CPrw.BrutoSum*newpercent/100),GetSalaryRoundMode("2"));
-        end;  
-        if (dispensflag) then begin
-          dpdtouse=DPDiscToUse(CPr.SerNr,CPr.ContrSerNr,CPr.PaymDate,CPr.CalcDate,"CalcPayrollVc",tmpval,true)-dpdisccurtot;
-          if (soctax > 0) and (dpdtouse > 0) then begin//ts - 2018/01
-            dpdisc=GetRowDPDisc(soctax,dpdtouse);
-          end;//+
-          CPrw.DPDiscSum=dpdisc;
-          dpdisccurtot=dpdisccurtot+CPrw.DPDiscSum;
-        end; 
-        CPrw.SocTaxSum=soctax-dpdisc;  
-        MatRowPut(CPr,i,CPrw);
-        soctaxtot=soctaxtot+CPrw.SocTaxSum;
+        soctax = CPrw.SocTaxSum;
+        dpddisc = 0;
+        if (soctax!=0) then begin //sots.maksuga maksustatav tasuliik
+          if ((soctaxminflag) and (dispensflag==false)) then begin
+            soctax = CPrw.BrutoSum*newpercent/100;
+          end;  
+          if (dispensflag) then begin //töövõimetuspensionär
+            if (rwdpdtouse!=0) then begin
+              soctax = CPrw.BrutoSum*newpercent/100;
+              dpddisc = CPrw.SocTaxSum - soctax;
+              rwdpdtouse = rwdpdtouse - dpddisc;
+              CPrw.DPDiscSum = dpddisc;
+            end;
+          end; 
+          CPrw.SocTaxSum = round(soctax,GetSalaryRoundMode("2"));  
+          MatRowPut(CPr,i,CPrw);
+          soctaxtot = soctaxtot + CPrw.SocTaxSum;
+        end;
       end;
     end;
   end; 
-
-  CPr.NetoTotal=netotot;
-  CPr.BrutoTotal=brutotot;
-  CPr.UnemplInsTotal=unemplinstot;
-  CPr.PensionTotal=pensiontot;
-  CPr.IncTaxTotal=inctaxtot;
-  CPr.AddTaxSumTotal=addtaxsumtot;
-  CPr.IncTaxFreeMinTotal=inctaxfreemintot;
-  CPr.SocTaxTotal=soctaxtot;
-  CPr.EmplUnemplInsTotal=emplunemplinstot;
+  CPr.NetoTotal = netotot;
+  CPr.BrutoTotal = brutotot;
+  CPr.UnemplInsTotal = unemplinstot;
+  CPr.PensionTotal = pensiontot;
+  CPr.IncTaxTotal = inctaxtot;
+  CPr.AddTaxSumTotal = addtaxsumtot;
+  CPr.IncTaxFreeMinTotal = inctaxfreemintot;
+  CPr.SocTaxTotal = soctaxtot;
+  CPr.EmplUnemplInsTotal = emplunemplinstot;
   return;
 end;
 
 global
-function val GetEmplTaxPercent(string emplcode,date paymdate,integer taxtype,val bruto,var string taxcode,var string taxname,var string idcode)
+function val GetEmplTaxPercent(string emplcode,date paymdate,integer taxtype,val bruto,var string taxcode,var string taxname,var string idcode,var string bankacc)
 begin  
   record EmplVc Emplr;
   row EmplVc Emplrw;
@@ -587,28 +584,29 @@ begin
   integer rwcnt,rwcnt1,i,j;
   val res;
 
-  res=0;
-  taxcode="";
-  taxname="";
-  Emplr.Code=emplcode;
+  res = 0;
+  taxcode = "";
+  taxname = "";
+  Emplr.Code = emplcode;
   if (ReadFirstMain(Emplr,1,true)) then begin
-    idcode=Emplr.IDCode;
-    rwcnt=MatRowCnt(Emplr);
+    idcode = Emplr.IDCode;
+    bankacc = Emplr.BankAccount;
+    rwcnt = MatRowCnt(Emplr);
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(Emplr,i,Emplrw);
       if nonblank(Emplrw.TaxCode) then begin
         if ((DateInRange(paymdate,Emplrw.SDate,Emplrw.EDate))) then begin
-          Taxr.Code=Emplrw.TaxCode;
+          Taxr.Code = Emplrw.TaxCode;
           if (ReadFirstMain(Taxr,1,true)) then begin
             if (Taxr.TaxType==taxtype) then begin
-              rwcnt1=MatRowCnt(Taxr);
+              rwcnt1 = MatRowCnt(Taxr);
               for (j=0;j<rwcnt1;j=j+1) begin
                 MatRowGet(Taxr,j,Taxrw);
                 if ((DateInRange(paymdate,Taxrw.SDate,Taxrw.EDate))) then begin
                   if ((bruto>=Taxrw.FromSum) and (bruto<=Taxrw.ToSum)) then begin
-                    res=Taxrw.Percent;
-                    taxcode=Taxr.Code;
-                    taxname=Taxr.Name;
+                    res = Taxrw.Percent;
+                    taxcode = Taxr.Code;
+                    taxname = Taxr.Name;
                     goto LGetEmplTaxPercent;
                   end;
                 end;
@@ -620,7 +618,7 @@ begin
     end;
   end;  
 LGetEmplTaxPercent:;
-  GetEmplTaxPercent=res;
+  GetEmplTaxPercent = res;
   return;
 end;
 
@@ -641,10 +639,11 @@ begin
 end;
 
 global
-procedure PasteCPrTaxes(var record CalcPayrollVc CPr,integer maintflag,integer pwflag,integer whflag,integer contrflag,integer itfm,var val previtfmin,Boolean Sumf)
+procedure PasteCPrTaxes(var record CalcPayrollVc CPr,integer pmaintflag,integer ppwflag,integer pwhflag,integer pcontrflag,integer pitfm,Boolean Sumf)
 begin  
   row CalcPayrollVc CPrw;
   record ContractVc Contrr;
+  record AbsTypeVc ATr;
   record PaymTypeVc PTr;
   val bruto,neto,calcbruto,addtaxsum,inctax,inctaxfreemin,unemplins,pension,soctax,emplunemplins,itfmintouse,amount,tariff,tmpval,emplneto,paiditneto,cpitneto;
   val totbruto,lastcalctax,fixedmin,addtomintouse;
@@ -652,45 +651,71 @@ begin
   boolean otflag,absflag,updflag;
   array string 20 bptcode;
   array val bunpaid;
-//
+  integer maintflag,pwflag,whflag,contrflag,itfm;
   LongInt whnr,pwnr,docrw;
   string 10 tmpstr;
   val percent;
-  
+
   updflag = true;
-  itfmintouse=0;
+  itfmintouse = 0;
   Contrr.SerNr = CPr.ContrSerNr;
   if (ReadFirstMain(Contrr,1,true)) then begin
-    rwcnt=MatRowCnt(CPr);
+    ATr.Code = Contrr.VacAbsTypeCode;
+    if (ReadFirstMain(ATr,1,true)) then begin end;
+    rwcnt = MatRowCnt(CPr);
     if (Sumf) then begin
       CPr.BrutoTotal = 0;
       for (i=0;i<rwcnt;i=i+1) begin
         MatRowGet(CPr,i,CPrw);
-        PTr.Code=CPrw.PaymTypeCode;
+        PTr.Code = CPrw.PaymTypeCode;
         if (ReadFirstMain(PTr,1,true)) then begin end;
         if (PTr.IncomeTaxFlag==1) then begin //Tulumaksuga maksustatav
           CPr.BrutoTotal = CPr.BrutoTotal + CPrw.BrutoSum;
           if (PTr.PaymTypeFlag==1) then begin //Kinnipidamine (bruto)
             if (PTr.UnemplInsFlag==1) then begin //Töötaja töötuskindlustusuga maksustatav
-              percent=GetEmplTaxPercent(Contrr.EmplCode,CPr.PaymDate,1,bruto,tmpstr,tmpstr,tmpstr);
-              CPrw.UnemplInsSum=round((CPrw.BrutoSum*percent/100),GetSalaryRoundMode("2"));
+              percent = GetEmplTaxPercent(Contrr.EmplCode,CPr.PaymDate,1,bruto,tmpstr,tmpstr,tmpstr,tmpstr);
+              CPrw.UnemplInsSum = round((CPrw.BrutoSum*percent/100),GetSalaryRoundMode("2"));
             end;
             if (PTr.PensionFlag==1) then begin //Kogumispensioniga maksustatav
-              percent=GetEmplTaxPercent(Contrr.EmplCode,CPr.PaymDate,2,bruto,tmpstr,tmpstr,tmpstr);
-              CPrw.PensionSum=round((CPrw.BrutoSum*percent/100),GetSalaryRoundMode("2"));
+              percent = GetEmplTaxPercent(Contrr.EmplCode,CPr.PaymDate,2,bruto,tmpstr,tmpstr,tmpstr,tmpstr);
+              CPrw.PensionSum = round((CPrw.BrutoSum*percent/100),GetSalaryRoundMode("2"));
             end;
-            addtomintouse =  addtomintouse + CPrw.BrutoSum - CPrw.UnemplInsSum - CPrw.PensionSum;
+            addtomintouse = addtomintouse + CPrw.BrutoSum - CPrw.UnemplInsSum - CPrw.PensionSum;
           end;
         end;
       end;
     end;
     IncTaxFreeMinToUse(CPr.SerNr,CPr.ContrSerNr,CPr.PaymDate,"CalcPayrollVc",tmpval,CPr.BrutoTotal,itfmintouse,totbruto,lastcalctax,fixedmin);
+
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(CPr,i,CPrw);
-      otflag=(CPrw.OTNr!=-1);
-      absflag=(CPrw.AbsNr!=-1);
-      paymtypeflag=GetPaymTypeFlag(CPrw.PaymTypeCode);
-      PTr.Code=CPrw.PaymTypeCode;
+      otflag = (CPrw.OTNr!=-1);
+      absflag = (CPrw.AbsNr!=-1);
+
+      maintflag = pmaintflag;
+      pwflag = ppwflag;
+      whflag = pwhflag;
+      contrflag = pcontrflag;
+      itfm = pitfm;
+      if (pmaintflag==3) then begin
+        if (CPrw.PaymTypeCode!=ATr.PaymTypeCode) then begin
+          maintflag = 1;
+          pwflag = ppwflag;
+          whflag = pwhflag;
+          contrflag = pcontrflag;
+          itfm = 0;
+        end else begin
+          maintflag = 2;
+          pwflag = 0;
+          whflag = 0;
+          contrflag = 0;
+          itfm = pitfm;
+          absflag = true;
+        end;
+      end;
+
+      paymtypeflag = GetPaymTypeFlag(CPrw.PaymTypeCode);
+      PTr.Code = CPrw.PaymTypeCode;
       if (ReadFirstMain(PTr,1,true)) then begin end;
       if ((paymtypeflag==1) or (paymtypeflag==2) or (paymtypeflag==3)) then begin //kinnipidamine k.a. Kohtutäitur (kinnip.neto)
         inctaxfreeminflag=0; //ära arvesta TM vaba miinimuni kinnipidamise juhul
@@ -698,23 +723,25 @@ begin
       if (paymtypeflag==7) then begin //tasu
         if (maintflag==2) then begin //hooldus koosta puhkusearvestuse kaardid
           if (itfm!=0) then begin
-            inctaxfreeminflag=0; //ära arvesta TM vaba miinimuni 
+            inctaxfreeminflag = 0; //ära arvesta TM vaba miinimuni 
           end else begin
-            inctaxfreeminflag=Contrr.IncTaxFreeMinFlag;
+            inctaxfreeminflag = Contrr.IncTaxFreeMinFlag;
           end;
         end else begin 
-          inctaxfreeminflag=Contrr.IncTaxFreeMinFlag;
+          inctaxfreeminflag = Contrr.IncTaxFreeMinFlag;
         end;
       end;
-      tariff=0;
-      amount=0;
-      unemplins=0;
-      pension=0;
-      calcbruto=0;
-      addtaxsum=0;
-      inctax=0;
-      soctax=0;
-      emplunemplins=0;
+      tariff = 0;
+      amount = 0;
+      unemplins = 0;
+      pension = 0;
+      calcbruto = 0;
+      addtaxsum = 0;
+      inctax = 0;
+      soctax = 0;
+      emplunemplins = 0;
+      whnr = -1;
+      pwnr = -1;
       if (paymtypeflag==3) then begin //Kohtutäitur (kinnip.neto)
         if (updflag) then begin
           cpitneto = GetCPrITNeto(CPr,i,emplneto,bptcode,bunpaid,brwcnt);
@@ -724,57 +751,59 @@ begin
       end else begin
         tariff = CPrw.Tariff;
       end;
-      amount=CPrw.Amount;
-      bruto=(tariff*amount);
-      neto=0;
+      amount = CPrw.Amount;
+      bruto = (tariff*amount);
+      neto = 0;
       if ((maintflag>0) and (otflag==false) and (absflag==false)) then begin
-        CalcPaymTypeSumsAndTaxes(PTr,CPr.BrutoTotal,bruto,neto,calcbruto,addtaxsum,totbruto,lastcalctax,fixedmin,inctax,inctaxfreemin,unemplins,pension,soctax,emplunemplins,CPr.SerNr,i,CPrw.PosCode,Contrr.EmplCode,CPr.PaymDate,inctaxfreeminflag,itfmintouse,amount,tariff,CPrw.SDate,CPrw.EDate,CPr.ContrSerNr,pwflag,whflag,contrflag,paymtypeflag,addtomintouse,whnr,pwnr,docrw);
-        CPrw.Tariff=tariff;
-        CPrw.Amount=amount;
-        CPrw.WHNr=whnr;
-        CPrw.PWNr=pwnr;
-        CPrw.RowNr=docrw;
+        CalcPaymTypeSumsAndTaxes(PTr,CPr.BrutoTotal,bruto,neto,calcbruto,addtaxsum,totbruto,lastcalctax,fixedmin,inctax,inctaxfreemin,unemplins,pension,soctax,emplunemplins,CPr.SerNr,i,CPrw.PosCode,Contrr.EmplCode,CPr.PaymDate,inctaxfreeminflag,itfmintouse,amount,tariff,CPrw.SDate,CPrw.EDate,CPr.ContrSerNr,pwflag,whflag,contrflag,paymtypeflag,addtomintouse,whnr,pwnr,docrw,CPrw.ObjCode);
+        CPrw.Tariff = tariff;
+        CPrw.Amount = amount;
+        CPrw.WHNr = whnr;
+        CPrw.PWNr = pwnr;
+        CPrw.RowNr = docrw;
       end else begin
         CalculateTaxes(CPr.BrutoTotal,bruto,neto,calcbruto,addtaxsum,totbruto,lastcalctax,fixedmin,inctax,inctaxfreemin,unemplins,pension,soctax,emplunemplins,CPrw.PaymTypeCode,Contrr.EmplCode,CPr.PaymDate,inctaxfreeminflag,itfmintouse,addtomintouse);
       end;
-      CPrw.NetoSum=neto;
-      CPrw.BrutoSum=bruto;
-      CPrw.UnemplInsSum=unemplins;
-      CPrw.PensionSum=pension;
-      CPrw.CalcBrutoSum=calcbruto;
-      CPrw.AddTaxSum=addtaxsum;
-      lastcalctax=lastcalctax-CPrw.AddTaxSum;
-      CPrw.IncTaxSum=inctax;
-      CPrw.IncTaxFreeMinSum=inctaxfreemin;
-      CPrw.DPDiscSum=blankval;
-      CPrw.SocTaxSum=soctax;
-      CPrw.EmplUnemplInsSum=emplunemplins;
-      previtfmin=inctaxfreemin;
+      CPrw.NetoSum = neto;
+      CPrw.BrutoSum = bruto;
+      CPrw.UnemplInsSum = unemplins;
+      CPrw.PensionSum = pension;
+      CPrw.CalcBrutoSum = calcbruto;
+      CPrw.AddTaxSum = addtaxsum;
+      lastcalctax = lastcalctax - CPrw.AddTaxSum;
+      CPrw.IncTaxSum = inctax;
+      CPrw.IncTaxFreeMinSum = inctaxfreemin;
+      CPrw.DPDiscSum = blankval;
+      CPrw.SocTaxSum = soctax;
+      CPrw.EmplUnemplInsSum = emplunemplins;
       
       if (paymtypeflag==7) then begin //Tasu
         if (CPrw.Tariff<0) then begin
-          CPrw.Tariff=-CPrw.Tariff;      
+          CPrw.Tariff = -CPrw.Tariff;      
         end;
       end;
       if ((paymtypeflag==1) or (paymtypeflag==2) or (paymtypeflag==3)) then begin //kinnipidamine k.a. Kohtutäitur (kinnip.neto)
         if (CPrw.Tariff>0) then begin
-          CPrw.Tariff=-CPrw.Tariff;      
+          CPrw.Tariff = -CPrw.Tariff;      
         end;
         if (paymtypeflag==1) then begin //Kinnipidamine (bruto)
           MakeMinusSums(CPrw.NetoSum,CPrw.BrutoSum,CPrw.UnemplInsSum,CPrw.PensionSum,CPrw.CalcBrutoSum,CPrw.AddTaxSum,CPrw.IncTaxSum,CPrw.IncTaxFreeMinSum,CPrw.SocTaxSum,CPrw.EmplUnemplInsSum,CPrw.DPDiscSum);
         end;
         if ((paymtypeflag==2) or (paymtypeflag==3)) then begin //Kinnipidamine (neto) või Kohtutäitur (kinnip.neto)
-          CPrw.NetoSum=(CPrw.Tariff*CPrw.Amount);
-          CPrw.BrutoSum=blankval;
-          CPrw.UnemplInsSum=blankval;
-          CPrw.PensionSum=blankval;
-          CPrw.CalcBrutoSum=blankval;
-          CPrw.AddTaxSum=blankval;
-          CPrw.IncTaxSum=blankval;
-          CPrw.IncTaxFreeMinSum=-CPrw.IncTaxFreeMinSum;
-          CPrw.DPDiscSum=blankval;
-          CPrw.SocTaxSum=blankval;
-          CPrw.EmplUnemplInsSum=blankval;
+          if (paymtypeflag==3) then begin //Kohtutäitur (kinnip.neto)      
+            CPrw.Tariff = -tariff;
+          end;
+          CPrw.NetoSum = CPrw.Tariff*CPrw.Amount;
+          CPrw.BrutoSum = blankval;
+          CPrw.UnemplInsSum = blankval;
+          CPrw.PensionSum = blankval;
+          CPrw.CalcBrutoSum = blankval;
+          CPrw.AddTaxSum = blankval;
+          CPrw.IncTaxSum = blankval;
+          CPrw.IncTaxFreeMinSum = -CPrw.IncTaxFreeMinSum;
+          CPrw.DPDiscSum = blankval;
+          CPrw.SocTaxSum = blankval;
+          CPrw.EmplUnemplInsSum = blankval;
         end;
       end;
       if (blank(CPrw.PosCode) and blank(CPrw.PaymTypeCode) and (CPrw.Tariff<=0) and (CPrw.Amount<=0)) then begin
@@ -799,16 +828,16 @@ begin
   date frdat,todat;
   val tariff;
   
-  poscode=CPrw.PosCode;
-  posname=CPrw.PosName;
-  paymtypecode=CPrw.PaymTypeCode;
-  paymtypename=CPrw.PaymTypeName;
-  tariff=CPrw.Tariff;
-  frdat=CPrw.SDate;
-  todat=CPrw.EDate;
+  poscode = CPrw.PosCode;
+  posname = CPrw.PosName;
+  paymtypecode = CPrw.PaymTypeCode;
+  paymtypename = CPrw.PaymTypeName;
+  tariff = CPrw.Tariff;
+  frdat = CPrw.SDate;
+  todat = CPrw.EDate;
   ResetLoop(PWr);
-  TrHs=true;
-  PWr.TransDate=frdat;
+  TrHs = true;
+  PWr.TransDate = frdat;
   while (LoopKey("TransDate",PWr,1,TrHs)) begin
     if (PWr.TransDate>todat) then begin
       TrHs = false;
@@ -817,24 +846,24 @@ begin
       if (PWr.OKFlag==1) then begin
         if (GetPWTPaymTypeCode(PWr.PieceWorkTypeCode)==paymtypecode) then begin
           rwcnt = MatRowCnt(PWr);
-          for (i=0; i<rwcnt;i=i+1) begin
+          for (i=0;i<rwcnt;i=i+1) begin
             MatRowGet(PWr,i,PWrw);
             if ((PWrw.ContrSerNr==CPr.ContrSerNr) and (PWrw.PosCode==poscode) and (PWrw.CalcSerNr<=0)) then begin
-              CPrw.PosCode=poscode;
-              CPrw.PosName=posname;
-              CPrw.PaymTypeCode=paymtypecode;
-              CPrw.PaymTypeName=paymtypename;
-              CPrw.SDate=frdat;
-              CPrw.EDate=todat;
-              CPrw.Tariff=tariff;
-              CPrw.Amount=1;
-              CPrw.BrutoSum=tariff;
-              CPrw.NetoSum=0;
+              CPrw.PosCode = poscode;
+              CPrw.PosName = posname;
+              CPrw.PaymTypeCode = paymtypecode;
+              CPrw.PaymTypeName = paymtypename;
+              CPrw.SDate = frdat;
+              CPrw.EDate = todat;
+              CPrw.Tariff = tariff;
+              CPrw.Amount = 1;
+              CPrw.BrutoSum = tariff;
+              CPrw.NetoSum = 0;
               if nonblank(PWrw.ObjCode) then begin
-                CPrw.ObjCode=PWrw.ObjCode;
+                CPrw.ObjCode = PWrw.ObjCode;
               end;
               MatRowInsert(CPr,calcrownr,CPrw);
-              calcrownr=calcrownr+1;
+              calcrownr = calcrownr+1;
             end;  
           end;  
         end;
@@ -851,21 +880,23 @@ begin
   boolean TrHs,testf;
   integer rwcnt,i;
   string 20 poscode,paymtypecode,posname,paymtypename;
+  string 60 objects;
   date frdat,todat;
   val tariff;
   
-  poscode=CPrw.PosCode;
-  posname=CPrw.PosName;
-  paymtypecode=CPrw.PaymTypeCode;
-  paymtypename=CPrw.PaymTypeName;
-  tariff=CPrw.Tariff;
-  frdat=CPrw.SDate;
-  todat=CPrw.EDate;
-  TrHs=true;
+  poscode = CPrw.PosCode;
+  posname = CPrw.PosName;
+  paymtypecode = CPrw.PaymTypeCode;
+  paymtypename = CPrw.PaymTypeName;
+  objects = CPrw.ObjCode;
+  tariff = CPrw.Tariff;
+  frdat = CPrw.SDate;
+  todat = CPrw.EDate;
+  TrHs = true;
 
   ResetLoop(WHr);
-  WHr.Year=GetYear(frdat);
-  WHr.Month=GetMonth(frdat);
+  WHr.Year = GetYear(frdat);
+  WHr.Month = GetMonth(frdat);
   while (LoopKey("Year",WHr,2,TrHs)) begin
     if (WHr.Year!=GetYear(frdat)) then begin
       TrHs = false;
@@ -879,21 +910,21 @@ begin
         for (i=0; i<rwcnt;i=i+1) begin
           MatRowGet(WHr,i,WHrw);
           if ((WHrw.ContrSerNr==CPr.ContrSerNr) and (WHrw.PosCode==poscode) and (GetWHTPaymTypeCode(WHrw.WorkHourTypeCode)==paymtypecode) and (WHrw.CalcSerNr<=0)) then begin
-            CPrw.PosCode=poscode;
-            CPrw.PosName=posname;
-            CPrw.PaymTypeCode=paymtypecode;
-            CPrw.PaymTypeName=paymtypename;
-            CPrw.SDate=frdat;
-            CPrw.EDate=todat;
-            CPrw.Tariff=tariff;
-            CPrw.Amount=1;
-            CPrw.BrutoSum=tariff;
-            CPrw.NetoSum=0;
+            CPrw.PosCode = poscode;
+            CPrw.PosName = posname;
+            CPrw.PaymTypeCode = paymtypecode;
+            CPrw.PaymTypeName = paymtypename;
+            CPrw.SDate = frdat;
+            CPrw.EDate = todat;
+            CPrw.Tariff = tariff;
+            CPrw.Amount = 1;
+            CPrw.BrutoSum = tariff;
+            CPrw.NetoSum = 0;
             if nonblank(WHrw.ObjCode) then begin
-              CPrw.ObjCode=WHrw.ObjCode;
+              CPrw.ObjCode = WHrw.ObjCode;
             end;
             MatRowInsert(CPr,calcrownr,CPrw);
-            calcrownr=calcrownr+1;
+            calcrownr = calcrownr + 1;
           end;  
         end;
       end;
@@ -908,13 +939,13 @@ begin
   record PaymTypeVc PTr;
   boolean testf,pastepw,pastewh;
   
-  testf=false;
+  testf = false;
   ClearRow(CPr,CPrw,1);
-  CPrw.PosCode=Contrrw.PosCode;
-  CPrw.PosName=Contrrw.PosName;
-  CPrw.PaymTypeCode=Contrrw.PaymTypeCode;
-  CPrw.SDate=CPr.StartDate;
-  CPrw.EDate=CPr.EndDate;
+  CPrw.PosCode = Contrrw.PosCode;
+  CPrw.PosName = Contrrw.PosName;
+  CPrw.PaymTypeCode = Contrrw.PaymTypeCode;
+  CPrw.SDate = CPr.StartDate;
+  CPrw.EDate = CPr.EndDate;
 
   pastepw = false;
   pastewh = false;
@@ -976,49 +1007,116 @@ begin
 end;
 
 global
+function val GetStandingChargeSum(record ContractVc Contrr,date calcdate,boolean nocpf)
+begin
+  record PaymTypeVc PTr;
+  row ContractVc Contrrw;  
+  integer rwcnt,i;
+  val res;
+  
+  res = 0;
+  rwcnt = MatRowCnt(Contrr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(Contrr,i,Contrrw);
+    if nonblank(Contrrw.PosCode) then begin
+      if (DateInRange(calcdate,Contrrw.SDate,Contrrw.EDate)) then begin
+        PTr.Code = Contrrw.PaymTypeCode;
+        if (ReadFirstMain(PTr,1,true)) then begin
+          if (PTr.StandingChargeFlag!=0) or (nocpf) then begin 
+            res = res + Contrrw.LoadSum;
+          end;
+        end;
+      end;   
+    end;
+  end;  
+  GetStandingChargeSum = res;
+  return;
+end;
+
+global
+function val GetBrutoFromContrr(LongInt contrsernr,date calcdate)
+begin
+  record PaymTypeVc PTr;
+  record ContractVc Contrr;
+  row ContractVc Contrrw;  
+  integer rwcnt,i;
+  val res;
+
+  Contrr.SerNr = contrsernr;
+  if (ReadFirstMain(Contrr,1,true)) then begin
+    rwcnt = MatRowCnt(Contrr);
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(Contrr,i,Contrrw);
+      if nonblank(Contrrw.PosCode) then begin
+        if (DateInRange(calcdate,Contrrw.SDate,Contrrw.EDate)) then begin
+          PTr.Code = Contrrw.PaymTypeCode;
+          if (ReadFirstMain(PTr,1,true)) then begin
+            if (PTr.VacationFlag!=0) then begin
+              res = res + Contrrw.LoadSum;
+            end;
+          end;
+        end;
+      end;   
+    end;
+  end;  
+  GetBrutoFromContrr = res; 
+  return;
+end;
+
+function val GetBrutoFromCPr(record CalcPayrollVc CPr)
+begin
+  record PaymTypeVc PTr;
+  row CalcPayrollVc CPrw;
+  integer rwcnt,i;
+  val res;
+  
+  res = 0;
+  rwcnt = MatRowCnt(CPr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(CPr,i,CPrw);
+    if (nonblank(CPrw.PaymTypeCode)) then begin
+      PTr.Code = CPrw.PaymTypeCode;
+      if (ReadFirstMain(PTr,1,true)) then begin
+        if (PTr.VacationFlag!=0) then begin
+          res = res + CPrw.BrutoSum;
+        end;
+      end;
+    end;
+  end;
+  GetBrutoFromCPr = res; 
+  return;
+end;
+
+global
 function val GetCPSumForPeriod(LongInt contrsernr,date sdate,date edate)
 begin  
   record CalcPayrollVc CPr;
-  row CalcPayrollVc CPrw;
-  record PaymTypeVc PTr;
-  integer rwcnt,i;
   val res;
   boolean TrHs,testf;
   
-  res=0;
+  res = 0;
   ResetLoop(CPr);
-  TrHs=true;  
-  CPr.ContrSerNr=contrsernr;
-  CPr.OKFlag=1;
-  CPr.StartDate=sdate;
+  TrHs = true;  
+  CPr.ContrSerNr = contrsernr;
+  CPr.OKFlag = 1;
+  CPr.StartDate = sdate;
   while (LoopKey("ContrSerNr",CPr,3,TrHs)) begin
     if (CPr.ContrSerNr!=contrsernr) then begin TrHs = false; end;
     if (CPr.OKFlag!=1) then begin TrHs = false; end;
     if (TrHs) then begin
-      testf=true;
+      testf = true;
       if (CPr.Invalid!=0) then begin 
-        testf=false; 
+        testf = false; 
       end;
       if ((CPr.StartDate<sdate) or (CPr.EndDate>edate)) then begin 
         testf = false; 
       end;
       if (testf) then begin
-        rwcnt=MatRowCnt(CPr);
-        for (i=0; i<rwcnt;i=i+1) begin
-          MatRowGet(CPr,i,CPrw);
-          if (nonblank(CPrw.PaymTypeCode)) then begin
-            PTr.Code = CPrw.PaymTypeCode;
-            if (ReadFirstMain(PTr,1,true)) then begin
-              if (PTr.VacationFlag!=0) then begin
-                res=res+CPrw.BrutoSum;
-              end;
-            end;
-          end;
-        end;
+        res = res + GetBrutoFromCPr(CPr);
       end;
     end;
   end;
-  GetCPSumForPeriod=res;
+  GetCPSumForPeriod = res;
   return;
 end;
 
@@ -1029,7 +1127,7 @@ begin
   LongInt bint;
   integer rwcnt,i;
 
-  rwcnt=MatRowCnt(CPr);
+  rwcnt = MatRowCnt(CPr);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(CPr,i,CPrw);
     if nonblank(CPrw.PaymTypeCode) then begin
@@ -1046,13 +1144,13 @@ begin
   integer rwcnt,i;
   val dpdused,dpdpaid;
   
-  rwcnt=MatRowCnt(CPr);
+  rwcnt = MatRowCnt(CPr);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(CPr,i,CPrw);
-    if nonblank(CPrw.PaymTypeCode) and (CPrw.DPDiscSum>0) then begin
-      dpdused=CPrw.DPDiscSum;
-      dpdpaid=0;
-      UpdateDPDUsedVc(CPr.ContrSerNr,CPr.PaymDate,CPr.CalcDate,dpdused,dpdpaid,increase);
+    if nonblank(CPrw.PaymTypeCode) and (CPrw.DPDiscSum!=0) then begin
+      dpdused = CPrw.DPDiscSum;
+      dpdpaid = 0;
+      UpdateDPDUsedVc(CPr.ContrSerNr,CPr.EndDate,CPr.CalcDate,dpdused,dpdpaid,increase);
     end;
   end;
   return;
@@ -1066,14 +1164,14 @@ begin
   integer rwcnt,i;
   val itfmused,itfmbrutosum;
   
-  rwcnt=MatRowCnt(CPr);
+  rwcnt = MatRowCnt(CPr);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(CPr,i,CPrw);
     if nonblank(CPrw.PaymTypeCode) then begin
-      PTr.Code=CPrw.PaymTypeCode;
+      PTr.Code = CPrw.PaymTypeCode;
       if (ReadFirstMain(PTr,1,true)) then begin end;
       if (PTr.IncomeTaxFlag==1) then begin //Tulumaksuga maksustatav
-        itfmused=CPrw.IncTaxFreeMinSum-CPrw.AddTaxSum;
+        itfmused = CPrw.IncTaxFreeMinSum - CPrw.AddTaxSum;
         itfmbrutosum = CPrw.BrutoSum;
         UpdateITFMUsedVc(CPr.ContrSerNr,CPr.PaymDate,itfmused,itfmbrutosum,increase,false);
       end;
@@ -1088,8 +1186,8 @@ begin
   record CPPPHistVc CPPPHistr;
   record ContractVc Contrr;
   
-  CPPPHistr.TransNr=CPr.SerNr;
-  CPPPHistr.TransType=0;
+  CPPPHistr.TransNr = CPr.SerNr;
+  CPPPHistr.TransType = 0;
   if (ReadFirstKey("TransNr",CPPPHistr,2,true)) then begin
     if (delete) then begin
       RecordDelete(CPPPHistr);
@@ -1097,15 +1195,15 @@ begin
     end;
   end else begin
     RecordNew(CPPPHistr);
-    CPPPHistr.TransNr=CPr.SerNr;
-    CPPPHistr.TransType=0;
-    CPPPHistr.RowNr=-1;
-    CPPPHistr.CalcSerNr=-1;
-    CPPPHistr.TransDate=CPr.CalcDate;
-    CPPPHistr.ContrSerNr=CPr.ContrSerNr;
+    CPPPHistr.TransNr = CPr.SerNr;
+    CPPPHistr.TransType = 0;
+    CPPPHistr.RowNr = -1;
+    CPPPHistr.CalcSerNr = -1;
+    CPPPHistr.TransDate = CPr.CalcDate;
+    CPPPHistr.ContrSerNr = CPr.ContrSerNr;
     Contrr.SerNr = CPPPHistr.ContrSerNr;
     if (ReadFirstMain(Contrr,1,true)) then begin
-      CPPPHistr.EmplCode=Contrr.EmplCode;
+      CPPPHistr.EmplCode = Contrr.EmplCode;
     end;
     if (RecordInsert(CPPPHistr,false)) then begin end;
   end;
@@ -1118,7 +1216,7 @@ begin
   row CalcPayrollVc CPrw;
   integer rwcnt,i,paymtypeflag;
 
-  rwcnt=MatRowCnt(CPr);
+  rwcnt = MatRowCnt(CPr);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(CPr,i,CPrw);
     if nonblank(CPrw.PaymTypeCode) then begin
@@ -1130,3 +1228,28 @@ begin
   end;
   return;
 end;
+
+//Bk - start: ts 2019/01
+global
+updating function Boolean RecordAction_rlCPrLOK(var record CalcPayrollVc CPr,Boolean readf)
+begin
+  Boolean res;
+  record CalcPayrollVc oldCPr; 
+  
+  if (IsRecordLocked(CPr)==false) then begin
+    if (readf) then begin
+      if (ReadFirstMain(CPr,0,true)) then begin end;  
+    end;
+    RecordCopy(oldCPr,CPr);
+    if (CPr.OKFlag==0) then begin
+      CPr.OKFlag = 1;
+      //SetMarkFlag(CPr.OKFlag,CPr.OKMark);//ts, done in recordupdate
+      if (RecordUpdate(oldCPr,CPr,true)==0) then begin
+        res = true;
+      end;
+    end;
+  end;  
+  RecordAction_rlCPrLOK = res;
+  return;
+end;
+//Bk - end

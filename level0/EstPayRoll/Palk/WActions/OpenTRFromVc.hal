@@ -8,7 +8,7 @@ begin
   if (UserCanAction("OpenTRFromSpec",true)) then begin
     TRr.Number = sernr;
     switch (filename) begin
-      case "CalcPayrollVc": TRr.IntYc = SalaryCalcYc; openf = true; flag=true;       
+      case "CalcPayrollVc": TRr.IntYc = SalaryCalcYc; openf = true; flag = true;       
       case "PaymPayrollVc": TRr.IntYc = SalaryPaymentYc; openf = true;        
     end;
     if (openf) then begin

@@ -24,14 +24,13 @@ begin
   row CalcPayrollVc CPrw;
   record EmplVc Emplr;
   record ContractVc Contrr;
-  row ContractVc Contrrw;
   record AbsenceVc Absr;
   record AbsTypeVc ATr;
   string 20 frempl,toempl,tstr,tstr1;
   string 200 emplname,absperiod;
   LongInt frcontr,tocontr,caldays,workdays;
   integer rwcnt,i,rw;
-  boolean TrHs, TrHs1,TrHs2,testf,testf1;
+  boolean TrHs,TrHs1,TrHs2,testf,testf1;
   
   rw = 1;
   StartReportJob(USetStr(1500383));
@@ -161,14 +160,14 @@ begin
         end;
       end;
       if (TrHs) then begin
-        testf=true;
+        testf = true;
         if (RepSpec.flags[1]==0) then begin
           if (Emplr.ClosedFlag!=0) then begin
             testf = false;
           end;
         end;  
         if (testf) then begin
-          TrHs1=true;
+          TrHs1 = true;
           ResetLoop(Contrr);
           Contrr.EmplCode = Emplr.Code;
           while (LoopKey("EmplCode",Contrr,1,TrHs1)) begin
@@ -176,7 +175,7 @@ begin
               TrHs1 = false;
             end;
             if (TrHs1) then begin
-              testf=true;
+              testf = true;
               if ((frcontr>0)) then begin
                 if ((Contrr.SerNr<frcontr) or (Contrr.SerNr>tocontr)) then begin
                   testf = false;
@@ -188,28 +187,28 @@ begin
                 end;
               end;
               if (testf) then begin
-                TrHs2=true;
+                TrHs2 = true;
                 ResetLoop(Absr);
                 Absr.ContrSerNr=Contrr.SerNr;
                 while (LoopKey("ContrSerNr",Absr,1,TrHs2)) begin
                   if (Absr.ContrSerNr!=Contrr.SerNr) then begin
-                    TrHs2=false;
+                    TrHs2 = false;
                   end;
                   if (TrHs2) then begin
-                  testf1=true;  
-                    testf1=GetRightPeriod(Absr.StartDate,Absr.EndDate,RepSpec.sStartDate,RepSpec.sEndDate);
+                  testf1 = true;  
+                    testf1 = GetRightPeriod(Absr.StartDate,Absr.EndDate,RepSpec.sStartDate,RepSpec.sEndDate);
                     if (nonblank(RepSpec.f4)) then begin
                       if (Absr.AbsTypeCode!=RepSpec.f4) then begin
-                        testf1=false;
+                        testf1 = false;
                       end;
                     end;
                     if (testf1) then begin
-                      testf1=false;
+                      testf1 = false;
                       if (RepSpec.flags[3]==1) and (Absr.OKFlag==1) then begin
-                        testf1=true;
+                        testf1 = true;
                       end;
                       if (RepSpec.flags[4]==1) and (Absr.OKFlag==0) then begin
-                        testf1=true;
+                        testf1 = true;
                       end;
                     end;
                     if (testf1) then begin
@@ -217,13 +216,13 @@ begin
                         ATr.Code = Absr.AbsTypeCode;
                         if (ReadFirstMain(ATr,1,true)) then begin
                           if ((RepSpec.flags[0]-1)!=ATr.AbsTypeFlag) then begin
-                            testf1=false; 
+                            testf1 = false; 
                           end;
                         end;  
                       end;
                       if (nonblank(RepSpec.ObjStr)) then begin
                         if (SetInSet(RepSpec.ObjStr,Absr.ObjCode)==false) then begin
-                          testf1=false;
+                          testf1 = false;
                         end;
                       end; 
                       if (testf1) then begin
@@ -231,15 +230,15 @@ begin
                         OutLongInt(0,"DblAbsenceVc",Absr.SerNr,false);
                         OutString(2,0,Absr.EmplCode,false);
                         OutString(3,0,Absr.ContrSerNr,false);
-                        emplname=Absr.Firstname & " " & Absr.Surname;
+                        emplname = Absr.Firstname & " " & Absr.Surname;
                         OutString(4,0,emplname,false);
                         OutString(5,0,Absr.ObjCode,false);
                         OutString(6,0,Absr.AbsTypeCode,false);
-                        caldays=GetCalendarDays(Absr.StartDate,Absr.EndDate);
-                        workdays=GetWorkingDays(Absr.StartDate,Absr.EndDate);
+                        caldays = GetCalendarDays(Absr.StartDate,Absr.EndDate);
+                        workdays = GetWorkingDays(Absr.StartDate,Absr.EndDate);
                         OutString(7,0,caldays,true);
                         OutString(8,0,workdays,true);
-                        absperiod=Absr.StartDate & " : " & Absr.EndDate;
+                        absperiod = Absr.StartDate & " : " & Absr.EndDate;
                         OutString(1,0,absperiod,true);
                         EndFormat;
                       end;

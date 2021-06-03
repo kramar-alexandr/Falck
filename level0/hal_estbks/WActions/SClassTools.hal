@@ -1,0 +1,33 @@
+//Bk - start
+//external function boolean CUDClassBeforeEditField(integer,string,integer,integer);
+external procedure OpenAddressLookupHelper(Integer);
+//Bk - end
+
+global
+function Boolean VESClassCommandNew(Integer wn)
+BEGIN
+  Integer mwn,wn2;
+  record CUVc CUr;
+  record CUVc oldCUr;
+  
+  mwn = MotherWindow(wn);
+  CloseWindow(wn);
+  RecordNew(CUr);
+  oldCUr.Code = CUr.Code;
+  if (ReadFirstMain(oldCUr,1,true)) then begin CUr.Code = ""; end;
+  CUr.CUType = 0;
+  CUr.VEType = 1;
+  CUr.CustCat = "";
+  CUr.PayDeal = "";
+  wn2 = OpenWindow("CUDClass",1,mwn,"","",CUr);  
+ //Bk - start //fix
+  // CUDClassBeforeEditField(wn2,"Code",1,-1);
+  WindowFieldGoto(wn2,CUr,-1,"Code",false);
+  if (GetWindowString(wn,"__helperalreadyshown")!="1") then begin
+    PutWindowString(wn,"__helperalreadyshown","1");
+    OpenAddressLookupHelper(wn);
+  end;
+ //Bk - end
+  VESClassCommandNew = true;
+  RETURN;
+END;

@@ -1,0 +1,97 @@
+//scoro liidestus
+//telema
+external function string 255 StrReplace(string,string,string);
+
+global
+procedure JSONAddStringToArea(string name, string value, var area targetArea)
+begin
+  string 255 encoded;
+
+  encoded = StrReplace(value,chr(34),"\\" & chr(34));
+  AddTextToArea(chr(34) & name & chr(34) & ":" & chr(34) & encoded & chr(34), targetArea);
+  return;
+end;
+
+global
+procedure JSONAddIntegerToArea(string name, string value, var area targetArea)
+begin
+  AddTextToArea(chr(34) & name & chr(34) & ":" & value, targetArea); //just no quoutes
+  return;
+end;
+
+global
+procedure JSONStartBracketToArea(var area targetArea)
+begin
+  AddTextToArea("{", targetArea);
+  return;
+end;
+
+
+global
+procedure JSONEndBracketToArea(var area targetArea)
+begin
+  AddTextToArea("}", targetArea);
+  return;
+end;
+
+global
+procedure JSONEncloseAreaWithBrackets(var area targetArea)
+begin
+  area startingBracket;
+  AddTextToArea("{", startingBracket);
+  AddTextToArea("}", targetArea);
+  InsertAreaBeforeArea(startingBracket,targetArea);
+  return;
+end;
+
+global
+procedure JSONAddCommaToArea(var area targetArea)
+begin
+  AddTextToArea(",", targetArea);
+  return;
+end;
+
+global
+procedure JSONAddSubSetNameToArea(string name, var area targetArea)
+begin
+  AddTextToArea(chr(34) & name & chr(34) & ":", targetArea);
+  return;
+end;
+
+global
+procedure JSONAddArrayStartToArea(string arrayName, var area targetArea)
+begin
+  AddTextToArea(chr(34) & arrayName & chr(34) & ": [", targetArea);
+  return;
+end;
+
+global
+procedure JSONAddArrayEndToArea(var area targetArea)
+begin
+  AddTextToArea("]", targetArea);
+  return;
+end;
+
+global
+procedure JSONAddAreaToArea(string name, area sourceArea, var area targetArea)
+begin
+  AddTextToArea(chr(34) & name & chr(34) & ":" & chr(34),targetArea);
+  AddAreaToArea(sourceArea,targetArea);
+  AddTextToArea(chr(34),targetArea);
+  return;
+end;
+
+global
+function date JSON_StringToDate(string sdate)
+begin 
+  date ddate;
+
+  //example "2018-09-25T12:11:02+03:00"
+  if (nonblank(sdate)) then begin
+    ddate.year = StringToInt(Left(sdate,4));
+    ddate.month = StringToInt(Mid(sdate,5,2));
+    ddate.day = StringToInt(Mid(sdate,8,2));
+  end;
+  JSON_StringToDate = ddate;
+  return;
+end;

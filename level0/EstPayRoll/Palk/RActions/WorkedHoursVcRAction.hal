@@ -12,16 +12,15 @@ begin
   date whdate;
 
   WHr.SerNr = -1;
-  whdate.day=01;
-  WHr.Month=GetMonth(CurrentDate);
-  WHr.Year=GetYear(CurrentDate);
-  whdate.month=WHr.Month;
-  whdate.year=WHr.Year;
+  whdate.day = 01;
+  WHr.Month = GetMonth(CurrentDate);
+  WHr.Year = GetYear(CurrentDate);
+  whdate.month = WHr.Month;
+  whdate.year = WHr.Year;
 
   if (SingleUserMode) then begin
     WHr.SerNr = NextSerNr("WorkedHoursVc",whdate,-1,false,"");
   end;
-
   WorkedHoursVcRecordDefaults = res; 
   return;
 end;
@@ -34,17 +33,17 @@ begin
   integer rwcnt,i;
   date whdate;
   
-  WHr.SerNr=-1;
-  WHr.OKFlag=0;
+  WHr.SerNr = -1;
+  WHr.OKFlag = 0;
   SetMarkFlag(WHr.OKFlag,WHr.OKMark);
-  whdate.day=01;
-  whdate.month=WHr.Month;
-  whdate.year=WHr.Year;
+  whdate.day = 01;
+  whdate.month = WHr.Month;
+  whdate.year = WHr.Year;
 
   if (SingleUserMode) then begin
     WHr.SerNr = NextSerNr("WorkedHoursVc",whdate,-1,false,"");
   end;
-  rwcnt=MatRowCnt(WHr);
+  rwcnt = MatRowCnt(WHr);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(WHr,i,WHrw);
     WHrw.CalcSerNr=-1;
@@ -65,12 +64,12 @@ begin
   integer rwcnt,i;
   string 255 tstr;
   
-  insertmode=1;
-  updatemode=2;
+  insertmode = 1;
+  updatemode = 2;
   res = 0;
-  whdate.day=01;
-  whdate.month=WHr.Month;
-  whdate.year=WHr.Year;
+  whdate.day = 01;
+  whdate.month = WHr.Month;
+  whdate.year = WHr.Year;
 
   if (stat!=insertmode) then begin
     if (WH2r.OKFlag!=0) then begin
@@ -116,7 +115,7 @@ begin
     goto LWorkedHoursVcRecordCheck;
   end;
 
-  rwcnt=MatRowCnt(WHr);
+  rwcnt = MatRowCnt(WHr);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(WHr,i,WHrw);
     if (WHrw.ContrSerNr<=0) then begin
@@ -173,7 +172,7 @@ begin
   end;
 LWorkedHoursVcRecordCheck:;
   if (res==-1) then begin
-    WHr.OKFlag=0;
+    WHr.OKFlag = 0;
     SetMarkFlag(WHr.OKFlag,WHr.OKMark);
   end;
   WorkedHoursVcRecordCheck = res;

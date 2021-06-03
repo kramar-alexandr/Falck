@@ -1,0 +1,275 @@
+//Bk //eteenused kulutuste aruanded
+external function date XmlGetDate(var xml,string,string);
+
+external function Boolean ExpVc_PastePerson(var record ExpVc);
+external procedure ExpGetRate(var record ExpVc);
+external procedure ExpVc_PasteCurncyCode(var record ExpVc);
+external function Boolean ExpVc_PasteAccNumber(var record ExpVc,Integer);
+external procedure CalcExpRow(var record ExpVc,Integer);
+external procedure ExpSumup(record ExpVc,var val);
+external function string 60 AddObjectToObjectList(string,string);
+external procedure NoDupObjs(string,var string);
+external procedure ExtractObj(string,var Integer,var string);
+
+external procedure GetAreaFromFile(Area,string);
+external procedure LogAreaToFile(string,area);
+
+function boolean FindUser(record ExpVc Expr,string name,string regnr,string accountnr)
+begin
+  record UserVc Userr;
+  record GlobalUserVc GUserr;
+  Boolean foundf;
+  
+  Userr.Name = name;
+  if (ReadFirstKey("ActName",Userr,1,true)) then begin
+    foundf = true;
+    Expr.Person = Userr.Code;
+  end;
+  if (foundf == false) then begin
+    GUserr.Name = name;
+    if (ReadFirstKey("ActName",GUserr,1,true)) then begin
+      foundf = true;
+      Expr.Person = GUserr.Code;
+    end;
+  end;
+  FindUser = foundf;
+  return;
+end;
+
+procedure FindVendor(string name,string regnr,var string vecode,var string vename,var string vevatnr)
+begin
+  record CUVc VEr;
+  boolean foundf;
+  
+  VEr.RegNr1 = regnr;
+  foundf = ReadFirstKey("VEActRegNr1",VEr,1,true);
+  if (foundf == false) then begin
+    VEr.Name = name;
+    foundf = ReadFirstKey("VEActName",VEr,1,true);
+  end;
+  if (foundf) then begin
+    vecode = VEr.Code;
+    vename = VEr.Name;
+    vevatnr = VEr.VATNr;
+  end;
+  return;
+end;
+
+function string 10 GetVATCode(val vatrate)
+begin
+  record VATCodeBlock VATRec;
+  row VATCodeBlock VATrw;
+  Integer i,rwcnt;
+  string 10 res;
+  
+  BlockLoad(VATRec);
+  rwcnt = MatRowCnt(VATRec);
+  for (i=i;i<rwcnt;i=i+1) begin
+    MatRowGet(VATRec,i,VATrw);
+    if (vatrate==VATrw.ExVatpr) then begin
+      res = VATrw.VATCode;
+      i = rwcnt;
+    end;
+  end;
+  GetVATCode = res;
+  return;
+end;
+
+procedure AddExpRepObjectsToExp(string objectlist, var string dest)
+begin
+  integer pos;
+  string 20 singleObj;
+
+  pos = 0;
+  ExtractObj(objectlist,pos,singleObj);
+  while (nonblank(singleObj)) begin
+    dest = AddObjectToObjectList(dest,singleObj);
+    ExtractObj(objectlist,pos,singleObj);
+  end;
+  NoDupObjs(dest,dest);
+  return;
+end;
+
+procedure ImportTravelExtra(xml xdata, string xmlroot, integer k, var record ExpVc Expr)
+begin
+  string 255 xkey;
+  string 10 tstr;
+  row ExpVc Exprw;
+  val allowance;
+  integer pos;
+  record DABlock DAbl;
+
+  xkey = xmlroot & "E_CostReport/CostReport[" &  k & "]/TravelExtra/TravelInformation";
+  tstr = XmlGetAttribute(xdata,xkey,"allowance");
+  if (nonblank(tstr)) then begin
+    allowance = StringToVal(tstr,M4Val);
+    if (allowance > 0) then begin
+      BlockLoad(DAbl);
+      pos = MatRowCnt(Expr);
+      ClearRow(Expr,Exprw,1);
+      Exprw.AccNumber = DAbl.DAAcc;
+      MatRowPut(Expr,pos,Exprw);
+      ExpVc_PasteAccNumber(Expr,pos);
+      MatRowGet(Expr,pos,Exprw);
+      Exprw.Sum = allowance;
+      MatRowPut(Expr,pos,Exprw);
+      CalcExpRow(Expr,pos);
+      MatRowGet(Expr,pos,Exprw);
+      Exprw.Comment = USetStr(22441);
+      MatRowPut(Expr,pos,Exprw);
+    end;
+  end;
+  return;
+end;
+
+global updating
+function boolean EExpXMLIn(xml xdata,string xmlroot,Integer k,Boolean EExpRowCommToExp, integer rowPackMethod, var LongInt ExpSerNr)
+begin
+  boolean res;
+  string 255 xstrmain,xsubstr,xsubstr2,xsubstr3,tstr,docnr,accstr,name,regnr,accountnr,vecode,vename,vevatnr,vatcode;
+  date expdate;
+  record ExpVc Expr;
+  row ExpVc Exprw;
+  record UserVc USr;
+  Integer i,j,j2,rownr,pos,iObj;
+  val t,vatsum,vatrate;
+  vector Integer vRowExists;
+  string 255 itemEntryObjects;
+  
+  res = true;
+
+  RecordNew(Expr);
+
+  xstrmain = xmlroot & "E_CostReport/CostReport[" &  k & "]/";
+
+//SellerParty
+  xsubstr = xstrmain & "CostReportParties/SellerParty/";
+  name = XmlGet(xdata,xsubstr & "Name");
+  regnr = XmlGet(xdata,xsubstr & "RegNumber");
+  accountnr = XmlGet(xdata,xsubstr & "AccountInfo/AccountNumber");
+  if (FindUser(Expr,name,regnr,accountnr)) then begin
+    if (ExpVc_PastePerson(Expr)) then begin end;
+  end else begin
+    Expr.Person = "";
+    Expr.Name = name;
+  end;
+//CostReportConfirmation
+  xsubstr = xstrmain & "CostReportInformation/";
+  Expr.TransDate = XmlGetDate(xdata,xsubstr & "CostReportDate","YYYY-MM-DD");
+  ExpGetRate(Expr);
+  
+//CostReportSumGroup
+  rownr = 0;
+  xsubstr = xstrmain & "CostReportSumGroup/";
+  Expr.CurncyCode = XmlGet(xdata,xsubstr & "Currency");
+  ExpVc_PasteCurncyCode(Expr);
+
+  tstr = XmlGet(xdata,xsubstr & "TotalSum");
+  Expr.PayVal = StringToVal(tstr,M4Val);
+
+//Invoice
+  i = 0;
+  while (XmlNodeExists(xdata,xstrmain & "Invoice[" & i & "]")) begin
+    xsubstr = xstrmain & "Invoice[" & i & "]/";
+    docnr = XmlGet(xdata,xsubstr & "InvoiceInformation/InvoiceNumber");//DocNr
+    expdate = XmlGetDate(xdata,xsubstr & "InvoiceInformation/InvoiceDate","YYYY-MM-DD");//ExpDate
+
+//SellerParty
+    xsubstr2 = xsubstr & "InvoiceParties/SellerParty/";
+    name = XmlGet(xdata,xsubstr2 & "Name");
+    regnr = XmlGet(xdata,xsubstr2 & "RegNumber");
+    vecode = "";
+    vename = name;
+    vevatnr = "";
+    FindVendor(name,regnr,vecode,vename,vevatnr);
+
+//InvoiceItem
+    j = 0;
+    while (XmlNodeExists(xdata,xsubstr & "InvoiceItem[" & j & "]")) begin
+      xsubstr2 = xsubstr & "InvoiceItem[" & j & "]/InvoiceItemGroup/";
+      
+//ItemEntry
+      j2 = 0;
+      while (XmlNodeExists(xdata,xsubstr2 & "ItemEntry[" & j2 & "]")) begin
+        xsubstr3 = xsubstr2 & "ItemEntry[" & j2 & "]/";
+        iObj = 0;
+        itemEntryObjects = "";
+        while (XmlNodeExists(xdata,xsubstr3 & "Accounting/JournalEntry/CostObjective[" & iObj & "]")) begin
+          itemEntryObjects = AddObjectToObjectList(itemEntryObjects,XmlGet(xdata,xsubstr3 & "Accounting/JournalEntry/CostObjective[" & iObj & "]"));
+          iObj = iObj + 1;
+        end;
+        accountnr = XmlGet(xdata,xsubstr3 & "Accounting/JournalEntry/GeneralLedger");
+        name = XmlGet(xdata,xsubstr3 & "Description");
+        vatrate = StringToVal(XmlGet(xdata,xsubstr3 & "VAT/VATRate"),M4Val);
+        vatcode = GetVATCode(vatrate);
+        tstr = i & ":";
+        tstr = tstr & accountnr & ":";
+        tstr = tstr & itemEntryObjects & ":"; //will match only if all objects are same
+        tstr = tstr & vatcode;
+        pos = vRowExists[tstr];
+        if (pos > 0 AND rowPackMethod == 1) then begin
+          pos = pos - 1;
+          MatRowGet(Expr,pos,Exprw);
+          vatsum = Exprw.VATSum + StringToVal(XmlGet(xdata,xsubstr3 & "VAT/VATSum"),M4Val);
+          Exprw.VATSum = vatsum;
+          Exprw.Sum = Exprw.Sum + StringToVal(XmlGet(xdata,xsubstr3 & "VAT/SumAfterVAT"),M4Val);
+          //Exprw.qty = Exprw.qty + StringToVal(XmlGet(xdata,xsubstr3 & "ItemTotal"),M4UVal);
+          MatRowPut(Expr,pos,Exprw);
+          CalcExpRow(Expr,pos);
+          MatRowGet(Expr,pos,Exprw);
+          if (Exprw.VATSum != vatsum) then begin
+            Exprw.VATSum = vatsum;      
+          end;
+          AddExpRepObjectsToExp(itemEntryObjects,Exprw.Objects);
+          MatRowPut(Expr,pos,Exprw);
+        end else begin
+          ClearRow(Expr,Exprw,1);
+          Exprw.DocNr = docnr;
+          Exprw.ExpDate = expdate;
+          Exprw.VECode = vecode;
+          Exprw.VEName = vename;
+          Exprw.Identifier = vevatnr;
+          Exprw.AccNumber = accountnr;
+          MatRowPut(Expr,rownr,Exprw);
+          if (ExpVc_PasteAccNumber(Expr,rownr)) then begin end;
+          MatRowGet(Expr,rownr,Exprw);
+          if (EExpRowCommToExp AND rowPackMethod == 0) then begin
+            Exprw.Comment = name;
+          end;
+          Exprw.VATCode = vatcode;
+          vatsum = StringToVal(XmlGet(xdata,xsubstr3 & "VAT/VATSum"),M4Val);
+          Exprw.VATSum = vatsum;
+          Exprw.Sum = StringToVal(XmlGet(xdata,xsubstr3 & "VAT/SumAfterVAT"),M4Val);
+          //Exprw.qty = StringToVal(XmlGet(xdata,xsubstr3 & "ItemTotal"),M4UVal);
+          MatRowPut(Expr,rownr,Exprw);
+          CalcExpRow(Expr,rownr);
+          MatRowGet(Expr,rownr,Exprw);
+          if (Exprw.VATSum != vatsum) then begin
+            Exprw.VATSum = vatsum;      
+          end;
+          AddExpRepObjectsToExp(itemEntryObjects,Exprw.Objects); 
+          MatRowPut(Expr,rownr,Exprw);
+          rownr = rownr + 1;
+          vRowExists[tstr] = rownr;
+        end;
+        j2 = j2 + 1;
+      end;
+      
+      j = j + 1;
+    end;
+
+    i = i + 1;
+  end;
+  ImportTravelExtra(xdata,xmlroot,k,Expr);
+  //if (MatRowCnt(Expr)>0) then begin
+  ExpSumup(Expr,t);
+  Expr.SerNr = NextSerNr("ExpVc",Expr.TransDate,-1,false,"");
+  if (Expr.SerNr > 0) then begin
+    RecordInsert(Expr,false);
+    ExpSerNr = Expr.SerNr;
+    res = true;
+  end;
+  //end;
+  EExpXMLIn = res;
+  return;
+end;

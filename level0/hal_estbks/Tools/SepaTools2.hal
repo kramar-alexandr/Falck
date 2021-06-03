@@ -1,0 +1,620 @@
+//sepa import
+//inners
+external function Date SEPA_StringToDate(string);
+external updating procedure AddSEPABankEntryToOPVc(record SEPABankEntryVc,record SEPABankFileBlock,var record OPVc,var boolean,boolean,string,boolean,var boolean);
+external updating procedure AddSEPABankEntryToIPVc(record SEPABankEntryVc,record SEPABankFileBlock,var record IPVc,var boolean,boolean,string,boolean,var boolean);
+
+//new dev
+external updating procedure AddSEPABankEntryToTRVc(record SEPABankEntryVc,var record TRVc,string,string,string,string,string,var string,var boolean,boolean,var boolean);
+external updating procedure MarkSEPAEntryDone(var record SEPABankEntryVc,integer);
+external function Integer InString2(string,string);
+
+global
+function string 255 GetStmtEntryDescription(string domCode, string famCode, string subFamCode, var string entryType)
+begin
+  string 255 res;
+
+  entryType = "";
+  //those where entryType is left blank are not processed
+  switch(domCode) begin
+    case "PMNT":
+      switch(famCode) begin
+        case "RCDT":
+          switch(subFamCode) begin
+            case "DMCT": res = "Incoming domestic payment"; entryType = "receipt";
+            case "BOOK": res = "Incoming"; entryType = "receipt";
+            case "FEES": res = "Incoming payment fee";
+            case "RRTN": res = "Returned payment"; entryType = "receipt";
+            case "XBCT": res = "Incoming cross-border payment"; entryType = "receipt";
+            case "ESCT": res = "Incoming European payment"; entryType = "receipt";
+            case "FICT": res = "Incoming bank to bank payment";
+            case "AUTT": res = "E-invoice Standing Order incoming intrabank payment"; entryType = "receipt";
+          end;
+        case "MDOP":
+          switch(subFamCode) begin
+            case "FEES": res = "Other";
+            case "ADJT": res = "Transaction adjustment";
+            case "COMM": res = "Bank";
+            case "COMI": res = "Bank";
+          end;
+        case "MCOP":
+          switch(subFamCode) begin
+            case "ADJT": res = "Transaction adjustment";
+            case "INTR": res = "Incoming interest";
+          end;
+        case "IDDT":
+          switch(subFamCode) begin
+            case "PMDD": res = "Automatical payments (before SEPA direct debit)";
+            case "ESDD": res = "SEPA Direct Debit"; entryType = "payment";
+            case "PRDD": res = "SEPA Direct Debit returning"; entryType = "receipt";
+            case "FEES": res = "Direct debit fee";
+            case "COMI": res = "Direct debit";
+          end;
+        case "ICDT":
+          switch(subFamCode) begin
+            case "DMCT": res = "Domestic payment"; entryType = "payment";
+            case "ESCT": res = "SEPA payment"; entryType = "payment";
+            case "BOOK": res = "Intrabank payment"; entryType = "payment";
+            case "FEES": res = "Outgoing payment fee";
+            case "XBCT": res = "Cross-border payment"; entryType = "payment";
+            case "FICT": res = "Bank to bank payment";
+            case "RPCR": res = "Payment reversal due to Payment Cancellation Request"; entryType = "receipt";
+            case "CHRG": res = "Service fee";
+            case "AUTT": res = "E-invoice Standing Order outgoing payment"; entryType = "payment";
+          end;
+        case "OTHR":
+          switch(subFamCode) begin
+            case "OTHR": res = "Other payments"; entryType = "receipt";
+          end;
+        case "CCRD":
+          switch(subFamCode) begin
+            case "CDPT": res = "Cash collection in ATM"; entryType = "receipt";
+            case "CWDL": res = "Cash withdrawal with card";
+            case "FEES": res = "Card fee";
+            case "OTHR": res = "Card transaction";
+            case "POSC": res = "Cashback transactions";
+            case "POSD": res = "Transaction";
+          end;
+        case "MCRD":
+          switch(subFamCode) begin
+            case "COMM": res = "POS transactions processing fee";
+            case "TAXE": res = "Taxe for POS administratuion";
+            case "POSP": res = "Point-of Sale (POS) Payments/Incoming POS transactions"; entryType = "receipt";
+            case "FEES": res = "Merchant";
+            case "COMI": res = "Merchant";
+          end;
+        case "CNTR":
+          switch(subFamCode) begin
+            case "CDPT": res = "Cash Collection";
+            case "FEES": res = "Cash transaction fee";
+            case "CWDL": res = "Cash withdrawal";
+          end;
+        case "ICHQ":
+          switch(subFamCode) begin
+            case "FEES": res = "Chegue purchase fee";
+            case "OTHR": res = "Cheque purchase";
+          end;
+        case "RCHQ":
+          switch(subFamCode) begin
+            case "FEES": res = "Cheque honouring fee";
+            case "OTHR": res = "Cheque honouring";
+          end;
+      end;
+    case "ACMT":
+      switch(famCode) begin
+        case "MCOP":
+          switch(subFamCode) begin
+            case "ADJT": res = "Canceled transactions (charges) for account administration";
+            case "INTR": res = "Transaction";
+          end;
+        case "MDOP":
+          switch(subFamCode) begin
+            case "CHRG": res = "With account administration related";
+            case "COMI": res = "With account administration related";
+            case "FEES": res = "With account administration related";
+          end;
+      end;
+    case "CAMT":
+      switch(famCode) begin
+        case "MDOP":
+          switch(subFamCode) begin
+            case "FEES": res = "Charges for cash pool";
+            case "INTR": res = "Cash pool account interests for internal limit usage";
+            case "OTHR": res = "Cash pool ohter miscellaneius debit order";
+          end;
+        case "MCOP":
+          switch(subFamCode) begin
+            case "INTR": res = "Cash pool account interests";
+          end;
+        case "ACCB":
+          switch(subFamCode) begin
+            case "TOPG": res = "Topping";
+            case "SWEP": res = "Sweeping";
+            case "ZABA": res = "Account balancing";
+            case "FEES": res = "Account balancing fee";
+          end;
+      end;
+    case "TRAD":
+      switch(famCode) begin
+        case "DOCC":
+          switch(subFamCode) begin
+            case "FEES": res = "Documantary Collection fee";
+          end;
+        case "GUAR":
+          switch(subFamCode) begin
+            case "FEES": res = "Guarantee fee";
+          end;
+        case "DCCT":
+          switch(subFamCode) begin
+            case "FEES": res = "Documantary Credit fee";
+          end;
+      end;
+    case "FORX":
+      switch(famCode) begin
+        case "OTHR":
+          switch(subFamCode) begin
+            case "FEES": res = "Fee of foreign exchange transaction";
+            case "OTHR": res = "Foreign exchange transaction";
+          end;
+      end;
+    case "LDAS":
+      switch(famCode) begin
+        case "OTHR":
+          switch(subFamCode) begin
+            case "NTAV": res = "Balancing of overdraft: loan";
+            case "OTHR": res = "Loan disbursement (C)/loan repayment (D)";
+          end;
+        case "NTAV":
+          switch(subFamCode) begin
+            case "NTAV": res = "Other loan related";
+          end;
+        case "MGLN":
+          switch(subFamCode) begin
+            case "FEES": res = "Loan administration fee";
+          end;
+        case "MDOP":
+          switch(subFamCode) begin
+            case "OTHR": res = "Loan related penalty";
+            case "TAXE": res = "Taxe transafering from earned deposit/overnight interests";
+            case "FEES": res = "Loan charges";
+            case "ADJT": res = "Loan adjustment";
+          end;
+        case "MCOP":
+          switch(subFamCode) begin
+            case "INTR": res = "Incoming interest/Disbursement of guaranteed interest";
+            case "ADJT": res = "Loan adjustment";
+          end;
+        case "CSLN":
+          switch(subFamCode) begin
+            case "INTR": res = "Payment of interest";
+            case "PPAY": res = "Payment of principal";
+          end;
+      end;
+    case "SECU":
+      switch(famCode) begin
+        case "OTHR":
+          switch(subFamCode) begin
+            case "OTHR": res = "Other movements related to securities";
+          end;
+        case "MDOP":
+          switch(subFamCode) begin
+            case "FEES": res = "Other";
+          end;
+        case "SETT":
+          switch(subFamCode) begin
+            case "SUBS": res = "Subscription of fund units";
+            case "REDM": res = "Redemption of fund units";
+            case "FEES": res = "Service fee of securities transaction";
+            case "TRAD": res = "Securities transaction with other broker";
+            case "OTCG": res = "Securities transfer delivery versus payment";
+            case "XCHG": res = "Securities transaction on market";
+          end;
+        case "CUST":
+          switch(subFamCode) begin
+            case "DVCA": res = "Reciept of securities dividends";
+            case "REDM": res = "Redemption of bonds";
+          end;
+        case "MCOP":
+          switch(subFamCode) begin
+            case "INTR": res = "Interest income from bonds";
+          end;
+        case "COLL":
+          switch(subFamCode) begin
+            case "FEES": res = "Fees related to pledging of securities";
+          end;
+        case "CORP":
+          switch(subFamCode) begin
+            case "OTHR": res = "Split of securities";
+          end;
+      end;
+    case "XTND":
+      switch(famCode) begin
+        case "NTAV":
+          switch(subFamCode) begin
+            case "NTAV": res = "Different bank transactions/charges";
+          end;
+      end;
+  end;
+  GetStmtEntryDescription = res;
+  return;
+end;
+
+function boolean DescriptionMatches(string pattern, string actual)
+begin
+  boolean res;
+  string 255 strToFind;
+  
+  if (Left(pattern,1) == chr(34) AND Right(pattern,1) == chr(34)) then begin //then exact match
+    strToFind = Mid(pattern,1,Len(pattern) - 2);
+    if (actual == strToFind) then begin
+      res = true;
+    end;
+  end else begin //then if contains
+    strToFind = pattern;
+    if (InString2(actual,strToFind) != -1) then begin
+      res = true;
+    end;
+  end;
+  DescriptionMatches = res;
+  return;
+end;
+
+function boolean TRIdentRowMatchesEntry(row TRIdentBlock TRIdentblrw,record SEPABankEntryVc SEPABankEntryr, var integer matchScore)
+begin
+  boolean res;
+
+  matchScore = 0;
+  res = true;
+  if (blank(TRIdentblrw.DomainCode) OR blank(TRIdentblrw.FamilyCode) OR blank(TRIdentblrw.SubfamilyCode)) then begin
+    res = false;
+    goto LTRIdentRowMatchesEntry;
+  end;
+  if (blank(SEPABankEntryr.DomainCode) OR blank(SEPABankEntryr.FamilyCode) OR blank(SEPABankEntryr.SubfamilyCode)) then begin
+    res = false;
+    goto LTRIdentRowMatchesEntry;
+  end;
+  if (TRIdentblrw.DomainCode != SEPABankEntryr.DomainCode) then begin
+    res = false;
+    goto LTRIdentRowMatchesEntry;
+  end;
+  if (TRIdentblrw.FamilyCode != SEPABankEntryr.FamilyCode) then begin
+    res = false;
+    goto LTRIdentRowMatchesEntry;
+  end;
+  if (TRIdentblrw.SubfamilyCode != SEPABankEntryr.SubfamilyCode) then begin
+    res = false;
+    goto LTRIdentRowMatchesEntry;
+  end;
+  //if here - mandatory checks passed, start counting the score
+  matchScore = matchScore + 1;
+  if (nonblank(TRIdentblrw.TheirIBAN)) then begin
+    if ((TRIdentblrw.TheirIBAN != SEPABankEntryr.DbtrAcctIBAN) AND (TRIdentblrw.TheirIBAN != SEPABankEntryr.CdtrAcctIBAN)) then begin
+      res = false;
+      goto LTRIdentRowMatchesEntry;
+    end else begin
+      matchScore = matchScore + 1;
+    end;
+  end;
+  if (nonblank(TRIdentblrw.OurIBAN)) then begin
+    if (TRIdentblrw.OurIBAN != SEPABankEntryr.OurIBAN) then begin
+      res = false;
+      goto LTRIdentRowMatchesEntry;
+    end else begin
+      matchScore = matchScore + 1;
+    end;
+  end;
+  if (nonblank(TRIdentblrw.RmtInfUstrd)) then begin
+    if (DescriptionMatches(TRIdentblrw.RmtInfUstrd,SEPABankEntryr.RmtInfUstrd) == false) then begin
+      res = false;
+      goto LTRIdentRowMatchesEntry;
+    end else begin
+      matchScore = matchScore + 1;
+    end;
+  end;
+LTRIdentRowMatchesEntry:;
+  TRIdentRowMatchesEntry = res;
+  return;
+end;
+
+global
+function boolean GetSEPAEntryIdentRow(record SEPABankEntryVc SEPABankEntryr, boolean useMainComp, var row TRIdentBlock TRIdentblrw, var integer rowNr)
+begin
+  boolean res;
+  record TRIdentBlock TRIdentbl;
+  integer rwcnt,i,bestMatch,matchScore,bestMatchScore;
+  record CompaniesBlock CompaniesRec;
+  row CompaniesBlock comprw;
+  integer curcomp;
+
+  rowNr = -1;
+  bestMatch = -1; //means nothing found
+  curcomp = CurrentCompany;  
+  //switch company if set so
+  if (useMainComp) then begin
+    if (ServerMode OR SingleUserMode) then begin
+      BlockLoad(CompaniesRec);
+      MatRowGet(CompaniesRec,0,comprw);
+      SetCompanyCode(comprw.CompCode,false);
+    end;
+  end;
+  //or just read from current
+  BlockLoad(TRIdentbl);
+  rwcnt = MatRowCnt(TRIdentbl);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(TRIdentbl,i,TRIdentblrw);
+    if (TRIdentRowMatchesEntry(TRIdentblrw,SEPABankEntryr,matchScore)) then begin
+      if (matchScore > bestMatchScore) then begin
+        bestMatch = i;
+        bestMatchScore = matchScore;
+      end;
+    end;
+  end;
+  if (bestMatch != -1) then begin
+    MatRowGet(TRIdentbl,bestMatch,TRIdentblrw);
+    rowNr = bestMatch;
+    res = true;
+  end;
+  ResetCompany(curcomp);
+  GetSEPAEntryIdentRow = res;
+  return;
+end;
+
+global
+procedure SEPABankEntryFromXML(xml xdata, string nodePath, var record SEPABankEntryVc SEPABankEntryr)
+begin
+  string 255 xstr0;
+  string 10 dummy;
+
+  RecordNew(SEPABankEntryr);
+  //local data
+  SEPABankEntryr.ImportedDate = CurrentDate;
+  SEPABankEntryr.ImportedTime = CurrentTime;
+  xstr0 = "Document/BkToCstmrAcctRpt";
+  if XmlNodeExists(xdata,xstr0 & "/GrpHdr/MsgId") then begin 
+    SEPABankEntryr.OurIBAN = XmlGet(xdata,xstr0 & "/Rpt/Acct/Id/IBAN");
+  end else begin
+    xstr0 = "Document/BkToCstmrStmt";
+    if XmlNodeExists(xdata,xstr0 & "/GrpHdr/MsgId") then begin 
+      SEPABankEntryr.OurIBAN = XmlGet(xdata,xstr0 & "/Stmt/Acct/Id/IBAN");
+    end;
+  end;
+  SEPABankEntryr.SvcrBIC = XmlGet(xdata,"Document/BkToCstmrStmt/Stmt/Acct/Svcr/FinInstnId/BIC");
+  if (blank(SEPABankEntryr.SvcrBIC)) then begin
+    SEPABankEntryr.SvcrBIC = XmlGet(xdata,"Document/BkToCstmrAcctRpt/Rpt/Acct/Svcr/FinInstnId/BIC");
+  end;
+  //dates and references
+  SEPABankEntryr.NtryRef = XmlGet(xdata,nodePath & "NtryRef");
+  SEPABankEntryr.CdtDbtInd = XmlGet(xdata,nodePath & "CdtDbtInd");
+  SEPABankEntryr.RvslInd = XmlGet(xdata,nodePath & "RvslInd");
+  SEPABankEntryr.BookgDt = SEPA_StringToDate(XmlGet(xdata,nodePath & "BookgDt/Dt"));
+  //BkTxCd
+  SEPABankEntryr.DomainCode = XmlGet(xdata,nodePath & "BkTxCd/Domn/Cd");
+  SEPABankEntryr.FamilyCode = XmlGet(xdata,nodePath & "BkTxCd/Domn/Fmly/Cd");
+  SEPABankEntryr.PrtryCd = XmlGet(xdata,nodePath & "BkTxCd/Prtry/Cd");
+  SEPABankEntryr.SubfamilyCode = XmlGet(xdata,nodePath & "BkTxCd/Domn/Fmly/SubFmlyCd");
+  SEPABankEntryr.Comment = GetStmtEntryDescription(SEPABankEntryr.DomainCode,SEPABankEntryr.FamilyCode,SEPABankEntryr.SubfamilyCode,dummy);
+  //NtryDtls
+  SEPABankEntryr.MsgId = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/Refs/MsgId");
+  SEPABankEntryr.AcctSvcrRef = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/Refs/AcctSvcrRef");
+  SEPABankEntryr.PmtInfId = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/Refs/PmtInfId");
+  SEPABankEntryr.InstrId = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/Refs/InstrId");
+  SEPABankEntryr.EndToEndId = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/Refs/EndToEndId");
+  SEPABankEntryr.PrtryTp = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/Refs/Prtry/Tp");
+  SEPABankEntryr.PrtryRef = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/Refs/Prtry/Ref");
+  SEPABankEntryr.InstdAmt = StringToVal(XmlGet(xdata,nodePath & "NtryDtls/TxDtls/AmtDtls/InstdAmt/Amt"),M4Val);
+  SEPABankEntryr.InstdAmtCcy = XmlGetAttribute(xdata,nodePath & "NtryDtls/TxDtls/AmtDtls/InstdAmt/Amt","Ccy");
+  SEPABankEntryr.TxAmt = StringToVal(XmlGet(xdata,nodePath & "NtryDtls/TxDtls/AmtDtls/TxAmt/Amt"),M4Val);
+  SEPABankEntryr.TxAmtCcy = XmlGetAttribute(xdata,nodePath & "NtryDtls/TxDtls/AmtDtls/TxAmt/Amt","Ccy");
+  SEPABankEntryr.RmtInfUstrd = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/RmtInf/Ustrd");
+  SEPABankEntryr.RmtInfStrdCdtr = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/RmtInf/Strd/CdtrRefInf/Ref");
+  //NtryDtls debtor data
+  SEPABankEntryr.DbtrNm = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/RltdPties/Dbtr/Nm");
+  SEPABankEntryr.DbtrDept = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/RltdPties/Dbtr/PstlAdr/Dept");
+  SEPABankEntryr.DbtrStrtNm = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/RltdPties/Dbtr/PstlAdr/StrtNm");
+  SEPABankEntryr.DbtrBldgNb = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/RltdPties/Dbtr/PstlAdr/BldgNb");
+  SEPABankEntryr.DbtrPstCd = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/RltdPties/Dbtr/PstlAdr/PstCd");
+  SEPABankEntryr.DbtrTwnNm = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/RltdPties/Dbtr/PstlAdr/TwnNm");
+  SEPABankEntryr.DbtrCtrySubDvsn = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/RltdPties/Dbtr/PstlAdr/CtrySubDvsn");
+  SEPABankEntryr.DbtrCtry = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/RltdPties/Dbtr/PstlAdr/Ctry");
+  SEPABankEntryr.DbtrAdrLine1 = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/RltdPties/Dbtr/PstlAdr/AdrLine[0]");
+  SEPABankEntryr.DbtrAdrLine2 = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/RltdPties/Dbtr/PstlAdr/AdrLine[1]");
+  if (XmlNodeExists(xdata,nodePath & "NtryDtls/TxDtls/RltdPties/Dbtr/Id/OrgId/Othr/Id")) begin
+    SEPABankEntryr.DbtrOrgId = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/RltdPties/Dbtr/Id/OrgId/Othr/Id");
+  end else begin
+    SEPABankEntryr.DbtrOrgId = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/RltdPties/Dbtr/Id/PrvtId/Othr/Id");
+  end;
+  SEPABankEntryr.DbtrAcctIBAN = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/RltdPties/DbtrAcct/Id/IBAN");
+  SEPABankEntryr.DbtrAcctOthrID = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/RltdPties/DbtrAcct/Id/Othr/Id");
+  //NtryDtls creditor data
+  SEPABankEntryr.CdtrNm = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/RltdPties/Cdtr/Nm");
+  SEPABankEntryr.CdtrDept = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/RltdPties/Cdtr/PstlAdr/Dept");
+  SEPABankEntryr.CdtrStrtNm = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/RltdPties/Cdtr/PstlAdr/StrtNm");
+  SEPABankEntryr.CdtrBldgNb = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/RltdPties/Cdtr/PstlAdr/BldgNb");
+  SEPABankEntryr.CdtrPstCd = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/RltdPties/Cdtr/PstlAdr/PstCd");
+  SEPABankEntryr.CdtrTwnNm = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/RltdPties/Cdtr/PstlAdr/TwnNm");
+  SEPABankEntryr.CdtrCtrySubDvsn = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/RltdPties/Cdtr/PstlAdr/CtrySubDvsn");
+  SEPABankEntryr.CdtrCtry = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/RltdPties/Cdtr/PstlAdr/Ctry");
+  SEPABankEntryr.CdtrAdrLine1 = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/RltdPties/Cdtr/PstlAdr/AdrLine[0]");
+  SEPABankEntryr.CdtrAdrLine2 = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/RltdPties/Cdtr/PstlAdr/AdrLine[1]");
+  if (XmlNodeExists(xdata,nodePath & "NtryDtls/TxDtls/RltdPties/Cdtr/Id/OrgId/Othr/Id")) begin
+    SEPABankEntryr.CdtrOrgId = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/RltdPties/Cdtr/Id/OrgId/Othr/Id");
+  end else begin
+    SEPABankEntryr.CdtrOrgId = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/RltdPties/Cdtr/Id/PrvtId/Othr/Id");
+  end;
+  SEPABankEntryr.CdtrAcctIBAN = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/RltdPties/CdtrAcct/Id/IBAN");
+  SEPABankEntryr.CdtrAcctOthrID = XmlGet(xdata,nodePath & "NtryDtls/TxDtls/RltdPties/CdtrAcct/Id/Othr/Id");
+  return;
+end;
+
+function boolean BankUsingUniqueNntry(string swift)
+begin
+  boolean res;
+
+  switch(swift) begin
+    case "HABAEE2X": res = true;
+  end;
+  BankUsingUniqueNntry = res;
+  return;
+end;
+
+updating
+procedure SaveNewSEPABankEntry(record SEPABankEntryVc SEPABankEntryr, var boolean entryExists)
+begin
+  record SEPABankEntryVc oldSEPABankEntryr;
+  
+  entryExists = false;
+  if (BankUsingUniqueNntry(SEPABankEntryr.SvcrBIC)) then begin
+    oldSEPABankEntryr.SvcrBIC = SEPABankEntryr.SvcrBIC;
+    oldSEPABankEntryr.NtryRef = SEPABankEntryr.NtryRef;
+    if (ReadFirstKey("SvcrBICNtry",oldSEPABankEntryr,2,true)) then begin
+      entryExists = true;
+      LogText(0,"Skipping bank entry " & oldSEPABankEntryr.NtryRef & " from " & oldSEPABankEntryr.SvcrBIC & ". Already in archive: " & oldSEPABankEntryr.SerNr);
+    end;
+  end;
+  if (entryExists == false) then begin
+    SEPABankEntryr.SerNr = NextSerNr("SEPABankEntryVc",SEPABankEntryr.ImportedDate,-1,false,"");
+    RecordInsert(SEPABankEntryr,true);
+  end;
+  return;
+end;
+
+function boolean EntryIsKnownPayment(record SEPABankEntryVc SEPABankEntryr)
+begin
+  boolean res;
+  string 10 entryType;
+
+  //this function does built-in identification
+  GetStmtEntryDescription(SEPABankEntryr.DomainCode,SEPABankEntryr.FamilyCode,SEPABankEntryr.SubfamilyCode,entryType);
+  if (entryType == "payment" AND SEPABankEntryr.CdtDbtInd == "DBIT") then begin
+    res = true;
+  end;
+  EntryIsKnownPayment = res;
+  return;
+end;
+
+function boolean EntryIsKnownReceipt(record SEPABankEntryVc SEPABankEntryr)
+begin
+  boolean res;
+  string 10 entryType;
+
+  //this function does built-in identification
+  GetStmtEntryDescription(SEPABankEntryr.DomainCode,SEPABankEntryr.FamilyCode,SEPABankEntryr.SubfamilyCode,entryType);
+  if (entryType == "receipt" AND SEPABankEntryr.CdtDbtInd == "CRDT") then begin
+    res = true;
+  end;
+  EntryIsKnownReceipt = res;
+  return;
+end;
+
+function boolean EntryDiffType(record SEPABankEntryVc prevEntry,record SEPABankEntryVc newEntry, integer curIdRow, integer prevIdRow)
+begin
+  boolean res;
+  
+  if(blank(prevEntry.DomainCode) AND blank(prevEntry.FamilyCode) AND blank(prevEntry.SubfamilyCode)) then begin
+    goto LEntryDiffType;
+  end;
+  if(blank(newEntry.DomainCode) AND blank(newEntry.FamilyCode) AND blank(newEntry.SubfamilyCode)) then begin
+    goto LEntryDiffType;
+  end;
+  if (curIdRow != -1 AND prevIdRow != -1 AND curIdRow != prevIdRow) then begin
+    res = true;
+    goto LEntryDiffType;
+  end;
+  if (prevEntry.DomainCode != newEntry.DomainCode OR
+      prevEntry.FamilyCode != newEntry.FamilyCode OR
+      prevEntry.SubfamilyCode != newEntry.SubfamilyCode OR
+      prevEntry.PrtryCd != newEntry.PrtryCd) then begin
+    res = true;
+  end;
+LEntryDiffType:;
+  EntryDiffType = res;
+  return;
+end;
+
+global updating
+procedure ProcessBankEntry(record SEPABankEntryVc SEPABankEntryr, record SEPABankFileBlock SEPABankFileBl, string payMode,
+                           var boolean newip, var boolean newop, var boolean newtr,
+                           var record IPVc IPr, var record OPVc OPr, var record TRVc TRr,
+                           var record SEPABankEntryVc prevIPEntry, var record SEPABankEntryVc prevOPEntry, var record SEPABankEntryVc prevTREntry,
+                           var integer prevIdentRow)
+begin
+  row TRIdentBlock TRIdentblrw;
+  boolean processed,typeDiffThanPrev,importedEarlier;
+  string 255 dummyMsg;
+  integer createdType,rowNr;
+
+  //save all entries for archive, regardless of other settings; this avoids importing same entries multiple times
+  SaveNewSEPABankEntry(SEPABankEntryr,importedEarlier);
+  if (importedEarlier) then begin
+    goto LProcessBankEntry;
+  end;
+  if (GetSEPAEntryIdentRow(SEPABankEntryr,SEPABankFileBl.UseMainIdentBlock == 1,TRIdentblrw,rowNr)) then begin //if this type is defined
+    switch(TRIdentblrw.RecType) begin
+      case 0: //do not create any
+        processed = true;
+      case 1: //hardcoded for TRVc, no TRYc in hal enums
+        if (SEPABankFileBl.CreateTRVc) then begin
+          if (EntryDiffType(prevTREntry,SEPABankEntryr,rowNr,prevIdentRow)) then begin //only for TR
+            typeDiffThanPrev = true;
+          end;
+          RecordCopy(prevTREntry,SEPABankEntryr);
+          prevIdentRow = rowNr;
+          AddSEPABankEntryToTRVc(SEPABankEntryr,TRr,TRIdentblrw.DebAccNumTR,TRIdentblrw.CredAccNumTR,TRIdentblrw.ObjectsTRDeb,TRIdentblrw.ObjectsTRCred,TRIdentblrw.Comment,dummyMsg,newtr,typeDiffThanPrev,processed);
+        end;
+      case OPYc:
+        if (SEPABankFileBl.CreateOPVc) then begin
+          if (blank(SEPABankEntryr.CdtrNm)) then begin //fill it as it is required by further functions
+            SEPABankEntryr.CdtrNm = TRIdentblrw.DefDescr;
+          end;
+          //if (EntryDiffType(prevOPEntry,SEPABankEntryr)) then begin
+            //typeDiffThanPrev = true;
+          //end;
+          RecordCopy(prevOPEntry,SEPABankEntryr);
+          AddSEPABankEntryToOPVc(SEPABankEntryr,SEPABankFileBl,OPr,newop,SEPABankFileBl.OKOPVc,payMode,typeDiffThanPrev,processed);
+        end;
+      case IPYc:
+        if (SEPABankFileBl.CreateIPVc) then begin
+          if (blank(SEPABankEntryr.DbtrNm)) then begin //fill it as it is required by further functions
+            SEPABankEntryr.DbtrNm = TRIdentblrw.DefDescr;
+          end;
+          //if (EntryDiffType(prevIPEntry,SEPABankEntryr)) then begin
+            //typeDiffThanPrev = true;
+          //end;
+          RecordCopy(prevIPEntry,SEPABankEntryr);
+          AddSEPABankEntryToIPVc(SEPABankEntryr,SEPABankFileBl,IPr,newip,SEPABankFileBl.OKIPVc,payMode,typeDiffThanPrev,processed);
+        end;
+      otherwise //hopefully not getting here as RecType is a set, but in case we do
+        if (SEPABankFileBl.StoreUnknownTrans == 0) then begin
+          processed = true; //just mark as processed, stored in archive anyway
+        end;
+    end;
+    createdType = TRIdentblrw.RecType;
+  end else begin //then do built-in identification, does not create any Transactions
+    if (EntryIsKnownPayment(SEPABankEntryr) AND SEPABankFileBl.CreateOPVc == 1) then begin
+      //if (EntryDiffType(prevOPEntry,SEPABankEntryr)) then begin
+        //typeDiffThanPrev = true;
+      //end;
+      RecordCopy(prevOPEntry,SEPABankEntryr); //only to keep track of previous, not saving it
+      AddSEPABankEntryToOPVc(SEPABankEntryr,SEPABankFileBl,OPr,newop,SEPABankFileBl.OKOPVc,payMode,typeDiffThanPrev,processed);
+      createdType = OPYc;
+    end else begin
+      if (EntryIsKnownReceipt(SEPABankEntryr) AND SEPABankFileBl.CreateIPVc == 1) then begin
+        //if (EntryDiffType(prevIPEntry,SEPABankEntryr)) then begin
+          //typeDiffThanPrev = true;
+        //end;
+        RecordCopy(prevIPEntry,SEPABankEntryr); //only to keep track of previous, not saving it
+        AddSEPABankEntryToIPVc(SEPABankEntryr,SEPABankFileBl,IPr,newip,SEPABankFileBl.OKIPVc,payMode,typeDiffThanPrev,processed);
+        createdType = IPYc;
+      end;
+    end;
+    if (processed == false AND SEPABankFileBl.StoreUnknownTrans == 0) then begin
+      processed = true; //just mark as processed, stored in archive anyway
+      createdType = 0;
+    end;
+  end;
+LProcessBankEntry:;
+  if (processed AND importedEarlier == false) then begin
+    MarkSEPAEntryDone(SEPABankEntryr,createdType);
+  end;
+  return;
+end;

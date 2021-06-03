@@ -1,3 +1,4 @@
+external function val MulRateToBase1(var string,val,val,val,val,val,val,roundmode);
 external function val MulRateToBase2(var string,val,val,val,val,val,val,roundmode);
 external procedure CurValToOtherCur(Date,string,val,string,var val,roundmode);
 remote function Integer ExpApprovalStatus(record ExpVc,var record AcceptanceRulesVc);
@@ -31,7 +32,6 @@ external function Boolean DidYouAuthorize(string);
 external procedure RoundVATSum(string,string,string,var val);
 external procedure RoundRowSum(string,string,string,var val);
 external function Boolean UserCanChangePendingRecord(Integer);
-external function val MulRateToBase1(var string,val,val,val,val,val,val,roundmode);
 
 global
 procedure ExpSumup(record ExpVc Expp,var val rp)
@@ -44,7 +44,9 @@ begin
   string 255 lastcrncy,crncy;
   record BaseCurBlock BCb;
   Boolean bcf,testf;
-
+  record ExpTBlock ETb;
+ 
+  BlockLoad(ETb);
   rwcnt = MatRowCnt(Expp);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(Expp,i,Exprw);
@@ -52,9 +54,32 @@ begin
       case 1:
         if (Exprw.ovst==0) then begin
           testf = false;
+          crncy = Exprw.BankCurncy;
+          if (blank(crncy)) then begin
+            crncy = Expp.CurncyCode;
+          end;
+          bal = bal + Exprw.Sum;
+          vatsum = vatsum + Exprw.VATSum;
           basebal = basebal + Exprw.BaseSum;
           basevatsum = basevatsum + Exprw.BaseVATSum;
-//          if (Exprw.BankCurncy!=Expp.CurncyCode) then begin
+
+          if (blank(Exprw.BaseSum)) then begin
+            if (ETb.ExpRateCostAcc!=0) and (nonblank(Exprw.BankCurncy)) and (nonblankdate(Exprw.ExpDate)) and (Exprw.ExpDate!=Expp.TransDate) then begin
+              basebal = basebal + MulRateToBase1(Exprw.BankCurncy,Exprw.Sum,Exprw.FrRateBankVal,Exprw.ToRateB1BankVal,Exprw.ToRateB2BankVal,Exprw.BaseRate1BankVal,Exprw.BaseRate2BankVal,DefaultCurRoundOff);
+            end else begin
+              basebal = basebal + MulRateToBase1(Expp.CurncyCode,Exprw.Sum,Expp.FrRate,Expp.ToRateB1,Expp.ToRateB2,Expp.BaseRate1,Expp.BaseRate2,DefaultCurRoundOff);
+            end;
+          end;
+          if (blank(Exprw.BaseVATSum)) then begin
+            if (ETb.ExpRateCostAcc!=0) and (nonblank(Exprw.BankCurncy)) and (nonblankdate(Exprw.ExpDate)) and (Exprw.ExpDate!=Expp.TransDate) then begin
+              basebal = basebal + MulRateToBase1(Exprw.BankCurncy,Exprw.VATSum,Exprw.FrRateBankVal,Exprw.ToRateB1BankVal,Exprw.ToRateB2BankVal,Exprw.BaseRate1BankVal,Exprw.BaseRate2BankVal,DefaultCurRoundOff);
+            end else begin
+              basebal = basebal + MulRateToBase1(Expp.CurncyCode,Exprw.VATSum,Expp.FrRate,Expp.ToRateB1,Expp.ToRateB2,Expp.BaseRate1,Expp.BaseRate2,DefaultCurRoundOff);
+            end;
+          end;
+
+/*   
+this seems very wierd         
           if (nonblank(Exprw.BankCurncy)) then begin
             if (bcf==false) then begin
               BlockLoad(BCb);
@@ -67,8 +92,13 @@ begin
             end;
             if (testf==false) then begin
               if (Expp.CurncyCode==BCb.BaseCur2) then begin
-                bal = bal + MulRateToBase2(Exprw.BankCurncy,Exprw.Sum,Exprw.FrRateBankVal,Exprw.ToRateB1BankVal,Exprw.ToRateB2BankVal,Exprw.BaseRate1BankVal,Exprw.BaseRate2BankVal,DefaultCurRoundOff);
-                vatsum = vatsum + MulRateToBase2(Exprw.BankCurncy,Exprw.VATSum,Exprw.FrRateBankVal,Exprw.ToRateB1BankVal,Exprw.ToRateB2BankVal,Exprw.BaseRate1BankVal,Exprw.BaseRate2BankVal,DefaultCurRoundOff);
+                if (ETb.ExpRateCostAcc!=0) and (nonblank(Exprw.BankCurncy)) and (nonblankdate(Exprw.ExpDate)) and (Exprw.ExpDate!=Expp.TransDate)) then begin
+                  bal = bal + MulRateToBase2(Exprw.BankCurncy,Exprw.Sum,Exprw.FrRateBankVal,Exprw.ToRateB1BankVal,Exprw.ToRateB2BankVal,Exprw.BaseRate1BankVal,Exprw.BaseRate2BankVal,DefaultCurRoundOff);
+                  vatsum = vatsum + MulRateToBase2(Exprw.BankCurncy,Exprw.VATSum,Exprw.FrRateBankVal,Exprw.ToRateB1BankVal,Exprw.ToRateB2BankVal,Exprw.BaseRate1BankVal,Exprw.BaseRate2BankVal,DefaultCurRoundOff);
+                end else begin
+                  bal = bal + MulRateToBase2(Exprw.BankCurncy,Exprw.Sum,Expp.FrRateBankVal,Expp.ToRateB1BankVal,Expp.ToRateB2BankVal,Expp.BaseRate1BankVal,Expp.BaseRate2BankVal,DefaultCurRoundOff);
+                  vatsum = vatsum + MulRateToBase2(Exprw.BankCurncy,Exprw.VATSum,Expp.FrRateBankVal,Expp.ToRateB1BankVal,Expp.ToRateB2BankVal,Expp.BaseRate1BankVal,Expp.BaseRate2BankVal,DefaultCurRoundOff);
+                end;
                 testf = true;
               end;
             end;
@@ -87,6 +117,7 @@ begin
             bal = bal + Exprw.Sum;
             vatsum = vatsum + Exprw.VATSum;
           end;
+*/            
         end;
     end;
   end;
@@ -265,7 +296,7 @@ BEGIN
     res = false;
     goto LExpDClassActiveEditField;
   end;
-//Bk start
+//Bk - start
 /*
   if (rownr>=0) then begin
     switch (fieldname) begin
@@ -275,7 +306,7 @@ BEGIN
     end;
   end;
 */
-//Bk end
+//Bk - end
   if (wnst==1) then begin//Rs_insert
     res = true;
     switch (fieldname) begin
@@ -553,25 +584,26 @@ BEGIN
   RETURN;
 END;
 
+//Bk, added parameters
 function Boolean ExpDClassVATSumEFAfter(Integer wn,Integer rownr,Integer changed)
 BEGIN
   Boolean res;
   record ExpVc Expr;
-  row ExpVc Exprw;
+  row ExpVc Exprw; //Bk +
   val t;
 
   if (changed!=0) then begin
     res = true;
     GetWindowRecord(wn,Expr);    
+//Bk - start //fix TS 2017/08
     MatRowGet(Expr,rownr,Exprw);
-//Bk fix - TS 2017/08
     if (blank(Exprw.BankCurncy)) then begin
       Exprw.BaseVATSum = MulRateToBase1(Expr.CurncyCode,Exprw.VATSum,Expr.FrRate,Expr.ToRateB1,Expr.ToRateB2,Expr.BaseRate1,Expr.BaseRate2,DefaultCurRoundOff);
     end else begin
       Exprw.BaseVATSum = MulRateToBase1(Exprw.BankCurncy,Exprw.VATSum,Exprw.FrRateBankVal,Exprw.ToRateB1BankVal,Exprw.ToRateB2BankVal,Exprw.BaseRate1BankVal,Exprw.BaseRate2BankVal,DefaultCurRoundOff);
     end;
-//Bk fix - end 
     MatRowPut(Expr,rownr,Exprw);
+//Bk - end 
     ExpSumup(Expr,t);
     PutWindowRecord(wn,Expr);        
   end;
@@ -584,7 +616,8 @@ BEGIN
   Boolean res;
   record ExpVc Expr;
   row ExpVc Exprw;
-  val t,vatval; //Bk
+  val t;
+  val vatval; //Bk +
 
   if (changed!=0) then begin
     res = true;
@@ -593,14 +626,14 @@ BEGIN
     if (Exprw.ExpDate>Expr.TransDate) then begin
       MessageBox(1142,"");
     end;
-    vatval = Exprw.VATSum; //Bk
+    vatval = Exprw.VATSum; //Bk +
     ExpGetRowRate(Expr,rownr);
     CalcExpRow(Expr,rownr);
-   //Bk - fix, ts - 2018/01
+   //Bk - start //fix ts - 2018/01
     MatRowGet(Expr,rownr,Exprw);
     Exprw.VATSum = vatval; //Bk
     MatRowPut(Expr,rownr,Exprw);
-   //cust - end
+   //Bk - end
     ExpSumup(Expr,t);
     PutWindowRecord(wn,Expr);
   end;
@@ -715,7 +748,9 @@ BEGIN
     case "AccNumber": res = ExpDClassAccNumberEFAfter(wn,rownr,changed);
     case "VATCode": res = ExpDClassVATCodeEFAfter(wn,rownr,changed);
     case "Sum": res = ExpDClassSumEFAfter(wn,rownr,changed);
+   //Bk - start //fix - added parameter
     case "VATSum": res = ExpDClassVATSumEFAfter(wn,rownr,changed);
+   //Bk - end
     case "ExpDate": res = ExpDClassExpDateEFAfter(wn,rownr,changed);
     case "PRCode": res = ExpDClassPRCodeEFAfter(wn,rownr,changed);
     case "DocDate": res = ExpDClassDocDateEFAfter(wn,changed);

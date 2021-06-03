@@ -38,12 +38,12 @@ begin
   record ISCOCodeVc ISCOr;
   LongInt updatemode,insertmode;
   
-  insertmode=1;
-  updatemode=2;
+  insertmode = 1;
+  updatemode = 2;
   res = 0;
   if (blank(Posr.Code)) then begin
     if (stat==updatemode) and nonblank(Pos2r.Code) then begin
-      Posr.Code=Pos2r.Code;
+      Posr.Code = Pos2r.Code;
     end else begin
       if (GetNextPosNr(Posr.Code)) then begin end;
     end;

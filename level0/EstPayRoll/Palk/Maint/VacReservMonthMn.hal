@@ -1,0 +1,239 @@
+external function roundmode GetSalaryRoundMode(string);
+external function val GetCPSumForPeriod(LongInt,date,date);
+external function Boolean TransInFiscal(Date);
+external procedure CheckFlush(var Integer,Integer);
+external updating procedure SaveTrans(record TRVc);
+external function boolean GetAccName(string,Var string,integer);
+external procedure AddEuroTrRow(record TRVc,string,string,string,string,val,val,val,boolean,boolean,var val,boolean,string,string,string);
+external function boolean EqualObjectStrings(string,string);
+external function val GetTaxPercent(string,date,val);
+
+global
+procedure GroupArray(var array string account,var array string objects,var array val sum,var integer cnt,string acccode,string objstr,val cpsum,boolean objf,boolean accf,boolean notaxobjf)
+begin
+  record AccVc Accr;
+  integer i;
+  boolean found;
+  string 255 objlist;
+
+  if (acccode!="") then begin 
+    if (notaxobjf) then begin //€ra lisa objekte fin.kandel maksu reale
+      objlist = "";
+    end else begin
+      objlist = objstr;
+      Accr.AccNumber = acccode;
+      if (ReadFirstMain(Accr,1,true)) then begin 
+        if nonblank(objlist) then begin
+          if (SetInSet(Accr.Objects,objlist)==false) then begin
+            objlist = objlist & "," & Accr.Objects;
+          end;
+        end else begin
+          objlist = Accr.Objects;
+        end;
+      end;  
+    end;
+    found = false;
+    for (i=0;i<cnt;i=i+1) begin
+      if (accf) then begin //Summeeri kandel maksu read, kui kontod on samad
+        if (objf) then begin //Koosta kanded objekti p›hiselt
+          if (EqualObjectStrings(objlist,objects[i])) then begin 
+            if (account[i]==acccode) then begin
+              sum[i] = sum[i] + cpsum;
+              i = cnt;
+              found = true;        
+            end;
+          end;
+        end else begin //€ra koosta kanded objekti p›hiselt
+          if (account[i]==acccode) then begin
+            sum[i] = sum[i] + cpsum;
+            if (SetInSet(objlist,objects[i])==false) then begin
+              objects[i] = objects[i] & "," & objlist;
+            end;
+            i = cnt;
+            found = true;        
+          end;
+        end;
+      end else begin //€ra summeeri kandel maksu read, kui kontod on samad
+        if (objf) then begin //Koosta kanded objekti p›hiselt
+          if (EqualObjectStrings(objlist,objects[i])) then begin 
+            if (account[i]==acccode) then begin
+              sum[i] = sum[i] + cpsum;
+              i = cnt;
+              found = true;        
+            end;
+          end;
+        end else begin //€ra koosta kanded objekti p›hiselt
+          found = false;        
+        end;
+      end;
+    end;
+  end;
+  if (found==false) then begin
+    account[cnt] = acccode;
+    objects[cnt] = objlist;
+    sum[cnt] = cpsum;
+    cnt = cnt + 1;
+  end;
+LGroupArray:;
+  return;
+end;
+
+global
+function boolean ArrangeArray(var array string TRrwacc,var array string TRrwobj,var array val TRrwdsum,var array val TRrwcsum,string debitacc,string creditacc,string objstr,val sum,var integer cnt,boolean objf,boolean accf,boolean notaxobjf,var string err)
+begin
+  boolean res;
+  string 60 tstr;
+  
+  res = true; 
+  err = 0;
+  if (nonblank(debitacc) and (GetAccName(debitacc,tstr,60)==false)) then begin
+    err = debitacc;
+    res = false;
+    goto LArrangeArray;
+  end;
+  GroupArray(TRrwacc,TRrwobj,TRrwdsum,cnt,debitacc,objstr,sum,objf,accf,notaxobjf);
+
+  if (nonblank(creditacc) and (GetAccName(creditacc,tstr,60)==false)) then begin
+    err = creditacc;
+    res = false;
+    goto LArrangeArray;
+  end;
+  GroupArray(TRrwacc,TRrwobj,TRrwcsum,cnt,creditacc,objstr,sum,objf,accf,notaxobjf);
+LArrangeArray:;
+  ArrangeArray = res;
+  return;
+end;
+
+global
+updating procedure CreateVacReservMonthMn(record RcVc RepSpec)
+begin
+  record VacReservVc VRr;
+  row VacReservVc VRrw;
+  record ContractVc Contrr;
+  record TRVc gTRr;
+  record BaseERVc BaseERr;
+  record SalSettingBlock SalSettingRec;
+  boolean TrHs,TrHs1,testf,notaxobjf;
+  date sd,ed;
+  integer flushcnt,cnt,i,rwcnt;
+  string 255 tstr,objstr,debitacc,creditacc,err;
+  val prc,br1,br2,bruto,brutotot,sum;
+  boolean dc,cc,accf,objf;
+  array string 64 TRrwacc,TRrwobj;
+  array val TRrwdsum,TRrwcsum;
+
+  sd = RepSpec.d1;
+  sd.day = 1;
+  ed = RepSpec.d1;
+  if (RepSpec.flags[0]==1) then begin
+    objf = true;
+  end;
+  if (RepSpec.flags[1]==1) then begin
+    accf = true;
+  end;
+  dc = true;
+  cc = false;
+
+  BaseERr.Date = ed;
+  if (ReadLastMain(BaseERr,1,false)) then begin
+    br1 = BaseERr.Rate1;
+    br2 = BaseERr.Rate2;
+  end;
+  BlockLoad(SalSettingRec);
+  if (SalSettingRec.NoObjOnCPTax==1) then begin
+    notaxobjf = true;
+  end;
+
+  VRr.Code = RepSpec.f3;
+  TrHs = true;
+  while (LoopMain(VRr,1,TrHs)) begin
+    if (nonblank(RepSpec.f3)) then begin
+      if (VRr.Code!=RepSpec.f3) then begin
+        TrHs = false;
+      end;
+    end;
+    if (TrHs) then begin
+      RecordNew(gTRr);
+      gTRr.IntYc = 0; 
+      gTRr.RegDate = CurrentDate;
+      gTRr.RegTime = CurrentTime;
+      gTRr.TransDate = RepSpec.d2;
+      if (TransInFiscal(gTRr.TransDate)==false) then begin
+        MessageBox(0,USetStr(1075));
+        goto LCreateVacReservMonthMn;
+      end;
+      gTRr.Number = NextSerNr("TRVc",gTRr.TransDate,-1,false,"");
+      gTRr.Comment = USetStr(1500582) & " " & ed;
+      gTRr.RefStr = "";
+      cnt = 0;
+
+      ResetLoop(Contrr);
+      TrHs1 = true;
+      while (LoopMain(Contrr,1,TrHs1)) begin
+        if (TrHs1) then begin
+          testf = true;
+          if (Contrr.Status!=1) then begin
+            testf = false;
+          end;
+          if (Contrr.AccGroupCode!=VRr.Code) then begin
+            testf = false;
+          end;
+          if (nonblank(RepSpec.ObjStr)) then begin
+            if (SetInSet(RepSpec.ObjStr,Contrr.ObjCode)==false) then begin
+              testf = false;
+            end;        
+          end;
+          if (testf) then begin
+            objstr = Contrr.ObjCode;
+            prc = VRr.Percent; 
+            bruto = GetCPSumForPeriod(Contrr.SerNr,sd,ed);
+            bruto = round((bruto*prc/100),GetSalaryRoundMode("2")); 
+            brutotot = brutotot + bruto;
+
+            debitacc = VRr.DebitAccCode; 
+            creditacc = VRr.CreditAccCode;
+            if (ArrangeArray(TRrwacc,TRrwobj,TRrwdsum,TRrwcsum,debitacc,creditacc,objstr,bruto,cnt,objf,accf,false,err)==false) then begin
+              MessageBox(1500433,err);
+              goto LCreateVacReservMonthMn;
+            end;
+
+            rwcnt = MatRowCnt(VRr);
+            for (i=0;i<rwcnt;i=i+1) begin
+              MatRowGet(VRr,i,VRrw);
+              prc = GetTaxPercent(VRrw.TaxCode,gTRr.TransDate,bruto);
+              sum = round((bruto*prc/100),GetSalaryRoundMode("2")); 
+              brutotot = brutotot + sum;
+
+              debitacc = VRrw.DebitAccCode;
+              creditacc = VRrw.CreditAccCode;
+              if (ArrangeArray(TRrwacc,TRrwobj,TRrwdsum,TRrwcsum,debitacc,creditacc,objstr,sum,cnt,objf,accf,notaxobjf,err)==false) then begin
+                MessageBox(1500433,err);
+                goto LCreateVacReservMonthMn;
+              end;
+            end;     
+          end;
+        end;
+      end;
+      if (cnt>0) then begin
+        for (i=0;i<cnt;i=i+1) begin
+          if (GetAccName(TRrwacc[i],tstr,60)==false) then begin
+            MessageBox(1500433,TRrwacc[i]);
+            goto LCreateVacReservMonthMn;
+          end; 
+          if (TRrwdsum[i]!=0) then begin
+            AddEuroTrRow(gTRr,TRrwacc[i],TRrwobj[i],"",tstr,TRrwdsum[i],br1,br2,false,dc,brutotot,false,"","","");
+          end;
+          if (TRrwcsum[i]!=0) then begin
+            AddEuroTrRow(gTRr,TRrwacc[i],TRrwobj[i],"",tstr,TRrwcsum[i],br1,br2,false,cc,brutotot,false,"","","");
+          end;
+        end;
+        if (MatRowCnt(gTRr)>0) then begin
+          SaveTrans(gTRr);
+        end;
+        CheckFlush(flushcnt,10);
+      end;
+    end;
+  end;
+LCreateVacReservMonthMn:;
+  return;
+end;

@@ -1,3 +1,5 @@
+//updated to ERP build 85321029 KB 04.11.2019
+
 procedure XXSERBLOCK
 begin
   RecordField(Math,M4Matrix,0,0);
@@ -15,40 +17,27 @@ end;
 
 begin
 
-  SourceFile("halcust\\estonian",3); //NK 12.04.2019
-  SourceFile("halcust\\russian",3);  //NK 12.04.2019
-  SourceFile("halcust\\latvian",3);  //NK 12.04.2019
+  SourceFile("halcust\\estonian",0);  //CHN::12.06.2019
+  SourceFile("halcust\\russian",0);   //CHN::12.06.2019
+  SourceFile("halcust\\latvian",0);   //CHN::12.06.2019
+  SourceFile("halcust\\English",0);   //CHN::12.06.2019
+  SourceFile("halcust\\Lithuanian",0);//CHN::12.06.2019
+
+  //e-services and other from BK
+  SourceFile("halcust\\level0\\hal_estbks\\amainhal",0);
+  SourceFile("halcust\\level0\\hal_estbks\\english",0);
+  SourceFile("halcust\\level0\\hal_estbks\\estonian",0);
+  SourceFile("halcust\\level0\\hal_estbks\\Exports",0);
+  SourceFile("halcust\\level0\\hal_estbks\\Imports",0);
+  SourceFile("halcust\\level0\\hal_estbks\\Maint",0);
+  SourceFile("halcust\\level0\\hal_estbks\\RActions",0);
+  SourceFile("halcust\\level0\\hal_estbks\\Reports",0);
+  SourceFile("halcust\\level0\\hal_estbks\\russian",0);
+  SourceFile("halcust\\level0\\hal_estbks\\Tools",0);
+  SourceFile("halcust\\level0\\hal_estbks\\WActions",0);
    
-  SourceFile("halcust\\level0\\BooksHAL\\EARVE_IMPORT",0);
-  SourceFile("halcust\\level0\\BooksHAL\\ETEENUSED\\amainhal",0);
-  SourceFile("halcust\\level0\\BooksHAL\\ETEENUSED\\estonian",0);
-  SourceFile("halcust\\level0\\BooksHAL\\ETEENUSED\\Maint",0);
-  SourceFile("halcust\\level0\\BooksHAL\\ETEENUSED\\RActions",0);
-  SourceFile("halcust\\level0\\BooksHAL\\ETEENUSED\\Tools",0);
-  SourceFile("halcust\\level0\\BooksHAL\\KMD_INF",0);
-  SourceFile("halcust\\level0\\BooksHAL\\KREDIIDISKOOR\\amainhal",0);
-  SourceFile("halcust\\level0\\BooksHAL\\KREDIIDISKOOR\\estonian",0);
-  SourceFile("halcust\\level0\\BooksHAL\\KREDIIDISKOOR\\Maint",0);
-  SourceFile("halcust\\level0\\BooksHAL\\KREDIIDISKOOR\\RActions",0);
-  SourceFile("halcust\\level0\\BooksHAL\\KREDIIDISKOOR\\Reports",0);
-  SourceFile("halcust\\level0\\BooksHAL\\KREDIIDISKOOR\\Tools",0);
-  SourceFile("halcust\\level0\\BooksHAL\\KREDIIDISKOOR\\WActions",0);
-  SourceFile("halcust\\level0\\BooksHAL\\Mailbow\\estonian",0);
-  SourceFile("halcust\\level0\\BooksHAL\\Mailbow\\Maint",0);
-  SourceFile("halcust\\level0\\BooksHAL\\Mailbow\\Tools",0);
-  SourceFile("halcust\\level0\\BooksHAL\\Mailbow\\WActions",0);
-  SourceFile("halcust\\level0\\BooksHAL\\RIK-VAL_KURSID\\amainhal",0);
-  SourceFile("halcust\\level0\\BooksHAL\\RIK-VAL_KURSID\\estonian",0);
-  SourceFile("halcust\\level0\\BooksHAL\\RIK-VAL_KURSID\\Reports",0);
-  SourceFile("halcust\\level0\\BooksHAL\\RIK-VAL_KURSID\\Tools",0);
-  SourceFile("halcust\\level0\\BooksHAL\\RIK-VAL_KURSID\\WActions",0);
-  SourceFile("halcust\\level0\\BooksHAL\\SEPA",0);
-  SourceFile("halcust\\level0\\BooksHAL\\SEPA_IMPORT\\estonian",0);
-  SourceFile("halcust\\level0\\BooksHAL\\SEPA_IMPORT\\Import",0);
-  SourceFile("halcust\\level0\\BooksHAL\\SEPA_IMPORT\\Tools",0);
-  SourceFile("halcust\\level0\\BooksHAL\\TSEKK\\estonian",0);
-  SourceFile("halcust\\level0\\BooksHAL\\TSEKK\\Tools",0);
-  SourceFile("halcust\\level0\\BooksHAL\\TSEKK\\WActions",0);
+  //palk from BK
+  SourceFile("halcust\\level0\\EstPayRoll\\Palk",0);
   SourceFile("halcust\\level0\\EstPayRoll\\Palk\\Documents",0);
   SourceFile("halcust\\level0\\EstPayRoll\\Palk\\estonian",0);
   SourceFile("halcust\\level0\\EstPayRoll\\Palk\\Exports",0);
@@ -57,6 +46,7 @@ begin
   SourceFile("halcust\\level0\\EstPayRoll\\Palk\\Reports",0);
   SourceFile("halcust\\level0\\EstPayRoll\\Palk\\Tools",0);
   SourceFile("halcust\\level0\\EstPayRoll\\Palk\\WActions",0);
+
   SourceFile("halcust\\level0\\Tools",0);
   SourceFile("halcust\\level0\\Maint",0);// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 11:41:26 AM
   SourceFile("halcust\\level0\\Documents",0);
@@ -65,8 +55,7 @@ begin
   SourceFile("halcust\\level0\\Exports",0);// Edit ************************** BPI Ukraine - KramarAlexandr - 04, 18 04 2019 y. at 4:39:10 PM
   SourceFile("halcust\\MultyCurDiff",3);
   SourceFile("halcust\\RActions",3);// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 25 June 2018 13:55:52
-  SourceFile("halcust\\English",3);// Edit ************************** BPI Ukraine - KramarAlexandr - Wednesday, 27 June 2018 09:37:36
-  SourceFile("halcust\\Lithuanian",3);// Edit ************************** BPI Ukraine - KramarAlexandr - Wednesday, 27 June 2018 09:37:35
+  SourceFile("halcust\\Reports",3);
   SourceFile("halcust\\WActions",3);// Edit ************************** BPI Ukraine - KramarAlexandr - Tuesday, 9 October 2018 10:35:08
 
 //Old Salary Module start
@@ -887,7 +876,7 @@ begin
   RecordField(codeVATLeak,M4Code,2,0);
   RecordField(codeVATLoHe,M4Code,2,0);
   RecordField(Math,M4Matrix,0,0);
-  ArrayBegin(Math,KHeatAndWaterRowType,1);
+  ArrayBegin(Math,-,1);
   ArrayField(intFlatNr,M4Int,0,0);
   ArrayField(strName,M4Str,60,0);  
   ArrayField(valColdStart,M4Val,0,0);
@@ -1062,7 +1051,7 @@ begin
   RecordField(valTotal,M4Val,0,0);  
   RecordField(valTotalAmount,M4Val,0,0);  
   RecordField(Math,M4Matrix,0,0);
-  ArrayBegin(Math,KFlatExpenseRowType,1);
+  ArrayBegin(Math,-,1);
   ArrayField(intFlatNr,M4Int,0,0);
   ArrayField(strName,M4Str,60,0);  
   ArrayField(valCounterStart,M4Val,0,0);
@@ -1120,7 +1109,7 @@ begin
 
   BlockBegin(KArvedDefBlock,-,"");
   RecordField(Math,M4Matrix,0,0);
-  ArrayBegin(Math,FormDefRowType,1);
+  ArrayBegin(Math,-,1);
   ArrayField(LangCode,M4Code,5,0);
   ArrayField(UserGroup,M4Code,5,0);
   ArrayField(SerNr,M4Long,0,0);
@@ -1169,7 +1158,7 @@ begin
   EndBlock;
 //AutoExportRn end
 
-//Salary Module start
+//New Salary Module start
   RecordBegin(EmplVc,-,"Empl");
   ImpExpLevel(1);  
   RecordField(Code,M4Code,20,EmplVc);
@@ -1279,6 +1268,7 @@ begin
   RecordField(Firstname,M4Str,60,0);
   RecordField(Surname,M4Str,60,0);
   RecordField(StartDate,M4Date,0,0);
+  FieldIsTransDate(StartDate);
   RecordField(EndDate,M4Date,0,0);
   RecordField(PensionFlag,M4Int,0,0);
   RecordField(LaborFlag,M4Int,0,0);
@@ -1293,6 +1283,7 @@ begin
   RecordField(DisPensFlag,M4Int,0,0);
   RecordField(DPDStartDate,M4Date,0,0);
   RecordField(VacAbsTypeCode,M4Code,10,AbsTypeVc);
+  RecordField(CalcBonusFlag,M4Int,0,0); //Bk, ts 2019/02
   ArrayBegin(Math,-,1);
   ArrayField(PosCode,M4Code,10,PositionVc);
   ArrayField(PosName,M4Str,60,0);
@@ -1385,6 +1376,7 @@ begin
   RecordField(Firstname,M4Str,60,0);
   RecordField(Surname,M4Str,60,0);
   RecordField(StartDate,M4Date,0,0);
+  FieldIsTransDate(StartDate);
   RecordField(EndDate,M4Date,0,0);
   RecordField(AbsTypeCode,M4Code,10,AbsTypeVc);
   RecordField(WorkDays,M4Int,0,0);
@@ -1410,6 +1402,7 @@ begin
   RecordField(CalcSerNr,M4Long,0,0);
   RecordField(Math,M4Matrix,0,0);
   RecordField(OKMark,M4Mark,0,0);
+  RecordField(InfoFlag,M4Int,0,0); //JL020919  
   ArrayBegin(Math,-,1);
   ArrayField(Year,M4Long,0,0);
   ArrayField(SDate,M4Date,0,0);
@@ -1542,6 +1535,8 @@ begin
   RecordField(DaysNotPaid,M4Int,0,0);
   RecordField(Percent,M4val,0,0);
   RecordField(DeductAdvPaymTypeCode,M4Code,20,PaymTypeVc);
+  RecordField(NoObjOnCPTax,M4Int,0,0);
+  RecordField(SumUpCPRows,M4Int,0,0);
   EndBlock;
 
   RecordBegin(ExceptDatesVc,-,"ExceptDates");
@@ -1575,6 +1570,7 @@ begin
   RecordField(SerNr,M4Long,0,0);
   SerialNoBlock(OpenTransSerBlock);                    
   RecordField(TransDate,M4Date,0,0);
+  FieldIsTransDate(TransDate);
   RecordField(PaymTypeCode,M4Code,20,PaymTypeVc);
   RecordField(Comment,M4Str,100,0);
   RecordField(OKFlag,M4Int,0,0);
@@ -1621,6 +1617,9 @@ begin
   KeySegment(OKFlag);
   KeySegment(TransDate);
   KeySegment(PaymTypeCode);
+  KeyBegin(Comment);
+  KeySegment(Comment);
+  KeySegment(SerNr);
   EndRecord;
 
   RecordBegin(PieceWorkVc,-,"PieceWork");
@@ -1628,6 +1627,7 @@ begin
   RecordField(SerNr,M4Long,0,0);
   SerialNoBlock(PieceWorkSerBlock);                    
   RecordField(TransDate,M4Date,0,0);
+  FieldIsTransDate(TransDate);
   RecordField(PieceWorkTypeCode,M4Code,10,PieceWorkTypeVc);
   RecordField(Comment,M4Str,100,0);
   RecordField(OKFlag,M4Int,0,0);
@@ -1638,8 +1638,8 @@ begin
   ArrayField(PosCode,M4Code,10,PositionVc);
   ArrayField(Firstname,M4Str,60,0);
   ArrayField(Surname,M4Str,60,0);
-  ArrayField(Tariff,M4Val,0,0);
-  ArrayField(Amount,M4Val,0,0);
+  ArrayField(Tariff,M45Val,0,0);
+  ArrayField(Amount,M45Val,0,0);
   ArrayField(BrutoSum,M4Val,0,0);
   ArrayField(ObjCode,M4UStr,60,ObjVc);
   ArrayField(CalcSerNr,M4Long,0,0);
@@ -1675,7 +1675,7 @@ begin
   ArrayField(PosCode,M4Code,10,PositionVc);
   ArrayField(Firstname,M4Str,60,0);
   ArrayField(Surname,M4Str,60,0);
-  ArrayField(Tariff,M4Val,0,0);
+  ArrayField(Tariff,M45Val,0,0);
   ArrayField(SDate,M4Date,0,0);
   ArrayField(EDate,M4Date,0,0);
   EndArray;
@@ -1762,37 +1762,37 @@ begin
   ArrayField(DaysTotal,M4Val,0,0);
   ArrayField(HoursTotal,M4Val,0,0);
   ArrayField(ObjCode,M4UStr,60,ObjVc);
-  ArrayField(d1,M4Val,0,0);
-  ArrayField(d2,M4Val,0,0);
-  ArrayField(d3,M4Val,0,0);
-  ArrayField(d4,M4Val,0,0);
-  ArrayField(d5,M4Val,0,0);
-  ArrayField(d6,M4Val,0,0);
-  ArrayField(d7,M4Val,0,0);
-  ArrayField(d8,M4Val,0,0);
-  ArrayField(d9,M4Val,0,0);
-  ArrayField(d10,M4Val,0,0);
-  ArrayField(d11,M4Val,0,0);
-  ArrayField(d12,M4Val,0,0);
-  ArrayField(d13,M4Val,0,0);
-  ArrayField(d14,M4Val,0,0);
-  ArrayField(d15,M4Val,0,0);
-  ArrayField(d16,M4Val,0,0);
-  ArrayField(d17,M4Val,0,0);
-  ArrayField(d18,M4Val,0,0);
-  ArrayField(d19,M4Val,0,0);
-  ArrayField(d20,M4Val,0,0);
-  ArrayField(d21,M4Val,0,0);
-  ArrayField(d22,M4Val,0,0);
-  ArrayField(d23,M4Val,0,0);
-  ArrayField(d24,M4Val,0,0);
-  ArrayField(d25,M4Val,0,0);
-  ArrayField(d26,M4Val,0,0);
-  ArrayField(d27,M4Val,0,0);
-  ArrayField(d28,M4Val,0,0);
-  ArrayField(d29,M4Val,0,0);
-  ArrayField(d30,M4Val,0,0);
-  ArrayField(d31,M4Val,0,0);
+  ArrayField(d1,M4Str,10,0);
+  ArrayField(d2,M4Str,10,0);
+  ArrayField(d3,M4Str,10,0);
+  ArrayField(d4,M4Str,10,0);
+  ArrayField(d5,M4Str,10,0);
+  ArrayField(d6,M4Str,10,0);
+  ArrayField(d7,M4Str,10,0);
+  ArrayField(d8,M4Str,10,0);
+  ArrayField(d9,M4Str,10,0);
+  ArrayField(d10,M4Str,10,0);
+  ArrayField(d11,M4Str,10,0);
+  ArrayField(d12,M4Str,10,0);
+  ArrayField(d13,M4Str,10,0);
+  ArrayField(d14,M4Str,10,0);
+  ArrayField(d15,M4Str,10,0);
+  ArrayField(d16,M4Str,10,0);
+  ArrayField(d17,M4Str,10,0);
+  ArrayField(d18,M4Str,10,0);
+  ArrayField(d19,M4Str,10,0);
+  ArrayField(d20,M4Str,10,0);
+  ArrayField(d21,M4Str,10,0);
+  ArrayField(d22,M4Str,10,0);
+  ArrayField(d23,M4Str,10,0);
+  ArrayField(d24,M4Str,10,0);
+  ArrayField(d25,M4Str,10,0);
+  ArrayField(d26,M4Str,10,0);
+  ArrayField(d27,M4Str,10,0);
+  ArrayField(d28,M4Str,10,0);
+  ArrayField(d29,M4Str,10,0);
+  ArrayField(d30,M4Str,10,0);
+  ArrayField(d31,M4Str,10,0);
   ArrayField(CalcSerNr,M4Long,0,0);
   EndArray;
   MainKeyBegin(SerNr,0);
@@ -1810,6 +1810,9 @@ begin
   KeySegment(SerNr);
   KeySegment(Year);
   KeySegment(Month);
+  KeyBegin(Comment);
+  KeySegment(Comment);
+  KeySegment(SerNr);
   EndRecord;
 
   RecordBegin(CalcPayrollVc,-,"CalcPayroll");
@@ -1817,6 +1820,7 @@ begin
   RecordField(SerNr,M4Long,0,0);
   SerialNoBlock(CalcPayrollSerBlock);                    
   RecordField(CalcDate,M4Date,0,0);
+  FieldIsTransDate(CalcDate);
   RecordField(PaymDate,M4Date,0,0);
   RecordField(OKFlag,M4Int,0,0);
   RecordField(PaymFlag,M4Int,0,0);
@@ -1842,6 +1846,9 @@ begin
   RecordField(PaymMark,M4Mark,0,0);
   RecordField(Mailf,M4Int,0,0);
   RecordField(AddTaxSumTotal,M4Val,0,0);//ts - 2017/12
+  // nk 30.11.2018
+  RecordField(RegDate,M4Date,0,0);
+  RecordField(RecSign,M4Code,20,0);
   ArrayBegin(Math,-,1);
   ArrayField(PosCode,M4Code,10,PositionVc);
   ArrayField(PosName,M4Str,60,0);
@@ -1915,6 +1922,10 @@ begin
   KeySegment(ContrSerNr);
   KeySegment(OKFlag);
   KeySegment(SerNr);
+  //nk 30.11.2018
+  KeyBegin(RegDate);
+  KeySegment(RegDate);
+  KeySegment(SerNr);
   EndRecord;
 
   RecordBegin(CPUnpaidVc,-,"CPUnpaid");
@@ -1971,6 +1982,7 @@ begin
   RecordField(SerNr,M4Long,0,0);
   SerialNoBlock(PaymPayrollSerBlock);                    
   RecordField(PaymDate,M4Date,0,0);
+  FieldIsTransDate(PaymDate);
   RecordField(OKFlag,M4Int,0,0);
   RecordField(Comment,M4Str,100,0);
   RecordField(ObjCode,M4UStr,60,ObjVc);
@@ -1982,6 +1994,9 @@ begin
   RecordField(SentFlag,M4Int,0,0);
   RecordField(OKMark,M4Mark,0,0);
   RecordField(Name,M4Str,120,0);
+  //nk 30.11.2018
+  RecordField(RegDate,M4Date,0,0);
+  RecordField(RecSign,M4Code,20,0);
   ArrayBegin(Math,-,1);
   ArrayField(ContrSerNr,M4Long,0,0);
   ArrayField(CalcSerNr,M4Long,0,0);
@@ -2025,6 +2040,10 @@ begin
   KeySegment(SerNr);
   KeyBegin(Name);
   KeySegment(Name);
+  KeySegment(SerNr);
+  //30.11.2018
+  KeyBegin(RegDate);
+  KeySegment(RegDate);
   KeySegment(SerNr);
   EndRecord;
 
@@ -2424,6 +2443,14 @@ begin
   KeySegment(TransNr);
   KeySegment(RowNr);
   KeySegment(CalcSerNr);
+  KeyBegin(ECode);
+  KeySegment(EmplCode);
+  KeySegment(TransDate);
+  KeySegment(TransType);
+  KeySegment(TransNr);
+  KeySegment(RowNr);
+  KeySegment(ContrSerNr);
+  KeySegment(CalcSerNr);
   Endrecord;
 
 //ts - 2017/11
@@ -2473,10 +2500,81 @@ begin
   ArrayField(Spec,M4Code,10,0);
   EndArray;
   EndBlock;
-//Salary Module end
+  
+//Bk, ts - 2019/06
+  RecordBegin(PlanAbsenceVc,-,"");
+  ImpExpLevel(1);  
+  RecordField(SerNr,M4Long,0,0);
+  SerialNoBlock(PlanAbsenceSerBlock);                    
+  RecordField(TransDate,M4Date,0,0);
+  FieldIsTransDate(TransDate);
+  RecordField(Comment,M4Str,100,0);
+  RecordField(OKFlag,M4Int,0,0);
+  RecordField(CalcFlag,M4Int,0,0);
+  RecordField(Math,M4Matrix,0,0);
+  //RecordField(Invalid,M4Int,0,0);
+  //FieldIsInvalid(Invalid);  
+  ArrayBegin(Math,-,1);
+  ArrayField(ContrSerNr,M4Long,0,0);
+  ArrayField(AbsTypeCode,M4Code,10,AbsTypeVc);
+  ArrayField(StartDate1,M4Date,0,0);
+  ArrayField(EndDate1,M4Date,0,0);
+  ArrayField(AbsenceNr,M4Long,0,0);
+  EndArray;
+  MainKeyBegin(SerNr,0);
+  KeySegment(SerNr);
+  KeyBegin(TransDate);
+  KeySegment(TransDate);
+  KeySegment(SerNr);
+  KeyBegin(OKFlag);
+  KeySegment(OKFlag);
+  KeySegment(SerNr);
+  KeyBegin(CalcFlag);
+  KeySegment(CalcFlag);
+  KeySegment(SerNr);
+  EndRecord;
+  
+  RecordBegin(VacReservVc,-,"");
+  ImpExpLevel(1);  
+  RecordField(Code,M4Code,10,AccGroupVc);
+  RecordField(Name,M4Str,60,0);
+  RecordField(Percent,M4Val,0,0);
+  RecordField(DebitAccCode,M4Code,10,AccVc);
+  RecordField(CreditAccCode,M4Code,10,AccVc);
+  RecordField(Math,M4Matrix,0,0);
+  ArrayBegin(Math,-,1);
+  ArrayField(TaxCode,M4Code,10,AbsTypeVc);
+  ArrayField(Name,M4Str,60,0);
+  ArrayField(DebitAccCode,M4Code,10,AccVc);
+  ArrayField(CreditAccCode,M4Code,10,AccVc);
+  EndArray;
+  MainKeyBegin(Code,0);
+  KeySegment(Code);
+  KeySegment(Name);
+  KeyBegin(Name);
+  KeySegment(Name);
+  KeySegment(Code);
+  EndRecord;
+
+  BlockBegin(PlanAbsenceSerBlock,-,"planabsenceserblock");
+  XXSERBLOCK;
+
+  BlockBegin(SalaryRoundBlock,-,"salroundoff3");
+  CacheBlockInClient;
+  NewAutosyncBlock(kSyncDirectionToClient);
+  RecordField(RndPWTariffDecs,M4Int,0,0);
+  RecordField(RndPWTariffStep,M4Set,398,0);
+  RecordField(RndPWTariffMode,M4Set,399,0);
+  RecordField(RndPWTariffDirec,M4Set,400,0);
+  RecordField(RndPWAmountDecs,M4Int,0,0);
+  RecordField(RndPWAmountStep,M4Set,398,0);
+  RecordField(RndPWAmountMode,M4Set,399,0);
+  RecordField(RndPWAmountDirec,M4Set,400,0);
+  EndBlock;
+//New Salary Module end
 
 // RIK request start
-  BlockBegin(TXTSerBlock,TXTServType,"");
+  BlockBegin(TXTSerBlock,-,"");
   BlockForAllCompanies;
   BlockInServer;
   RecordField(dbName,M4Str,20,0);
@@ -2499,21 +2597,273 @@ begin
   RecordField(LastImportHour,M4Time,0,0);
   RecordField(LastImportDate,M4Date,0,0);
   RecordField(TimedAction,M4Int,0,0);
+  RecordField(CreateTRVc,M4Int,0,0);
+  RecordField(StoreUnknownTrans,M4Int,0,0);
+  RecordField(MaxRowCntIP,M4Int,0,0);
+  RecordField(MaxRowCntOP,M4Int,0,0);
+  RecordField(UseMainIdentBlock,M4Int,0,0);
+  RecordField(TRVcPackMethod,M4Int,0,0);
+  EndBlock;
+
+  RecordBegin(SEPABankEntryVc,-,"exc_SEPABankEntryVc");
+  RecordField(SerNr,M4Long,0,0);
+  RecordField(Comment,M4Str,255,0);
+  RecordField(ImportedDate,M4Date,0,0);
+  RecordField(ImportedTime,M4Time,0,0);
+  RecordField(DoneFlag,M4Int,0,0);
+  RecordField(DoneDate,M4Date,0,0);
+  RecordField(DoneTime,M4Time,0,0);
+  RecordField(RecType,M4Int,0,0);
+  RecordField(RecID,M4Str,20,0);
+  RecordField(OurIBAN,M4Str,20,0);
+  RecordField(DomainCode,M4Str,10,0);
+  RecordField(FamilyCode,M4Str,10,0);
+  RecordField(SubfamilyCode,M4Str,10,0);
+  RecordField(NtryRef,M4Str,50,0);
+  RecordField(CdtDbtInd,M4Str,5,0);
+  RecordField(RvslInd,M4Str,5,0);
+  RecordField(BookgDt,M4Date,0,0);
+  RecordField(PrtryCd,M4Str,5,0);
+  RecordField(MsgId,M4Str,50,0);
+  RecordField(AcctSvcrRef,M4Str,50,0);
+  RecordField(PmtInfId,M4Str,50,0);
+  RecordField(InstrId,M4Str,50,0);
+  RecordField(EndToEndId,M4Str,50,0);
+  RecordField(PrtryTp,M4Str,50,0);
+  RecordField(PrtryRef,M4Str,50,0);
+  RecordField(InstdAmt,M4Val,0,0);
+  RecordField(InstdAmtCcy,M4Str,5,0);
+  RecordField(TxAmt,M4Val,0,0);
+  RecordField(TxAmtCcy,M4Str,5,0);
+  RecordField(DbtrNm,M4Str,100,0);
+  RecordField(DbtrDept,M4Str,100,0);
+  RecordField(DbtrStrtNm,M4Str,100,0);
+  RecordField(DbtrBldgNb,M4Str,20,0);
+  RecordField(DbtrPstCd,M4Str,20,0);
+  RecordField(DbtrTwnNm,M4Str,20,0);
+  RecordField(DbtrCtry,M4Str,20,0);
+  RecordField(DbtrCtrySubDvsn,M4Str,20,0);
+  RecordField(DbtrAdrLine1,M4Str,255,0);
+  RecordField(DbtrAdrLine2,M4Str,255,0);
+  RecordField(DbtrOrgId,M4Str,20,0);
+  RecordField(DbtrAcctIBAN,M4Str,20,0);
+  RecordField(DbtrAcctOthrID,M4Str,20,0);
+  RecordField(CdtrNm,M4Str,100,0);
+  RecordField(CdtrDept,M4Str,100,0);
+  RecordField(CdtrStrtNm,M4Str,100,0);
+  RecordField(CdtrBldgNb,M4Str,20,0);
+  RecordField(CdtrPstCd,M4Str,20,0);
+  RecordField(CdtrTwnNm,M4Str,20,0);
+  RecordField(CdtrCtry,M4Str,20,0);
+  RecordField(CdtrCtrySubDvsn,M4Str,20,0);
+  RecordField(CdtrAdrLine1,M4Str,255,0);
+  RecordField(CdtrAdrLine2,M4Str,255,0);
+  RecordField(CdtrOrgId,M4Str,20,0);
+  RecordField(CdtrAcctIBAN,M4Str,20,0);
+  RecordField(CdtrAcctOthrID,M4Str,20,0);
+  RecordField(RmtInfUstrd,M4Str,255,0);
+  RecordField(RmtInfStrdCdtr,M4Str,255,0);
+  RecordField(SvcrBIC,M4Code,10,0);
+  MainKeyBegin(SerNr,0);
+  KeySegment(SerNr);
+  KeyBegin(ImportedDateTime);
+  KeySegment(ImportedDate);
+  KeySegment(ImportedTime);
+  KeySegment(SerNr);
+  KeyBegin(DoneDateTime);
+  KeySegment(DoneDate);
+  KeySegment(DoneTime);
+  KeySegment(SerNr);
+  KeyBegin(DoneFlag);
+  KeySegment(DoneFlag);
+  KeySegment(SerNr);
+  KeyBegin(CdtDbtInd);
+  KeySegment(CdtDbtInd);
+  KeySegment(SerNr);
+  KeyBegin(BookgDt);
+  KeySegment(BookgDt);
+  KeySegment(SerNr);
+  KeyBegin(SvcrBICNtry);
+  KeySegment(SvcrBIC);
+  KeySegment(NtryRef);
+  KeySegment(SerNr);
+  //indexes for LCLass window
+  KeyBegin(SerNrNotDone);
+  KeySegment(SerNr);
+  KeyBegin(ImportedDateTimeNotDone);
+  KeySegment(ImportedDate);
+  KeySegment(ImportedTime);
+  KeySegment(SerNr);
+  KeyBegin(DoneDateTimeNotDone);
+  KeySegment(DoneDate);
+  KeySegment(DoneTime);
+  KeySegment(SerNr);
+  KeyBegin(CdtDbtIndNotDone);
+  KeySegment(CdtDbtInd);
+  KeySegment(SerNr);
+  KeyBegin(BookgDtNotDone);
+  KeySegment(BookgDt);
+  KeySegment(SerNr);
+  KeyBegin(SvcrBICNtryNotDone);
+  KeySegment(SvcrBIC);
+  KeySegment(NtryRef);
+  KeySegment(SerNr);
+  EndRecord;
+
+  BlockBegin(TRIdentBlock,-,"");
+  BlockInServer;
+  RecordField(Math,M4Matrix,0,0);
+  ArrayBegin(Math,-,1);
+  ArrayField(DomainCode,M4Code,10,0);
+  ArrayField(FamilyCode,M4Code,10,0);
+  ArrayField(SubfamilyCode,M4Code,10,0);
+  ArrayField(TheirIBAN,M4Str,20,0);
+  ArrayField(BankTransDescr,M4Str,255,0);
+  ArrayField(Comment,M4Str,255,0);
+  ArrayField(CredAccNumTR,M4Code,10,0);
+  ArrayField(DebAccNumTR,M4Code,10,0);
+  ArrayField(RecType,M4Set,1670,0);
+  ArrayField(DefDescr,M4Str,255,0);
+  ArrayField(ObjectsTRCred,M4UStr,60,ObjVc);
+  ArrayField(ObjectsTRDeb,M4UStr,60,ObjVc);
+  ArrayField(RmtInfUstrd,M4Str,255,0);
+  ArrayField(OurIBAN,M4Str,20,0);
+  EndArray;
   EndBlock;
 //SEPA_IMPORT end
 
-//Mailbow
-  BlockBegin(MailbowBlock,-,"");
-  BlockForAllCompanies;
+  //Bk - start KB 08.03.2019 //pangaliidestus
+  RecordBegin(BankReqQueVc,-,"exc_BankReqQueVc");
+  RecordField(SerNr,M4Long,0,0);
+  RecordField(ReqUniqueID,M4Str,30,0); //SerNr is also unique but it can be predicted
+  RecordField(RegNr,M4Str,20,0);
+  RecordField(UserName,M4Str,60,0);
+  RecordField(BankReqType,M4Str,60,0);
+  RecordField(RecordType,M4Str,60,0);
+  RecordField(RecordID,M4Str,60,0); //can be ser nr or code, so type is string
+  RecordField(ReqFileName,M4Str,255,0);
+  RecordField(ReplyFileName,M4Str,255,0);
+  RecordField(Status,M4Set,1671,0);
+  RecordField(SendAttempts,M4Long,0,0);
+  RecordField(StatusMessage,M4Str,255,0);
+  RecordField(CreationDate,M4Date,0,0);
+  RecordField(CreationTime,M4Time,0,0);
+  RecordField(SendDate,M4Date,0,0);
+  RecordField(SendTime,M4Time,0,0);
+  RecordField(ReplyDate,M4Date,0,0);
+  RecordField(ReplyTime,M4Time,0,0);
+  RecordField(CorrelID,M4Str,60,0);
+  RecordField(Partner,M4Str,60,0);
+  RecordField(ReplyStatCode,M4Set,1672,0);
+  RecordField(MsgID,M4Str,60,0);
+  RecordField(BankCode,M4Code,10,0);
+  RecordField(PmtInfId,M4Str,255,0);
+  RecordField(Math,M4Matrix,0,0);
+  RecordField(NbOfTxs,M4Int,0,0);
+  RecordField(NbOfTxsAccept,M4Int,0,0);
+  RecordField(NbOfTxsReject,M4Int,0,0);
+  RecordField(IBAN,M4Str,60,0);
+  ArrayBegin(Math,-,1);
+  ArrayField(RecordID,M4Str,60,0);
+  ArrayField(ReplyStatCode,M4Set,1672,0);
+  ArrayField(StatusMessage,M4Str,255,0);
+  ArrayField(PmtInfId,M4Str,255,0);
+  EndArray;
+  MainKeyBegin(SerNr,0);
+  KeySegment(SerNr);
+  KeyBegin(StatusDateTime);
+  KeySegment(Status);
+  KeySegment(SendDate);
+  KeySegment(SendTime);
+  KeySegment(SerNr);
+  KeyBegin(CreationDateTime);
+  KeySegment(CreationDate);
+  KeySegment(CreationTime);
+  KeySegment(SerNr);
+  KeyBegin(SendDateTime);
+  KeySegment(SendDate);
+  KeySegment(SendTime);
+  KeySegment(SerNr);
+  KeyBegin(ReplyDateTime);
+  KeySegment(ReplyDate);
+  KeySegment(ReplyTime);
+  KeySegment(SerNr);
+  KeyBegin(BankReqType);
+  KeySegment(BankReqType);
+  KeySegment(SerNr);
+  KeyBegin(StatReqTypeIBAN);
+  KeySegment(Status);
+  KeySegment(BankReqType);
+  KeySegment(Partner);
+  KeySegment(BankCode);
+  KeySegment(IBAN);
+  KeySegment(SerNr);
+  KeyBegin(RecordIDType);
+  KeySegment(RecordID);
+  KeySegment(RecordType);
+  KeySegment(SerNr);
+  KeyBegin(MsgID);
+  KeySegment(MsgID);
+  KeySegment(SerNr);
+  SubsetKeyBegin2(RowRecordIDType);
+  StoreInBaseKey;
+  AppendMatrixFieldToKeyName(RecordID,0);
+  KeySegment(RecordType);
+  KeySegment(SerNr);  
+  EndRecord;
+
+  BlockBegin(BankServicesBlock,-,"");
   BlockInServer;
-  RecordField(dbUser,M4Str,20,0);
-  RecordField(dbPasswd,M4Str,100,0);
-  RecordField(dbConf,M4Str,40,0);
-  RecordField(Title,M4Str,60,0);
-  RecordField(PackageSize,M4long,0,0);
+  //Bank1 = SGW
+  RecordField(Bank1EPayFlag,M4Int,0,0);
+  RecordField(Bank1EPayLastDate,M4Date,0,0);
+  RecordField(Bank1EPayLastTime,M4Time,0,0);
+  RecordField(Bank1EPayLastRecord,M4Long,0,0);
+  RecordField(Bank1AccStmtFlag,M4Int,0,0);
+  RecordField(Bank1AccStmtLastDate,M4Date,0,0);
+  RecordField(Bank1AccStmtLastTime,M4Time,0,0);
+  RecordField(Bank1TodayAccStmtFlag,M4Int,0,0);
+  RecordField(Bank1TodayAccStmtLastDate,M4Date,0,0);
+  RecordField(Bank1TodayAccStmtLastTime,M4Time,0,0);
+  RecordField(SysMsg,M4Str,255,0);
+  RecordField(DebugFlag,M4Int,0,0);
+  RecordField(Bank1BalanceFlag,M4Int,0,0);
+  RecordField(Bank1BalanceLastDate,M4Date,0,0);
+  RecordField(Bank1BalanceLastTime,M4Time,0,0);
+  RecordField(Bank1AgreementId,M4Str,255,0);
+  RecordField(TestFlag,M4Int,0,0);
   EndBlock;
 
-  BlockBegin(MailbowFieldsBlock,-,"");
+  BlockBegin(OPTBlock,-,"OPTBlockExc85");
+  RecordField(DOSFlag,M4Int,0,0);   //Default selection
+  RecordField(OnDUEDate,M4Int,0,0); //Default selection
+  RecordField(Bankfees,M4Int,0,0);  //Default selection
+  RecordField(NoMixCurOP,M4Int,0,0);
+  RecordField(NoMixCurIP,M4Int,0,0);
+  RecordField(ExpPath,M4Str,100,0);
+  RecordField(MicroTKey1,M4Long,0,0);
+  RecordField(MicroTKey2,M4Long,0,0);
+  RecordField(MicroTKey3,M4Long,0,0);
+  RecordField(MicroTKey4,M4Long,0,0);
+  RecordField(IncChequeNo,M4Int,0,0);
+  RecordField(BatchBooking,M4Int,0,0);
+  //Bk - start - new Books fields. Change register tag name when new field is added and create new import function
+  RecordField(PayPerSupplier,M4Int,0,0); //Default selection // new field KB 17.04.2019
+  //Bk - end
+  EndBlock;
+
+  //Bk - end //pangaliidestus
+
+//Mailbow
+  BlockBegin(SmailyBlock,-,"");
+  BlockForAllCompanies;
+  BlockInServer;
+  RecordField(ServiceHost,M4Str,60,0);
+  RecordField(dbUser,M4Str,20,0);
+  RecordField(dbPasswd,M4Str,100,0);
+  EndBlock;
+
+  BlockBegin(SmailyFieldsBlock,-,"");
   BlockInServer;
   BlockForAllCompanies;
   RecordField(Math,M4Matrix,0,0);
@@ -2525,7 +2875,7 @@ begin
   EndArray;
   EndBlock;
 
-//Krediidiskoor
+//eteenused
   BlockBegin(EInvoiceBlock,-,"Exc_EInvoiceBlock");
   LoadBlockOnStartup;
   CacheBlockInClient;
@@ -2640,7 +2990,7 @@ begin
   RecordField(xxBlockCloudDownloads,M4Dummy,0,0);
   RecordField(IncAllAttach,M4Int,0,0);
   RecordField(VEIVRowComment,M4Int,0,0);
-  //cust KB 20.06.2017 - new inforegister flip fields
+  //Bk KB 20.06.2017 - new inforegister flip fields
   RecordField(CreditScoreServiceFlag,M4Int,0,0);
   RecordField(CreditScoreStatusDate,M4Date,0,0);
   RecordField(CreditScoreStatusTime,M4Time,0,0);
@@ -2656,13 +3006,13 @@ begin
   RecordField(APIServiceToken,M4Str,255,0);
   RecordField(WebLinkUserName,M4Str,255,0);
   RecordField(WebLinkPassword,M4Str,255,0);
-  //cust end
+  //Bk end
   //Bk TS 217/09
   RecordField(EInvoicePartner,M4Str,60,0);
   RecordField(Service4Flag,M4Int,0,0);
   RecordField(Service5Flag,M4Int,0,0);
   RecordField(Service6Flag,M4Int,0,0);
-  RecordField(Service11Flag,M4Int,0,0);
+  RecordField(Service11Flag,M4Int,0,0);//removed, mailbow
   RecordField(InIVEstEInvoices,M4Int,0,0);
   RecordField(CntInIVEstEInvoices,M4Int,0,0);
   RecordField(LastInIVEstEInvoicesDate,M4Date,0,0);
@@ -2673,79 +3023,36 @@ begin
   RecordField(LastInIVEstTime,M4Time,0,0);
   RecordField(LastInEstDate,M4Date,0,0);
   RecordField(LastInEstTime,M4Time,0,0);
-  RecordField(TsekkActivFlag,M4Int,0,0); //cust KB 30.10.2017 Tsekk.ee
-  RecordField(AutoVIfromVEIV,M4Int,0,0); //cust ts 2018/04, for automated invoice
+  RecordField(TsekkActivFlag,M4Int,0,0); //Bk KB 30.10.2017 Tsekk.ee
+  RecordField(AutoVIfromVEIV,M4Int,0,0); //Bk ts 2018/04, for automated invoice
   RecordField(LastInIVEstEInvSerial,M4Long,0,0);
   RecordField(StopInIVEstEInvPdf,M4Int,0,0);
   RecordField(CntInIVEstEInvPdf,M4Int,0,0);
-  //Bk end
+//Bk -start ts-2018/07, kulutuste aruanne
+  RecordField(EExpPartner,M4Str,60,0);
+  RecordField(InEstExp,M4Int,0,0);
+  RecordField(StopInEstExp,M4Int,0,0);
+  RecordField(LastInEstExpDate,M4Date,0,0);
+  RecordField(LastInEstExpTime,M4Time,0,0);
+  RecordField(LastInEstExpSerial,M4Long,0,0);
+  RecordField(StopInEstExpPdf,M4Int,0,0);
+  RecordField(CntInEstExpPdf,M4Int,0,0);
+  RecordField(LastInEstExpReqDate,M4Date,0,0);
+  RecordField(LastInEstExpReqTime,M4Time,0,0);
+  RecordField(Service15Flag,M4Int,0,0); //Telema API KB 12.07.2018 reserved 16 to 19 for detailed Telema services
+  RecordField(UseAccObject,M4Int,0,0); //NK 26.10.2018
+  RecordField(VEIVRowToExpMethod,M4Int,0,0); //Bk KB 08.01.2019
+  RecordField(BaseDataSend,M4Int,0,0); //Bk KB 21.01.2019 //e-arvete algandmed
+  RecordField(VEIVRowCommToExp,M4Int,0,0); //Bk KB 12.02.2019
+  RecordField(Service20Flag,M4Int,0,0); //Bk KB 08.03.2019 //pangaliidestus reserved 21 to 29 for detailed bank services
+  RecordField(Service30Flag,M4Int,0,0); //Bk KB 25.06.2019 //scoro liidestus reserved 30 to 39 for detailed scoro services
+  RecordField(UseMedicalElems,M4Int,0,0); //Bk KB 04.07.2019 //earvete erinouded
+  RecordField(UseTootKassaElems,M4Int,0,0); //Bk KB 04.07.2019 //earvete erinouded
+  RecordField(EExpRowPackMethod,M4Int,0,0); //Bk KB 05.07.2019 //kuluaruanded
+  RecordField(EExpRowCommToExp,M4Int,0,0); //Bk KB 05.07.2019 //kuluaruanded
+  RecordField(Service40Flag,M4Int,0,0); //Bk ts 2019/07 //smaily
+  //Bk - end
   EndBlock;
-
-  BlockBegin(CredScoreSettBlock,-,"");
-  BlockInServer;
-  RecordField(Math,M4Matrix,0,0);
-  ArrayBegin(Math,-,1);
-  ArrayField(ScoreRangeLastValue,M4Val,0,0);
-  ArrayField(DispMessage,M4Str,255,0);
-  ArrayField(AllowCreateIVVc,M4Set,12000,0);
-  ArrayField(AllowCreateORVc,M4Set,12000,0);
-  ArrayField(AllowCreateSHVc,M4Set,12000,0);
-  EndArray;
-  EndBlock;
-
-  BlockBegin(IRSetBlock,-,"");
-  BlockInServer;
-  RecordField(SearchResQaunt,M4Int,0,0);
-  RecordField(UpdInterruptedFlag,M4Int,0,0);
-  RecordField(FailedCredScoreCU,M4Code,20,0);
-  RecordField(FailedEMTAKCU,M4Code,20,0);
-  RecordField(FailureDate,M4Date,0,0);
-  RecordField(ServiceDisabledFlag,M4Int,0,0);
-  RecordField(UpdCredScoreSchedHour,M4Int,0,0);
-  RecordField(SendDebtsSchedHour,M4Int,0,0);
-  RecordField(CredScoreComplFlag,M4Int,0,0);
-  RecordField(SendDebtsComplFlag,M4Int,0,0);
-  EndBlock;
-
-  RecordBegin(IRSuppVc,-,"");
-  ImpExpLevel(0);
-  RegisterForAllCompanies(false);
-  RecordField(RegNr1,M4Str,20,0);
-  RecordField(CreditScore,M4Val,0,0);
-  RecordField(CreditScoreUpdDate,M4Date,0,0);
-  MainKeyBegin(RegNr1,0);
-  KeySegment(RegNr1);
-  EndRecord;
-
-  RecordBegin(IRDebtHandleVc,-,"");
-  ImpExpLevel(1);
-  RecordField(CredRegCode,M4Str,20,0);
-  RecordField(CredName,M4Str,255,0);
-  RecordField(DebtRegCode,M4Str,20,0);
-  RecordField(DebtName,M4Str,255,0);
-  RecordField(ReprentRegCode,M4Str,20,0);
-  RecordField(ReprName,M4Str,255,0);
-  RecordField(InvoiceNr,M4Long,0,IVVc);
-  RecordField(InvoiceAmount,M4Val,0,0);
-  RecordField(ClaimAmount,M4Val,0,0);
-  RecordField(CurncyCode,M4Code,5,CurncyCodeVc);
-  RecordField(InvIssDate,M4Date,0,0);
-  RecordField(InvDueDate,M4Date,0,0);
-  RecordField(ClaimCreatedDate,M4Date,0,0);
-  RecordField(PaidFlag,M4Mark,0,0);
-  RecordField(CredContactName,M4Str,255,0);
-  RecordField(CredContactEmail,M4Str,255,0);
-  RecordField(CredContactPhone,M4Str,255,0);
-  RecordField(SentFlag,M4Int,0,0);//ts - 2018/04
-  MainKeyBegin(InvoiceNr,0);
-  KeySegment(InvoiceNr);
-  KeySegment(CredRegCode);
-  KeySegment(DebtRegCode);
-  KeyBegin(CredRegCode);
-  KeySegment(CredRegCode);
-  KeySegment(DebtRegCode);
-  KeySegment(InvoiceNr);
-  EndRecord;
 
   BlockBegin(EInvQueryIntrvlBlock,-,"Exc_EInvQBlock");
   BlockInServer;
@@ -2757,8 +3064,16 @@ begin
   RecordField(StatusCheckReq,M4Int,0,0);
 //Bk
   RecordField(GetInvReq,M4Int,0,0);
-  RecordField(GetCurRateReq,M4Int,0,0); //cust KB 06.02.2018
-  RecordField(GetInvPdfReq,M4Int,0,0);
+  RecordField(GetCurRateReq,M4Int,0,0); //Bk KB 06.02.2018
+  RecordField(GetInvPdfReq,M4Int,0,0);//Bk, ts 2018/06
+  RecordField(EExpReq,M4Int,0,0);//Bk, ts 2018/07
+  RecordField(EExpPdfReq,M4Int,0,0);//Bk, ts 2018/07
+  RecordField(TelemaAPIReq,M4Int,0,0); //Telema API KB 12.07.2018
+  RecordField(BaseDataSendReq,M4Int,0,0); //e-arvete algandmed KB 18.01.2019
+  RecordField(BankQueueSend,M4Int,0,0); //Bk //pangaliidestus KB 08.03.2019
+  RecordField(BankStmtRequest,M4Int,0,0); //Bk //pangaliidestus KB 08.03.2019
+  RecordField(ScoroExpReq,M4Int,0,0); //Bk //scoro liidestus KB 25.06.2019
+  RecordField(ScoroImpReq,M4Int,0,0); //Bk //scoro liidestus KB 25.06.2019
   EndBlock;
 
 //Tsekk.ee start KB 09.01.2018
@@ -2775,6 +3090,10 @@ begin
   RecordField(LastSuccessReqDate,M4Date,0,0);
   RecordField(LastSuccessReqTime,M4Time,0,0);
   RecordField(AccountUserName,M4Str,255,0);
+  RecordField(NoPdfFlag,M4Int,0,0);
+  RecordField(LastInvDate,M4Date,0,0);
+  RecordField(LastInvTime,M4Time,0,0);
+  RecordField(LastPDFInvNr,M4Long,0,0);
   EndBlock;
 
   //Support register to select multiple e-invoices
@@ -2821,6 +3140,75 @@ begin
   KeySegment(IVSerNr);
   KeySegment(SerNr);    
   EndRecord;
+
+//e-invoice import
+  BlockBegin(EInvoiceSetBlock,-,"");
+  RecordField(CompanyForms,M4Str,255,0);
+  RecordField(FindCode,M4Int,0,0);
+  RecordField(FindVATNr,M4Int,0,0);
+  RecordField(FindRegNr,M4Int,0,0);
+  RecordField(FindName,M4Int,0,0);
+  RecordField(NameCountry,M4Int,0,0);
+  EndBlock;
+
+//supplier e-invoice import
+  BlockBegin(SupEInvoiceSetBlock,-,"");
+  RecordField(CompanyForms,M4Str,255,0);
+  RecordField(FindCode,M4Int,0,0);
+  RecordField(FindVATNr,M4Int,0,0);
+  RecordField(FindRegNr,M4Int,0,0);
+  RecordField(FindName,M4Int,0,0);
+  RecordField(NameCountry,M4Int,0,0);
+  RecordField(FindIBAN,M4Int,0,0);
+  EndBlock;
+
+  RecordBegin(CompanyFormVc,-,"");
+  RegisterForAllCompanies(false);
+  RecordField(Code,M4Code,20,0);
+  RecordField(Comment,M4Str,100,0);
+  MainKeyBegin(Code,0);
+  KeySegment(Code);
+  KeyBegin(Comment);
+  KeySegment(Comment);
+  KeySegment(Code);
+  EndRecord;
+
+//kulutuste aruanded
+  RecordBegin(CUExpVc,-,"");
+  RecordField(SerNr,M4Long,0,0);
+  RecordField(ReportId,M4Str,30,0);
+  RecordField(AttachmentId,M4Str,30,0);
+  RecordField(VersionNr,M4Long,0,0);
+  RecordField(ExpSerNr,M4Long,0,0);
+  RecordField(FileName,M4Str,60,0);
+  MainKeyBegin(SerNr,0);
+  KeySegment(SerNr);
+  KeyBegin(ReportId);
+  KeySegment(ReportId);
+  KeySegment(AttachmentId);
+  KeySegment(SerNr);
+  KeyBegin(ExpSerNr);
+  KeySegment(ExpSerNr);
+  KeySegment(SerNr);    
+  EndRecord;
+
+  //earvete erinouded - start
+  BlockBegin(EInvObjTypeBlock,-,"EInvObjTypeExc85");
+  BlockInServer;
+  RecordField(Math,M4Matrix,0,0);
+  ArrayBegin(Math,-,1);
+  ArrayField(EInvElem,M4Str,60,0);
+  ArrayField(IVObjType,M4Str,5,0);
+  EndArray;
+  EndBlock;
+  //earvete erinouded - end
+
+  RecordAddBegin(IVVc,"Bk_IVVc85");
+  //cust - start KB 05.11.2019 //earvete erinouded
+  RecordField(BKContractId,M4Str,100,0);
+  RecordField(BKTenderId,M4Str,100,0);
+  //cust - end
+  EndRecordAdd;
   
   RecordAddBegin(CCatVc,"BPICCatVc2");
   	RecordField(BPIObjects,M4UStr,100,ObjVc);// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 25 June 2018 13:48:21
@@ -2848,6 +3236,10 @@ begin
 		RecordField(SeparateOnAcc,M4Int,0,0);
 		RecordField(Per7,M4Long,0,0);// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 11:54:25 AM
 		RecordField(Per8,M4Long,0,0);// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 11:54:27 AM
+  EndBlock;
+
+  BlockBegin(VINoVATPayBlock,-,"");
+  RecordField(Classification,M4UStr,200,CClassVc);
   EndBlock;
 	
   return;

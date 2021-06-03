@@ -1,15 +1,19 @@
 external function boolean IsVacAbsTypeFlag(string);
-external function LongInt GetCalendarDays(date,date);
-external function LongInt GetWorkingDays(Date,Date);
+external function longint GetCalendarDays(date,date);
+external function longint GetWorkingDays(Date,Date);
 external function boolean GetBackXMonthsPeriod(var date,var date,integer);
 external function boolean GetRightPeriod(var date,var date,date,date);
-external function LongInt GetExceptDays(date,var date);
+external function longint GetExceptDays(date,var date);
 external function val GetMinSalary(date);
-external function val GetStandingChargeSum(record ContractVc,date);
+external function val GetStandingChargeSum(record ContractVc,date,boolean);
 external function string 20 GetVacAbsTypeCode(LongInt);
 external function roundmode GetSalaryRoundMode(string);
-external function LongInt GetAbsenceDays(LongInt,string,date,date,var LongInt,var LongInt);
+external function longint GetAbsenceDays(LongInt,string,date,date,var LongInt,var LongInt);
+external function integer CheckCalcmethod(record ContractVc,date,date,date,var val,var val,var val);
+external function val GetCPSumForPeriod(LongInt,date,date);
+external function boolean No6Month(longint,date);
 
+global
 procedure EmptyRow()
 begin
   StartFormat(15);
@@ -17,6 +21,7 @@ begin
   return;
 end;
 
+global
 function string 10 MonthYearStr(date sd)
 begin
   string 10 res;
@@ -31,69 +36,10 @@ begin
 end;
 
 global
-procedure DblAbsenceFBVc(string dblstr,string l,integer currepwn)
-begin
-  record AbsenceFBVc AFBr;
-  integer wn;
-
-  if (nonblank(dblstr)) then begin
-    AFBr.SerNr = FirstInRange(dblstr,20);
-    if (ReadFirstMain(AFBr,1,true)) then begin
-      wn = OpenWindow("AbsenceFBDClass",1,0,"","",AFBr);
-    end;
-  end;
-  return;
-end;
-
-global
-procedure DblSalaryFBVc(string dblstr,string l,integer currepwn)
-begin
-  record SalaryFBVc SFBr;
-  integer wn;
-
-  if (nonblank(dblstr)) then begin
-    SFBr.SerNr = FirstInRange(dblstr,20);
-    if (ReadFirstMain(SFBr,1,true)) then begin
-      wn = OpenWindow("SalaryFBDClass",1,0,"","",SFBr);
-    end;
-  end;
-  return;
-end;
-
-global
-procedure DblPaymTypeVc(string dblstr,string l,integer currepwn)
-begin
-  record PaymTypeVc PTr;
-  integer wn;
-
-  if (nonblank(dblstr)) then begin
-    PTr.Code = FirstInRange(dblstr,20);
-    if (ReadFirstMain(PTr,1,true)) then begin
-      wn = OpenWindow("PaymTypeDClass",1,0,"","",PTr);
-    end;
-  end;
-  return;
-end;
-
-global
-procedure DblAbsTypeVc(string dblstr,string l,integer currepwn)
-begin
-  record AbsTypeVc ATr;
-  integer wn;
-
-  if (nonblank(dblstr)) then begin
-    ATr.Code = FirstInRange(dblstr,20);
-    if (ReadFirstMain(ATr,1,true)) then begin
-      wn = OpenWindow("AbsTypeDClass",1,0,"","",ATr);
-    end;
-  end;
-  return;
-end;
-
-global
 procedure VacCalcRn(record RcVc RepSpec)
 begin
   record AbsenceVc Absr;  
+  record AbsenceVc Abs2r;  
   record AbsTypeVc ATr;
   record PaymTypeVc PTr,PT2r;
   record ContractVc Contrr;
@@ -104,15 +50,16 @@ begin
   record CalcPayrollVc CPr;
   row CalcPayrollVc CPrw;
   string 255 tstr;
-  integer rw,calcmethod,paymflag,rwcnt,i;
+  integer rw,calcmethod,rwcnt,i,vmexceptdays;
   string 20 paymtypecode;
-  LongInt contrsernr,abscalnoexcdays,absworkdays;
+  longint contrsernr,abscalnoexcdays,absworkdays;
   integer tmpint,tmpint0,caldays,vaccaldays,workdays,vacworkdays,vacexceptdays,exceptdays,caldaystot,workdaystot,exceptdaystot,abscaldays,absfbcaldaystot,absfbcaldays;
   integer absfbworkdaystot,abscaldaystot,absworkdaystot,vmcaldays,vmworkdays,absexceptdays,absexceptdaystot,absfbexceptdays,absfbexceptdaystot,absfbworkdays;
   date paymdate,sdate,edate,sd,ed,vmsd,vmed;
-  boolean TrHs,testf;
-  val bruto,fbbrutotot,brutotot,vacbrutotot,vacscbrutotot,tmpval0,tmpval,tmpval1,tmpval2,tmpval3,cm2val1,cm2val2,perdaystr;
+  boolean TrHs,testf,nocpf,nopaymf,no6monthf,firstf;
+  val bruto,fbbrutotot,brutotot,vacbrutotot,vacscbrutotot,tmpval0,tmpval,tmpval1,tmpval2,tmpval3,cm2val1,cm2val2,perdaystr,sumperday,vacdays;
   
+  nocpf = false;
   paymdate = RepSpec.d1;
   Absr.SerNr = RepSpec.f1;
   if (ReadFirstMain(Absr,1,true)) then begin end;
@@ -120,6 +67,7 @@ begin
   Contrr.SerNr = Absr.ContrSerNr;
   if (ReadFirstMain(Contrr,1,true)) then begin end;
   if (IsVacAbsTypeFlag(Absr.AbsTypeCode)==false) then begin
+    MessageBox(1500499,"");
     goto LVacCalcRn;
   end;
   ATr.Code = Absr.AbsTypeCode;
@@ -128,14 +76,13 @@ begin
     PTr.Code = ATr.PaymTypeCode;
     if (ReadFirstMain(PTr,1,true)) then begin
       calcmethod = PTr.CalcMethodFlag;
-      paymflag = PTr.PaymFlag;
+      nopaymf = PTr.PaymFlag;
     end;
   end;
 
-  if (paymflag!=0) then begin //ei kuulu väljamaksmisele
-    goto LVacCalcRn;
+  if (nopaymf) then begin //ei kuulu väljamaksmisele
+    calcmethod = 0;
   end;
-
   bruto = 0;
   fbbrutotot = 0;
   brutotot = 0;
@@ -197,8 +144,8 @@ begin
   OutString(2,"DblAbsTypeVc",Absr.AbsTypeCode,false);
   OutString(3,"",USetStr(1500521),false);
   OutString(4,"DblPaymTypeVc",paymtypecode,false);
-  OutString(5,0,Absr.StartDate ,false);
-  OutString(6,0,Absr.EndDate ,false);
+  OutString(5,0,Absr.StartDate,false);
+  OutString(6,0,Absr.EndDate,false);
   vaccaldays = GetCalendarDays(Absr.StartDate,Absr.EndDate);
   vacworkdays = GetWorkingDays(Absr.StartDate,Absr.EndDate);
   vacexceptdays = GetExceptDays(Absr.StartDate,Absr.EndDate);
@@ -207,13 +154,20 @@ begin
   EndFormat;
 
 //2. periood
+  if (GetCPSumForPeriod(Absr.ContrSerNr,Contrr.StartDate,Absr.StartDate)==0) then begin
+    nocpf = true;
+  end;
   EmptyRow;
   Black_Divider(0,1);
   OutString(0,"",USetStr(1500524),false);
   StartFormat(15);
   EndFormat;  
   EmptyRow;  
-  vmed = Absr.EndDate;
+  if (nocpf) then begin //uus töötaja -> ei ole arvestuskaarte
+    vmed = Absr.StartDate;
+  end else begin
+    vmed = Absr.EndDate;
+  end;
   tstr = "Puhkusearvestuse kuu:  " & MonthYearStr(vmed);
   StartFormat(15);
   OutString(0,"",tstr,false);
@@ -231,69 +185,68 @@ begin
   StartFormat(15);
   OutString(0,"",tstr,false);
   EndFormat;
+  if (nocpf) then begin //uus töötaja -> ei ole arvestuskaarte
+    vmexceptdays = GetExceptDays(vmsd,vmed);
+    tstr = "Puhkusearvestuse kuu riiklikke pühi:  " & vmexceptdays;
+    StartFormat(15);
+    OutString(0,"",tstr,false);
+    EndFormat;
   EmptyRow;  
-  Gray_Divider(0,1);
+  end;
+  Gray_Divider(0,290);
   StartFormat(15);
   OutString(0,"",USetStr(1500530),false);
   OutString(3,"",USetStr(1500529),true);
   OutString(4,"",USetStr(1500515),true);
   OutString(5,"",USetStr(1500531),true);
   EndFormat;
-  Gray_Divider(0,1);
-//cust - begin: ts 2018/05
-/* 
-  if (paymdate>Absr.StartDate) then begin
-    edate=Absr.StartDate;
-  end else begin
-    edate=paymdate;
-  end;
-*/
+  Gray_Divider(0,290);
+
   if (RepSpec.flags[0]==0) then begin
-    edate=Absr.StartDate;
+    edate = Absr.StartDate;
   end else begin
-    edate=AddMonth(Absr.StartDate,-1);
+    edate = AddMonth(Absr.StartDate,-1);
   end;
-//cust - end
-  if (calcmethod>0) then begin
-    if (GetBackXMonthsPeriod(sdate,edate,6)) then begin
-      if (GetRightPeriod(sdate,edate,Contrr.StartDate,Contrr.EndDate)) then begin
-        sd = sdate;
-        while (sd<=edate) begin
-          sd.day = 1;
-//cust - begin: ts 2017/09
-          if (sd < Contrr.StartDate) then begin
+  if (GetBackXMonthsPeriod(sdate,edate,6)) then begin
+    if (GetRightPeriod(sdate,edate,Contrr.StartDate,Contrr.EndDate)) then begin
+      sd = sdate;
+      firstf = true;
+      while (sd<=edate) begin
+        sd.day = 1;
+      //Bk - start: ts 2020/06
+        if (firstf) then begin
+          if (AddMonth(edate,-6)<Contrr.StartDate) then begin
             sd = Contrr.StartDate;
           end;
-//cust- end
-          ed = sd;
-          ed.day = DaysInMonth(GetYear(ed),GetMonth(ed));
-          caldays = GetCalendarDays(sd,ed);
-          workdays = GetWorkingDays(sd,ed);
-          exceptdays = GetExceptDays(sd,ed);
-          tstr = MonthYearStr(sd);
-          StartFormat(15);
-          OutString(0,"",tstr,false);
-          OutString(3,0,caldays,true);
-          OutString(4,0,workdays,true);
-          OutString(5,0,exceptdays,true);
-          EndFormat;
-          caldaystot = caldaystot + caldays;
-          workdaystot = workdaystot + workdays;
-          exceptdaystot = exceptdaystot + exceptdays;
-          sd = AddMonth(sd,1);
+          firstf = false;
         end;
-        if (caldaystot>0) or (workdaystot>0) or (exceptdaystot>0) then begin
-          Gray_Divider(60,290);
-          StartFormat(15);
-          OutString(0,0,"",false);
-          OutString(2,0,USetStr(1500453),false);
-          OutString(3,0,caldaystot,true);
-          OutString(4,0,workdaystot,true);
-          OutString(5,0,exceptdaystot,true);
-          EndFormat;
-        end;
-      end else begin
-        goto LVacCalcRn;
+      //Bk - end
+        ed = sd;
+        ed.day = DaysInMonth(GetYear(ed),GetMonth(ed));
+        caldays = GetCalendarDays(sd,ed);
+        workdays = GetWorkingDays(sd,ed);
+        exceptdays = GetExceptDays(sd,ed);
+        tstr = MonthYearStr(sd);
+        StartFormat(15);
+        OutString(0,"",tstr,false);
+        OutString(3,0,caldays,true);
+        OutString(4,0,workdays,true);
+        OutString(5,0,exceptdays,true);
+        EndFormat;
+        caldaystot = caldaystot + caldays;
+        workdaystot = workdaystot + workdays;
+        exceptdaystot = exceptdaystot + exceptdays;
+        sd = AddMonth(sd,1);
+      end;
+      if (caldaystot>0) or (workdaystot>0) or (exceptdaystot>0) then begin
+        Gray_Divider(60,290);
+        StartFormat(15);
+        OutString(0,0,"",false);
+        OutString(2,0,USetStr(1500453),false);
+        OutString(3,0,caldaystot,true);
+        OutString(4,0,workdaystot,true);
+        OutString(5,0,exceptdaystot,true);
+        EndFormat;
       end;
     end;
   end;
@@ -315,7 +268,7 @@ begin
   while (LoopKey("OKFlag",SFBr,1,TrHs)) begin
     if (SFBr.OKFlag!=1) then begin TrHs = false; end;
     if (TrHs) then begin
-      rwcnt=MatRowCnt(SFBr);
+      rwcnt = MatRowCnt(SFBr);
       sd = sdate;
       while (sd<=edate) begin 
         sd.day = 1;
@@ -366,13 +319,13 @@ begin
   EndFormat;
   Gray_Divider(0,1);
 
-  TrHs=true;  
-  AFBr.OKFlag=1;
+  TrHs = true;  
+  AFBr.OKFlag = 1;
   while (LoopKey("OKFlag",AFBr,1,TrHs)) begin
     if (AFBr.OKFlag!=1) then begin TrHs = false; end;
     if (TrHs) then begin
-      rwcnt=MatRowCnt(AFBr);
-      for (i=0; i<rwcnt;i=i+1) begin
+      rwcnt = MatRowCnt(AFBr);
+      for (i=0;i<rwcnt;i=i+1) begin
         MatRowGet(AFBr,i,AFBrw);
         if (AFBrw.ContrSerNr==contrsernr) then begin
           if (GetRightPeriod(AFBrw.SDate,AFBrw.EDate,sdate,edate)) then begin end;
@@ -428,20 +381,20 @@ begin
   Gray_Divider(0,1);
 
   bruto = 0;
-  TrHs=true;  
-  CPr.ContrSerNr=contrsernr;
-  CPr.OKFlag=1;
-  CPr.StartDate=sdate;
+  TrHs = true;  
+  CPr.ContrSerNr = contrsernr;
+  CPr.OKFlag = 1;
+  CPr.StartDate = sdate;
   while (LoopKey("ContrSerNr",CPr,3,TrHs)) begin
     if (CPr.ContrSerNr!=contrsernr) then begin TrHs = false; end;
     if (CPr.OKFlag!=1) then begin TrHs = false; end;
     if (TrHs) then begin
-      testf=true;
-      if (CPr.Invalid!=0) then begin testf=false; end;
+      testf = true;
+      if (CPr.Invalid!=0) then begin testf = false; end;
       if ((CPr.StartDate<sdate) or (CPr.EndDate>edate)) then begin testf = false; end;
       if (testf) then begin
-        rwcnt=MatRowCnt(CPr);
-        for (i=0; i<rwcnt;i=i+1) begin
+        rwcnt = MatRowCnt(CPr);
+        for (i=0;i<rwcnt;i=i+1) begin
           MatRowGet(CPr,i,CPrw);
           if (nonblank(CPrw.PaymTypeCode)) then begin
             ResetLoop(PT2r);
@@ -470,7 +423,7 @@ begin
                   tstr = "EI";
                 end;  
                 OutString(8,0,tstr,false);
-                bruto=round(bruto,GetSalaryRoundMode("2")); //ts - 281/05, tmp fix
+                bruto = round(bruto,GetSalaryRoundMode("2")); //ts - 281/05, tmp fix
                 OutString(1,0,bruto,true);
                 EndFormat;
                 brutotot = brutotot + bruto;
@@ -526,26 +479,26 @@ begin
   EndFormat;
   Gray_Divider(0,1);
 
-  TrHs=true;  
-  Absr.ContrSerNr=contrsernr;
-  Absr.OKFlag=1;
-  Absr.EndDate=sdate;
-  while (LoopKey("ContrSerNr",Absr,3,TrHs)) begin
-    if (Absr.ContrSerNr!=contrsernr) then begin TrHs = false; end;
+  TrHs = true;  
+  Abs2r.ContrSerNr = contrsernr;
+  Abs2r.OKFlag = 1;
+  Abs2r.EndDate = sdate;
+  while (LoopKey("ContrSerNr",Abs2r,3,TrHs)) begin
+    if (Abs2r.ContrSerNr!=contrsernr) then begin TrHs = false; end;
     if (TrHs) then begin
-      if (Absr.OKFlag!=0) then begin
-        if (GetRightPeriod(Absr.StartDate,Absr.EndDate,sdate,edate)) then begin end;
-        if (DateInRange(Absr.StartDate,sdate,edate)) and (DateInRange(Absr.EndDate,sdate,edate)) then begin
-          abscaldays = GetAbsenceDays(Absr.ContrSerNr,"",Absr.StartDate,Absr.EndDate,absworkdays,abscalnoexcdays);
-          absexceptdays = GetExceptDays(Absr.StartDate,Absr.EndDate);
+      if (Abs2r.OKFlag!=0) then begin
+        if (GetRightPeriod(Abs2r.StartDate,Abs2r.EndDate,sdate,edate)) then begin end;
+        if (DateInRange(Abs2r.StartDate,sdate,edate)) and (DateInRange(Abs2r.EndDate,sdate,edate)) then begin
+          abscaldays = GetAbsenceDays(Abs2r.ContrSerNr,"",Abs2r.StartDate,Abs2r.EndDate,absworkdays,abscalnoexcdays);
+          absexceptdays = GetExceptDays(Abs2r.StartDate,Abs2r.EndDate);
           StartFormat(15);
-          OutLongInt(0,"DblAbsenceVc",Absr.SerNr,false);
-          OutString(2,0,Absr.StartDate,false);
-          OutString(3,0,Absr.EndDate,false);
-          OutString(4,"DblAbsTypeVc",Absr.AbsTypeCode,false);
+          OutLongInt(0,"DblAbsenceVc",Abs2r.SerNr,false);
+          OutString(2,0,Abs2r.StartDate,false);
+          OutString(3,0,Abs2r.EndDate,false);
+          OutString(4,"DblAbsTypeVc",Abs2r.AbsTypeCode,false);
           OutString(9,0,abscaldays,true);
           OutString(420,0,absworkdays,true);
-            OutString(1,0,absexceptdays,true);
+          OutString(1,0,absexceptdays,true);
           EndFormat;
           abscaldaystot = abscaldaystot + abscaldays;
           absworkdaystot = absworkdaystot + absworkdays;
@@ -554,10 +507,6 @@ begin
       end;
     end;
   end;
-//Bk fix, ts - 2018/05
-  Absr.SerNr = RepSpec.f1;
-  if (ReadFirstMain(Absr,1,true)) then begin end;
-//Bk fix end
   if (abscaldaystot>0) or (absworkdaystot>0) then begin
     Gray_Divider(270,1);
     StartFormat(15);
@@ -572,29 +521,40 @@ begin
   end;
   
   //7. valem
+  if (nocpf) then begin
+    calcmethod = CheckCalcmethod(Contrr,Absr.StartDate,vmsd,vmed,brutotot,sumperday,vacdays);
+  end;
   EmptyRow;
   Black_Divider(0,1);
   OutString(0,"",USetStr(1500523),false);
   EmptyRow;
   EmptyRow;
   switch (calcmethod) begin
-    case 0: tstr = USetStr(1500542);
+    case 0: 
+      if (nopaymf) then begin
+        tstr = USetStr(1500480);
+      end else begin
+        tstr = USetStr(1500542);
+      end;
     case 1: tstr = USetStr(1500543);
     case 2: tstr = USetStr(1500544);
     case 3: tstr = USetStr(1500545);
     case 4: tstr = USetStr(1500546);
     case 5: tstr = USetStr(1500547);
+    case 6: tstr = USetStr(1500544);
+    case 7: tstr = USetStr(1500546);
   end;
   StartFormat(15);
   OutString(0,"",USetStr(1500541),false);
   OutString(2,"",tstr,false);
   EndFormat;
-  if (calcmethod==2) then begin
-    tstr ="Antud arvestuse meetodi korral võrreldakse summad kokku,";
+  no6monthf = No6Month(Absr.ContrSerNr,Absr.StartDate);
+  if ((calcmethod==2) and (no6monthf==false)) then begin
+    tstr = "Antud arvestuse meetodi korral võrreldakse summad kokku,";
     StartFormat(15);
     OutString(2,"",tstr,false);
     EndFormat;
-    tstr ="arvutatud meetodiga 'Keskmine kalendripäeva tasu (v.a Riiklikud pühad)' ja 'Palga jätkumine'“. Suurem summa läheb arvestusele.";
+    tstr = "arvutatud meetodiga 'Keskmine kalendripäeva tasu (v.a Riiklikud pühad)' ja 'Palga jätkumine'“. Suurem summa läheb arvestusele.";
     StartFormat(15);
     OutString(2,"",tstr,false);
     EndFormat;
@@ -715,7 +675,7 @@ begin
     OutString(2,"",tstr,false);
     EndFormat;
     EmptyRow;
-    tstr = "1 Puhkuse päev  *  (Puhkusepäevade arv - riiklikud pühad)  =  Puhkuse eest arvestatud summa";
+    tstr = "1 Puhkuse päev  *  (Puhkuse päevade arv - Riiklikud pühad)  =  Puhkuse eest arvestatud summa";
     StartFormat(15);
     OutString(2,"",tstr,false);
     EndFormat;
@@ -815,8 +775,8 @@ begin
     EndFormat;
   end;
   
-//Palga jätkumine või (Keskmine kalendripäeva tasu (v.a. Riiklikud pühad) võrdlemiseks)
-  if ((calcmethod==4) or (calcmethod==2)) then begin 
+//Palga jätkumine või (Keskmine kalendripäeva tasu (v.a. Riiklikud pühad) võrdlemiseks juhul, kui töötaja on töötanud rohkem kui 6 kuud)
+  if ((calcmethod==4) or ((calcmethod==2) and (no6monthf==false))) then begin 
     if (calcmethod==2) then begin
       EmptyRow;
       tstr = USetStr(1500546);
@@ -849,7 +809,7 @@ begin
     StartFormat(15);
     OutString(2,"",tstr,false);
     EndFormat;
-    tmpval1 = GetStandingChargeSum(Contrr,paymdate);//ts - 2018/05, orig was CPr.CalcDate
+    tmpval1 = GetStandingChargeSum(Contrr,paymdate,nocpf);//ts - 2018/05, orig was CPr.CalcDate
     tstr = tmpval1;
     StartFormat(15); 
     OutString(2,"",tstr,false);
@@ -974,29 +934,145 @@ begin
     OutString(2,"",tstr,false);
     EndFormat;
   end;
+//Keskmine kalendripäeva tasu (v.a. Riiklikud pühad) -> uus töötaja -> //Fikseeritud töötasu või Proportsionaalselt töötatud ajaga
+  if (calcmethod==6) then begin
+    EmptyRow;
+    tstr = "Kalendripäevi kokku (Punkt 2) – Riiklikud pühad (Punkt 2)  =  Puhkusearvestuse aluseks olevad päevad ";
+    StartFormat(15);
+    OutString(2,"",tstr,false);
+    EndFormat;
+    tmpint = vmcaldays - vmexceptdays;
+    tstr = vmcaldays & "  -  " & vmexceptdays & "  =  " & tmpint;
+    StartFormat(15); 
+    OutString(2,"",tstr,false);
+    EndFormat;
+    EmptyRow;
+    tstr = "Puhkuse kalendripäevi kokku (Punkt 1)";
+    StartFormat(15);
+    OutString(2,"",tstr,false);
+    EndFormat;
+    tstr = vaccaldays;
+    StartFormat(15); 
+    OutString(2,"",tstr,false);
+    EndFormat;
+    EmptyRow;   
+    tstr = "Töölepingu kaardil fikseeritud töötasu.";    
+    StartFormat(15);
+    OutString(2,"",tstr,false);
+    EndFormat;
+    tmpval1 = brutotot;
+    tstr = tmpval1;
+    StartFormat(15); 
+    OutString(2,"",tstr,false);
+    EndFormat;
+    EmptyRow;
+    tstr = "Töötasu  /  Puhkusearvestuse aluseks olevad päevad  =  1 Puhkuse päeva tasu";
+    StartFormat(15);
+    OutString(2,"",tstr,false);
+    EndFormat;
+    tmpval2 = tmpval1/tmpint;
+    perdaystr = round(tmpval2,GetSalaryRoundMode("2"));
+    tstr = tmpval1 & "  /  " & tmpint & "  =  " & perdaystr;
+    StartFormat(15); 
+    OutString(2,"",tstr,false);
+    EndFormat;
+    EmptyRow;
+    tstr = "1 Puhkuse päeva tasu  *  (Puhkuse kalendripäevade arv - Riiklikud pühad)  =  Puhkuse eest arvestatud summa";
+    StartFormat(15);
+    OutString(2,"",tstr,false);
+    EndFormat;
+    tstr = "Kui Puudumise kaardi Puudumise tüüp on erinev Töölepingul olevast puhkuse Puudumise tüübist, siis on puhkusepäevade arvuks 0.";
+    StartFormat(15);
+    OutString(2,"",tstr,false);
+    EndFormat;
+    if (Absr.AbsTypeCode!=GetVacAbsTypeCode(Absr.ContrSerNr)) then begin
+      vaccaldays = 0;
+      vacexceptdays = 0;
+    end;
+    tmpval3 = round((perdaystr*(vaccaldays-vacexceptdays)),GetSalaryRoundMode("2"));
+    tstr = perdaystr & "  *  (" & vaccaldays & "  - " & vacexceptdays & ")  =  " & tmpval3;
+    StartFormat(15); 
+    OutString(2,"",tstr,false);
+    EndFormat;
+    EmptyRow;
+    tstr = "1 Puhkuse päev  =  " & perdaystr;
+    StartFormat(15);
+    OutString(2,"",tstr,false);
+    EndFormat;
+    tstr = "Puhkuse eest arvestatud summa  =  " & tmpval3;
+    StartFormat(15); 
+    OutString(2,"",tstr,false);
+    EndFormat;
+  end;
+//Palga jätkumine -> uus töötaja -> tööajatabel
+  if (calcmethod==7) then begin
+    EmptyRow;
+    tstr = "Puhkusearvestuse kuu tööpäevade norm (Punkt 2)  =  Puhkusearvestuse aluseks olevad päevad";
+    StartFormat(15);
+    OutString(2,"",tstr,false);
+    EndFormat;
+    tstr = vmworkdays;
+    StartFormat(15); 
+    OutString(2,"",tstr,false);
+    EndFormat;
+    EmptyRow;
+    tstr = "Puhkuse tööpäevi kokku (Punkt 1)";
+    StartFormat(15);
+    OutString(2,"",tstr,false);
+    EndFormat;
+    tstr = vacworkdays;
+    StartFormat(15); 
+    OutString(2,"",tstr,false);
+    EndFormat;
+    EmptyRow;   
+    tstr = "Töölepingu kaardil fikseeritud tunnitasu.";    
+    StartFormat(15);
+    OutString(2,"",tstr,false);
+    EndFormat;
+    tmpval1 = sumperday;
+    tstr = tmpval1;
+    StartFormat(15); 
+    OutString(2,"",tstr,false);
+    EndFormat;
+    EmptyRow;
+    tstr = "Tunnitasu  *  8 töötundi  =  1 Puhkuse päev";
+    StartFormat(15);
+    OutString(2,"",tstr,false);
+    EndFormat;
+    tmpval2 = tmpval1*8;
+    perdaystr = round(tmpval2,GetSalaryRoundMode("2"));
+    tstr = tmpval1 & "  *  " & 8 & "  =  " & perdaystr;
+    StartFormat(15); 
+    OutString(2,"",tstr,false);
+    EndFormat;
+    EmptyRow;
+    tstr = "1 Puhkuse päev  *  Puhkuse tööpäevade arv  =  Puhkuse eest arvestatud summa";
+    StartFormat(15);
+    OutString(2,"",tstr,false);
+    EndFormat;
+    tstr = "Kui Puudumise kaardi Puudumise tüüp on erinev Töölepingul olevast puhkuse Puudumise tüübist, siis on puhkusepäevade arvuks 0.";
+    StartFormat(15);
+    OutString(2,"",tstr,false);
+    EndFormat;
+    if (Absr.AbsTypeCode!=GetVacAbsTypeCode(Absr.ContrSerNr)) then begin
+      vaccaldays = 0;
+    end;
+    tmpval3 = round((perdaystr*vacworkdays),GetSalaryRoundMode("2"));
+    tstr = perdaystr & "  *  " & vacworkdays & "  =  " & tmpval3;
+    StartFormat(15); 
+    OutString(2,"",tstr,false);
+    EndFormat;
+    EmptyRow;
+    tstr = "1 Puhkuse päev  =  " & perdaystr;
+    StartFormat(15);
+    OutString(2,"",tstr,false);
+    EndFormat;
+    tstr = "Puhkuse eest arvestatud summa  =  " & tmpval3;
+    StartFormat(15); 
+    OutString(2,"",tstr,false);
+    EndFormat;
+  end;
 LVacCalcRn:;
   EndJob;
-  return;
-end;
-
-global
-procedure VacCalcDsm()
-begin
-  record RcVc RepSpec;
-  record AbsenceVc Absr;  
-  integer wn,nwn;
-  
-  wn = CurWindow;
-  if (WindowState(wn)==0) then begin
-    GetWindowRecord(wn,Absr);
-    RepSpec.repname = "VacCalcRn";
-    ReportDefaults(RepSpec,"VacCalcRClass");
-    RepSpec.f1 = Absr.SerNr;
-    RepSpec.d1 = CurrentDate;
-    RepSpec.Media = mtScreen;    
-    nwn = OpenWindow("VacCalcRClass",1,0,"","",RepSpec);
-  end else begin
-    Beep;
-  end;
   return;
 end;

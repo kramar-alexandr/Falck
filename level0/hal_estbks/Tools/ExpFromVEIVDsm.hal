@@ -1,0 +1,183 @@
+//Bk //tsekk.ee
+external function Boolean HasModExp();
+//KB new functions 09.11.2017
+remote updating function boolean AddSingleVEIVToExp(record VEIVVc, var record ExpVc);
+
+function LongInt HasModExpCheck()
+begin
+  record ModuleBlock ModuleBlockr;
+  longint r;
+  
+  r = 0;
+  BlockLoad(ModuleBlockr);
+  if (HasModExp == false) then begin
+    r = 1500203;
+  end;
+  if (ModuleBlockr.ExpensesEnabler == 0) then begin
+    r = 1500203;
+  end;
+  HasModExpCheck = r;
+  return;
+end;
+
+global updating
+procedure ExpFromVEIVLsm()
+begin
+  record VEIVVc VEIVr;
+  record ExpVc Expr;
+  longint r;
+  integer wn,i;
+
+  i = 1;
+  wn = CurWindow;
+  if (HasModExpCheck > 0) then begin
+    MessageBox(r,"");
+    goto LSTOPALL;
+  end;
+  if (UserCanAction("ExpFromVEIV",false)) then begin
+    RecordNew(Expr);
+    while (GetRecordFromBrowse(VEIVr,wn,i)) begin
+      if(AddSingleVEIVToExp(VEIVr,Expr) == false) then begin
+        Beep;
+        goto LSTOPALL;
+      end;
+      i = i + 1;
+    end;
+//Bk - start: ts 2018/07, in order to make proper linking between supplier e-invoice and expense
+    if (MatRowCnt(Expr)>0) then begin
+      if (Expr.SerNr == -1) then begin
+        Expr.SerNr = NextSerNr("ExpVc",Expr.TransDate,-1,false,"");
+      end;
+      RecordInsert(Expr,false);
+    end;
+//Bk - end
+    OpenWindow("ExpDClass",0,0,"","",Expr);
+  end else begin
+    MessageBox(1274,StringFromStringSet(3,"ExpFromVEIV"));
+  end;
+LSTOPALL:;
+  return;
+end;
+
+global updating
+procedure ExpFromVEIVLAltsm()
+begin
+  record VEIVVc VEIVr;
+  record ExpVc Expr;
+  record SelectVEIVBlock SelectVEIVbl;
+  row SelectVEIVBlock SelectVEIVrw;
+  longint r;
+  integer wn,i,rwcnt;
+
+  if (HasModExpCheck > 0) then begin
+    MessageBox(r,"");
+    goto LSTOPALL2;
+  end;
+  if (UserCanAction("ExpFromVEIV",false)) then begin
+    wn = CurWindow;
+    RecordNew(Expr);
+    GetWindowRecord(wn,SelectVEIVbl);
+    rwcnt = MatRowCnt(SelectVEIVbl);
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(SelectVEIVbl,i,SelectVEIVrw);
+      if (nonblank(SelectVEIVrw.VEIVSerNr)) then begin
+        VEIVr.SerNr = SelectVEIVrw.VEIVSerNr;
+        if (ReadFirstMain(VEIVr,1,true)) then begin
+          if (AddSingleVEIVToExp(VEIVr,Expr) == false) then begin
+            Beep;
+            goto LSTOPALL2;
+          end;
+        end;
+      end;
+    end;
+    SetWindowState(wn,Rs_normal);
+    CloseWindow(wn);
+    while (MatRowCnt(SelectVEIVbl)) begin
+      MatRowDelete(SelectVEIVbl,0);
+    end;
+    BlockStore(SelectVEIVbl);
+//Bk - start KB 16.10.2019 - same as in ExpFromVEIVLsm
+    if (MatRowCnt(Expr)>0) then begin
+      if (Expr.SerNr == -1) then begin
+        Expr.SerNr = NextSerNr("ExpVc",Expr.TransDate,-1,false,"");
+      end;
+      RecordInsert(Expr,false);
+    end;
+//Bk - end
+    OpenWindow("ExpDClass",0,0,"","",Expr);
+  end else begin
+    MessageBox(1274,StringFromStringSet(3,"ExpFromVEIV"));
+  end;
+LSTOPALL2:;
+  return;
+end;
+
+global
+procedure OpenVEIVLSelWindowsm()
+begin
+  record VEIVVc VEIVr;
+  record ExpVc Expr;
+  record SelectVEIVBlock SelectVEIVbl;
+  integer wn,i;
+
+  wn = CurWindow;
+  BlockLoad(SelectVEIVbl);
+  OpenWindow("SelectVEIVTClass",0,wn,"","",SelectVEIVbl);
+  return;
+end;
+
+global updating
+procedure RemSelectVEIVBlocksm()
+begin
+  record SelectVEIVBlock SelectVEIVbl;
+  row SelectVEIVBlock SelectVEIVblrw;
+  integer rwcnt,i,wn;
+
+  wn = CurWindow;
+  CloseWindow(wn);
+  BlockLoad(SelectVEIVbl);
+  rwcnt = MatRowCnt(SelectVEIVbl);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowDelete(SelectVEIVbl,i);
+    rwcnt = MatRowCnt(SelectVEIVbl);
+    i = i - 1;
+  end;
+  BlockStore(SelectVEIVbl);
+  OpenWindow("SelectVEIVTClass",0,0,"","",SelectVEIVbl);
+  return;
+end;
+
+global updating
+procedure ExpFromVEIVDsm()
+begin
+  record VEIVVc VEIVr;
+  record ExpVc Expr; 
+  longint r;
+  integer wn,nwn;
+  
+  wn = CurWindow;
+  if (WindowState(wn)==0) then begin//Rs_normal
+  if (HasModExpCheck > 0) then begin
+    MessageBox(r,"");
+    goto LSTOPALL3;
+  end;
+    if (UserCanAction("ExpFromVEIV",false)) then begin
+      GetWindowRecord(wn,VEIVr);
+      if (VEIVr.NotPaidFlag==0) then begin
+        RecordNew(Expr);
+        if (AddSingleVEIVToExp(VEIVr,Expr)) then begin
+          nwn = OpenWindow("ExpDClass",0,0,"","",Expr);
+        end else begin
+          Beep;
+          goto LSTOPALL3;
+        end;
+      end;
+    end else begin
+      MessageBox(1274,StringFromStringSet(3,"ExpFromVEIV"));
+    end;
+  end else begin
+    Beep;
+  end;
+LSTOPALL3:;
+  return;
+end;

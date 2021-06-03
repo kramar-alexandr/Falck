@@ -34,7 +34,7 @@ begin
   ExportTheLevel(level);
   ExportPadString("<",1," ",false);
   ExportPadString(tag,len(tag)," ",false);
-  ExportPadString(">",1," ",false);  
+  ExportPadString(">",1," ",false);
   ExportPadString(value,BytesInString(value)," ",false);
   ExportPadString("</",2," ",false);
   ExportPadString(tag,len(tag)," ",false);
@@ -58,7 +58,7 @@ begin
     ExportPadString(attrvalue,BytesInString(attrvalue)," ",false);
     ExportPadString("""",1," ",false);
   end;
-  ExportPadString(">",1," ",false);  
+  ExportPadString(">",1," ",false);
   ExportPadString(value,BytesInString(value)," ",false);
   ExportPadString("</",2," ",false);
   ExportPadString(tag,len(tag)," ",false);
@@ -195,11 +195,11 @@ begin
     end;
     testf = true;
     if (RepSpec.OnlyUnprntd==0) then begin
-      if (OPr.DoneFlag==1) then begin 
+      if (OPr.DoneFlag==1) then begin
         testf = false;
       end;
     end;
-    if (OPr.OrderedFlag==0) then begin 
+    if (OPr.OrderedFlag==0) then begin
       testf = false;
     end;
     if (OPr.Invalid!=0) then begin  testf = false; end;
@@ -246,13 +246,13 @@ begin
           end;
           prevacnt = acnt;
           AddToPerSupplierArray(1,OPrw,bankacc,aprvecode,aprbankacc,aprreference,aprbankcur,aprreccur,aprrecval,aprreferencedetails,acnt);
-          if (prevacnt!=acnt) then begin              
+          if (prevacnt!=acnt) then begin
             NbOfTxs = NbOfTxs + 1;
             vTotals["NbOfTxs_" & OPr.SerNr] = vTotals["NbOfTxs_" & OPr.SerNr] + 1;
           end;
           CtrlSum = CtrlSum + OPrw.RecVal;
-          vTotals["CtrlSum_" & OPr.SerNr] = vTotals["CtrlSum_" & OPr.SerNr] + OPrw.RecVal;          
-LBankExpLithuaniaSEPA_Domestic_GroupHeader_SKIPROW1:;              
+          vTotals["CtrlSum_" & OPr.SerNr] = vTotals["CtrlSum_" & OPr.SerNr] + OPrw.RecVal;
+LBankExpLithuaniaSEPA_Domestic_GroupHeader_SKIPROW1:;
         end;
       end else begin
         for (i=0;i<rwcnt;i=i+1) begin
@@ -268,8 +268,8 @@ LBankExpLithuaniaSEPA_Domestic_GroupHeader_SKIPROW1:;
           NbOfTxs = NbOfTxs + 1;
           CtrlSum = CtrlSum + OPrw.RecVal;
           vTotals["NbOfTxs_" & OPr.SerNr] = vTotals["NbOfTxs_" & OPr.SerNr] + 1;
-          vTotals["CtrlSum_" & OPr.SerNr] = vTotals["CtrlSum_" & OPr.SerNr] + OPrw.RecVal;          
-LBankExpLithuaniaSEPA_Domestic_GroupHeader_SKIPROW2:;              
+          vTotals["CtrlSum_" & OPr.SerNr] = vTotals["CtrlSum_" & OPr.SerNr] + OPrw.RecVal;
+LBankExpLithuaniaSEPA_Domestic_GroupHeader_SKIPROW2:;
         end;
       end;
     end;
@@ -279,7 +279,7 @@ LBankExpLithuaniaSEPA_Domestic_GroupHeader_SKIPROW2:;
 
   tstr = "<Document xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns=""urn:iso:std:iso:20022:tech:xsd:pain.001.001.03"">";
 //  tstr = "<Document xmlns=""urn:iso:std:iso:20022:tech:xsd:pain.001.001.03"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xsi:schemaLocation=""urn:iso:std:iso:20022:tech:xsd:pain.001.001.03 pain.001.001.03.xsd"">";
-  ExportPlainXml(tstr,0); 
+  ExportPlainXml(tstr,0);
 
   ExportPlainXml("<CstmrCdtTrfInitn>",0);
 
@@ -377,7 +377,7 @@ begin
     ExportTagXml("Cd","SEPA",4);
   end;
   ExportPlainXml("</SvcLvl>",3);
-*/  
+*/
   ExportPlainXml("<CtgyPurp>",3);
   ExportTagXml("Cd","SUPP",4);
   ExportPlainXml("</CtgyPurp>",3);
@@ -428,7 +428,7 @@ begin
   ExportPlainXml("</SchmeNm>",6);
   ExportPlainXml("</Othr>",5);
   ExportPlainXml("</OrgId>",4);
-  ExportPlainXml("</Id>",3);  
+  ExportPlainXml("</Id>",3);
   ExportPlainXml("</Dbtr>",2);
   
   ExportPlainXml("<DbtrAcct>",2);
@@ -446,7 +446,7 @@ begin
   if (ValidateIBAN(bankacc)) then begin
     ExportTagXml("IBAN",bankacc,4);
   end;
-  ExportPlainXml("</Id>",3);    
+  ExportPlainXml("</Id>",3);
   if (nonblank(OPr.PayCurCode)) then begin
     ExportTagXml("Ccy",OPr.PayCurCode,3);
   end else begin
@@ -467,7 +467,7 @@ begin
   ExportPlainXml("</DbtrAgt>",2);
 
   if (RepSpec.flags[4]==2) then begin
-    ExportTagXml("ChrgBr","SLEV",2);  
+    ExportTagXml("ChrgBr","SLEV",2);
   end;
   bfr.RowSerNr = rowsernr + 1;
   return;
@@ -541,7 +541,7 @@ begin
       if (blank(bankacc)) then begin
         bankacc = VEr.Bank;
       end;
-      AddToPerSupplierArray(1,OPrw,bankacc,aprvecode,aprbankacc,aprreference,aprbankcur,aprreccur,aprrecval,aprreferencedetails,acnt);      
+      AddToPerSupplierArray(1,OPrw,bankacc,aprvecode,aprbankacc,aprreference,aprbankcur,aprreccur,aprrecval,aprreferencedetails,acnt);
 LBankExpLithuaniaSEPA_Domestic_SKIPROW1:;
     end;
     for (i=0;i<acnt;i=i+1) begin
@@ -552,9 +552,9 @@ LBankExpLithuaniaSEPA_Domestic_SKIPROW1:;
 
       ExportPlainXml("<CdtTrfTxInf>",1);
 
-      ExportPlainXml("<PmtId>",2);    
+      ExportPlainXml("<PmtId>",2);
       //ExportTagXml("InstrId",OPr.SerNr,3); Swedbank does not accept both InstrId and PmtInfId filled in.
-      ExportTagXml("EndToEndId",OPr.SerNr & "-" & i+1,3);  
+      ExportTagXml("EndToEndId",OPr.SerNr & "-" & i+1,3);
       ExportPlainXml("</PmtId>",2);
       
       ExportPlainXml("<Amt>",2);
@@ -592,22 +592,25 @@ LBankExpLithuaniaSEPA_Domestic_SKIPROW1:;
           ExportPlainXml("<CdtrAgt>",2);
           ExportPlainXml("<FinInstnId>",3);
           ExportTagXml("BIC",Bankr.SWIFT,4);
-          ExportTagXml("Nm",Bankr.Name,4);  
+          ExportTagXml("Nm",Bankr.Name,4);
           ExportPlainXml("</FinInstnId>",3);
           ExportPlainXml("</CdtrAgt>",2);
         end;
       end;
       ExportPlainXml("<Cdtr>",2);
       ExportTagXml("Nm",ConvertXmlString(VEr.Name,false),3);
-      if (nonblank(VEr.InvAddr1) and nonblank(VEr.InvAddr2)) then begin
         ExportPlainXml("<PstlAdr>",3);
         ExportTagXml("Ctry",country,4);
-        ExportTagXml("AdrLine",ConvertXmlString(VEr.InvAddr1,false),4);  
-        ExportTagXml("AdrLine",ConvertXmlString(VEr.InvAddr2,false),4);  
+        if (nonblank(VEr.InvAddr1)) then begin
+        ExportTagXml("AdrLine",ConvertXmlString(VEr.InvAddr0,false) & ", " & ConvertXmlString(VEr.InvAddr1,false),4);
+      end else begin
+        ExportTagXml("AdrLine",ConvertXmlString(VEr.InvAddr0,false),4);
+        end;
+      if (nonblank(VEr.InvAddr2)) and (nonblank(VEr.InvAddr3)) then begin
+        ExportTagXml("AdrLine",ConvertXmlString(VEr.InvAddr2,false) & ", " & ConvertXmlString(VEr.InvAddr3,false),4);
+        end;
         ExportPlainXml("</PstlAdr>",3);
-      end;
       ExportPlainXml("</Cdtr>",2);
-
       ExportPlainXml("<CdtrAcct>",2);
       ExportPlainXml("<Id>",3);
       if (ValidateIBAN(bankacc)) then begin
@@ -623,8 +626,8 @@ LBankExpLithuaniaSEPA_Domestic_SKIPROW1:;
       if (ForeignPaymf) or (CYb.CountryCode!=country) then begin
         ExportPlainXml("<RgltryRptg>",2);
         ExportPlainXml("<Dtls>",3);
-        ExportTagXml("Ctry",country,4);  
-        ExportTagXml("Cd","999",4);  
+        ExportTagXml("Ctry",country,4);
+        ExportTagXml("Cd","999",4);
         ExportPlainXml("</Dtls>",3);
         ExportPlainXml("</RgltryRptg>",2);
       end;
@@ -644,10 +647,10 @@ LBankExpLithuaniaSEPA_Domestic_SKIPROW1:;
           tstr = USetStr(16668);
           if (nonblank(aprreferencedetails[i])) then begin
             tstr = tstr & left(aprreference[i],122-len(aprreferencedetails[i]));
-            ExportTagXml("Ustrd",left(tstr,140),3);    
+            ExportTagXml("Ustrd",left(tstr,140),3);
           end else begin
             tstr = tstr & aprreference[i];
-            ExportTagXml("Ustrd",left(tstr,140),3);  
+            ExportTagXml("Ustrd",left(tstr,140),3);
           end;
         end;
         if (nonblank(aprreferencedetails[i])) then begin
@@ -655,12 +658,12 @@ LBankExpLithuaniaSEPA_Domestic_SKIPROW1:;
           ExportPlainXml("<CdtrRefInf>",4);
           ExportPlainXml("<Tp>",5);
           ExportPlainXml("<CdOrPrtry>",6);
-          ExportTagXml("Cd","SCOR",7);  
-          ExportPlainXml("</CdOrPrtry>",6);  
-          ExportPlainXml("</Tp>",5);  
-          ExportTagXml("Ref",Left(aprreferencedetails[i],35),5);          
+          ExportTagXml("Cd","SCOR",7);
+          ExportPlainXml("</CdOrPrtry>",6);
+          ExportPlainXml("</Tp>",5);
+          ExportTagXml("Ref",Left(aprreferencedetails[i],35),5);
           ExportPlainXml("</CdtrRefInf>",4);
-          ExportPlainXml("</Strd>",3);       
+          ExportPlainXml("</Strd>",3);
         end;
       end;
       ExportPlainXml("</RmtInf>",2);
@@ -681,9 +684,9 @@ LBankExpLithuaniaSEPA_Domestic_SKIPROW1:;
       VIr.SerNr = OPrw.VISerNr;
       ReadFirstMain(VIr,1,true);
       ExportPlainXml("<CdtTrfTxInf>",1);
-      ExportPlainXml("<PmtId>",2);    
+      ExportPlainXml("<PmtId>",2);
       //ExportTagXml("InstrId",OPr.SerNr,3);//Swedbank does not accept both InstrId and PmtInfId filled in.
-      ExportTagXml("EndToEndId",OPr.SerNr & "-" & i+1,3);  
+      ExportTagXml("EndToEndId",OPr.SerNr & "-" & i+1,3);
       ExportPlainXml("</PmtId>",2);
       ExportPlainXml("<Amt>",2);
       if (nonblank(OPrw.RecCurncy)) then begin
@@ -707,7 +710,7 @@ LBankExpLithuaniaSEPA_Domestic_SKIPROW1:;
         if (nonblank(Bankr.SWIFT)) then begin
           ExportPlainXml("<CdtrAgt>",2);
           ExportPlainXml("<FinInstnId>",3);
-          ExportTagXml("BIC",Bankr.SWIFT,4);  
+          ExportTagXml("BIC",Bankr.SWIFT,4);
           ExportPlainXml("</FinInstnId>",3);
           ExportPlainXml("</CdtrAgt>",2);
         end;
@@ -755,11 +758,10 @@ LBankExpLithuaniaSEPA_Domestic_SKIPROW1:;
         ExportPlainXml("</PstlAdr>",3);
       end;
       ExportPlainXml("</Cdtr>",2);
-
       ExportPlainXml("<CdtrAcct>",2);
       ExportPlainXml("<Id>",3);
       if (ValidateIBAN(bankacc)) then begin
-        ExportTagXml("IBAN",bankacc,4);  
+        ExportTagXml("IBAN",bankacc,4);
       end else begin
         ExportPlainXml("<Othr>",4);
         ExportTagXml("Id",tstr,5);
@@ -771,14 +773,17 @@ LBankExpLithuaniaSEPA_Domestic_SKIPROW1:;
       if (ForeignPaymf) or (left(CYb.Bank2,2)!=country) then begin
         ExportPlainXml("<RgltryRptg>",2);
         ExportPlainXml("<Dtls>",3);
-        ExportTagXml("Ctry",country,4);  
-        ExportTagXml("Cd","999",4);  
+        ExportTagXml("Ctry",country,4);
+        ExportTagXml("Cd","999",4);
         ExportPlainXml("</Dtls>",3);
         ExportPlainXml("</RgltryRptg>",2);
       end;
       
       printRef = false;
-      refstr = OPrw.VISerNr;
+      refstr = VIr.InvoiceNr;
+      if (blank(refstr)) then begin
+        refstr = OPrw.VISerNr;
+      end;
       if (blank(refstr)) then begin
         refstr = "TRANSFER";
       end;
@@ -788,7 +793,7 @@ LBankExpLithuaniaSEPA_Domestic_SKIPROW1:;
 
       if ((ForeignPaymf) or (left(CYb.Bank2,2)!=country)) and (Bankr.Sorting == "Foreign") then begin
         tstr1 = "Invoice:" & left(refstr,122);
-        ExportTagXml("Ustrd",left(tstr1,140),3);    
+        ExportTagXml("Ustrd",left(tstr1,140),3);
       end else begin
 //        if ((ForeignPaymf) or (left(CYb.Bank2,2)!=country)) and (Bankr.Sorting != "Foreign") then begin
           if (nonblank(tstr)) then begin
@@ -801,10 +806,10 @@ LBankExpLithuaniaSEPA_Domestic_SKIPROW1:;
           refstr = USetStr(16668) & refstr;
           if (nonblank(tstr)) then begin
             tstr1 = left(refstr,(130-len(tstr)));
-            ExportTagXml("Ustrd",left(tstr1,140),3);  
+            ExportTagXml("Ustrd",left(tstr1,140),3);
           end else begin
             tstr1 = refstr;
-            ExportTagXml("Ustrd",left(tstr1,140),3); 
+            ExportTagXml("Ustrd",left(tstr1,140),3);
           end;
         end;
         if (nonblank(tstr)) then begin
@@ -813,17 +818,17 @@ LBankExpLithuaniaSEPA_Domestic_SKIPROW1:;
           ExportPlainXml("<Tp>",5);
           ExportPlainXml("<CdOrPrtry>",6);
           ExportTagXml("Cd","SCOR",7);
-          ExportPlainXml("</CdOrPrtry>",6);  
-          ExportPlainXml("</Tp>",5);  
-          ExportTagXml("Ref",Left(tstr,35),5);   
+          ExportPlainXml("</CdOrPrtry>",6);
+          ExportPlainXml("</Tp>",5);
+          ExportTagXml("Ref",Left(tstr,35),5);
           ExportPlainXml("</CdtrRefInf>",4);
           ExportPlainXml("</Strd>",3);
-        end;      
-      end;      
+        end;
+      end;
       ExportPlainXml("</RmtInf>",2);
       
       ExportPlainXml("</CdtTrfTxInf>",1);
-LBankExpLithuaniaSEPA_Domestic_SKIPROW2:;    
+LBankExpLithuaniaSEPA_Domestic_SKIPROW2:;
     end;
   end;
   BankExpLithuaniaSEPA_Domestic_Footer;

@@ -1,0 +1,228 @@
+//pangaliidestus
+external procedure SendTextParameter(string,var Area);
+external procedure ReadTXServiceReply(var record TXServiceReplyVc,var Area,Boolean);
+external procedure EstEInvTagValue(string,string,integer,area); 
+external procedure EstEInvStartTag2(string,var string,area);
+external procedure EstEInvStartTag(string,area);
+external procedure EstEInvEndTag(string,area);
+external procedure BankingDebugMsg(string,string);
+external procedure BankingDebugFile(area,string);
+
+
+function string 30 SGWGetUniqueIDFromReply(var area reply, var string errMsg)
+begin
+  string 30 res;
+  record TXServiceReplyVc TXServiceReplyr;
+
+  ReadTXServiceReply(TXServiceReplyr,reply,true);
+  res = TXServiceReplyr.MsgID;
+  errMsg = TXServiceReplyr.ErrorDescription;
+  SGWGetUniqueIDFromReply = res;
+  return;
+end;
+
+function string 30 GetXMLDateTime(date theDate, time theTime)
+begin
+  string 30 res;
+  string 10 timePart,datePart;
+
+  //example "2017-11-15T00:00:00+00:00"
+  datePart = DateToString(theDate,"YYYY-MM-DD");
+  timePart = theTime & "";
+  res = datePart & "T" & timePart;
+  GetXMLDateTime = res;
+  return;
+end;
+
+function date GetNextStmtFromDate()
+begin
+  date res;
+  record BankServicesBlock BankServicesbl;
+
+  //only for SGW
+  BlockLoad(BankServicesbl);
+  if (BankServicesbl.Bank1AccStmtFlag == 1) then begin
+    res = AddDay(BankServicesbl.Bank1AccStmtLastDate,1); //last day is done, so next one
+    if (blankdate(res)) then begin //if used for the first time
+      res = AddDay(CurrentDate,-1); //can be only requested for previous day
+    end;
+  end;
+  if (BankServicesbl.Bank1TodayAccStmtFlag == 1) then begin
+    res = BankServicesbl.Bank1TodayAccStmtLastDate;
+    if (blankdate(res)) then begin //if used for the first time
+      res = CurrentDate;
+    end;
+  end;
+  GetNextStmtFromDate = res;
+  return;
+end;
+
+global
+procedure SGWGenerateStateReqArea(var area reqArea, record BankReqQueVc BankReqQuer)
+begin
+  string 255 attrib;
+  string 30 msgId;
+  date curDate;
+  time curTime;
+  record CYBlock CYb;
+  string 30 fromDateStr,toDateStr;
+  string 30 fromTimeStr,toTimeStr;
+  string 20 format;
+
+  curDate = CurrentDate;
+  curTime = CurrentTime;
+
+  switch(BankReqQuer.BankReqType) begin
+    case "Statement":
+      format = "camt.053.001.02";
+      fromDateStr = DateToString(GetNextStmtFromDate,"YYYY-MM-DD");
+      toDateStr = DateToString(AddDay(BankReqQuer.CreationDate,-1),"YYYY-MM-DD"); //to yesterday's day end
+    case "TodayStatement":
+      format = "camt.052.001.02";
+      fromDateStr = DateToString(CurrentDate,"YYYY-MM-DD");
+      toDateStr = DateToString(CurrentDate,"YYYY-MM-DD");
+    case "Balance":
+      format = "camt.052.001.02";
+      fromDateStr = DateToString(CurrentDate,"YYYY-MM-DD");
+      toDateStr = DateToString(CurrentDate,"YYYY-MM-DD");
+  end;
+  //request only previous day as current day report is separate paid service
+  fromTimeStr = "00:00:00+00:00"; //ignored by camt.060.001.03, 03.01.2019 see SGW documentation
+  toTimeStr = "23:59:59+00:00"; //ignored by camt.060.001.03, 03.01.2019 see SGW documentation
+
+  msgId = "" & curDate.year & curDate.month & curDate.day & curTime.hour & curTime.minute & curTime.second;
+  EstEInvStartTag("?xml version=""1.0"" encoding=""UTF-8""?",reqArea);
+  attrib = "xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns=""urn:iso:std:iso:20022:tech:xsd:camt.060.001.03""";
+  EstEInvStartTag2("Document",attrib,reqArea);
+  EstEInvStartTag("AcctRptgReq",reqArea);
+  EstEInvStartTag("GrpHdr",reqArea);
+  EstEInvTagValue("MsgId",msgId,30,reqArea); 
+  EstEInvTagValue("CreDtTm",GetXMLDateTime(curDate,curTime),30,reqArea); 
+  EstEInvEndTag("GrpHdr",reqArea);
+  EstEInvStartTag("RptgReq",reqArea);
+  if (BankReqQuer.BankReqType != "Balance") then begin
+    EstEInvTagValue("Id",msgId,30,reqArea);
+  end;
+  EstEInvTagValue("ReqdMsgNmId",format,30,reqArea); 
+  EstEInvStartTag("Acct",reqArea);
+  EstEInvStartTag("Id",reqArea);
+  EstEInvTagValue("IBAN",BankReqQuer.IBAN,30,reqArea); 
+  EstEInvEndTag("Id",reqArea);
+  EstEInvEndTag("Acct",reqArea);
+  EstEInvStartTag("AcctOwnr",reqArea); //required but ignored by camt.060.001.03
+  EstEInvTagValue("Pty","",30,reqArea); //required but ignored by camt.060.001.03
+  EstEInvEndTag("AcctOwnr",reqArea); //required but ignored by camt.060.001.03
+  EstEInvStartTag("RptgPrd",reqArea);
+  EstEInvStartTag("FrToDt",reqArea);
+  EstEInvTagValue("FrDt",fromDateStr,30,reqArea);
+  EstEInvTagValue("ToDt",toDateStr,30,reqArea);
+  EstEInvEndTag("FrToDt",reqArea);
+  EstEInvStartTag("FrToTm",reqArea); //required but ignored by camt.060.001.03
+  EstEInvTagValue("FrTm",fromTimeStr,30,reqArea); //required but ignored by camt.060.001.03
+  EstEInvTagValue("ToTm",toTimeStr,30,reqArea); //required but ignored by camt.060.001.03
+  EstEInvEndTag("FrToTm",reqArea); //required but ignored by camt.060.001.03
+  EstEInvTagValue("Tp","ALLL",30,reqArea);
+  EstEInvEndTag("RptgPrd",reqArea);
+  if (BankReqQuer.BankReqType == "Balance") then begin
+    EstEInvStartTag("ReqdBalTp",reqArea);
+    EstEInvStartTag("CdOrPrtry",reqArea);
+    EstEInvTagValue("Prtry","ONLYBALANCE",30,reqArea);
+    EstEInvEndTag("CdOrPrtry",reqArea);
+    EstEInvEndTag("ReqdBalTp",reqArea);
+  end;
+  EstEInvEndTag("RptgReq",reqArea);
+  EstEInvEndTag("AcctRptgReq",reqArea);
+  EstEInvEndTag("Document",reqArea);
+
+  BankingDebugFile(reqArea,msgId & "_" & LowerCase(BankReqQuer.BankReqType) & "_request.xml");
+  return;
+end;
+
+function boolean SGWComposeAndSendRequest(record BankReqQueVc BankReqQuer, area fileArea, string fileName, var string uniqueID, var string errMsg)
+begin
+  boolean res;
+  record ServiceCacheVc SCr;
+  record HTSFileVc HTSFr;
+  area request,reply;
+  record InternetEnablerBlock IEb;
+  record BankServicesBlock BankServicesbl;
+
+  BlockLoad(IEb);
+  BlockLoad(BankServicesbl);
+  SCr.Code = "BANKSERVICES";
+  SCr.Partner = "SGW";
+  if (ReadFirstMain(SCr,2,true) == false) then begin
+    BankingDebugMsg("BANK SERVICES","SGW Service cache not found: BANKSERVICES, partner SGW");
+  end else begin
+    HTSFr.FileName = fileName;
+    SetRecordBlob(HTSFr,"Math",fileArea);
+    AddRecordToArea(HTSFr,"HTSFileVc",request);
+    SendTextParameter(BankReqQuer.RegNr,request);
+    SendTextParameter(BankReqQuer.UserName,request);
+    SendTextParameter(BankReqQuer.BankReqType,request);
+    SendTextParameter(IEb.Contract,request);
+    SendTextParameter(BankServicesbl.Bank1AgreementId,request);
+    SendTextParameter(BankServicesbl.TestFlag,request);
+    res = SendWebRequest(SCr.ServiceHost,SCr.ServicePort,-1,true,"POST","/" & SCr.FuncName,"text/xml; charset=utf-8","",false,request,reply,20);
+    BankingDebugFile(request,BankReqQuer.SerNr & "_hts_sgw_request.txt");
+    BankingDebugFile(reply,BankReqQuer.SerNr & "_hts_sgw_reply.txt");
+    uniqueID = SGWGetUniqueIDFromReply(reply,errMsg);
+    if (blank(uniqueID)) then begin
+      res = false;
+      errMsg = USetStr(1501089) & " " & errMsg;
+    end;
+  end;
+  SGWComposeAndSendRequest = res;
+  return;
+end;
+
+global
+function boolean SGWSendSignedFileToHTS(area fileArea, string fileName, record BankReqQueVc BankReqQuer, var string uniqueID, var string errMsg)
+begin
+  boolean res;
+
+  res = SGWComposeAndSendRequest(BankReqQuer,fileArea,fileName,uniqueID,errMsg);
+  SGWSendSignedFileToHTS = res;
+  return;
+end;
+
+global
+function boolean SGWSendStateReqToHTS(area fileArea, record BankReqQueVc BankReqQuer, var string uniqueID, var string errMsg)
+begin
+  boolean res;
+  string 50 fileName;
+
+  fileName = "acc_state_req_" & BankReqQuer.RegNr & "_" & CurrentCompany & ".xml";
+  res = SGWComposeAndSendRequest(BankReqQuer,fileArea,fileName,uniqueID,errMsg);
+  SGWSendStateReqToHTS = res;
+  return;
+end;
+
+global
+function boolean SGWSendBalanceReqToHTS(area fileArea, record BankReqQueVc BankReqQuer, var string uniqueID, var string errMsg)
+begin
+  boolean res;
+  //balance is same as state
+  res = SGWSendStateReqToHTS(fileArea,BankReqQuer,uniqueID,errMsg);
+  SGWSendBalanceReqToHTS = res;
+  return;
+end;
+
+global
+procedure SGWCompleteReplyAtHTS(record BankReqQueVc BankReqQuer)
+begin
+  record ServiceCacheVc SCr;
+  area request,reply;
+  string 255 funcname;
+
+  SCr.Code = "BANKSERVICES";
+  SCr.Partner = "SGW";
+  funcname = "HTSCompleteSGWReply.hal"; //hardcoded to use same service cache code and partner but diff function
+  if (ReadFirstMain(SCr,2,true) == false) then begin
+    BankingDebugMsg("BANK SERVICES","SGW Service cache not found: BANKSERVICES, partner SGW");
+  end else begin
+    SendTextParameter(BankReqQuer.ReqUniqueID,request);
+    SendWebRequest(SCr.ServiceHost,SCr.ServicePort,-1,true,"POST","/" & funcname,"text/xml; charset=utf-8","",false,request,reply,20);
+  end;
+  return;
+end;

@@ -1,0 +1,45 @@
+//Bk //smaily ts 2019/07
+external procedure CutAreaLeft(var area,integer);
+external procedure CutAreaRight(var area,integer);
+external function LongInt SearchFromArea(string,boolean,area);
+external procedure StripHTTPHeaderFromReply(var area);
+//external procedure LogAreaToFile(string,area);
+
+global
+procedure SendOutSmailyContractRequest(area a_req,Boolean logf)
+begin
+  Boolean res;
+  record ServiceCacheVc SCr;
+  string 255 host,port,method,errmsg;
+  LongInt errcode;
+  json js;
+  area reply;
+  
+  SCr.Code = "SMAILY";
+  if (ReadFirstMain(SCr,1,true)) then begin
+    host = SCr.ServiceHost;
+    port = SCr.ServicePort;//443
+    method = SCr.FuncName;
+    //LogAreaToFile("request.txt",a_req);
+    res = SendRawWebRequest(host,port,true,"POST","/" & method,"application/json","",false,a_req,reply,20);
+    //LogAreaToFile("reply.txt",reply);
+    if (res==false) then begin
+      errmsg = USetStr(25920);
+      if (logf) then begin
+        LogText(0,errmsg);
+      end else begin
+        StopAlert(errmsg & ". " & USetStr(34187));
+      end;
+      goto LSendOutSmailyContractRequest;
+    end;
+    StripHTTPHeaderFromReply(reply);
+    js = ParseJSONArea(reply);
+    errcode = StringToLongInt(JSONGet(js,"code"));
+    errmsg = JSONGet(js,"message");
+    if (errcode!=101) then begin
+      LogText(0,"Smaily>" & errcode & ":" & errmsg);
+    end;
+  end;
+LSendOutSmailyContractRequest:;
+  return;
+end;

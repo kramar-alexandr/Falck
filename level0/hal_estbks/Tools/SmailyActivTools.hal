@@ -1,0 +1,73 @@
+//Bk //smaily
+external updating procedure SendActivationRequestEInvOther(string);
+external function Boolean CheckInternetEnabler();
+remote updating procedure FillSmailySettingsRemote(record RcVc);
+
+function boolean SmailyDataIsCorrect(record RcVc RepSpec, var string errMsg)
+begin
+  boolean res;
+
+  res = false;
+  if (blank(RepSpec.f1)) then begin
+    errMsg = UsetStr(20248);
+    goto LSmailyDataIsCorrect;
+  end;
+  if (blank(RepSpec.f2)) then begin
+    errMsg = UsetStr(20502);
+    goto LSmailyDataIsCorrect;
+  end;
+  if (blank(RepSpec.f3)) then begin
+    errMsg = UsetStr(20503);
+    goto LSmailyDataIsCorrect;
+  end;
+  res = true;
+LSmailyDataIsCorrect:;
+  SmailyDataIsCorrect = res;
+  return;
+end;
+
+global
+procedure OpenSmailyActWindow()
+begin
+  record RcVc RepSpec;
+  integer wn;
+  record EInvoiceBlock EIb;
+
+  wn = CurWindow;
+  BlockLoad(EIb);
+  if (EIb.TestFlag==0) then begin
+    if (CheckInternetEnabler==false) then begin
+      MessageBox(1500007,"");
+      CloseWindow(wn);
+      goto LOpenSmailyActWindow;
+    end;
+  end;
+  OpenWindow("SmailyRegWClass",0,wn,"","",RepSpec);
+LOpenSmailyActWindow:;
+  return;
+end;
+
+global
+procedure CloseSmailyActWindow()
+begin
+  CloseWindow(CurWindow);
+  return;
+end;
+
+global updating
+procedure SendSmailyActRequest()
+begin
+  record RcVc RepSpec;
+  string 255 errMsg;
+  
+  DeselectWindow(CurWindow,true);
+  GetWindowRecord(CurWindow,RepSpec);
+  if(SmailyDataIsCorrect(RepSpec,errMsg)) then begin
+    FillSmailySettingsRemote(RepSpec);
+    CloseSmailyActWindow;
+    SendActivationRequestEInvOther("SMAILY");
+  end else begin
+    MessageBox(0,errMsg);
+  end;
+  return;
+end;

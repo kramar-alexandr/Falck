@@ -1,0 +1,250 @@
+external function Boolean IsStandardUnused();
+external function Boolean IsEnterprise();
+external function Boolean StandardHansa();
+external function Boolean HasATOL();
+
+external function Boolean HasAccPeriods();
+external function Boolean HasAccessGroups();
+external function Boolean HasAddFee();
+external function Boolean HasApprovals();
+external function Boolean HasCCPayments();
+external function Boolean HasAdvancedAccounting();
+external function Boolean HasAdvancedCRM();
+external function Boolean HasAdvancedPricing();
+external function Boolean HasAdvancedProduction();
+external function Boolean HasAdvancedStock();
+external function Boolean HasAged();
+external function Boolean HasBar();
+external function Boolean HasBase2();
+external function Boolean HasBranch();
+external function Boolean HasBuyBack();
+external function Boolean HasCategories();
+//external function Boolean HasConsigmentStock();
+external function Boolean HasCommunicator();
+external function Boolean HasConsignmentStock();
+external function Boolean HasContactClassification();
+external function Boolean HasContactRelations();
+external function Boolean HasConsolidation();
+external function Boolean HasCountryPerCustomer();
+external function Boolean HasCreditLimit();
+external function Boolean HasCustItem();
+external function Boolean HasCustomerSearchKey();
+external function Boolean HasCustomerStatusReport();
+external function Boolean HasDownpayments();
+external function Boolean HasDefineColumns();
+external function Boolean HasDeliveryAddress();
+external function Boolean HasDepartments();
+external function Boolean HasETaxDocuments();
+external function Boolean HasEInvoicing();
+external function Boolean HasEndorsedChecks();
+external function Boolean HasExtraNLComment();
+external function Boolean HasExtTax();
+external function Boolean HasFavouriteActTypes();
+external function Boolean HasFiscalPrinter();
+external function Boolean HasFormEditor();
+external function Boolean HasFreightAdvanced();
+external function Boolean HasHideCostPrice();
+external function Boolean HasHotelInterface();
+external function Boolean HasGuestUserDefined();
+external function Boolean HasJewelleryInterface();
+external function Boolean HasIncomeAndExpenseBook();
+external function Boolean HasIOUChecks();
+external function Boolean HasItemClassification();
+external function Boolean HasItemGroups();
+external function Boolean HasKPIs();
+external function Boolean HasLanguages();
+external function Boolean HasLimitedAccess();
+external function Boolean HasLocalMachines();
+external function Boolean HasLoyaltyCards();
+external function Boolean HasMailTags();
+external function Boolean HasMainPartner();
+external function Boolean HasMultiCurrency();
+external function Boolean HasMultiLocations();
+external function Boolean HasNLBudget();
+external function Boolean HasNLBudgetClass();
+external function Boolean HasObjects();
+external function Boolean HasInvoiceOfficialSerNr();
+external function Boolean HasOfficialSerNr();
+external function Boolean HasOrderClasses();
+external function Boolean HasPreferedOfficialSerNr();
+external function Boolean HasNumberSeries();
+external function Boolean HasPersons();
+external function Boolean HasPocketScreen();
+external function Boolean HasPositions();
+external function Boolean HasPrepayments();
+external function Boolean HasProjects();
+external function Boolean HasPriceLists();
+external function Boolean HasQualityControl();
+external function Boolean HasReconLevel2();
+external function Boolean HasReminderLevel();
+external function Boolean HasRemoteBackup();
+external function Boolean HasResourceDisplayGroups();
+external function Boolean HasRussianPrepayment();
+external function Boolean HasRetGoodsToSupp();
+external function Boolean HasReturnedGoods();
+external function Boolean HasRoomPackages();
+external function Boolean HasRoomTypes();
+external function Boolean HasRoute();
+external function Boolean HasSalesman();
+external function Boolean HasSalesmanBonus();
+external function Boolean HasSalesGroup();
+external function Boolean HasSecondQuantity();
+external function Boolean HasSerialNumbers();
+external function Boolean HasServerInCloud();
+external function Boolean HasSettlementDiscount();
+external function Boolean HasSimulations();
+external function Boolean hasSimAccruals();
+external function Boolean HasSkypeConnection();
+external function Boolean HasSIPServerConnection();
+external function Boolean HasStrAsSignFType();
+external function Boolean HasTouchScreenDevice();
+external function Boolean HasTaxMatrix();
+external function Boolean HasTestFeatures();
+external function Boolean HasMetroTestFeatures();
+external function Boolean HasWorkOrders();
+external function Boolean HasThrouLocation();
+external function Boolean HasTouchScreenLook();
+external function Boolean HasTREO();
+external function Boolean HasVarieties();
+external function Boolean HasVATZone();
+external function Boolean HasWithholdingTax();
+external function Boolean HasWithholdingTaxAdvanced();
+external function Boolean HasWorkOrders();
+external function Boolean HasWorkflowOverview();
+
+external function Boolean HasStandardCRM();
+external function Boolean HasStandardOrganizer();
+external function Boolean HasStandardCommunicator();
+
+external function Boolean HasEMail();
+external function Boolean HasExternalEMail();
+
+external function Boolean HasModAT2();
+external function Boolean HasModBA();
+external function Boolean HasModCheck();
+external function Boolean HasModCL();
+external function Boolean HasModCO();
+external function Boolean HasModCons();
+external function Boolean HasModCourses();
+external function Boolean HasModCredMan();
+external function Boolean HasModCRM();
+external function Boolean HasModEDI();
+external function Boolean HasModExp();
+external function Boolean HasModHotel();
+external function Boolean HasModHRM();
+external function Boolean HasModIN();
+external function Boolean HasModIntStock();
+external function Boolean HasModNL();
+external function Boolean HasPaymentGateway();
+external function Boolean HasModPO();
+external function Boolean HasModPOS();
+external function Boolean HasModPL();
+external function Boolean HasModPOProg();
+external function Boolean HasModPP();
+external function Boolean HasModProd();
+external function Boolean HasModQT();
+external function Boolean HasModRent();
+external function Boolean HasModRest();
+external function Boolean HasModRsrt();
+external function Boolean HasModSO();
+external function Boolean HasModSL();
+external function Boolean HasModSVO();
+external function Boolean HasModTS();
+external function Boolean HasModWHM();
+external function Boolean HasModDI();
+external function Boolean UsePostOKButton();
+external function Boolean HasBankImport();
+external function Boolean HasPLIntegratedWithNL();
+external function Boolean HasSLIntegratedWithNL();
+external function Boolean HasIntegratedNL();
+external function Boolean HasConsStockMoveInvoices();
+external function Boolean AcceptanceStatusColumnTest(string);
+
+
+window OPLClass:2
+  wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  Integer rn;
+  
+  WindowBegin("Payments",OPLClass,CGmlist,-);
+  SetWRect(20,80,629,307);
+  Sizeable(-1,-1,0,0);
+  SpawnClass(OPDClass);
+  UseView(OPVc);
+  FormName(PrintOPL);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,1,      "No.",SerNr,false,SerNr);
+  RlColKey(84,79,    "Ord.",OrderedFlag,false,OrderedFlag);
+  RlColKey(121,116,  "OK",DoneFlag,false,DoneFlag);
+  if (HasModNL) then begin
+    RlColKey(151,151,  "Trans. Date",TransDate,false,TransDate);
+  end else begin
+    RlCol(151,151,  "Pay. Date",PayDate,false);
+  end;
+  RlColKey(231,231,"Reference",PayNumber,false,PayNumber);
+  if (IsEnterprise) then begin
+    if (AcceptanceStatusColumnTest("OPVc")) then begin
+      CalculatedColumn(-170,-170,"Appr.","OPLClassAcceptanceStatus",false);
+    end;
+  end else begin
+    RlCol(-230,-230,"Bank A/C",BankAcc,false);
+  end;
+  if (HasMultiCurrency) then begin
+    RlColKey(-131,-131,"Sum",CurPayVal,true,CurPayVal);
+    RlCol(-30,-15,"Cur.",PayCurCode,true);
+  end else begin
+    RlColKey(-100,-100,"Sum",CurPayVal,true,CurPayVal);
+  end;
+  RlCol(-1,-1,"",Invalid,true);
+  SearchField("Search");
+
+
+  if (GuiType==kGuiMetro) then begin
+    RowMenuBegin("");
+    RowMenuItem(0,"Order",'B','B',4312,"OrderOPLsm");
+    RowMenuItem(0,"OK",'G','G',4312,"OKOPLsm");
+    //cust - start KB 06.11.2019
+    if (IsEnterprise and HasLocalization("LVA")) then begin
+      RowMenuItem(0,"E-Payment Status",' ',' ',4300,"EPaymentStatusOPLsm");
+    end;
+    if (IsEnterprise and HasLocalization("EST")) then begin //Bk
+      //Bk - start KB 30.08.2019 //pangaliidestus
+      RowMenuItem(0,"E-Payment Status",' ',' ',4300,"BK_EPayStatusOPLsm");
+      //Bk - end
+    end;
+    //cust - end
+    EndRowMenu;
+    SpecMenuGroup("",kSpecMenuGroupTypeButtonsInBottomBarRight,0);
+    if (IsEnterprise) then begin
+      SpecialMenuWithIcon("Create Payments Suggestion",' ',4313,1,"OPSuggOPLsm");
+//    SpecMenuItem("Create Withholding Rows",' ',3);//no code
+//  SpecMenuItem("Payment Transfer",' ',4); no code
+    end;
+    if (HasModCheck) then begin
+      SpecialMenuWithIcon("#Cheque# Run",' ',4313,2,"ChequeRunOPLsm");
+    end;
+  end else begin
+    SpecialMenu("Order",'B',0,"OrderOPLsm");
+    SpecialMenu("OK",'G',1,"OKOPLsm");
+//    SpecMenuItem("Create Withholding Rows",' ',3);//no code
+//  SpecMenuItem("Payment Transfer",' ',4); no code
+    //cust - start KB 06.11.2019
+    if (IsEnterprise and HasLocalization("LVA")) then begin
+      SpecialMenu("E-Payment Status",' ',5,"EPaymentStatusOPLsm");
+    end;
+    if (IsEnterprise and HasLocalization("EST")) then begin //Bk
+      //Bk - start KB 30.08.2019 //pangaliidestus
+      SpecialMenu("E-Payment Status",' ',5,"BK_EPayStatusOPLsm");
+      //Bk - end
+    end;
+    //cust - end
+    SpecMenuGroup("",kSpecMenuGroupTypeExtendedPlusMenu,0);
+    if (IsEnterprise or (IsBooks and IsStandardProduct==false)) then begin
+      SpecialMenu("Payments Suggestion",' ',2,"OPSuggOPLsm");
+    end;
+    if (HasModCheck) then begin
+     SpecialMenu("#Cheque# Run",' ',6,"ChequeRunOPLsm");
+    end;
+  end;
+  EndWindow;
+end;

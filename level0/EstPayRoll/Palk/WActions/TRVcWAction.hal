@@ -37,8 +37,8 @@ BEGIN
   record CredManVc CredManr;
   record BuyBackVc BBr;
   record ForexTRVc FTRr;
-  record CalcPayrollVc CPr;//cust
-  record PaymPayrollVc PaymPr;//cust
+  record CalcPayrollVc CPr;//Bk
+  record PaymPayrollVc PaymPr;//Bk
   
   if (TRp.IntYc==IVYc) then begin dclass = "IVDClass"; end;
   if (TRp.IntYc==IPYc) then begin dclass = "IPDClass"; end;
@@ -82,8 +82,8 @@ BEGIN
   if (TRp.IntYc==BuyBackReconYc) then begin dclass = "BuyBackDClass"; end;
   if (TRp.IntYc==ForexTRYc) then begin dclass = "ForexTRDClass"; end;
   if (TRp.IntYc==Check2Yc) then begin dclass = "CheckDClass"; end;
-  if (TRp.IntYc==SalaryCalcYc) then begin dclass = "CalcPayrollDClass"; end;//cust
-  if (TRp.IntYc==SalaryPaymentYc) then begin dclass = "PaymPayrollDClass"; end;//cust
+  if (TRp.IntYc==SalaryCalcYc) then begin dclass = "CalcPayrollDClass"; end;//Bk
+  if (TRp.IntYc==SalaryPaymentYc) then begin dclass = "PaymPayrollDClass"; end;//Bk
 
   if (nonblank(dclass)) then begin
     if (TRp.IntYc==IVYc) then begin 
@@ -340,7 +340,7 @@ BEGIN
         nwn = OpenWindow(dclass,1,0,"","",FTRr);
       end;
     end;
-//cust start
+//Bk - start
     if (TRp.IntYc==SalaryCalcYc) then begin 
       CPr.SerNr = TRp.Number;
       if (ReadFirstMain(CPr,1,true)) then begin
@@ -353,7 +353,7 @@ BEGIN
         nwn = OpenWindow(dclass,1,0,"","",PaymPr);
       end;
     end;
-//cust end
+//Bk - end
   end;
   RETURN;
 END;

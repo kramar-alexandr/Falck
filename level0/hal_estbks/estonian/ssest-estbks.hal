@@ -1,0 +1,694 @@
+/* all books specific sstring, include EstPayRoll */
+event startup
+
+begin
+  SetLangMode(LangEstonian,"EST",0);
+
+  //cust - start KB 04.11.2019 - these must be off, otherwise ERP is asking BK keys
+  /*
+  SString(912,"1295");
+  SString(915,"3124");
+  SString(914,"1607");
+  SString(1800,"20");
+  */
+  //SourceFile(HobFolder & "clest-estbks.hob",0);//tmp ? kontrollida üle
+  //cust - end
+
+/* keep these strings for compatibility, left from krediidiskoor */
+// SString(1500000):SString(1500177)
+  SString(1500000,"Päring valitud teenustele saadetud. Ava seadistus uuesti ja vaata välja 'Süsteemi teade' lisainfo saamiseks");
+  SString(1500001,"Krediidiskoor");
+  SString(1500002,"Selle kliendi krediidiskoor ei luba arvet teha");
+  SString(1500003,"Kontaktil puudub registrinumber");
+  SString(1500004,"Puudub");
+  SString(1500005,"Teenus ei ole aktiveeritud.");
+  SString(1500006,"Salvesta kõigepealt kaart");
+  SString(1500007,"Teie programm ei ole registreeritud. Palun kontrollige seadistust Internetivõtmed.");
+  SString(1500008,"Inforegistri teenuseid saab aktiveerida moodulis Üldine, seadistus - E-teenuste seadistused või ajutiselt peatada moodulis Tehnika, Inforegistri seadistused");
+  SString(1500009,"Uuenduse käigus tekkis viga, mõned väärtused ei ole uuendatud");
+  SString(1500010,"Toimub juurdepääsu võtme uuendus, palun proovige uuesti hetke pärast");
+  SString(1500011,"Selle kliendi krediidiskoor ei luba tellimust teha");
+  SString(1500012,"Seadistuses 'Ajastatud tegevused' on juba teine HAL toiming olemas!");
+  SString(1500013,"Inforegistri teenused on ajastatud pärast tekstikoopia tegemist");
+  SString(1500014,"Kaarte uuendatud");
+  SString(1500015,"Selle kliendi krediidiskoor ei luba lähetust teha");
+  SString(1500016,"Kliendi krediidiskoori taseme seadistused ei ole määratud");
+  SString(1500017,"Krediidiskoori seadistuse muutmise õigused puuduvad");
+  SString(1500018,"Päring Inforegistri kasutaja loomiseks on saadetud. Kontrollige e-meili.");
+  SString(1500019,"Andmed saadetud, palun avage E-teenuste seadistused ja vaadake 'Süsteemi teade' lisainfo saamiseks");
+  SString(1500020,"Teenuse deaktiveerimine ebaõnnestus!");
+  SString(1500021,"Teenuste sulgemise server ei vasta, proovige palun hetke pärast uuesti");
+  SString(1500022,"Minimaalne sedeli suurus on 10 punkti");
+
+/*CompanyInfoIRRn*/
+  SString(1500031,"Vaata ärivõrgustikku");
+  SString(1500032,"Sisesta kontaktandmed");
+  SString(1500033,"Lisa EMTAK klassifikaator");
+  SString(1500034,"Uuenda kontaktandmeid");
+  SString(1500035,"Loo järgmine uus kontakt");
+  SString(1500036,"Sisesta aadress, reg. ja KMKR numbrid");
+  SString(1500037,"Uuenda nime");
+  SString(1500038,"Vaata kohustusi");
+  SString(1500039,"Loo uus kontakt");
+  SString(1500040,"Uuenda aadressi, reg. ja KMKR numbrit");
+  SString(1500041,"E-mail");
+  SString(1500042,"Faks");
+  SString(1500043,"Telefoninumber");
+  SString(1500044,"Staatus");
+  SString(1500045,"KMKR nr.");
+  SString(1500046,"Päring ebaõnnestus");
+  SString(1500047,"Kokku: ");
+  SString(1500048,"Nimi");
+  SString(1500049,"Reg.nr.");
+  SString(1500050,"Ettevõtte andmed");
+  SString(1500051,"Andmete allikas: www.inforegister.ee ");
+  SString(1500052,"Tegevusaadress");
+  SString(1500053,"Juriidiline aadress");
+  SString(1500054,"Kodulehekülg");
+  SString(1500055,"Inforegistri link");
+  SString(1500056,"Juhatuse liikmed");
+  SString(1500057,"Põhikapital");
+  SString(1500058,"Puuduvad teenuse serveri andmed");
+  SString(1500059,"Otsing ei andnud tulemust, kontrollige reg.nr. või nimi");
+  SString(1500060,"Registreerimiskuupäev");
+  SString(1500061,"Registreerimispiirkond");
+  SString(1500062,"EMTAK klassifikaator");
+  SString(1500063,"Ei saanud klassifikaatorit lisada");
+  SString(1500064,"--andmed puuduvad--");
+
+  SString(1500065,"Krediidiskoori automaatne uuendus on ajastatud");
+  SString(1500066,"Krediidiskoori automaatne uuendus on peatatud");
+  SString(1500067,"Võlahaldusesse saatmine on ajastatud");
+  SString(1500068,"Võlahaldusesse saatmine on peatatud");
+
+/*IRInfoRequest*/
+  SString(1500100,"Inforegistri aadressi päring");
+  SString(1500101,"Serveri vastus on vigane");
+  SString(1500102,"Maksimaalne tulemuste arv on ületatud, kuvatakse ainult esimesed ");
+  SString(1500103,"Ühenduse viga, palun proovige uuesti hetke pärast");
+  SString(1500104,"Serveri vastus on tühi");
+  SString(1500105,"Ei leidnud ühtegi ettevõttet");
+  SString(1500106,"Proovige otsingu päringut täpsustada või muuta");
+
+//EstAddrLookupRn - was standard range in s5est.hal, but no longer in BK 85
+  SString(1500107,"RIK aadressi päring");
+  SString(1500108,"Nimi");
+  SString(1500109,"Reg.nr.");
+  SString(1500110,"KMK.nr.");
+  SString(1500111,"Staatus");
+  SString(1500112,"Aadress");
+  SString(1500113,"Päring ebaõnnestus");//Ei leitud ühtegi vastet
+  SString(1500114,"Uuenda andmeid");
+  SString(1500115,"Loo uus kontakt");
+  SString(1500116,"Vaata kohustusi");
+  SString(1500117,"Aruandes kuvatakse maksimaalselt 100 vastet. Täpsusta otsingut!");
+  SString(1500118,"Kokku: ");
+  SString(1500119,"not used"); //can reuse
+  SString(1500120,"not used"); //can reuse
+  SString(1500121,"Uuenda nime");
+  SString(1500122,"Sisesta andmeid");
+  SString(1500123,"Loo järgmine uus kontakt");
+  SString(1500124,"Kontrolli, kas teenus on aktiiveeritud E-arvete seadistuses!");//webrequest ebaõnnestus või andis vea
+
+/*Debt handling*/
+  SString(1500151, "Võlanõue on saadetud võlahalduse järjekorda");
+  SString(1500152, "Ei saa võlanõuet koostada, mõned andmed puuduvad");
+  SString(1500153, "See võlanõue on juba saadetud");
+  SString(1500154, "Saada võlanõue");
+  SString(1500155, "Ei saa arvet võlale lisada, mõned andmed puuduvad");
+  SString(1500156, "Võla andmete saatmisel serverisse tekkis viga");
+  SString(1500157, "Võlanõude andmete saatmisel serverisse tekkis viga");
+  SString(1500158, "Ei saa dokumenti võlale lisada, mõned andmed puuduvad");
+  SString(1500159, "Dokumendi andmete saatmisel serverisse tekkis viga");
+  SString(1500160, "Võlanõude kinnitamise päringu saatmisel serverisse tekkis viga");
+  SString(1500161, "Võlanõude kinnitamise vastust serverilt ei tulnud");
+  SString(1500162, "Arve peab olema kinnitatud");
+  SString(1500163, "Salvesta kõigepealt kaart");
+  SString(1500164, "Arve nr. või vahemik peab olema määratud");
+  SString(1500165, "Vahemikud on valesti määratud!");
+  SString(1500166, "Tegevus ebõnnestus");
+  SString(1500167, "Võlanõuded on edastatud");
+  SString(1500168, "Selleks et võlanõuet kustutada, aktiveerige linnuke 'Tasutud' kaardi peal, siis järgmisel saatmisel see kustutatakse");
+
+/*Organization statuses translation 
+(see http://graph.ir.ee/organization-status-types)*/
+  SString(1500170, "kustutatud");
+  SString(1500171, "eksikombel sisestatud");
+  SString(1500172, "pankrotimenetluses");
+  SString(1500173, "likvideerimisel");
+  SString(1500174, "ei ole sisestatud");
+  SString(1500175, "projekt");
+  SString(1500176, "registreeritud");
+  SString(1500177, "üleantud");
+
+/* Tsekk.ee */
+// SString(1500200):SString(1500209)
+  //do not translate
+  SString(1500200,"Costpocket: data exchange has been stopped. Your program is not registered. Please check setting Internet Enablers");
+  SString(1500201,"Costpocket: no companies with activated service, service stopped");
+  //do not translate end
+  SString(1500202,"Ei saa sisse logida/aktiveerida, puudub või vale Costpocketi juurdepääsu võti. Kontrollige Costpocketi seadistust.");
+  SString(1500203,"Selleks peab olema aktiveeritud moodul 'Kulutused'");
+  SString(1500204,"See arve on juba nimekirjas, ei saa uuesti lisada");
+  SString(1500205,"Aktiveerimise lõpetamiseks avage seadistust uuesti ja logige sisse kasutades nuppu 'Sisene'");
+  SString(1500206,"Logige sisse nupu 'Sisene' abil. ");
+  SString(1500207,"Teie tsekk token on seotud kontoga. ");
+  SString(1500208,"Sisestage palun nimi ja perekonnanimi");
+  SString(1500209,"Akiveerimine ebaõnnestus");
+
+/* Telema */
+// SString(1500210):SString(1500224), SString(1500700):SString(1500750)
+  SString(1500210,"Hinnamuutused");
+  SString(1500211,"Rida");
+  SString(1500212,"Artikkel");
+  SString(1500213,"Nimetus");
+  SString(1500214,"Tellimuse hind");
+  SString(1500215,"Meie hind");
+  SString(1500216,"Muutus");
+  SString(1500217,"Hinnad on samad");
+  SString(1500218,"Märkus");
+  SString(1500219,"Puudub lähetuselt");
+  SString(1500220,"Puuduvad tarne read");
+  SString(1500221,"Tarne");
+  SString(1500222,"Lähetusel");
+  SString(1500223,"Erinevus");
+  SString(1500224," / KONTROLLI HINNAD!");
+  SString(1500225,"Tellimuse nr. on nii päises kui ka ridades");
+  SString(1500226,"Arvet ei eksisteeri");
+  SString(1500227,"Päise või iga rea Tellimus peab olema täidetud");
+  SString(1500228,"Kreeditarve on juba koostatud");
+  SString(1500229,"Artikli hind ei ole määratud");
+  //Other ranges are in use
+  SString(1500700,"Kreedit arve(d) koostatud: ");
+  SString(1500701,"Tagastatud kaubad koostatud: ");
+  SString(1500702,"Tagastatud kaubad on juba koostatud.");
+  SString(1500703,"Lähetus ei ole seotud Tellimusega.");
+  SString(1500704,"Kõik tellimuste rea numbrid peavad olema täidetud.");
+  SString(1500705,"Rea number ei saa olla 0 või negatiivne.");
+  SString(1500706,"Lähetuse nr. on nii päises kui ka ridades");
+  SString(1500707,"Tagastustellimuste nimekiri");
+  SString(1500708,"Tagastustell. nr.");
+  SString(1500709,"Kliendi Tagastustellimuse nr.");
+  SString(1500710,"Tagastustellimuse kuupäev");
+  SString(1500711,"Tegelemata tagastustellimused");
+  SString(1500712,"Antud numbriga reas on Lähetuses teine artikkel.");
+  SString(1500713,"Sellist lähetust ei eksisteeri");
+  SString(1500714,"Päise või iga rea Lähetuse nr peab olema täidetud");
+  SString(1500715,"Kaart on lisatud Telema ekspordi järjekorda");
+  SString(1500716,"Hiljuti lisatud järjekorda");
+  SString(1500717,"Dokument on eksporditud");
+  SString(1500718,"See kaart on juba Telema ekspordi järjekorras");
+  SString(1500719,"Telema arve hetkeseis");
+  SString(1500720,"Telema lähetuse hetkeseis");
+  SString(1500721,"Programmist saadetud");
+  SString(1500722,"Saatmine ebaõnnestus");
+  SString(1500723,"Programmist saadetud (manuaalselt eksporditud)");
+  SString(1500724,"Programmist saatmisel (manuaalselt eksporditud)");
+  SString(1500725,"Ei ole saadetud");
+  SString(1500726," / KONTROLLI KLIENDIKOODI");
+  SString(1500727," / KONTROLLI ARTIKLIKOODI");
+  SString(1500728,"Telema ostutellimuse hetkeseis");
+  SString(1500729,"Telema dokumentide hetkeseis");
+  SString(1500730,"Vaheta TELEMAARTIKKEL õige artikli vastu ja kontrolli andmed üle!");
+  SString(1500731,"Vaheta TELEMAKLIENT õige kliendi vastu ja kontrolli andmed üle");
+
+/* Pakendi aruanne */
+// SString(1500230):SString(1500233)
+  SString(1500230,"Pakendiaruanne");
+  SString(1500231,"Pakendi tüüp");
+  SString(1500232,"Nimetus");
+  SString(1500233,"Kaal kokku");
+
+/* VD aruanne */
+// SString(1500240):SString(1500248)
+  SString(1500240,"VD aruanne");
+  SString(1500241,"Riik");
+  SString(1500242,"Klient");
+  SString(1500243,"Reg. nr");
+  SString(1500244,"Kaupade väärtus");
+  SString(1500245,"Kolmnurktehing");
+  SString(1500246,"Teenus väärtus");
+  SString(1500247,"Tehingu tüüp");
+  SString(1500248,"Kauba eksport");
+  SString(1500249,"Koosta VD eksport");
+
+/* SEPA import */
+// SString(1500250):SString(1500257)
+  SString(1500250,"Ettevõtte arveldusarve/IBAN number ei leidnud faili");
+  SString(1500251,"Ettevõtte arveldusarve/IBAN number puudub. Kontrolli tasumisviiside seadistust");
+  SString(1500252,"Juba koostatud");
+  SString(1500253,"Antud pangaväljavõte kirje on seostatud teist tüüpi kaardiga: ");
+  SString(1500254,"Laekumiste koostamine on keelatud SEPA impordi seadistuses. Veenduge et tõesti soovite edaspidi neid automaatselt koostada.");
+  SString(1500255,"Tasumiste koostamine on keelatud SEPA impordi seadistuses. Veenduge et tõesti soovite edaspidi neid automaatselt koostada.");
+  SString(1500256,"Kannete koostamine on keelatud SEPA impordi seadistuses. Veenduge et tõesti soovite edaspidi neid automaatselt koostada.");
+
+/* Kasumiaruanne kuude lõikes */
+// SString(1500258):SString(1500270)
+  SString(1500258,"jaan.");
+  SString(1500259,"veebr.");
+  SString(1500260,"märts");
+  SString(1500261,"apr.");
+  SString(1500262,"mai");
+  SString(1500263,"juuni");
+  SString(1500264,"juuli");
+  SString(1500265,"aug.");
+  SString(1500266,"sept.");
+  SString(1500267,"okt.");
+  SString(1500268,"nov.");
+  SString(1500269,"dets.");
+  SString(1500270,"Perioodis on rohkem kui 12 kuud");
+
+/* Kannete arve perioodis */
+// SString(1500271):SString(1500296)
+  SString(1500271,"Kannete arv perioodis");
+  SString(1500273,"REGISTER");
+  SString(1500274,"KANNETE ARV");
+  SString(1500275,"Töötaja: ");
+  SString(1500276,"Ettevõtte nr.: ");
+  SString(1500277,"Kõik ettevõtted");
+  SString(1500278,"Ainult kinnitatud allsüsteemi kaardid");
+  SString(1500279,"KOKKU kõikides kasutatud ettevõtetes");
+  SString(1500280,"Arved");
+  SString(1500281,"Laekumised");
+  SString(1500282,"Ostuarved");
+  SString(1500283,"Tasumised");
+  SString(1500284,"Väljamaksed");
+  SString(1500285,"Laoliikumised");
+  SString(1500286,"Lähetused");
+  SString(1500287,"Kanded");
+  SString(1500288,"Kulutused");
+  SString(1500289,"Kassa sissetulekud");
+  SString(1500290,"Kassa väljaminekud");
+  SString(1500291,"Põhivara mahakandmised");
+  SString(1500292,"Lao sissetulekud");
+  SString(1500293,"Lao mahakandmised");
+  SString(1500294,"Kõik töötajad");
+  SString(1500295,"K.a. kinnitamata allsüsteemi kaardid");
+  SString(1500296,"Finantskanded");
+  //30.11.2018 //nk
+  SString(1500297,"Palgaarvestused");
+  SString(1500298,"Palgaväljamaksed");
+  SString(1500299,"Kõik töötajad kokku");
+
+
+/* Salary module */
+// SString(1500300):SString(1500606)
+// SString(1500300) - SString(1500800) reserved for Standard Books Salary module
+
+/* Korteriühistu */
+// SString(1500801):SString(1500911)
+  SString(1500801,"Korterite nimekiri");
+  SString(1500802,"Majad: ");
+  SString(1500803,"Kõik");
+  SString(1500804,"Ainult kasutuses korterid");
+  SString(1500805,"K.a. passiivsed korterid");
+  SString(1500806,"Korterid: ");
+  SString(1500807,"Maja");
+  SString(1500808,"Korter");
+  SString(1500809,"Omanik");
+  SString(1500810,"Üldpind");
+  SString(1500811,"Köetav pind");
+  SString(1500812,"Elanikke");
+  SString(1500813,"Kokku");
+  SString(1500814,"Perioodi kulud");
+  SString(1500815,"Kuluartiklid: ");
+  SString(1500816,"Näitude register");
+  SString(1500817,"Kuukood: ");
+  SString(1500818,"K.a. arveta kirjed");
+  SString(1500819,"Ainult arvega kirjed");
+  SString(1500820,"Maja: ");
+  SString(1500821,"Arved koostamata");
+  SString(1500822,"Külm vesi");
+  SString(1500823,"Soe vesi");
+  SString(1500824,"Üldvesi");
+  SString(1500825,"Küte");
+  SString(1500826,"Soojuskaod");
+  SString(1500827,"Summa");
+  SString(1500828,"Tariif");
+  SString(1500829,"Kogus");
+  SString(1500830,"Algnäit");
+  SString(1500831,"Lõppnäit");
+  SString(1500832,"Järjestus: Korter puhul detailne vaade puudub.");
+  SString(1500833,"Vali kokkuvõtlik vaade.");
+  SString(1500834,"Kasuta kombinatsiooni: Järjestus=Artikkel");
+  SString(1500835,"Artiklikood");
+  SString(1500836,"Nimetus");
+  SString(1500837,"Hoiatus! Kuukoodiga  ");//Hoiatus! Sellise kuukoodi ja majakoodiga arved on juba olemas. Arve number: 
+  SString(1500838,"Ei leitud kulukirjet artiklile "); //Kulukirje kinnitamata või sisestamata artiklile 
+  SString(1500839,"Külma vee lõppnäit on algnäidust väiksem. ");
+  SString(1500840,"Sooja vee lõppnäit on algnäidust väiksem. ");
+  SString(1500841,"Ei leitud Näitude registri kirjet ");//Näitude registri kirje kinnitamata või sisestamata. 
+  SString(1500842,"Ettemaks(-)/Võlg(+): ");
+  SString(1500843,"          Tasuda: ");
+  SString(1500844,"Kõik väljad peavad olema täidetud");
+  SString(1500845,"Kõik väljad peavad olema erinevad");
+  SString(1500846,"Artiklit ei eksisteeri: ");
+  SString(1500847,"Näitude registri artiklid on loodud. Artiklid on seadistatud soovituslike väärtustega.");
+  SString(1500848,"Puudub KM-kood. Kontrolli seadistusi.");
+  SString(1500849,"KM-koodi ei eksisteeri. Kontrolli seadistusi. Artikkel: ");
+  SString(1500850,"Kuukood sisestamata või vale pikkusega ");
+  SString(1500851,"Korteri number ei tohi olla 0. Vt. rida nr. ");
+  SString(1500852,"Ei tohi muuta, arved koostatud.");//Kinnitatud kaarti ei saa muuta.
+  SString(1500853,"Eksisteerib täitmata väli");
+  SString(1500854,"Kuukood vale formaadiga. Kasuta formaati aaaakk.");
+  SString(1500855,"Sellist artiklit ei eksisteeri");
+  SString(1500856,"Tariif on fikseeritud");
+  SString(1500857,"Kogusumma väli peab olema täidetud");
+  SString(1500858,"Sellel majal ei ole sisestatud ühtegi korterit. Ei saa salvestada");
+  SString(1500859,"Sellise kuu-, maja- ja artiklikoodga kirje juba eksisteerib");
+  SString(1500860,"Ei tohi kustutada, arved koostatud.");
+  SString(1500861,"Näitude registri artiklid ei ole kasutusel. Vaata hooldusfunktsiooni.");
+  SString(1500862,"Sooja vee, kütte ja soojuskadude summa ei lähe kokku soojusenergia väärtusega");
+  SString(1500863,"Negatiivsed väärtused ei ole lubatud.");
+  SString(1500864,"Maatriksi ridu ei tohi lisada ega kustutada");
+  SString(1500865,"Sellise kuu-ja majakoodga kirje juba eksisteerib");
+  SString(1500866,"Korterinumber peab olema 0-st suurem arv");
+  SString(1500867,"Lubatud korterite arv (150) ületatud. Suurema paketi ostmiseks helista 6691111");
+  SString(1500868,"Sellist klienti ei eksisteeri");
+  SString(1500869,"Sellist maja ei eksisteeri");
+  SString(1500870,"Kontrollige välja Soojusenergia. Sisestatud summa ilmselt liiga väike.");
+  SString(1500871,"Sellel korteril ei ole veemõõtjaid.");
+  SString(1500872,"Algnäitu ei tohi kustutada.");
+  SString(1500873,"Lõppnäit peab olema algnäidust suurem. Võrdsustan algnäiduga.");
+  SString(1500874,"Kütte hind on fikseeritud, ei tohi muuta");
+  SString(1500875,"Kütte summa tekib arvutuslikult, ei tohi muuta");
+  SString(1500876,"Kütte väli ei tohi olla tühi");
+  SString(1500877,"Sisestatud summa liiga väike. Vaata hinnakirjadega korterite küttesummasid.");
+  SString(1500878,"Kütte summa liiga suur. Kontrollige välja Soojusenergia");
+  SString(1500879,"Minimaalne väärtus hetkel ");
+  SString(1500880,"Soojuskadude hind on fikseeritud, ei tohi muuta");
+  SString(1500881,"Soojuskadude arvutus tehakse peale kütte summa sisestamist. Ei tohi muuta.");
+  SString(1500882,"Soojuskadude väli ei tohi olla tühi");
+  SString(1500883,"Arvutuslikud suurused. Ei tohi muuta.");
+  SString(1500884,"Ei tohi muuta! Kasuta CTRL-Enter taastamiseks.");
+  SString(1500885,"Kogusumma liiga väike. Võrdsustan minimaalse väärtusega.");
+  SString(1500886,"Majakoodi väli peab olema täidetud");
+  SString(1500887,"Maatriks juba täidetud");//ei ole kasutuses
+  SString(1500888,"Artikli väli peab olema täidetud");
+  SString(1500889,"Maatriksi täitmiseks sisesta majakood");
+  SString(1500890,"Tariif on fikseeritud. Ära sisesta kogusummat");
+  SString(1500891,"Tegemist Näitude registri artikliga. Selle kulukaardi täitmisel pole mõtet");
+  SString(1500892,"Artikkel ei ole tüüpi Näidik/lõppnäit");
+  SString(1500893,"Algnäitu ei tohi kustutada");
+  SString(1500894,"Kogust ei tohi muuta");
+  SString(1500895,"Selles majas ei ole sellist korterit");//ei ole kasutuses
+  SString(1500896,"Tariifi ei tohi muuta");//ei ole kasutuses
+  SString(1500897,"Summat ei tohi muuta");//ei ole kasutuses
+  SString(1500898,"Lõppnäit peab olema algnäidust suurem. Võrdsustan algnäiduga.");
+  SString(1500899,"Artikkel tüüpi Näidik/kogus. Sisesta kogus.");
+  SString(1500900," ja majakoodiga ");
+  SString(1500901," arved on juba olemas.");
+  SString(1500902,"Sisesta arve kuupäev!");
+  SString(1500903,"Sisesta kande kuupäev!");
+  SString(1500904,"Lubatud korterite arv ületatud!");
+  SString(1500905,"Ei tohi kustutada! Leidub Näitude registri kirje nr ");
+  SString(1500906,", kus see korter on kasutuses.");
+  SString(1500907,"Ei tohi kustutada! Leidub Kulude registri kirje nr ");
+  SString(1500908,"FO KÜ andmete konverteerimine ei ole lubatud! Konverteerimine oli juba läbi viidud või programm oli juba kasutusel ilma konverteerimiseta. Kontrolli andmed! Vajadusel impordi FO KÜ andmebaasi uuesti ja käivita hooldus.");
+  SString(1500909,"Külm vesi(2)");
+  SString(1500910,"Soe vesi(2)");
+  SString(1500911,"Küte artikkel kuulub Kulude registrisse, ei tohi muuta");
+
+/* BooksFix */
+// SString(1500915):SString(1500934)
+  SString(1500915,"Tootmised on koostatud"); 
+  SString(1500916,"Artiklite ostu-müügi statistika");
+  SString(1500917,"Ostetud tarnijalt");
+  SString(1500918,"Müüdud kliendile");
+  SString(1500919,"Artikliklassid alates: "); //Bk
+  SString(1500920,"Ostutellimus(ed) on koostatud: ");
+
+  /*PORequireRn Books with item name*/
+  SString(1500921,"1 - Artikli kood");
+  SString(1500922,"2 - Artikli nimi");
+  SString(1500923,"3 - Laos");
+  SString(1500924,"4 - Ostutellimustel");
+  SString(1500925,"5 - Müügitellimustel");
+  SString(1500926,"6 - Teoreetiliselt laos");
+  SString(1500927,"7 - Müük");
+  SString(1500928,"8 - Keskmine müük");
+  SString(1500929,"9 - Eeldatav müük");
+  SString(1500930,"10 - Artikli min.tase");
+  SString(1500931,"11 - Min. tellitav kogus");
+  SString(1500932,"12 - Soovituslik tellitav kogus");
+
+  /*AT2DeprRn Books with new columns*/
+  SString(1500933,"Amort.alg. k");
+  SString(1500934,"Amort. mudel");
+  
+/* SEPA (eksport) */
+// SString(1500935):SString(1500937)
+  SString(1500935,"Kulutuste väljamakse ");
+  SString(1500936,"Andmed on valed, käivita aruanne ""Andmete kontroll (SEPA MAKSED)""");
+  SString(1500937,"Andmete kontroll (SEPA väljamaksed)");
+
+/* e-Invoice/Supplier e-Invoice messages */
+// SString(1501000):SString(1501030)
+  SString(1501000,"Ei ole e-arve");
+  SString(1501001,"Manust ei leitud");
+  SString(1501002,"Ei ole tarnija e-arve");
+  SString(1501003,"Ei ole määratud numbriseerias");
+  SString(1501004,"Ostuarve koostamine ebaõnnestus");
+  SString(1501005,"Ostuarve koostamine ebaõnnestus. Puudub summa");
+  SString(1501006,"Kulutuse koostamiseks sisesta KM-kood");
+  SString(1501007,"Ostuarve on juba koostatud");
+  SString(1501008,"Kulutus on juba koostatud");
+  SString(1501009,"Sama tarnija arve nr-ga ostuarve on juba koostatud: ");
+  //e-arvete algandmed
+  SString(1501010,"E-arvete teenus ei ole aktiveeritud");
+  SString(1501011,"Valitud e-arve teenusepakkuja ei toeta antud teenust");
+  SString(1501012,"Algandmete saatmine on keelatud e-teenuste seadistuses.");
+  SString(1501013,"Uendatud andmed keskkonda saatmiseks puuduvad.");
+  SString(1501014,"E-teenused on peatatud. Uuenda andmebaasivõtit"); //Bk ts 2019/10
+  SString(1501015,"Running AutoEnabler function"); //Bk ts 2019/10
+  
+   /* aruanne Ostuarvete manused  1501030 - 1501040 */
+  SString(1501030,"Ostuarvete manused");
+  SString(1501031,"Ostuarved on manustatud faile");
+  SString(1501032,"Osturarved ei ole manustatud faile");
+  SString(1501033,"Kõik osturarved");
+  SString(1501034,"Ostuarve Nr.");
+  SString(1501035,"Manused");
+
+ /* aruanne Ostuarvete nimekiri (standard) */
+  SString(1501041,"Kinnipidamise maks");
+  SString(1501042,"Kin.maks");
+  SString(1501043,"Arvesta käibemaksust maha kinnipidamise maks");
+
+/* pangaliidestus */
+// SString(1501060):SString(1501150)
+  SString(1501060,"Jooksva päeva perioodiline väljavõte ja eilse päeva väljavõte ei saa olla samaaegselt aktiveeritud.");
+  SString(1501061,"Ei ole panka saadetud");
+  SString(1501062,"On juba panga päringute järjekorras");
+  SString(1501063,"Ettevõtte reg. number Ettevõtte andmetes on tühi");
+  SString(1501064,"Kaart peab olema Tellitud");
+  SString(1501065,"Teenus ei ole aktiivne partneril ");
+  SString(1501066,"E-Tasumised");
+  SString(1501067,"Antud tasumisviisil määratud pank ei ole toetatud: ");
+  SString(1501068,"Hiljuti lisatud järjekorda");
+  SString(1501069,"Fail puudub või on 0 suurusega: ");
+  SString(1501070,"Tasumine aktsepteeritud. Tehing on pangas kinnitatud");
+  SString(1501071,"Tasumine läbib lisakontrolli. Kontrollige seisu pangas.");
+  SString(1501072,"Tasumine on panga poolt tagasilükatud.");
+  SString(1501073,"Tasumine edastatud, internetipangas kinnitamata");
+  SString(1501074,"Tasumise read osaliselt kinnitatud. Kontrollige üle internetipangas.");
+  SString(1501075,"VIGA: ");
+  SString(1501076,"OK: ");
+  SString(1501077,"Päring on saadetud ja registreeritud");
+  SString(1501078,"Tundmatu päringu tüüp: ");
+  SString(1501079,"Ei saanud genereerida pangaväljavõte päringu faili");
+  SString(1501080,"Partner ei ole toetatud: ");
+  SString(1501081,"Pangaväljavõte vastuse XML fail vastuvõetud ja imporditud");
+  SString(1501082,"See pangaväljavõte oli juba varem imporditud (sama kuni kp/kell XML failis)");
+  SString(1501083,"Jooksva päeva väljavõte vastuse XML fail vastuvõetud ja imporditud");
+  SString(1501084,"See kontoseisu aruanne oli juba varem imporditud (sama kuni kp/kell XML failis)");
+  SString(1501085,"Tundmatu viga");
+  SString(1501086,"Tasumine on lisatud panga päringute järjekorda");
+  SString(1501087,"Ei saanud lisada järjekorda.");
+  SString(1501088,"Ei saanud allkirjastada.");
+  SString(1501089,"Saatmine ebaõnnestus. Viga vaheserveris. ");
+  SString(1501090,"OOTEL: ");
+  SString(1501091,"Pangakannete impordi ajalugu");
+  SString(1501092,"Deb/Cred");
+  SString(1501093,"Impordi kp.");
+  SString(1501094,"Impordi kell");
+  SString(1501095,"Ära näita töötlemata");
+  SString(1501096,"Panga väljavõte hetkeseis");
+  SString(1501097,"Lisatud");
+  SString(1501098,"Saadetud");
+  SString(1501099,"Vastatud");
+  SString(1501100,"Ühtegi panga 'Jooksva päeva väljavõte' teenus ei ole aktiveeritud");
+  SString(1501101,"Allkirjastamine ebaõnnestus. Kontrollige, kas kaart on lugejas ja PIN2 on korrektne");
+  SString(1501102,"Töötlemata kanne");
+  SString(1501103,"Antud tingimustega ei ole ühtegi makset eksportida.");
+  SString(1501109,"Määra käsitsi tehtuks");
+  SString(1501150,"Reserved");
+   
+  /* MR > Aruanne> Arvete meedia hetkeseis */
+  // 1501151:1501164
+  SString(1501151,"e-mail/saatmisel e-mail");
+  SString(1501152,"e-maili seis");
+  SString(1501153,"Koostatud");
+  SString(1501154,"Järjekorras");
+  SString(1501155,"Saatmisel");
+  SString(1501156,"Saadetud");
+  SString(1501157,"Ebaõnnestus");
+  SString(1501158,"Saatmiselolev e-mail puudub");
+  
+  /* aruanne Kannete arve perioodis,2 */
+  SString(1501165,"Töötaja lõikes"); 
+  SString(1501166,"Sisestamise periood: "); 
+  SString(1501167,"Kannete periood: "); 
+  SString(1501168,"reserved"); 
+  SString(1501169,"reserved"); 
+  
+  /* Intrastat */
+  // SString(1501170):SString(1501220)
+  SString(1501170,"Deklaratsioon on täis kuu kohta");
+  SString(1501171,"Täitmata ""Intrastat XML seadistused""");
+  SString(1501172,"Lubatud Ost või Müük");
+  SString(1501173,"Muudatus ei ole lubatud kui eksport on koostatud");
+  SString(1501174,"Deklaratsioon on täis kvartali kohta");
+  SString(1501175,"Deklaratsioon on täis aasta kohta");
+  SString(1501176,"Intrastat kontroll");
+  SString(1501177,"esitaja tüüp");
+  SString(1501178,"saaja tüüp");
+  SString(1501179,"saaja ID");
+  SString(1501180,"saaja nimi");
+  SString(1501181,"Täitmata ");
+  SString(1501182,"ettevõtte nimi");
+  SString(1501183,"ettevõtte registreerimisnr.1");
+  SString(1501184,"MÜÜK");
+  SString(1501185,"OST");
+  SString(1501186,"XML päis kontroll");
+  SString(1501187,"/reg Nr1/");
+  SString(1501188,"/riigi kood kontakti kaardilt/");
+  SString(1501189,"/paritolumaa/");
+  SString(1501190,"/arve valuuta/");
+  SString(1501191,"/lähetustingimus/");
+  SString(1501192,"Kliendid ilma Reg.nr.1");
+  SString(1501193,"Tarnijad ilma Reg.nr.1");
+  SString(1501194,"/järjekorranumber/");
+  SString(1501195,"/EKN kood/");
+  SString(1501196,"/nimetus/"); 
+  SString(1501197,"/netokaal/");
+  SString(1501198,"/summa ilma KM/");
+  SString(1501199,"/kogus/");
+  SString(1501200,"puudub");
+  SString(1501201,"ARTIKKEL");
+  SString(1501202,"Eksport on juba tehtud");
+  
+  //Töötaja väljavõte, perioodiline PersPerRn
+  SString(1501221,"Kommentaar");
+
+  /* SI */
+  SString(1501230,"Soovitusindeks");
+  SString(1501231,"Saatmise kp.");
+  SString(1501232,"Hetkeseis");
+  SString(1501233,"Aegunud");
+  SString(1501234,"-");
+  SString(1501235,"Vastatud");
+  SString(1501236,"Aegub");
+
+/* lao muugivaartus */
+  // SString(1501300):SString(1501309)
+  SString(1501300,"Lao müügiväärtus");
+  SString(1501309,"Reserved");
+
+/* bilanss kuude loikes */
+// SString(1501310):SString(1501319)
+  SString(1501310,"Bilanss kuude lõikes");
+  SString(1501319,"Reserved");
+
+//klientide statistika riikide loikes
+// SString(1501320):SString(1501329)
+  SString(1501320,"Klientide statistika riikide lõikes");
+  SString(1501329,"Reserved");
+
+//valjamaksmata kulutused
+// SString(1501330):SString(1501339)
+  SString(1501330,"Töötaja väljavõte - väljamaksmata kulutused");
+  SString(1501331,"Kaardi nr.");
+  SString(1501332,"Kulutuse/Tas.kp");
+  SString(1501333,"Kulutuse summa");
+  SString(1501334,"Väljam. summa");
+  SString(1501339,"Reserved");
+
+
+//INF3  1501340: 1501369
+  SString(1501349,"Ettemaks");
+  SString(1501350,"Isikukood puudub kliendi kaardil");
+  SString(1501351,"Isikukood puudub maksja kaardil");
+  SString(1501352,"Maksja ei ole kontaktide registris");
+  SString(1501353,"INF3 makse kaart ei leidnud");
+  SString(1501354,"INF3 aruanne");
+  SString(1501355,"Koolitatava isik ");
+  SString(1501356,"Maksja isikukood");
+  SString(1501357,"Maksja nimi");
+  SString(1501358,"Koolitatav isiku isikukood");
+  SString(1501359,"Koolitatava isiku nimi");
+  SString(1501360,"Liik 1");
+  SString(1501361,"Liik 2");
+  SString(1501362,"Liik 3");
+  SString(1501363,"Kokku");
+  SString(1501364,"INF3 arve");
+  SString(1501365,"INF3 makse");
+  SString(1501366,"Arve nr.");
+  SString(1501367,"Laekumine nr.");
+  SString(1501368,"Kontrolli seadistus Ettevõtte andmed");
+  SString(1501369,"Lubatud periood on aasta");
+
+//kasumiaruanne ja eelarve kuude loikes
+// SString(1501370):SString(1501379)
+  SString(1501370,"Kasumiaruande ja eelarve võrdlus kuude lõikes");
+  SString(1501371,"Eel.");
+  SString(1501372,"Tul.");
+  SString(1501379,"Reserved");
+
+//artiklite pakendiretseptid
+// SString(1501380):SString(1501389)
+  SString(1501380,"Müüdud artiklite pakendiretseptid");
+  SString(1501381,"Pakend olemas");
+  SString(1501382,"Pakend puudub");
+  SString(1501383,"Pakendiretsept");
+  SString(1501384,"Vali pakendiretsept");
+  SString(1501389,"Reserved");
+
+//scoro liidestus
+// SString(1501390):SString(1501419) //do not translate English, these are for logs 
+  SString(1501390,"Creating new record failed. Probably duplicate record?");
+  SString(1501391,"Data received and saved, but RecordCheck failed. See log file for details.");
+  SString(1501392,"");
+  SString(1501393,"Record cannot be updated because of RecordCheck error. See log file for details.");
+  SString(1501394,"Kaart on lisatud Scoro ekspordi järjekorda");
+  SString(1501395,"Saadetud Scorosse");
+  SString(1501396,"Hiljuti lisatud");
+  SString(1501397,"Kõik väljad peavad olema täidetud");
+  SString(1501398,"Scoro liidestuse seadistus ei ole täidetud");
+  SString(1501399,"Ei saa eksportida. Scoros on sama numbriga arve juba olemas");
+  SString(1501400,"See arve oli varem eksporditud, või Scorost imporditud. Vaadake üle Scoro kirjete vastavusi");
+  SString(1501401,"Ei saa eksportida, Scoro liidestus on seadistatud andmete vastvõtmiseks");
+  SString(1501402,"Ei saa eksportida. Scoros on sama reg. numbriga kontakt juba olemas");
+  SString(1501403,"Scoro liidestus peab olema aktiveeritud enne isikute lisamist");
+  SString(1501404,"Kontaktil puudub Haldur Scoro keskkonnas");
+  //...
+  SString(1501419,"Reserved end");
+
+//artiklid lahetusaadressidele
+// SString(1501420):SString(1501429)
+  SString(1501420,"Tellitud artiklid lähetusaadressidele");
+  SString(1501421,"Lähetusaadress ja klient");
+  SString(1501429,"Reserved");
+
+  SString(1501430,"Tellimuste komplekteerimine");
+  SString(1501431,"Kinnitatud Ostutellimust ei saa sulgeda");//Bk JL 190920
+  SString(1501432,"Sisestage Reg.nr.1"); //Bk JL 190924
+  SString(1501433,"Standard Booksi server taaskäivitatakse 10 minuti pärast"); //Bk JL 191001
+  SString(1501434,"Tellimusel puudub ladu või erineb Ostuartikli laost. "); //Bk JL 190927
+  SString(1501435,"Lisa artikkel, artikliklass või klassifikaator!"); //Bk KB 08.10.2019
+  SString(1501436,"Maksimaalne sõidulehe summa ületatud"); //Bk KB 15.10.2019
+  SString(1501437,"Kulutuse summa peab olema suurem kui 0!");
+
+  return;
+end; 
+ 

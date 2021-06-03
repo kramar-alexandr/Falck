@@ -25,7 +25,7 @@ begin
 //avatud kanded
   PWr.PieceWorkTypeCode = pwtcode;
   if (ReadFirstKey("PieceWorkTypeCode",PWr,1,true)) then begin
-    res=true;
+    res = true;
     goto LPWTrInUse;
   end;
 

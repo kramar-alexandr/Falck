@@ -1,4 +1,4 @@
-//event startup
+event startup
 begin
 
   SetLangMode(LangEstonian,"EST",0);

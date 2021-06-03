@@ -1,0 +1,16 @@
+//Bk //tsekk.ee
+global
+function boolean TsekkSetTClassActiveEditField(Integer wn,string fieldname,Integer fn,Integer wnst,Integer rownr,Integer changed)
+begin
+  boolean res;
+  record EInvoiceBlock EIb;
+
+  res = true;
+  BlockLoad(EIb);
+  switch (fieldname) begin
+    case "LastSuccessReqDate": res = (EIb.DebugFlag == 1);
+    case "LastSuccessReqTime": res = (EIb.DebugFlag == 1);
+  end;
+  TsekkSetTClassActiveEditField = res;
+  return;
+end;

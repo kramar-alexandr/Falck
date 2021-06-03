@@ -1,0 +1,62 @@
+//pangaliidestus
+external updating procedure MarkBankQueRecordReplied(var record BankReqQueVc,string,integer);
+external updating procedure MarkBankQueRecordFailed(var record BankReqQueVc,string);
+external updating procedure MarkBankQueRecordPartReplied(var record BankReqQueVc,string);
+external procedure SGWCompleteReplyAtHTS(record BankReqQueVc);
+external function boolean SGWRequestHasReply(record BankReqQueVc,var area,var string,var integer);
+external procedure SGWProcessXMLReply(var record BankReqQueVc,area,var boolean,var boolean,var string,var integer);
+external procedure BankingDebugFile(area,string);
+external function integer BankQueStatusSent();
+
+procedure CheckOneRequestReply(var record BankReqQueVc BankReqQuer)
+begin
+  boolean replyIsOK,isFinalReply;
+  area replyFileArea;
+  string 255 statusMsg;
+  longint opSerNr;
+  integer statusCode,replyStatCode; //one is technical request status, the other - bank operation reply status
+
+  switch(BankReqQuer.Partner) begin
+    case "SGW":
+      if (SGWRequestHasReply(BankReqQuer,replyFileArea,statusMsg,statusCode)) then begin
+        BankingDebugFile(replyFileArea,BankReqQuer.SerNr & "_bankreqque_reply_area.txt");
+        SGWProcessXMLReply(BankReqQuer,replyFileArea,replyIsOK,isFinalReply,statusMsg,replyStatCode);
+        if (replyIsOK) then begin
+          if (isFinalReply) then begin
+            qupdating.MarkBankQueRecordReplied(BankReqQuer,statusMsg,replyStatCode);
+            SGWCompleteReplyAtHTS(BankReqQuer);
+          end else begin
+            qupdating.MarkBankQueRecordPartReplied(BankReqQuer,statusMsg);
+          end;
+        end else begin
+          qupdating.MarkBankQueRecordFailed(BankReqQuer,statusMsg);
+          SGWCompleteReplyAtHTS(BankReqQuer);
+        end;
+      end else begin
+        if (statusCode == 2 or statusCode == 3) then begin
+          qupdating.MarkBankQueRecordFailed(BankReqQuer,statusMsg);
+          SGWCompleteReplyAtHTS(BankReqQuer);
+        end;
+      end;
+  end;
+  return;
+end;
+
+global
+procedure CheckBankRepliesForCurCompany()
+begin
+  record BankReqQueVc BankReqQuer;
+  boolean TrHs;
+
+  TrHs = true;
+  BankReqQuer.Status = BankQueStatusSent;
+  while (LoopKey("StatusDateTime",BankReqQuer,1,TrHs)) begin
+    if (BankReqQuer.Status != BankQueStatusSent) then begin
+      TrHs = false;
+    end;
+    if (TrHs) then begin
+      CheckOneRequestReply(BankReqQuer);
+    end;
+  end;
+  return;
+end;

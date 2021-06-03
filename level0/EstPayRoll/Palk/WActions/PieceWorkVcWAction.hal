@@ -19,7 +19,6 @@ begin
   if (PWr.OKFlag!=0) then begin
     res = false;
   end;
-
   PieceWorkDClassDeleteRowTest = res;
   return;
 end;
@@ -37,10 +36,12 @@ begin
     res = false;
   end else begin
     switch (fieldname) begin
+/* //ts 2019/02
       case "SerNr": 
         if (wnst==Rs_update) then begin
           res = false;
         end;
+*/
       case "BrutoSum": res = false;
       case "CalcSerNr": res = false;
     end;
@@ -143,14 +144,14 @@ begin
     if (ReadFirstMain(Contrr,1,true)) then begin
       PWrw.Firstname = Contrr.Firstname;
       PWrw.Surname = Contrr.Surname;
-      rwcnt=MatRowCnt(Contrr);
+      rwcnt = MatRowCnt(Contrr);
       for (i=0;i<rwcnt;i=i+1) begin
         MatRowGet(Contrr,i,Contrrw);
         if nonblank(Contrrw.PosCode) then begin
           if (DateInRange(PWr.TransDate,Contrrw.SDate,Contrrw.EDate)) then begin
-            PWrw.PosCode=Contrrw.PosCode;
-            PWrw.Tariff=GetPieceWorkTypeTariff(PWr.PieceWorkTypeCode,PWrw.PosCode,PWrw.ContrSerNr,PWr.TransDate);
-            PWrw.ObjCode=Contrrw.ObjCode;
+            PWrw.PosCode = Contrrw.PosCode;
+            PWrw.Tariff = GetPieceWorkTypeTariff(PWr.PieceWorkTypeCode,PWrw.PosCode,PWrw.ContrSerNr,PWr.TransDate);
+            PWrw.ObjCode = Contrrw.ObjCode;
             goto L1; 
           end;
         end;
@@ -173,12 +174,11 @@ begin
     GetWindowRecord(wn,PWr);
     DeselectWindow(wn,false);
     MatRowGet(PWr,rownr,PWrw);
-    PWrw.Tariff=0;
-    PWrw.Tariff=GetPieceWorkTypeTariff(PWr.PieceWorkTypeCode,PWrw.PosCode,PWrw.ContrSerNr,PWr.TransDate);
+    PWrw.Tariff = 0;
+    PWrw.Tariff = GetPieceWorkTypeTariff(PWr.PieceWorkTypeCode,PWrw.PosCode,PWrw.ContrSerNr,PWr.TransDate);
     MatRowPut(PWr,rownr,PWrw);
     PutWindowRecord(wn,PWr);
   end;
-
   PieceWorkDClassPosCodeEFAfter = true;
   return;
 end;
@@ -192,12 +192,30 @@ begin
     GetWindowRecord(wn,PWr);
     DeselectWindow(wn,false);
     MatRowGet(PWr,rownr,PWrw);
-    PWrw.BrutoSum=round((PWrw.Tariff*PWrw.Amount),GetSalaryRoundMode("2"));
+    PWrw.Tariff = round(PWrw.Tariff,GetSalaryRoundMode("PWTariff"));
+    PWrw.BrutoSum = round((PWrw.Tariff*PWrw.Amount),GetSalaryRoundMode("2"));
     MatRowPut(PWr,rownr,PWrw);
     PutWindowRecord(wn,PWr);
   end;
-
   PieceWorkDClassTariffEFAfter = true;
+  return;
+end;
+
+function boolean PieceWorkDClassAmountEFAfter(integer wn,integer rownr,integer changedf)
+begin  
+  record PieceWorkVc PWr;
+  row PieceWorkVc PWrw;
+  
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,PWr);
+    DeselectWindow(wn,false);
+    MatRowGet(PWr,rownr,PWrw);
+    PWrw.Amount = round(PWrw.Amount,GetSalaryRoundMode("PWAmount"));
+    PWrw.BrutoSum = round((PWrw.Tariff*PWrw.Amount),GetSalaryRoundMode("2"));
+    MatRowPut(PWr,rownr,PWrw);
+    PutWindowRecord(wn,PWr);
+  end;
+  PieceWorkDClassAmountEFAfter = true;
   return;
 end;
 
@@ -212,9 +230,8 @@ begin
     case "ContrSerNr": res = PieceWorkDClassContrSerNrEFAfter(wn,rownr,changed);
     case "PosCode": res = PieceWorkDClassPosCodeEFAfter(wn,rownr,changed);
     case "Tariff": res = PieceWorkDClassTariffEFAfter(wn,rownr,changed);
-    case "Amount": res = PieceWorkDClassTariffEFAfter(wn,rownr,changed);
+    case "Amount": res = PieceWorkDClassAmountEFAfter(wn,rownr,changed);
   end;
-
   PieceWorkDClassAfterEditField = res;
   return;
 end;

@@ -1,0 +1,77 @@
+//moved to level1, so Std.Books code would work also without EstPayroll module //ts 2020/04
+global
+procedure CalcPayrollTransNumbers(record RcVc RepSpec,string usercode,string compcode,Boolean PaymDatef,var vector val trnumb)
+begin
+  record CalcPayrollVc CalcPayrollr;
+  boolean TrHs,testf;
+  string 20 ckey;
+  integer Vc;
+  
+  Vc=240;
+  TrHs=true;
+  if (PaymDatef) then begin
+    CalcPayrollr.PaymDate=RepSpec.sStartDate;
+    ckey = "PaymDate";
+  end else begin
+    CalcPayrollr.RegDate=RepSpec.sStartDate;
+    ckey = "RegDate";
+  end;
+  while (LoopKey(ckey,CalcPayrollr,1,TrHs)) begin
+    if (PaymDatef) then begin
+      if (CalcPayrollr.PaymDate>RepSpec.sEndDate) then begin TrHs=false; end;
+    end else begin
+      if (CalcPayrollr.RegDate>RepSpec.sEndDate) then begin TrHs=false; end;
+    end;
+    if (TrHs) then begin
+      testf = true;
+      if (CalcPayrollr.RecSign!=usercode) and (RepSpec.flags[20]!=0) then begin testf=false; end;
+      if (RepSpec.flags[15]!=0) then begin
+        if (CalcPayrollr.OKFlag==0) then begin testf=false; end;
+      end;
+      if (testf) then begin
+        trnumb[usercode & ":" & compcode & ":" & Vc]= trnumb[usercode & ":" & compcode & ":" & Vc]+1;
+        //LogText(0, "Palgaarvestus: " & CalcPayrollr.SerNr & " / RegDate: " & CalcPayrollr.RegDate);
+        //LogText(0,usercode & ":" & compcode & ":" & Vc & "//" & trnumb[usercode & ":" & compcode & ":" & Vc]);
+      end;
+    end;
+  end;
+  return;
+end;
+
+global
+procedure PaymPayrollTransNumbers(record RcVc RepSpec,string usercode,string compcode,Boolean PaymDatef,var vector val trnumb)
+begin
+  record PaymPayrollVc PaymPayrollr;
+  boolean TrHs,testf;
+  string 20 ckey;
+  integer Vc;
+  
+  Vc=241;
+  TrHs=true;
+  if (PaymDatef) then begin
+    PaymPayrollr.PaymDate=RepSpec.sStartDate;
+    ckey = "PaymDate";
+  end else begin
+    PaymPayrollr.RegDate=RepSpec.sStartDate;
+    ckey = "RegDate";
+  end;
+  while (LoopKey(ckey,PaymPayrollr,1,TrHs)) begin
+    if (PaymDatef) then begin
+      if (PaymPayrollr.PaymDate>RepSpec.sEndDate) then begin TrHs=false; end;
+    end else begin
+      if (PaymPayrollr.RegDate>RepSpec.sEndDate) then begin TrHs=false; end;
+    end;
+    if (TrHs) then begin
+      testf = true;
+      if (PaymPayrollr.RecSign!=usercode) and (RepSpec.flags[20]!=0) then begin testf=false; end;
+      if (RepSpec.flags[15]!=0) then begin
+        if (PaymPayrollr.OKFlag==0) then begin testf=false; end;
+      end;
+      if (testf) then begin
+        trnumb[usercode & ":" & compcode & ":" & Vc]= trnumb[usercode & ":" & compcode & ":" & Vc]+1;
+        //LogText(0,usercode & ":" & compcode & ":" & Vc & "//" & trnumb[usercode & ":" & compcode & ":" & Vc]);
+      end;
+    end;
+  end;
+  return;
+end;

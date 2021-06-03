@@ -1,0 +1,116 @@
+//sepa import
+//inners
+external procedure HT2Per(Date, Date , var string);
+//new dev KB 16.01.2019
+
+function string 20 RecNameFromType(integer recType)
+begin
+  string 20 res;
+
+  switch(recType) begin
+    case 0: res = USetStr(1501102);
+    case 1: res = USetStr(14161);
+    case OPYc: res = USetStr(16490);
+    case IPYc: res = USetStr(16491);
+    otherwise
+  end;
+  RecNameFromType = res;
+  return;
+end;
+
+procedure PrintColumnHeaders()
+begin
+  StartFormat(15);
+  OutString(0,0,USetStr(12667),false); //ser nr
+  OutString(2,0,USetStr(13840),false); //booking date
+  OutString(3,0,USetStr(1501093),false); //import date
+  OutString(4,0,USetStr(1501094),false); //time
+  OutString(5,0,USetStr(17155),false); //sum
+  OutString(6,0,USetStr(1501092),false); //deb / cred
+  OutString(1,0,USetStr(16410),true); //what created
+  EndFormat;
+  Gray_Divider(0,1);
+  return;
+end;
+
+procedure PrintRepHeader(record RcVc RepSpec)
+begin
+  integer rw;
+  string 100 tstr;
+
+  rw = 0;
+  HT2Per(RepSpec.sStartDate,RepSpec.sEndDate,tstr);
+  Header(rw,tstr,1);
+  rw = rw + 2;
+  if (nonblanktime(RepSpec.sEndTime)) then begin
+    Header(rw,RepSpec.sStartTime & " - " & RepSpec.sEndTime,1);
+    rw = rw + 1;
+  end;
+  if (RepSpec.flags[0] == 1) then begin
+    Header(rw,USetStr(1501095),1);
+    rw = rw + 1;
+  end;
+  EndHeader;
+  return;
+end;
+
+procedure SetReportColumns()
+begin
+  SetRepCol(2,80);
+  SetRepCol(3,160);
+  SetRepCol(4,240);
+  SetRepCol(5,320);
+  SetRepCol(6,380);
+  return;
+end;
+
+procedure PrintBankEntries(record RcVc RepSpec)
+begin
+  record SEPABankEntryVc SEPABankEntryr;
+  boolean TrHs,testf;
+
+  TrHs = true;
+  SEPABankEntryr.ImportedDate = RepSpec.sStartDate;
+  SEPABankEntryr.ImportedTime = RepSpec.sStartTime;
+  while LoopKey("ImportedDateTime",SEPABankEntryr,2,TrHs) begin
+    testf = true;
+    if (SEPABankEntryr.ImportedDate > RepSpec.sEndDate AND nonblankdate(RepSpec.sEndDate)) then begin
+      TrHs = false;
+    end;
+    if (SEPABankEntryr.ImportedTime > RepSpec.sEndTime AND nonblanktime(RepSpec.sEndTime)) then begin
+      testf = false;
+    end;
+    if (SEPABankEntryr.ImportedTime < RepSpec.sStartTime AND nonblanktime(RepSpec.sStartTime)) then begin
+      testf = false;
+    end;
+    if (RepSpec.flags[0] == 1 AND SEPABankEntryr.DoneFlag == 0) then begin
+      testf = false;
+    end;
+    if (TrHs AND testf) then begin
+      StartFormat(15);
+      OutStringID(0,"DblBankEntry",SEPABankEntryr.SerNr,false,SEPABankEntryr.SerNr & "");
+      OutString(2,0,SEPABankEntryr.BookgDt,false);
+      OutString(3,0,SEPABankEntryr.ImportedDate,false);
+      OutString(4,0,SEPABankEntryr.ImportedTime,false);
+      OutString(5,0,SEPABankEntryr.TxAmt,false);
+      OutString(6,0,SEPABankEntryr.CdtDbtInd,false);
+      OutString(1,0,RecNameFromType(SEPABankEntryr.RecType),true);
+      EndFormat;
+    end;
+  end;
+  return;
+end;
+
+global
+procedure BankEntryHistRn(record RcVc RepSpec)
+begin
+  StartReportJob(USetStr(1501091));
+  PrintRepHeader(RepSpec);
+  SetReportColumns;
+  PrintColumnHeaders;
+  PrintBankEntries(RepSpec);
+  EndJob;
+  return;
+end;
+
+

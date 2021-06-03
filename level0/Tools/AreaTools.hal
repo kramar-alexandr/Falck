@@ -139,7 +139,7 @@ begin
   string 8 fromArea;
   string 70 b64;
   array string 1 b64_arr;
-  
+
   // for faster flow
   b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
   aLen = len(b64);
@@ -162,16 +162,19 @@ begin
     AddTextToArea(fromArea,encoded);
     fromArea = "";
   end;
+
   switch(Mod(aLen,3)) begin
     case 1: // 8 bit final
       fromArea = "==";
     case 2: // 16 bit final
       fromArea = "=";
   end;
-  MidArea(encoded,0,GetAreaLength(encoded)-len(fromArea));//exc, fix for ending
+
+//Bk - start
+  MidArea(encoded,0,GetAreaLength(encoded)-len(fromArea));
+//Bk - end
   AddTextToArea(fromArea,encoded);
   SetAreaZeroSize(target);
   InsertAreaBeforeArea(encoded,target);
-//WriteAreaToFile(encoded,"target03.txt",0);
   return;
 end;

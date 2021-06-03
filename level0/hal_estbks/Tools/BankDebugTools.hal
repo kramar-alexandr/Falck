@@ -1,0 +1,24 @@
+//pangaliidestus
+global
+procedure BankingDebugMsg(string sourceName, string message)
+begin
+  record BankServicesBlock BankServicesbl;
+  
+  BlockLoad(BankServicesbl);
+  if(BankServicesbl.DebugFlag == 1) then begin
+    LogText(0,sourceName & " *DEBUG* " & ": " & message & " comp=" & CurrentCompany & " ServerMode=" & ServerMode);
+  end;
+  return;
+end;
+
+global
+procedure BankingDebugFile(area fileArea, string fileName)
+begin
+  record BankServicesBlock BankServicesbl;
+
+  BlockLoad(BankServicesbl);
+  if(BankServicesbl.DebugFlag == 1 AND DirExists("debug/banking")) then begin
+    WriteAreaToFile(fileArea,"./debug/banking/comp_" & CurrentCompany & "_" & fileName,0);
+  end;
+  return;
+end;

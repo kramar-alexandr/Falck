@@ -1,0 +1,695 @@
+/* all books specific sstring, include EstPayRoll */
+event startup
+
+begin
+  SetLangMode(LangEnglish,"ENG",0);
+
+  //cust - start KB 04.11.2019 - these must be off, otherwise ERP is asking BK keys
+  /*
+  SString(912,"1295");
+  SString(915,"3124");
+  SString(914,"1607");
+  SString(1800,"20");
+  */
+
+  //SourceFile(HobFolder & "cleng-estbks.hob",0);//tmp ? kontrollida Ÿle
+  //SourceFile(HobFolder & "clest-estbks.hob",0);//tmp ? kontrollida Ÿle
+  //cust - end
+
+/* keep these strings for compatibility, left from krediidiskoor */
+// SString(1500000):SString(1500177)
+  SString(1500000,"The requests for chosen services have been sent. Reopen setting and check field 'System message' for additional info");
+  SString(1500001,"Bankruptcy risk");
+  SString(1500002,"This customer's bankruptcy risk score does not allow to create invoice");
+  SString(1500003,"Contact does not have reg. number");
+  SString(1500004,"Missing");
+  SString(1500005,"Service is not available");
+  SString(1500006,"Save record first");
+  SString(1500007,"You are not registered. Check Internet Enabler Setting.");
+  SString(1500008,"Inforegister services can be activated in module 'System', setting - 'Electronic Invoices Settings' or temporarily disabled in module 'Technics', 'Inforegister settings'");
+  SString(1500009,"An error occured during update, some values were not updated");
+  SString(1500010,"Updating the access token, please try again in a moment");
+  SString(1500011,"This customer's bankruptcy risk score does not allow to create order");
+  SString(1500012,"There is another HAL routine entered in Timed Operations settings");
+  SString(1500013,"Inforegister services are scheduled afer text backup operation");
+  SString(1500014,"Records updated");
+  SString(1500015,"This customer's bankruptcy risk score does not allow to create delivery");
+  SString(1500016,"Customer's bankruptcy risk score settings are not defined");
+  SString(1500017,"No permission to change bankruptcy risk settings");
+  SString(1500018,"New Inforegister user creation request is sent. Check e-mail.");
+  SString(1500019,"Data is sent, please open Clou services settings again and check the 'System message' for details.");
+  SString(1500020,"Stopping service failed!");
+  SString(1500021,"The service stopping server did not respond, please try again after a moment");
+  SString(1500022,"Minimal size of label is 10 points");
+
+/*CompanyInfoIRRn*/
+  SString(1500031,"See co-executive graph");
+  SString(1500032,"Insert contact info");
+  SString(1500033,"Add EMTAK classifier");
+  SString(1500034,"Update contact info");
+  SString(1500035,"Create next new contact");
+  SString(1500036,"Insert address, reg. number and #VAT No.#");
+  SString(1500037,"Update name");
+  SString(1500038,"See credit report");
+  SString(1500039,"Create new contact");
+  SString(1500040,"Update address, reg. number and #VAT No.#");
+  SString(1500041,"E-mail");
+  SString(1500042,"Fax");
+  SString(1500043,"Phone");
+  SString(1500044,"Status");
+  SString(1500045,"#VAT No.#");
+  SString(1500046,"Request failed");
+  SString(1500047,"Total: ");
+  SString(1500048,"Name");
+  SString(1500049,"Reg.nr.");
+  SString(1500050,"Company info");
+  SString(1500051,"Data source: www.inforegister.ee ");
+  SString(1500052,"Activity address");
+  SString(1500053,"Legal address");
+  SString(1500054,"Homepage");
+  SString(1500055,"Inforegister link");
+  SString(1500056,"Members of the board");
+  SString(1500057,"Basic capital");
+  SString(1500058,"Missing service server address");
+  SString(1500059,"Search did not return any results, please check reg.nr. or name");
+  SString(1500060,"Registration date");
+  SString(1500061,"Registration district");
+  SString(1500062,"EMTAK classifier");
+  SString(1500063,"Could not add classifier");
+  SString(1500064,"--information missing--");
+
+  SString(1500065,"Credit score automatic update is planned");
+  SString(1500066,"Credit score automatic upade is stopped");
+  SString(1500067,"Debts sending is planned");
+  SString(1500068,"Debts sending is stopped");
+
+/*IRInfoRequest*/
+  SString(1500100,"Inforegister information request");
+  SString(1500101,"The server response is wrong");
+  SString(1500102,"The maximum result setting count is exceeded, showing only first ");
+  SString(1500103,"Connection error, please try again in a moment");
+  SString(1500104,"The server response is empty");
+  SString(1500105,"No companies were found");
+  SString(1500106,"Try to specify or change the search request");
+
+//EstAddrLookupRn - was standard range in s5est.hal, but no longer in BK 85
+  SString(1500107,"RIK address request");
+  SString(1500108,"Name");
+  SString(1500109,"Reg.num.");
+  SString(1500110,"VAT.nr.");
+  SString(1500111,"Status");
+  SString(1500112,"Address");
+  SString(1500113,"Request failed");//Ei leitud Ÿhtegi vastet
+  SString(1500114,"Update data");
+  SString(1500115,"Create new contact");
+  SString(1500116,"See details");
+  SString(1500117,"Showing maximum 100 results. Specify search request!");
+  SString(1500118,"Total: ");
+  SString(1500119,"not used"); //can reuse
+  SString(1500120,"not used"); //can reuse
+  SString(1500121,"Update name");
+  SString(1500122,"Insert data");
+  SString(1500123,"Create next new contact");
+  SString(1500124,"Check if service is activated in cloud settings");//webrequest eba›nnestus v›i andis vea
+
+/*Debt handling*/
+  SString(1500151, "The debt handling request is sent to debt request queue");
+  SString(1500152, "Could not complete the debt handling request, some information is missing");
+  SString(1500153, "This debt handling request was already sent");
+  SString(1500154, "Send debt handling request");
+  SString(1500155, "Could not add claim to debt, some information is missing");
+  SString(1500156, "An error occured during debt information sending to server");
+  SString(1500157, "An error occured during debt-claim information sending to server");
+  SString(1500158, "Could not add claim-doc to debt, some information is missing");
+  SString(1500159, "An error occured during document information sending to server");
+  SString(1500160, "An error occured during debt finalization request sending to server");
+  SString(1500161, "Server did not response on debt finalization request");
+  SString(1500162, "Invoice must be OK-ed");
+  SString(1500163, "Save record first");
+  SString(1500164, "Invoice nr. or range must be defined");
+  SString(1500165, "Ranges are defined incorrectly");
+  SString(1500166, "The action failed");
+  SString(1500167, "Debt handling requests are sent");
+  SString(1500168, "To delete a debt handling request, check the 'Paid' flag, the request will be removed on next sending");
+
+/*Organization statuses translation 
+(see http://graph.ir.ee/organization-status-types)*/
+  SString(1500170, "deleted");
+  SString(1500171, "falsely-entered");
+  SString(1500172, "in-bankruptcy");
+  SString(1500173, "in-liquidation");
+  SString(1500174, "not-entered");
+  SString(1500175, "project");
+  SString(1500176, "registered");
+  SString(1500177, "transferred");
+
+/* Tsekk.ee */
+// SString(1500200):SString(1500209)
+  //do not translate
+  SString(1500200,"Costpocket: data exchange has been stopped. Your program is not registered. Please check setting Internet Enablers");
+  SString(1500201,"Costpocket: no companies with activated service, service stopped");
+  //do not translate end
+  SString(1500202,"Cannot log in/activate, Costpocket token is missing or blank. Check Costpocket settings.");
+  SString(1500203,"Module 'Expenses' must be activated");
+  SString(1500204,"This invoice is already in list, cannot paste again");
+  SString(1500205,"To finish the activation, please open this setting again, then log in using button 'Enter'");
+  SString(1500206,"Log in using button 'Enter'. ");
+  SString(1500207,"Your Costpocket token is connected to account. ");
+  SString(1500208,"Please enter Name and Surname");
+  SString(1500209,"Activation failed");
+
+/* Telema */
+// SString(1500210):SString(1500224), SString(1500700):SString(1500750)
+  SString(1500210,"Price changes");
+  SString(1500211,"Row");
+  SString(1500212,"Item");
+  SString(1500213,"Name");
+  SString(1500214,"Order price");
+  SString(1500215,"Our price");
+  SString(1500216,"Change");
+  SString(1500217,"Prices are equal");
+  SString(1500218,"Note");
+  SString(1500219,"Missing in Delivery");
+  SString(1500220,"Missing delivery rows");
+  SString(1500221,"Delivery");
+  SString(1500222,"On delivery");
+  SString(1500223,"Difference");
+  SString(1500224," / CHECK PRICES!");
+  SString(1500225,"Order number is in both header and rows");
+  SString(1500226,"No such Invoice");
+  SString(1500227,"Header or each row Order must be filled");
+  SString(1500228,"Credit invoice is already created");
+  SString(1500229,"Item price is not defined");
+  //Other ranges are in use
+  SString(1500700,"Credit invoice(s) created: ");
+  SString(1500701,"Retured Goods: ");
+  SString(1500702,"Retured Goods are already created");
+  SString(1500703,"Delivery is not connected with Order.");
+  SString(1500704,"All Order row numbers must be filled");
+  SString(1500705,"Row number can not be negative or 0");
+  SString(1500706,"Delivery number is in both header and rows");
+  SString(1500707,"Return Orders list");
+  SString(1500708,"Return order. nr.");
+  SString(1500709,"Customer return order nr.");
+  SString(1500710,"Return Order date");
+  SString(1500711,"Unhandled Return Orders");
+  SString(1500712,"There is another item on Delivery given row nr");
+  SString(1500713,"No such Delivery");
+  SString(1500714,"Header or each row Delivery must be filled");
+  SString(1500715,"Record is added to Telema export queue");
+  SString(1500716,"Recently added to queue");
+  SString(1500717,"Document is exported");
+  SString(1500718,"This record is already in Telema export queue");
+  SString(1500719,"Telema Invoice status");
+  SString(1500720,"Telema Delivery status");
+  SString(1500721,"Sent from software");
+  SString(1500722,"Sending failed");
+  SString(1500723,"Sent from software (manually exported)");
+  SString(1500724,"Sending from software (manually exported)");
+  SString(1500725,"Not sent");
+  SString(1500726," / CHECK CUSTOMER CODE");
+  SString(1500727," / CHECK ITEM CODES");
+  SString(1500728,"Telema Purchase Order status");
+  SString(1500729,"Telema Document Status");
+  SString(1500730,"Change TELEMAARTIKKEL to correct item and re-check the record!");
+  SString(1500731,"Change TELEMAKLIENT to correct customer and re-check the record!");
+
+/* Pakendi aruanne */
+// SString(1500230):SString(1500233)
+  SString(1500230,"Pakendiaruanne");
+  SString(1500231,"Pakendi tŸŸp");
+  SString(1500232,"Nimetus");
+  SString(1500233,"Kaal kokku");
+
+/* VD aruanne */
+// SString(1500240):SString(1500248)
+  SString(1500240,"VD aruanne");
+  SString(1500241,"Riik");
+  SString(1500242,"Klient");
+  SString(1500243,"Reg. nr");
+  SString(1500244,"Kaupade vŠŠrtus");
+  SString(1500245,"Kolmnurktehing");
+  SString(1500246,"Teenus vŠŠrtus");
+  SString(1500247,"Tehingu tŸŸp");
+  SString(1500248,"Kauba eksport");
+  SString(1500249,"Koosta VD eksport");
+
+/* SEPA import */
+// SString(1500250):SString(1500257)
+  SString(1500250,"Company bank account/IBAN is not found in file");
+  SString(1500251,"Company bank account/IBAN is missing. Check payment mode setting");
+  SString(1500252,"Already created");
+  SString(1500253,"The given bank transaction type is associated with another record type: ");
+  SString(1500254,"Receipts creation is forbidden in SEPA import settings. Please ensure you want to create them automatically in future.");
+  SString(1500255,"Payments creation is forbidden in SEPA import settings. Please ensure you want to create them automatically in future.");
+  SString(1500256,"Transactions creation is forbidden in SEPA import settings. Please ensure you want to create them automatically in future.");
+
+/* Kasumiaruanne kuude l›ikes */
+// SString(1500258):SString(1500270)
+  SString(1500258,"jan.");
+  SString(1500259,"feb.");
+  SString(1500260,"mar.");
+  SString(1500261,"apr.");
+  SString(1500262,"may");
+  SString(1500263,"jun.");
+  SString(1500264,"jul.");
+  SString(1500265,"aug.");
+  SString(1500266,"sep.");
+  SString(1500267,"oct.");
+  SString(1500268,"nov.");
+  SString(1500269,"dec.");
+  SString(1500270,"Period includes more than 12 months");
+
+/* Kannete arve perioodis */
+// SString(1500271):SString(1500296)
+  SString(1500271,"Transactions in period");
+  SString(1500273,"REGISTER");
+  SString(1500274,"Trans. count");
+  SString(1500275,"Employee: ");
+  SString(1500276,"Company nr.: ");
+  SString(1500277,"All companies");
+  SString(1500278,"Only OK-d subsystem records");
+  SString(1500279,"TOTAL in all used companies");
+  SString(1500280,"Invoices");
+  SString(1500281,"Receipts");
+  SString(1500282,"Purchase invoices");
+  SString(1500283,"Payments");
+  SString(1500284,"Payroll payments");
+  SString(1500285,"Stock movements");
+  SString(1500286,"Deliveries");
+  SString(1500287,"Transactions");
+  SString(1500288,"Expenses");
+  SString(1500289,"Cash in");
+  SString(1500290,"Cash out");
+  SString(1500291,"Asset Disposals");
+  SString(1500292,"Goods Receipts");
+  SString(1500293,"#Stock Depreciation#");
+  SString(1500294,"All employees");
+  SString(1500295,"Include not OK-d subsystem records");
+  SString(1500296,"Financial transactions");
+  //30.11.2018 //nk
+  SString(1500297,"Salary Calculations");
+  SString(1500298,"Salary Payments");
+  SString(1500299,"All Employees");
+
+
+/* Salary module */
+// SString(1500300):SString(1500606)
+// SString(1500300) - SString(1500800) reserved for Standard Books Salary module
+
+/* KorteriŸhistu */
+// SString(1500801):SString(1500911)
+  SString(1500801,"Apartment list");
+  SString(1500802,"Houses: ");
+  SString(1500803,"All");
+  SString(1500804,"Only apartments in use");
+  SString(1500805,"Including passive apartments");
+  SString(1500806,"Apartments: ");
+  SString(1500807,"House");
+  SString(1500808,"Apartment");
+  SString(1500809,"Owner");
+  SString(1500810,"General area");
+  SString(1500811,"Heated area");
+  SString(1500812,"Residents");
+  SString(1500813,"Total");
+  SString(1500814,"Period expenses");
+  SString(1500815,"Expense items: ");
+  SString(1500816,"Readings register");
+  SString(1500817,"Month code: ");
+  SString(1500818,"Including entries without invoice");
+  SString(1500819,"Only entries with invoice");
+  SString(1500820,"House: ");
+  SString(1500821,"Invoices not compiled");
+  SString(1500822,"Cold water");
+  SString(1500823,"Hot water");
+  SString(1500824,"General water");
+  SString(1500825,"Heating");
+  SString(1500826,"Heat losses");
+  SString(1500827,"Sum");
+  SString(1500828,"Tariff");
+  SString(1500829,"Amount");
+  SString(1500830,"Initial reading");
+  SString(1500831,"Final reading");
+  SString(1500832,"Order: No detailed view for apartment.");
+  SString(1500833,"Select summary view.");
+  SString(1500834,"Use combination: Order=Article");
+  SString(1500835,"Article code");
+  SString(1500836,"Nomination");
+  SString(1500837,"Warning! With month code ");//Hoiatus! Sellise kuukoodi ja majakoodiga arved on juba olemas. Arve number: 
+  SString(1500838,"No expense entry found for the article "); //Kulukirje kinnitamata vÝi sisestamata artiklile 
+  SString(1500839,"Final reading of cold water is smaller than initial reading. ");
+  SString(1500840,"Final reading of hot water is smaller than initial reading. ");
+  SString(1500841,"No entry of readings register found ");//Nitude registri kirje kinnitamata vÝi sisestamata. 
+  SString(1500842,"Prepayment(-)/VÝlg(+): ");
+  SString(1500843,"          To be paid: ");
+  SString(1500844,"All fields must be completed");
+  SString(1500845,"All fields must be different");
+  SString(1500846,"Article does not exist: ");
+  SString(1500847,"Readings register articles created. Articles are configured with recommended values.");
+  SString(1500848,"VAT code missing. Check settings.");
+  SString(1500849,"VAT code does not exist. Check settings. Article: ");
+  SString(1500850,"Month code not entered or with wrong length ");
+  SString(1500851,"Apartment number cannot be 0. See row No ");
+  SString(1500852,"Changing not allowed, invoices compiled.");//Kinnitatud kaarti ei saa muuta.
+  SString(1500853,"Uncompleted field exists ");
+  SString(1500854,"Month code in wrong format. Use format yyyymm.");
+  SString(1500855,"Such article does not exist.");
+  SString(1500856,"Tariff is fixed");
+  SString(1500857,"Total sum field must be completed ");
+  SString(1500858,"No apartment entered for this house. Cannot save");
+  SString(1500859,"Entry with such month, house and article code already exists");
+  SString(1500860,"Deleting not allowed, invoices compiled.");
+  SString(1500861,"Articles of the readings register not in use. See the maintenance function.");
+  SString(1500862,"Hot water, heating and heat losses sum does not correspond to heating energy value ");
+  SString(1500863,"Negative values are not allowed.");
+  SString(1500864,"Adding or deleting matrix rows is not allowed ");
+  SString(1500865,"Entry with such month and house code already exists");
+  SString(1500866,"Apartment number must be a number higher than 0 ");
+  SString(1500867,"Allowed number of apartments (150) exceeded. To purchase bigger package call 6691111");
+  SString(1500868,"This client does not exist");
+  SString(1500869,"This house does not exist ");
+  SString(1500870,"Check the field Heating energy. Entered sum is probably too small.");
+  SString(1500871,"This apartment has no water meters.");
+  SString(1500872,"Deleting initial reading is not allowed.");
+  SString(1500873,"Final reading must be higher than initial reading. Equalising with initial reading.");
+  SString(1500874,"Heating price fixed, changing not allowed ");
+  SString(1500875,"Heating sum generated by calculations, changing not allowed");
+  SString(1500876,"Field Heating cannot be empty");
+  SString(1500877,"Entered sum is too small. See heating sums of the apartments with price lists.");
+  SString(1500878,"Heating sum too high. Check the field Heating energy ");
+  SString(1500879,"Minimum value at the moment ");
+  SString(1500880,"Heat losses price is fixed, changing not allowed");
+  SString(1500881,"Calculation of heat losses performed after entering the sum of heating. Changing not allowed.");
+  SString(1500882,"Heat losses field must not be empty ");
+  SString(1500883,"Calculated values. Changing not allowed.");
+  SString(1500884,"Changing not allowed! Use CTRL-Enter to restore.");
+  SString(1500885,"Total sum too small. Equalising with minimum value.");
+  SString(1500886,"House code field must be completed ");
+  SString(1500887,"Matrix already completed");//ei ole kasutuses
+  SString(1500888,"Article field must be completed");
+  SString(1500889,"Enter house code to complete matrix");
+  SString(1500890,"Tariff is fixed. Do not enter total sum");
+  SString(1500891,"This is an article of Indicators register. Completing this expense chart is not necessary");
+  SString(1500892,"Article is not of type Indicator/final reading");
+  SString(1500893,"Deleting initial reading not allowed");
+  SString(1500894,"Amount changing not allowed");
+  SString(1500895,"No such apartment exists in this house ");//ei ole kasutuses
+  SString(1500896,"Tariff changing not allowed");//ei ole kasutuses
+  SString(1500897,"Sum changing not allowed");//ei ole kasutuses
+  SString(1500898,"Final reading must be higher than initial reading. Equalising with initial reading.");
+  SString(1500899,"Article of type Indicator/amount. Enter amount.");
+  SString(1500900," and with house code ");
+  SString(1500901," invoices already exist.");
+  SString(1500902,"Enter invoice date!");
+  SString(1500903,"Enter entry date!");
+  SString(1500904,"Allowed number of apartments exceeded!");
+  SString(1500905," Do not delete! Readings registry entry No exists");
+  SString(1500906,", where this apartment is in use.");
+  SString(1500907,"Do not delete! Expenses registry entry No exists");
+  SString(1500908,"Converting FO AU data not allowed! Converting had already been carried out or the programme was already used without conversion. Check the data! If necessary import FO AU database again and start maintenance.");
+  SString(1500909,"Cold water(2)");
+  SString(1500910,"Hot water(2)");
+  SString(1500911,"Heating item is used in Expenses register, changing not allowed");
+
+/* BooksFix */
+// SString(1500915):SString(1500934)
+  sString(1500915,"Production created"); 
+  sString(1500916,"Purchase Items statistics");
+  sString(1500917,"Purchased from Supplier");
+  sString(1500918,"Sold to Customer");
+  sString(1500919,"Item Classifications From: ");
+  SString(1500920,"Purchase Order(s) created: ");
+
+  /*PORequireRn Books with item name*/
+  SString(1500921,"1 - Item Code");
+  SString(1500922,"2 - Item Name");
+  SString(1500923,"3 - In #Stock#");
+  SString(1500924,"4 - On Purchase Orders");
+  SString(1500925,"5 - On Sales Orders");
+  SString(1500926,"6 - Theoretical #Stock#");
+  SString(1500927,"7 - Sales");
+  SString(1500928,"8 - Average Sales");
+  SString(1500929,"9 - Predicted Sales");//Proposed #Stock# Level
+  SString(1500930,"10 - Item Minimum Level");
+  SString(1500931,"11 - PI Min. Ord Qty");
+  SString(1500932,"12 - Suggested Order Quantity");//Order Minimum Level
+
+  /*AT2DeprRn Books with new columns*/
+  SString(1500933,"Depr. start");
+  SString(1500934,"Depr. model");
+
+/* SEPA (eksport) */
+// SString(1500935):SString(1500937)
+  SString(1500935,"Personnel Payment ");
+  SString(1500936,"Problems with data, please run report ""Data Check (SEPA Payments)""");
+  SString(1500937,"Data Check (SEPA payouts)");
+
+/* e-Invoice/Supplier e-Invoice messages */
+// SString(1501000):SString(1501030)
+  SString(1501000,"Not an e-invoice");
+  SString(1501001,"Attachment not found");
+  SString(1501002,"Not a supplier e-invoice");
+  SString(1501003,"Not in any defined number series");
+  SString(1501004,"Purchase invoice creation failed");
+  SString(1501005,"Purchase invoice creation failed. Missing sum");
+  SString(1501006,"To create Expense, enter VAT code");
+  SString(1501007,"Purchase invoice was already created");
+  SString(1501008,"Expense was already created");
+  SString(1501009,"Purchase invoice with same supplier inv. number already exists: ");
+  //e-arvete algandmed
+  SString(1501010,"E-invoice services are not active");
+  SString(1501011,"Selected e-inv operator does not support this service");
+  SString(1501012,"Sending base data is forbidden in cloud services settings");
+  SString(1501013,"No updated data found to be sent to e-inv portal");
+  SString(1501014,"E-Services have been stopped. Get Internet Enabler"); //Bk ts 2019/10
+  SString(1501015,"Running AutoEnabler function"); //Bk ts 2019/10
+
+  /* aruanne Ostuarvete manused  1501030 - 1501040 */
+  SString(1501030,"Purchase Invoice PDF Attachements");
+  SString(1501031,"Purchase Invoices with attachemnets");
+  SString(1501032,"Purchase Invoices without attachements");
+  SString(1501033,"All Purchase Invoices");
+  SString(1501034,"Purchase Invoice Nr.");
+  SString(1501035,"Attached Files");
+
+  /* aruanne Ostuarvete nimekiri (standard) */
+  SString(1501041,"Witholding Tax");
+  SString(1501042,"WH Tax");
+  SString(1501043,"Exclude Withholding Tax");
+
+/* pangaliidestus */
+// SString(1501060):SString(1501150)
+  SString(1501060,"Current day statement and yesterday day end statement cannot be activated at the same time");
+  SString(1501061,"Not sent to bank");
+  SString(1501062,"Already in bank requests queue");
+  SString(1501063,"Company reg. number in Company info is blank");
+  SString(1501064,"Record must be Ordered");
+  SString(1501065,"Service is not active for partner ");
+  SString(1501066,"E-Payments");
+  SString(1501067,"The bank defined for this payment mode is not supported: ");
+  SString(1501068,"Just added to queue");
+  SString(1501069,"File missing or size is zero: ");
+  SString(1501070,"Payment accepted. Operation is booked in bank");
+  SString(1501071,"Payment requires additional check. Check the status in bank.");
+  SString(1501072,"Payment is rejected by bank.");
+  SString(1501073,"Payment is forwarded, but not confirmed in internet-bank");
+  SString(1501074,"Payment rows are partially accepted. Review in internet-bank.");
+  SString(1501075,"ERR: ");
+  SString(1501076,"OK: ");
+  SString(1501077,"Request is sent and registered");
+  SString(1501078,"Uknown request type: ");
+  SString(1501079,"Could not generate bank statement request file");
+  SString(1501080,"Partner is not supported: ");
+  SString(1501081,"Bank statement reply XML file recived and imported");
+  SString(1501082,"This bank statement was imported earlier (same to date/time in XML file)");
+  SString(1501083,"Current day bank statement reply XML recived and imported");
+  SString(1501084,"This account report was imported earlier (same to date/time in XML file)");
+  SString(1501085,"Unknown error");
+  SString(1501086,"Payment is added to bank request queue");
+  SString(1501087,"Could not add to request queue.");
+  SString(1501088,"Could not digitally sign");
+  SString(1501089,"Sending failed. Transaction server error.");
+  SString(1501090,"PENDING: ");
+  SString(1501091,"Bank transactions import history");
+  SString(1501092,"Deb/Cred");
+  SString(1501093,"Import date");
+  SString(1501094,"Import time");
+  SString(1501095,"Do not show unhandled");
+  SString(1501096,"Bank statement status");
+  SString(1501097,"Created");
+  SString(1501098,"Sent");
+  SString(1501099,"Replied");
+  SString(1501100,"The 'Current day statement' service is not active for any bank");
+  SString(1501101,"Signing failed. Check if card is in reader and PIN2 is correct");
+  SString(1501102,"Unhandled trans.");
+  SString(1501103,"Nothing to export with given definitions.");
+  SString(1501109,"Set as done manually");
+  SString(1501150,"Reserved");
+   
+  /* MR > Aruanne> Arvete meedia hetkeseis */
+  // 1501151:1501161
+  SString(1501151,"Email/Email Queue");
+  SString(1501152,"Email Status");
+  SString(1501153,"Created");
+  SString(1501154,"Queued");
+  SString(1501155,"Being Sent");
+  SString(1501156,"Sent");
+  SString(1501157,"Failed");
+  SString(1501158,"Email Queue not found");
+  
+  /* aruanne Kannete arve perioodis, 2 */
+  SString(1501165,"Per Employee");
+  SString(1501166,"Created in Period: ");
+  SString(1501167,"Transaction Period: ");
+  SString(1501168,"reserved"); 
+  SString(1501169,"reserved"); 
+  
+  /* Intrastat */
+  // SString(1501170):SString(1501220)
+  SString(1501170,"Full months required");
+  SString(1501171,"Check setting ""Intrastat XML settings""");
+  SString(1501172,"Only Sales or Purchase is possible");
+  SString(1501173,"Not allowed to change, export file is created");
+  SString(1501174,"Period is full quarter");
+  SString(1501175,"Period is full year");
+  SString(1501176,"Intrastat Check");
+  SString(1501177,"Sender Type");
+  SString(1501178,"Receiver Type");
+  SString(1501179,"Receiver ID");
+  SString(1501180,"Receiver Name");
+  SString(1501181,"Blank ");
+  SString(1501182,"Company Name");
+  SString(1501183,"Company Reg.nr1");
+  SString(1501184,"SALES");
+  SString(1501185,"PURCHASE");
+  SString(1501186,"XML Header Check");
+  SString(1501187,"/Reg Nr1/");
+  SString(1501188,"/Country Code on Contact /");
+  SString(1501189,"/Country of Orogin/");
+  SString(1501190,"/Invoice Currency/");
+  SString(1501191,"/Delivery Terms/");
+  SString(1501192,"Customers without Reg.nr.1");
+  SString(1501193,"Suppliers without Reg.nr.1");
+  SString(1501194,"/row number/");
+  SString(1501195,"/EKN code/");
+  SString(1501196,"/name/"); 
+  SString(1501197,"/neto weight/");
+  SString(1501198,"/amount without VAT/");
+  SString(1501199,"/quantity/");
+  SString(1501200,"blank");
+  SString(1501201,"ITEM");
+  SString(1501202,"Export was done already");
+  
+  //Tšštaja vŠljav›te, perioodiline PersPerRn
+  SString(1501221,"Comment");
+
+  /* SI */
+  SString(1501230,"Net Promoter Score");
+  SString(1501231,"Send Date");
+  SString(1501232,"Status");
+  SString(1501233,"Expired");
+  SString(1501234,"-");
+  SString(1501235,"Answered");
+  SString(1501236,"Expires");
+
+/* lao muugivaartus */
+  // SString(1501300):SString(1501309)
+  SString(1501300,"#Stock# sale value");
+  SString(1501309,"Reserved");
+
+/* bilanss kuude loikes */
+// SString(1501310):SString(1501319)
+  SString(1501310,"Balance Sheet per month");
+  SString(1501319,"Reserved");
+
+//klientide statistika riikide loikes
+// SString(1501320):SString(1501329)
+  SString(1501320,"Customer Statistics by Country");
+  SString(1501329,"Reserved");
+
+//valjamaksmata kulutused
+// SString(1501330):SString(1501349)
+  SString(1501330,"Periodic Personnel Statement - unpaid expenses");
+  SString(1501331,"Record nr.");
+  SString(1501332,"Exp/Paym date");
+  SString(1501333,"Exp. sum");
+  SString(1501334,"Paym. sum");
+  SString(1501349,"Reserved");
+
+//INF3  1501340: 1501369
+  SString(1501349,"Prepayment");
+  SString(1501350,"Customer ID Code is missed");
+  SString(1501351,"Payer ID Code is missed");
+  SString(1501352,"Payer is not found in Contacts register");
+  SString(1501353,"INF3 Payment record is not found");
+  SString(1501354,"INF3 report");
+  SString(1501355,"Trained Person ");
+  SString(1501356,"Payer ID Code");
+  SString(1501357,"Payer Name");
+  SString(1501358,"Trained ID Code");
+  SString(1501359,"Trained Person Name");
+  SString(1501360,"Type 1");
+  SString(1501361,"Type 2");
+  SString(1501362,"Type 3");
+  SString(1501363,"Total");
+  SString(1501364,"INF3 invoice");
+  SString(1501365,"INF3 payment");
+  SString(1501366,"Invoice nr.");
+  SString(1501367,"Receipt nr.");
+  SString(1501368,"Check the setting Ettev›tte andmed");
+  SString(1501369,"Allowed period is one year");
+  
+//kasumiaruanne ja eelarve kuude loikes
+// SString(1501370):SString(1501379)
+  SString(1501370,"Profit & Loss and Budget Per month");
+  SString(1501371,"Budg.");
+  SString(1501372,"Res.");
+  SString(1501379,"Reserved");
+
+//artiklite pakendiretseptid
+// SString(1501380):SString(1501389)
+  SString(1501380,"Sold items package recipes");
+  SString(1501381,"Package exists");
+  SString(1501382,"Package missing");
+  SString(1501383,"Package recipe");
+  SString(1501384,"Choose package recipe");
+  SString(1501389,"Reserved");
+
+//scoro liidestus
+// SString(1501390):SString(1501419) //do not translate English, these are for logs 
+  SString(1501390,"Creating new record failed. Probably duplicate record?");
+  SString(1501391,"Data received and saved, but RecordCheck failed. See log file for details.");
+  SString(1501392,"");
+  SString(1501393,"Record cannot be updated because of RecordCheck error. See log file for details.");
+  SString(1501394,"Record is added to Scoro export queue");
+  SString(1501395,"Sent to Scoro");
+  SString(1501396,"Just added");
+  SString(1501397,"All fields must be filled");
+  SString(1501398,"Scoro settings are not filled");
+  SString(1501399,"Cannot export. The invoice with same number already exists in Scoro");
+  SString(1501400,"This invoice was exported earlier, or imported from Scoro. Review Scoro record mapping table");
+  SString(1501401,"Cannot export. Scoro interfacing is set up to data receiving");
+  SString(1501402,"Cannot export. The contact with same reg. number already exists in Scoro");
+  SString(1501403,"Scoro API must be activated before adding users");
+  SString(1501404,"No Account manager assigned to this contact in Scoro");
+  //...
+  SString(1501419,"Reserved end"); 
+
+//artiklid lahetusaadressidele
+// SString(1501420):SString(1501429)
+  SString(1501420,"Ordered items to delivery addresses");
+  SString(1501421,"Delivery addr. and customer");
+  SString(1501429,"Reserved");
+
+  SString(1501430,"Delivery List");
+  SString(1501431,"Oked Purchase Order can not be closed");//Bk JL 190920
+  SString(1501432,"Enter Reg.nr.1"); //Bk JL 190924
+  SString(1501433,"Standard Books server will restart in 10 minutes"); //Bk JL 190927
+  SString(1501434,"Location is missing from the Order or differs from the Location on Purhase Item. "); //Bk JL 190927
+  SString(1501435,"Add item, item group or item classification!"); //Bk KB 08.10.2019
+  SString(1501436,"Maximum #Mileage# sum is exceeded"); //Bk KB 15.10.2019
+  SString(1501437,"Expense sum must be more than 0!");
+
+  return;
+end;
+

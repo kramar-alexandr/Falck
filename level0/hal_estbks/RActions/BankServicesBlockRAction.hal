@@ -1,0 +1,22 @@
+//pangaliidestus
+
+global
+function longint BankServicesBlockCheck(var record BankServicesBlock BankServicesr,record BankServicesBlock BankServices2r,LongInt stat,LongInt long4)
+begin
+  longint res;
+  integer i,rwcnt,errcode;
+  string 255 errstr;
+  
+  res = 0;
+  //allowed to have both, as duplicate bank entries will not be imported
+  /*
+  if (BankServicesr.Bank1AccStmtFlag == 1 AND BankServicesr.Bank1TodayAccStmtFlag == 1) then begin
+    RecordCheckError(1501060,"",-1,"Bank1AccStmtFlag");      
+    res = -1;
+    goto LBankServicesBlockCheck;
+  end;
+  */
+LBankServicesBlockCheck:;  
+  BankServicesBlockCheck = res;
+  return;
+end;

@@ -1,11 +1,9 @@
 external procedure PasteCPrwFromContrrw(var record CalcPayrollVc,var row CalcPayrollVc,record ContractVc,row ContractVc,var integer,integer,integer,integer,boolean);
 external procedure CPrSumUp(var record CalcPayrollVc);
-external procedure PasteCPrTaxes(var record CalcPayrollVc,integer,integer,integer,integer,integer,var val,Boolean);
+external procedure PasteCPrTaxes(var record CalcPayrollVc,integer,integer,integer,integer,integer,Boolean);
 external function boolean GetRightPeriod(var date,var date,date,date);
-external updating procedure UpdateCPUnFromCPr(record CalcPayrollVc,boolean);
-external updating procedure UpdateITFMUsedFromCPr(record CalcPayrollVc,boolean);
-external updating procedure UpdateCPPPHistFromCPr(record CalcPayrollVc,boolean);
 external function string 255 GetPaymTypeName(string);
+remote updating function Boolean RecordAction_rlCPrLOK(var record CalcPayrollVc,Boolean);
 
 global 
 function Boolean CalcPayrollDClassDeleteRowTest(Integer wn,Integer rownr)
@@ -35,20 +33,19 @@ begin
   row CalcPayrollVc CPrw;
   Integer i,rwcnt;
   boolean res;
-  val tmpval;
 
   res = true;
   GetWindowRecord(wn,CPr);
-  rwcnt=MatRowCnt(CPr);
+  rwcnt = MatRowCnt(CPr);
 /*
   CPr.BrutoTotal = 0;
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(CPr,i,CPrw);
     CPr.BrutoTotal = CPr.BrutoTotal + CPrw.BrutoSum;
   end;
-  PasteCPrTaxes(CPr,0,0,0,0,0,tmpval,false);
+  PasteCPrTaxes(CPr,0,0,0,0,0,false);
 */
-  PasteCPrTaxes(CPr,0,0,0,0,0,tmpval,true);
+  PasteCPrTaxes(CPr,0,0,0,0,0,true);
   CPrSumUp(CPr);
   PutWindowRecord(wn,CPr);
   CalcPayrollDClassOnOverStrike = true;
@@ -79,9 +76,11 @@ begin
       case "SDate": res = false;
       case "EDate": res = false;
       case "SerNr": 
+/* //ts 2019/02
         if (wnst==Rs_update) then begin
           res = false;
         end;
+*/
     end;
   end;  
   CalcPayrollDClassActiveEditField = res;
@@ -113,7 +112,6 @@ begin
       res = false;
     end;
   end;
-
   CalcPayrollDClassOKFlagButtonAction = res;
   return;
 end;
@@ -123,7 +121,7 @@ updating function boolean CalcPayrollDClassPaymFlagButtonAction(integer wn,integ
 begin
   boolean res;
 
-    res = false;
+  res = false;
   CalcPayrollDClassPaymFlagButtonAction = res;
   return;
 end;
@@ -137,27 +135,25 @@ begin
   row ContractVc Contrrw;
   integer rwcnt,rwcnt1,j,i;
   boolean testf;
-  date tmpdate;
-  val tmpval;
   
   if (changedf!=0) then begin
     GetWindowRecord(wn,CPr);
     DeselectWindow(wn,false);
-    rwcnt1=MatRowCnt(CPr);
+    rwcnt1 = MatRowCnt(CPr);
     for (j=0;j<rwcnt1;j=j+1) begin
       MatRowDelete(CPr,j);
       j = j - 1;
       rwcnt1 = MatRowCnt(CPr);
     end;
-    j=0;
+    j = 0;
     Contrr.SerNr = CPr.ContrSerNr;
     if (ReadFirstMain(Contrr,1,true)) then begin
-      testf=GetRightPeriod(CPr.StartDate,CPr.EndDate,Contrr.StartDate,Contrr.EndDate);
+      testf = GetRightPeriod(CPr.StartDate,CPr.EndDate,Contrr.StartDate,Contrr.EndDate);
       if (testf) then begin
         CPr.Firstname = Contrr.Firstname;
         CPr.Surname = Contrr.Surname;
         CPr.ObjCode = Contrr.ObjCode;
-        rwcnt=MatRowCnt(Contrr);
+        rwcnt = MatRowCnt(Contrr);
         for (i=0;i<rwcnt;i=i+1) begin
           MatRowGet(Contrr,i,Contrrw);
           if nonblank(Contrrw.PosCode) then begin
@@ -165,7 +161,7 @@ begin
           end;
         end;
 //        PasteCPrTaxes(CPr,1,1,1,1,0); //hoolduse funktsionaalsus
-        PasteCPrTaxes(CPr,0,0,0,0,0,tmpval,true);
+        PasteCPrTaxes(CPr,0,0,0,0,0,true);
       end;
     end;
     CPrSumUp(CPr);
@@ -183,38 +179,37 @@ begin
   row ContractVc Contrrw;
   integer rwcnt,j,i;
   boolean testf;
-  val tmpval;
 
   if (changedf!=0) then begin
     GetWindowRecord(wn,CPr);
     DeselectWindow(wn,false);
     MatRowGet(CPr,rownr,CPrw);
-    j=rownr;
+    j = rownr;
     Contrr.SerNr = CPr.ContrSerNr;
     if (ReadFirstMain(Contrr,1,true)) then begin
-      rwcnt=MatRowCnt(Contrr);
+      rwcnt = MatRowCnt(Contrr);
       for (i=0;i<rwcnt;i=i+1) begin
         MatRowGet(Contrr,i,Contrrw);
         if (CPrw.PosCode==Contrrw.PosCode) then begin
-          testf=GetRightPeriod(CPr.StartDate,CPr.EndDate,Contrrw.SDate,Contrrw.EDate);
+          testf = GetRightPeriod(CPr.StartDate,CPr.EndDate,Contrrw.SDate,Contrrw.EDate);
           if (testf) then begin
-            CPrw.PosCode=Contrrw.PosCode;
-            CPrw.PosName=Contrrw.PosName;
-            CPrw.PaymTypeCode=Contrrw.PaymTypeCode;
-            CPrw.PaymTypeName =GetPaymTypeName(CPrw.PaymTypeCode);
-            CPrw.SDate=CPr.StartDate;
-            CPrw.EDate=CPr.EndDate;
-            CPrw.Tariff=Contrrw.LoadSum;
-            CPrw.Amount=1;
-            CPrw.BrutoSum=Contrrw.LoadSum;
-            CPrw.NetoSum=0;
-            CPrw.ObjCode=Contrrw.ObjCode;
+            CPrw.PosCode = Contrrw.PosCode;
+            CPrw.PosName = Contrrw.PosName;
+            CPrw.PaymTypeCode = Contrrw.PaymTypeCode;
+            CPrw.PaymTypeName = GetPaymTypeName(CPrw.PaymTypeCode);
+            CPrw.SDate = CPr.StartDate;
+            CPrw.EDate = CPr.EndDate;
+            CPrw.Tariff = Contrrw.LoadSum;
+            CPrw.Amount = 1;
+            CPrw.BrutoSum = Contrrw.LoadSum;
+            CPrw.NetoSum = 0;
+            CPrw.ObjCode = Contrrw.ObjCode;
             MatRowPut(CPr,j,CPrw);
-            j=j+1;
+            j = j + 1;
           end; 
         end;
       end;
-      PasteCPrTaxes(CPr,0,0,0,0,0,tmpval,true);
+      PasteCPrTaxes(CPr,0,0,0,0,0,true);
     end;
     CPrSumUp(CPr);
     PutWindowRecord(wn,CPr);
@@ -227,23 +222,21 @@ function boolean CalcPayrollDClassPaymTypeCodeEFAfter(integer wn,integer rownr,i
 begin  
   record CalcPayrollVc CPr;
   row CalcPayrollVc CPrw;
-  val tmpval;
 
   if (changedf!=0) then begin
     GetWindowRecord(wn,CPr);
     DeselectWindow(wn,false);
     MatRowGet(CPr,rownr,CPrw);
-    CPrw.PaymTypeName=GetPaymTypeName(CPrw.PaymTypeCode);
-    CPrw.SDate=CPr.StartDate;
-    CPrw.EDate=CPr.EndDate;
-    CPrw.Amount=1;
+    CPrw.PaymTypeName = GetPaymTypeName(CPrw.PaymTypeCode);
+    CPrw.SDate = CPr.StartDate;
+    CPrw.EDate = CPr.EndDate;
+    CPrw.Amount = 1;
     MatRowPut(CPr,rownr,CPrw);
-    //PasteCPrTaxes(CPr,0,0,0,0,0,tmpval,false);
-    PasteCPrTaxes(CPr,0,0,0,0,0,tmpval,true);
+    //PasteCPrTaxes(CPr,0,0,0,0,0,false);
+    PasteCPrTaxes(CPr,0,0,0,0,0,true);
     CPrSumUp(CPr);
     PutWindowRecord(wn,CPr);
   end;
-
   CalcPayrollDClassPaymTypeCodeEFAfter = true;
   return;
 end;
@@ -252,7 +245,6 @@ function boolean CalcPayrollDClassTariffEFAfter(integer wn,integer rownr,integer
 begin  
   record CalcPayrollVc CPr;
   row CalcPayrollVc CPrw;
-  val tmpval;
 
   if (changedf!=0) then begin
     GetWindowRecord(wn,CPr);
@@ -260,11 +252,11 @@ begin
     MatRowGet(CPr,rownr,CPrw);
 /*
     CPr.BrutoTotal = CPr.BrutoTotal - CPrw.BrutoSum + CPrw.Tariff*CPrw.Amount;
-    PasteCPrTaxes(CPr,0,0,0,0,0,tmpval,false);
+    PasteCPrTaxes(CPr,0,0,0,0,0,false);
 */
     CPrw.BrutoSum = CPrw.Tariff*CPrw.Amount;
     MatRowPut(CPr,rownr,CPrw);
-    PasteCPrTaxes(CPr,0,0,0,0,0,tmpval,true);
+    PasteCPrTaxes(CPr,0,0,0,0,0,true);
     CPrSumUp(CPr);
     PutWindowRecord(wn,CPr);
   end;
@@ -281,13 +273,13 @@ begin
   if (changedf!=0) then begin
     GetWindowRecord(wn,CPr);
     DeselectWindow(wn,false);
-    tmpdate.day=1;
-    tmpdate.month=GetMonth(CPr.CalcDate);
-    tmpdate.year=GetYear(CPr.CalcDate);
-    CPr.StartDate=tmpdate;
-    tmpdate.day=DaysInMonth(GetYear(tmpdate),GetMonth(tmpdate));
-    CPr.EndDate=tmpdate;
-    CPr.PaymDate=tmpdate;
+    tmpdate.day = 1;
+    tmpdate.month = GetMonth(CPr.CalcDate);
+    tmpdate.year = GetYear(CPr.CalcDate);
+    CPr.StartDate = tmpdate;
+    tmpdate.day = DaysInMonth(GetYear(tmpdate),GetMonth(tmpdate));
+    CPr.EndDate = tmpdate;
+    CPr.PaymDate = tmpdate;
     PutWindowRecord(wn,CPr);
     res = CalcPayrollDClassContrSerNrEFAfter(wn,rownr,changedf);
   end;
@@ -304,13 +296,13 @@ begin
   if (changedf!=0) then begin
     GetWindowRecord(wn,CPr);
     DeselectWindow(wn,false);
-    tmpdate.day=1;
-    tmpdate.month=GetMonth(CPr.StartDate);
-    tmpdate.year=GetYear(CPr.StartDate);
-    tmpdate.day=DaysInMonth(GetYear(tmpdate),GetMonth(tmpdate));
-    CPr.EndDate=tmpdate;
-    CPr.PaymDate=tmpdate;
-    CPr.CalcDate=tmpdate;
+    tmpdate.day = 1;
+    tmpdate.month = GetMonth(CPr.StartDate);
+    tmpdate.year = GetYear(CPr.StartDate);
+    tmpdate.day = DaysInMonth(GetYear(tmpdate),GetMonth(tmpdate));
+    CPr.EndDate = tmpdate;
+    CPr.PaymDate = tmpdate;
+    CPr.CalcDate = tmpdate;
     PutWindowRecord(wn,CPr);
     res = CalcPayrollDClassContrSerNrEFAfter(wn,rownr,changedf);
   end;
@@ -327,13 +319,13 @@ begin
   if (changedf!=0) then begin
     GetWindowRecord(wn,CPr);
     DeselectWindow(wn,false);
-    CPr.PaymDate=CPr.EndDate;
+    CPr.PaymDate = CPr.EndDate;
     if (CPr.EndDate<CPr.StartDate) then begin
-      tmpdate.month=GetMonth(CPr.StartDate);
-      tmpdate.year=GetYear(CPr.StartDate);
-      tmpdate.day=DaysInMonth(GetYear(tmpdate),GetMonth(tmpdate));
-      CPr.EndDate=tmpdate;
-      CPr.PaymDate=CPr.EndDate;
+      tmpdate.month = GetMonth(CPr.StartDate);
+      tmpdate.year = GetYear(CPr.StartDate);
+      tmpdate.day = DaysInMonth(GetYear(tmpdate),GetMonth(tmpdate));
+      CPr.EndDate = tmpdate;
+      CPr.PaymDate = CPr.EndDate;
     end;
     PutWindowRecord(wn,CPr);
     res = CalcPayrollDClassContrSerNrEFAfter(wn,rownr,changedf);
@@ -352,7 +344,7 @@ begin
     GetWindowRecord(wn,CPr);
     DeselectWindow(wn,false);
     if (CPr.PaymDate<CPr.StartDate) then begin
-      CPr.PaymDate=CPr.EndDate;
+      CPr.PaymDate = CPr.EndDate;
       PutWindowRecord(wn,CPr);
     end;
     res = CalcPayrollDClassContrSerNrEFAfter(wn,rownr,changedf);
@@ -435,3 +427,28 @@ begin
   CalcPayrollDClassOpenRecord = res;
   return;
 end;
+
+//Bk - start: ts 2019/01
+global
+updating procedure OKCPrLsm()
+begin
+  Integer wn;
+  record CalcPayrollVc CPr;
+  LongInt i;
+  boolean testf;
+  
+  wn = CurWindow;
+  i = 1;
+  while (GetRecordFromBrowse(CPr,wn,i)) begin
+    testf = true;
+    if (CPr.Invalid!=0) then begin testf = false; end;
+    if (CPr.OKFlag!=0) then begin testf = false; end;
+    if (testf) then begin
+      if (RecordAction_rlCPrLOK(CPr,true)) then begin end;
+    end;
+    i = i + 1;
+  end;
+  UpdateBrowses("CalcPayrollVc");
+  return;
+end;
+//Bk - end

@@ -1,0 +1,193 @@
+external procedure FindUserMailboxName(string,var string,var string);
+external updating function LongInt MailVcRecordCheck(var record MailVc,record MailVc,LongInt,LongInt);
+external procedure MailTextRow(string,string,string,var row MailTextVc,var Integer);
+
+updating procedure CreateMailForSalSlip(string FromMail,string EmplMail,var record MailVc Mailr,date sdate,date edate)
+begin
+  record UserVc Userr;
+  record MailVc OldMailr;
+  row MailVc Mailrw;
+  row MailTextVc MTrw;
+  Integer i,rwcnt;
+  string 255 tstr;
+  LongInt err;
+  string 255 langcode;
+  Integer IgnoreRecordDetails,line;
+  record LTxtVc LTxtr;
+  Boolean added;
+  
+  ClearRow(Mailr,Mailrw,1);
+  Mailrw.RowTyp = kMailRowTypeFrom;
+  Mailrw.AddrCode = FromMail;
+  MatRowPut(Mailr,0,Mailrw);
+  Mailrw.RowTyp = kMailRowTypeTo;
+  Mailrw.AddrCode = EmplMail;
+  MatRowPut(Mailr,1,Mailrw);
+  if (blank(langcode)) then begin
+    Userr.Code = CurrentUser;
+    if (ReadFirstMain(Userr,1,true)) then begin
+      langcode = Userr.LangCode;
+    end;
+  end;
+  MailTextRow("CalcPayrollVc","",langcode,MTrw,IgnoreRecordDetails);
+  Mailr.Header = MTrw.Header & USetStr(1500428) & " " &  sdate & " - " & edate; 
+
+  if (nonblank(MTrw.FirstTxt)) then begin
+    LTxtr.Code = MTrw.FirstTxt;
+    if (ReadFirstMain(LTxtr,1,true)) then begin
+      Mailr.HtmlFlag = LTxtr.HtmlFlag;
+    end;
+  end;
+  if (Mailr.HtmlFlag==0) then begin
+    if (nonblank(MTrw.LastTxt)) then begin
+      LTxtr.Code = MTrw.LastTxt;
+      if (ReadFirstMain(LTxtr,1,true)) then begin
+        Mailr.HtmlFlag = LTxtr.HtmlFlag;
+      end;
+    end;
+  end;
+        
+  Mailr.TransDate = CurrentDate;
+  Mailr.SerNr = NextSerNr("MailVc",Mailr.TransDate,-1,false,"");
+        
+  RecordInsert(Mailr,true);
+  RecordCopy(OldMailr,Mailr);
+        
+  added = false;
+  if (nonblank(MTrw.FirstTxt)) then begin
+    LTxtr.Code = MTrw.FirstTxt;
+    if (ReadFirstMain(LTxtr,1,true)) then begin
+      if (Mailr.HtmlFlag==0) then begin
+        rwcnt = LineTextCnt(LTxtr);
+        for (i=0;i<rwcnt;i=i+1) begin
+          tstr = LineTextGet(LTxtr,i);
+          LineTextPut(Mailr,LineTextCnt(Mailr),tstr);
+        end;
+        AddCRToText(Mailr);
+      end else begin
+        if (LTxtr.HtmlFlag==0) then begin
+          AddToHtmlRecord(Ltxtr,false,Mailr,true,true);
+        end else begin
+          AddHtmlRecordToHtmlRecord(Ltxtr,Mailr,true);
+        end;
+      end;
+      added = true;
+    end;
+  end;
+  if (added==false) then begin
+    tstr = USetStr(11442);
+    if (Mailr.HtmlFlag==0) then begin
+      LineTextPut(Mailr,LineTextCnt(Mailr),tstr);
+    end else begin
+      RecordClear(Ltxtr);
+      LineTextPut(Ltxtr,0,tstr);
+      AddToHtmlRecord(Ltxtr,false,Mailr,true,true);
+    end;
+  end;
+        
+  if (nonblank(MTrw.LastTxt)) then begin
+    LTxtr.Code = MTrw.LastTxt;
+    if (ReadFirstMain(LTxtr,1,true)) then begin
+      if (Mailr.HtmlFlag==0) then begin
+        rwcnt = LineTextCnt(LTxtr);
+        for (i=0;i<rwcnt;i=i+1) begin
+          tstr = LineTextGet(LTxtr,i);
+          LineTextPut(Mailr,LineTextCnt(Mailr),tstr);
+        end;
+        AddCRToText(Mailr);
+      end else begin
+        if (LTxtr.HtmlFlag==0) then begin
+          AddToHtmlRecord(Ltxtr,false,Mailr,true,true);
+        end else begin
+          AddHtmlRecordToHtmlRecord(Ltxtr,Mailr,true);
+        end;
+      end;
+    end;
+  end;
+  return;
+end;
+
+global
+updating function SalSlipToMailMn_Run(var record RcVc RepSpec,string FromSystem)
+begin
+  record EmplVc Emplr;
+  record ContractVc Contrr;
+  record MailVc Mailr,OldMailr;
+  string 255 frempl,toempl,fname;
+  boolean TrHs,testf;
+  date sdate,edate;
+  boolean res;
+
+  sdate = RepSpec.sStartDate;
+  edate = RepSpec.sEndDate;
+  frempl = FirstInRange(RepSpec.f1,20);
+  toempl = LastInRange(RepSpec.f1,20);
+
+  if blank(frempl) then begin
+    Contrr.SerNr = RepSpec.f2;
+    if (ReadFirstMain(Contrr,1,true)) then begin
+      frempl = Contrr.EmplCode;
+      toempl = Contrr.EmplCode;
+    end;
+  end;
+
+  TrHs = true;
+  ResetLoop(Emplr);
+  Emplr.Code = frempl;
+  while (LoopMain(Emplr,1,TrHs)) begin
+    if (TrHs) then begin
+      if (nonblank(toempl)) then begin
+        if (Emplr.Code>toempl) then begin
+          TrHs = false;
+        end;
+      end;
+      if (TrHs) then begin
+        testf = true;
+        if (Emplr.ClosedFlag!=0) then begin
+          testf = false;
+        end;
+        if (testf) then begin
+          RecordNew(Mailr);
+          CreateMailForSalSlip(FromSystem,Emplr.Mail,Mailr,sdate,edate);
+          fname = "tmp/" & USetStr(1500428) & "_" & DateToString(CurrentDate,"YYYYMM") & "_" & Emplr.Firstname & ".pdf";
+          SetDocumentFilename(fname);
+          SetMedia(mtPdf);
+          RepSpec.repname = "SalSlipForm";
+          PrintDocument(Emplr,"SalSlipForm",false);
+          if (FileExists(fname)) then begin
+            RecordLinkFile(fname,0,Mailr,CurrentCompany);
+            if (RepSpec.flags[1]!=0) then begin
+              Mailr.SendFlag = 1;
+            end;
+            RecordUpdate(OldMailr,Mailr,true);
+          end else begin
+            RecordDelete(Mailr);
+          end;
+          SetDocumentFilename("");    
+          Delete_File(fname);
+        end;
+      end;
+    end;
+  end; 
+  return;
+end;  
+
+global
+updating procedure SalSlipToMailMn(record RcVc RepSpec)
+begin
+  record MailSettingsBlock MSb;
+  string 255 mailboxnr,FromSystem;
+  boolean res;
+
+  BlockLoad(MSb);
+  FindUserMailboxName(CurrentUser,mailboxnr,FromSystem);
+  if (blank(FromSystem)) then begin
+    FromSystem = MSb.FromSystem;
+  end;
+  if (blank(FromSystem)) then begin
+    goto LSalSlipToMailMn;
+  end;
+  SalSlipToMailMn_Run(RepSpec,FromSystem);
+LSalSlipToMailMn:;
+  return;
+end;  

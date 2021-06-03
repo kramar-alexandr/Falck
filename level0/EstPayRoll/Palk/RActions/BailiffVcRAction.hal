@@ -15,7 +15,7 @@ function LongInt BailiffVcRecordDuplicate(var record BailiffVc Bailr,record Bail
 begin
   LongInt res;
  
-  Bailr.OKFlag=0;
+  Bailr.OKFlag = 0;
   SetMarkFlag(Bailr.OKFlag,Bailr.OKMark);
   Bailr.ContrSerNr = -1;
   Bailr.Firstname = "";
@@ -201,7 +201,7 @@ begin
     checkflag = true;
   end;
   if (checkflag) then begin
-    rwcnt=MatRowCnt(Bailr);
+    rwcnt = MatRowCnt(Bailr);
     if (rwcnt==0) then begin
       RecordCheckError(1500507,"",-1,"Math");      
       res = -1; 
@@ -230,7 +230,7 @@ begin
   end;  
 LBailiffVcRecordCheck:;
   if (res==-1) then begin
-    Bailr.OKFlag=0;
+    Bailr.OKFlag = 0;
     SetMarkFlag(Bailr.OKFlag,Bailr.OKMark);
   end;
   BailiffVcRecordCheck = res;

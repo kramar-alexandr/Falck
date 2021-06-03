@@ -44,15 +44,15 @@ begin
   row PieceWorkTypeVc PWTrw;
   integer rwcnt,i;
 
-  res=0;
+  res = 0;
   PWTr.Code = pwtcode;
   if (ReadFirstMain(PWTr,1,true)) then begin
-    rwcnt=MatRowCnt(PWTr);
+    rwcnt = MatRowCnt(PWTr);
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(PWTr,i,PWTrw);
       if ((PWTrw.ContrSerNr==contrsernr) and (PWTrw.PosCode==poscode)) then begin
         if (DateInRange(transdate,PWTrw.SDate,PWTrw.EDate)) then begin
-          res=PWTrw.Tariff;
+          res = PWTrw.Tariff;
         end;
       end;
     end;
@@ -67,11 +67,11 @@ begin
   row PieceWorkVc PWrw;
   integer rwcnt,i;
 
-  rwcnt=MatRowCnt(PWr);
+  rwcnt = MatRowCnt(PWr);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(PWr,i,PWrw);
     if ((PWrw.ContrSerNr>0) and nonblank(PWrw.PosCode)) then begin
-      PWrw.Tariff=GetPieceWorkTypeTariff(PWr.PieceWorkTypeCode,PWrw.PosCode,PWrw.ContrSerNr,PWr.TransDate);
+      PWrw.Tariff = GetPieceWorkTypeTariff(PWr.PieceWorkTypeCode,PWrw.PosCode,PWrw.ContrSerNr,PWr.TransDate);
       MatRowPut(PWr,i,PWrw);
     end;
   end;

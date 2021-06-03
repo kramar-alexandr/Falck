@@ -1,0 +1,174 @@
+//Bk //sepa import
+external procedure OPVc_PasteRecCurncy(var record OPVc,Integer);
+external function Boolean PasteInvIn2OPr(var record OPVc,Integer,Date,Integer,val,var string,Boolean,var Boolean);
+external procedure CurValToOtherCur(Date,string,val,string,var val,roundmode);
+external procedure OPVc_PasteRecVal(var record OPVc,Integer);
+external procedure OPSumup(var record OPVc,Boolean);
+
+procedure ChangeOPRows(record OPVc OPp,LongInt VISerNr,string reccurncy,Integer currow,var val curv,Boolean installmentf)
+begin
+  row OPVc OPrw;
+  row OPVc newOPrw;
+  Integer i,rwcnt;
+  val v;
+         
+  v = curv;
+  curv = blankval;
+  rwcnt = MatRowCnt(OPp);
+  for (i=currow+1;i<rwcnt;i=i+1) begin
+    MatRowGet(OPp,i,OPrw);
+    if (OPrw.VISerNr==VISerNr) then begin
+	    switch (OPrw.stp) begin
+	      case 1:
+	        if (installmentf) then begin
+	        end;
+	      case 5: 
+	        CopyRow(OPp,OPrw,newOPrw);
+			newOPrw.RecCurncy = reccurncy;
+			MatRowPut(OPp,i,newOPrw);
+			OPVc_PasteRecCurncy(OPp,i);				  
+			MatRowGet(OPp,i,newOPrw);
+	        v = v - newOPrw.RecVal;
+	        curv = curv + newOPrw.RecVal;
+	    end;
+	  end;
+  end;
+
+  MatRowGet(OPp,currow,newOPrw);    
+  newOPrw.RecCurncy = RecCurncy;
+  MatRowPut(OPp,currow,newOPrw);
+  OPVc_PasteRecCurncy(OPp,currow);
+    MatRowGet(OPp,currow,newOPrw);
+	curv = curv + newOPrw.RecVal;
+  
+	if (installmentf==false) then begin
+    MatRowGet(OPp,currow,newOPrw);
+    newOPrw.RecVal = v;
+    MatRowPut(OPp,currow,newOPrw);
+    OPVc_PasteRecVal(OPp,currow);
+    MatRowGet(OPp,currow,newOPrw);
+  end;
+  RETURN;
+END;
+
+procedure OpenVEInvoiceNumber(record IPTBlock IPTb,string vecode, var LongInt lastpos,var record APVc resAPr)
+begin
+  record APVc APr;
+  Boolean found;
+  string 255 ckey;
+
+  RecordNew(resAPr);  
+  APr.VECode = vecode;
+  found = true;
+  SetLoopPosition(APr,lastpos);
+
+  switch (IPTb.DistributeIP) begin
+    case 0: ckey = "VECode";
+    case 1: ckey = "VEDue";
+  end;
+  while (LoopKey(ckey,APr,1,found)) begin
+    if (APr.VECode!=vecode) then begin found = false; end;
+    if (found) then begin
+      lastpos = GetLoopPosition(APr);
+      RecordCopy(resAPr,APr);     
+      goto LOpenVEInvoiceNumber;
+    end;    
+  end;
+
+LOpenVEInvoiceNumber:;
+  return;
+end;
+
+global
+procedure RecordAction_raExpandVEPay(var record OPVc OPp,Integer rownr)
+begin
+  row OPVc OP0rw;
+  row OPVc newOPrw;
+  Integer i,rwcnt,currow;
+  record APVc APr;
+  record VIVc VIr;
+  Boolean loopf,testf,installmentf;
+  LongInt lastpos;
+  record BaseCurBlock BCb;
+  val v,remv,chk;  
+  record OPTBlock OPTb;
+  string 255 warning;
+//Bk +
+  vector val vInvoice;
+  string 20 vecode;
+    
+  BlockLoad(BCb);
+  BlockLoad(OPTb);
+  rwcnt = MatRowCnt(OPp);
+  currow = rwcnt;
+//Bk - start: TS 2017/10
+  MatRowGet(OPp,rownr,OP0rw);
+  vecode = OP0rw.VECode;
+  for (i=0; i<rwcnt; i=i+1) begin
+    if (i!=rownr) then begin
+      MatRowGet(OPp,i,OP0rw);
+      if (OP0rw.VECode == vecode) then begin
+        vInvoice[OP0rw.VISerNr] = vInvoice[OP0rw.VISerNr] + OP0rw.RecVal;
+      end;
+    end;
+  end;
+//Bk - end
+  MatRowGet(OPp,rownr,OP0rw);
+  remv = OP0rw.RecVal;
+  if (OP0rw.VISerNr<0) and (OP0rw.RecVal>0) then begin
+    loopf = true;
+  end;
+  while (loopf) begin
+    OpenVEInvoiceNumber(OPTb,OP0rw.VECode,lastpos,APr);    
+    if (APr.SerNr==-1) then begin
+      loopf = false;
+    end;
+    if (remv<=0) then begin
+      loopf = false;
+    end;
+    if (loopf) then begin
+      testf = true;
+      VIr.SerNr = APr.SerNr;
+      if (ReadFirstMain(VIr,1,true)) then begin
+        testf = true;
+        if (VIr.Invalid!=0) then begin
+          testf = false;
+        end;
+      end;
+      if (testf) then begin
+        if (VIr.CurncyCode!=OP0rw.RecCurncy) then begin
+          CurValToOtherCur(OPp.TransDate,VIr.CurncyCode,APr.RVal,OP0rw.RecCurncy,v,DefaultCurRoundOff);
+        end else begin
+          v = APr.RVal;
+        end;
+        v = v - vInvoice[VIr.SerNr];//Bk +
+        if (remv<v) then begin
+          v = remv;
+        end;
+        if (v != 0) then begin//Bk +
+        ClearRow(OPp,newOPrw,1)
+        newOPrw.VISerNr = APr.SerNr;
+        MatRowPut(OPp,currow,newOPrw);
+        if (PasteInvIn2OPr(OPp,currow,OPp.TransDate,1,chk,warning,false,installmentf)) then begin 
+        end;
+        ChangeOPRows(OPp,newOPrw.VISerNr,OP0rw.RecCurncy,currow,v,installmentf);
+        currow = MatRowCnt(OPp);
+        remv = remv - v;
+        end; //Bk +
+      end;
+    end;    
+  end;  
+  
+  MatRowDelete(OPp,rownr);
+  if (remv>0) then begin
+    currow = MatRowCnt(OPp);
+    CopyRow(OPp,OP0rw,newOPrw);
+    MatRowPut(OPp,currow,newOPrw);
+    MatRowGet(OPp,currow,newOPrw);
+    newOPrw.RecVal = remv;
+    MatRowPut(OPp,currow,newOPrw);
+    OPVc_PasteRecVal(OPp,currow);
+  end;
+  OPSumup(OPp,true);
+  return;
+end;

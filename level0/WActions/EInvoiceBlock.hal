@@ -1,3 +1,4 @@
+//Bk //eteenused
 remote updating procedure EInvoiceTClassOnOKWindowRemote(record EInvoiceBlock,record EInvoiceBlock);
 
 function Integer RegisteredInCountry()
@@ -173,11 +174,11 @@ begin
 
   GetWindowRecord(wn,EIBb);  
   BlockLoad(EIBprevb);
-/* //Bk
+/* //Bk - start
   if (EIBb.StopEInvoices!=0) then begin 
     goto LEInvoiceTClassOnOKWindow;
   end;
-*/
+*/ //Bk - end
   EInvoiceTClassOnOKWindowRemote(EIBb,EIBprevb);
 LEInvoiceTClassOnOKWindow:;  
   EInvoiceTClassOnOKWindow = true;
@@ -188,6 +189,8 @@ global
 function Boolean EInvoiceTClassOutEstEInvoicesButtonAction(Integer wn,Integer value)
 begin
   Boolean res;
+  record EInvoiceBlock EIb;
+  Integer normalmode,updatemode;
  
   res = false;
   EInvoiceTClassOutEstEInvoicesButtonAction = res;
@@ -198,12 +201,15 @@ global
 function Boolean EInvoiceTClassInEstEInvoicesButtonAction(Integer wn,Integer value)
 begin
   Boolean res;
+  record EInvoiceBlock EIb;
+  Integer normalmode,updatemode;
  
   res = false;
   EInvoiceTClassInEstEInvoicesButtonAction = res;
   return;
 end;
 
+//Bk - start
 global
 function Boolean EInvoiceTClassInIVEstEInvoicesButtonAction(Integer wn,Integer value)
 begin
@@ -213,3 +219,4 @@ begin
   EInvoiceTClassInIVEstEInvoicesButtonAction = res;
   return;
 end;
+//Bk - end

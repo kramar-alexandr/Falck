@@ -244,7 +244,7 @@ begin
 end;
 
 global
-updating function Boolean AssPRClSClassOnOKWindow(Integer wn)
+updating function Boolean AssPRClSClassOnOKWindow(Integer wn)//CUST
 begin
   PasteFromTRObjS(wn,1);
   AssPRClSClassOnOKWindow = false;
@@ -260,7 +260,7 @@ begin
 end;
 
 global
-updating function Boolean TRObjSClassOnOKWindow(Integer wn)
+updating function Boolean TRObjSClassOnOKWindow(Integer wn)//CUST
 begin
   PasteFromTRObjS(wn,1);
   TRObjSClassOnOKWindow = false;
@@ -268,7 +268,7 @@ begin
 end;
 
 global
-updating function Boolean CUClassSClassOnOKWindow(Integer wn)
+updating function Boolean CUClassSClassOnOKWindow(Integer wn)//CUST
 begin
   PasteFromTRObjS(wn,1);
   CUClassSClassOnOKWindow = false;
@@ -276,7 +276,7 @@ begin
 end;
 
 global
-updating function Boolean HWCOCClassSClassOnOKWindow(Integer wn)
+updating function Boolean HWCOCClassSClassOnOKWindow(Integer wn)//CUST
 begin
   PasteFromTRObjS(wn,1);
   HWCOCClassSClassOnOKWindow = false;
@@ -284,7 +284,7 @@ begin
 end;
 
 global
-updating function Boolean DIClassSClassOnOKWindow(Integer wn)
+updating function Boolean DIClassSClassOnOKWindow(Integer wn)//CUST
 begin
   PasteFromTRObjS(wn,1);
   DIClassSClassOnOKWindow = false;
@@ -862,5 +862,13 @@ function Boolean TelephonySoundOutputSClassOnOKWindow(Integer wn)
 begin
   PasteFromSysList(wn,0);
   TelephonySoundOutputSClassOnOKWindow = false;
+  return;
+end;
+
+global
+function Boolean FiscalRegimeSClassOnOKWindow(Integer wn)
+begin
+  PasteFromSysList(wn,0);
+  FiscalRegimeSClassOnOKWindow = false;
   return;
 end;

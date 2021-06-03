@@ -24,11 +24,12 @@ begin
   LongInt res;
 
   PPr.SerNr = -1;
-  PPr.PaymDate=CurrentDate;
+  PPr.PaymDate = CurrentDate;
+  PPr.RegDate = CurrentDate; //nk 30.11.2018
+  PPr.RecSign = CurrentUser; //nk 30.11.2018
   if (SingleUserMode) then begin
     if (GetNextPaymPayrollSerNr(PPr.PaymDate,PPr.SerNr)) then begin end;
   end;
-
   PaymPayrollVcRecordDefaults = res; 
   return;
 end;
@@ -45,7 +46,9 @@ begin
   if (SingleUserMode) then begin
     if (GetNextPaymPayrollSerNr(PPr.PaymDate,PPr.SerNr)) then begin end;
   end;
-  PPr.PaymDate=CurrentDate;
+  PPr.PaymDate = CurrentDate;
+  PPr.RegDate = CurrentDate; //nk 30.11.2018
+  PPr.RecSign = CurrentUser; //nk 30.11.2018
   PaymPayrollVcRecordDuplicate = res; 
   return;
 end;
@@ -64,8 +67,8 @@ begin
   string 20 advpaymtype;
   boolean gentrans,transf;
  
-  insertmode=1;
-  updatemode=2;
+  insertmode = 1;
+  updatemode = 2;
   res = 0;
 
  if (PP2r.Invalid!=0) then begin
@@ -78,7 +81,6 @@ begin
        goto LPaymPayrollVcRecordCheck;
     end;
   end;
-
   if (stat==updatemode) then begin
     if (PPr.SerNr<=0)  then begin
       PPr.SerNr = PP2r.SerNr;
@@ -145,8 +147,8 @@ begin
     goto LPaymPayrollVcRecordCheck;
   end;
 */
-  advpaymtype=GetAdvPaymTypeCode;
-  rwcnt=MatRowCnt(PPr);
+  advpaymtype = GetAdvPaymTypeCode;
+  rwcnt = MatRowCnt(PPr);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(PPr,i,PPrw);
     for (j=i+1;j<rwcnt;j=j+1) begin
@@ -224,6 +226,11 @@ begin
           goto LPaymPayrollVcRecordCheck;
         end;
       end;
+      if blank(PPrw.PDate) then begin
+        RecordCheckError(1500342,"",i,"PDate");      
+        res = -1; 
+        goto LPaymPayrollVcRecordCheck;
+      end;
     end;
   end;
 
@@ -235,7 +242,7 @@ begin
     end;  
   end;
   if ((transf) and (gentrans)) then begin
-    errcode=MakeTransFromPaymPayroll(gTRp,PPr,false,true);
+    errcode = MakeTransFromPaymPayroll(gTRp,PPr,false,true);
     tstr = CheckTrans(gTRp,2,true);
     if (nonblank(tstr)) then begin
       RecordCheckError(1085,tstr,-1,"SerNr");      
@@ -253,7 +260,7 @@ begin
   end;
 LPaymPayrollVcRecordCheck:;
   if (res==-1) then begin
-    PPr.OKFlag=0;
+    PPr.OKFlag = 0;
     SetMarkFlag(PPr.OKFlag,PPr.OKMark);
   end;
   PaymPayrollVcRecordCheck = res;
@@ -379,6 +386,6 @@ begin
     UpdateCPPPHistFromPPr(PPr,false); //Arvestuste/VŠljamaksete ajalugu - testimiseks
   end;
 
-  PaymPayrollVcRecordImportAfter=res;
+  PaymPayrollVcRecordImportAfter = res;
   return;
 end;

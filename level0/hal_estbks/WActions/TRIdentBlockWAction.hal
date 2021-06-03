@@ -1,0 +1,37 @@
+//sepa import
+//new dev
+external function string 255 GetStmtEntryDescription(string,string,string,var string);
+
+global
+procedure TRIdentPasteBankTransDesc(var row TRIdentBlock TRIdentrw)
+begin
+  string 10 dummy;
+
+  TRIdentrw.BankTransDescr = GetStmtEntryDescription(TRIdentrw.DomainCode,TRIdentrw.FamilyCode,TRIdentrw.SubfamilyCode,dummy);
+  return;
+end;
+
+global
+function boolean TRIdentTCLassAfterEditField(Integer wn,string fieldname,Integer fn,Integer rownr,Integer changed)
+begin
+  boolean res;
+  record TRIdentBlock TRIdentr;
+  row TRIdentBlock TRIdentrw;
+
+  GetWindowRecord(wn,TRIdentr);
+  MatRowGet(TRIdentr,rownr,TRIdentrw);
+  res = true;
+  switch (fieldname) begin
+    case "DomainCode":
+      TRIdentPasteBankTransDesc(TRIdentrw);
+    case "FamilyCode":
+      TRIdentPasteBankTransDesc(TRIdentrw);
+    case "SubfamilyCode":
+      TRIdentPasteBankTransDesc(TRIdentrw);
+  end;
+  MatRowPut(TRIdentr,rownr,TRIdentrw);
+  PutWindowRecord(wn,TRIdentr);
+
+  TRIdentTCLassAfterEditField = res;
+  return;
+end;

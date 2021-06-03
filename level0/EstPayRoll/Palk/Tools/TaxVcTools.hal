@@ -15,3 +15,29 @@ begin
   GetNextTaxNr = res;
   return;
 end;
+
+global
+function val GetTaxPercent(string taxcode,date paymdate,val bruto)
+begin
+  record TaxVc Taxr;
+  row TaxVc Taxrw;
+  integer i,rwcnt;
+  val res;
+  
+  res = 0;
+  Taxr.Code = taxcode;
+  if (ReadFirstMain(Taxr,1,true)) then begin
+    rwcnt = MatRowCnt(Taxr);
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(Taxr,i,Taxrw);
+      if ((DateInRange(paymdate,Taxrw.SDate,Taxrw.EDate))) then begin
+        if ((bruto>=Taxrw.FromSum) and (bruto<=Taxrw.ToSum)) then begin
+          res = Taxrw.Percent;
+          i = rwcnt;
+        end;
+      end;
+    end;
+  end;
+  GetTaxPercent = res;
+  return;
+end;

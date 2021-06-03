@@ -1,0 +1,53 @@
+//Bk //tsekk.ee
+external function string 255 GeneratePassword2(Integer);
+remote procedure GetLoginLinkRemote(string, string, var string);
+
+global
+function string 20 GetTsekkPartner()
+begin
+  string 20 res;
+
+  res = "hansaworld";
+  GetTsekkPartner = res;
+  return;
+end;
+
+global updating
+procedure GenerateAndSaveToken()
+begin
+  record TsekkSetBlock TsekkSetbl;
+  
+  BlockLoad(TsekkSetbl);
+  if(blank(TsekkSetbl.AccessToken)) then begin
+    TsekkSetbl.AccessToken = GeneratePassword2(30);
+    BlockStore(TsekkSetbl);
+  end;
+  return;
+end;
+
+global
+function string 255 GetTsekkToken()
+begin
+  string 255 res;
+  record TsekkSetBlock TsekkSetbl;
+  
+  BlockLoad(TsekkSetbl);
+  res = TsekkSetbl.AccessToken;
+  GetTsekkToken = res;
+  return;
+end;
+
+
+global
+procedure OpenBrowserWindowTsekk(string tempToken)
+begin
+  string 255 loginLink;
+
+  threadremote.GetLoginLinkRemote(GetTsekkPartner,tempToken,loginLink);
+  if(nonblank(loginLink)) then begin
+    OpenWebBrowser(loginLink);
+  end else begin
+    MessageBox(1500202,"");
+  end;
+  return;
+end;

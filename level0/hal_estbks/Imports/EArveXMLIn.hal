@@ -1,0 +1,983 @@
+//Bk //eteenused //earvete import
+external procedure IVVc_PasteTransDate(var record IVVc,var Integer,var Integer);
+external function Boolean IVDchrsum(var record IVVc,Integer);
+external procedure IVDchsum(var record IVVc,Integer);
+external procedure IVSumup(var record IVVc,Boolean);
+external function Boolean PasteCustInInv(var record IVVc);
+external function Boolean GetNextCustNr(var string);
+external function PastePDInInv(var record IVVc,string,Boolean);
+external procedure IVVc_PasteCurncyCode(var record IVVc,string,Integer,Boolean,Boolean);
+external procedure IVVc_PasteItem(record IVVc,Integer,Integer);
+external function Boolean IVVc_PasteQuantity(var record IVVc,Integer);
+external procedure IVVc_PastePrice(var record IVVc,record IVVc,Integer,var string);
+external function Boolean IVVc_PasteSerialNr(var record IVVc,Integer,Boolean);
+external procedure IVVc_PasteUnitCode(var record IVVc,Integer);
+external function Boolean IVVc_PasteArtCode(var record IVVc,Integer,var string,var string,Boolean,var Integer);
+external procedure IVVc_PasteVATCode(var record IVVc,Integer,string,var Boolean);
+external function Boolean IVVc_PasteSum(var record IVVc,Integer,var Boolean,Integer);
+external function string 255 RemoveShortWords(string,string,var string);
+external procedure ExtractObj(string,var Integer,var string);
+external procedure GetAreaFromFile(Area,string);
+//external procedure LogAreaToFile(string,area);
+external function LongInt DateDiff(Date,Date);
+
+/* //Bk, ts 2019/04
+updating function Boolean NewContactFromCU(record CUVc CUr,string contactname)
+begin
+  record CUVc ContactCUr;
+  record CUVc lCUr;
+  record ContactRelVc ContactRelr;
+  Integer wn,nwn;
+  string 200 tstr;
+  Boolean res;
+  
+  if (blank(CUr.Code)) then begin
+    goto LNewContactFromCU;
+  end;
+  RecordNew(ContactCUr);
+  RecordNew(ContactRelr);
+  if (GetNextCustNr(tstr)) then begin
+  end;
+  ContactCUr.CustCat = "";
+  ContactCUr.Code = tstr;
+  ContactCUr.Name = contactname;
+  ContactCUr.InvAddr0 = CUr.InvAddr0;
+  ContactCUr.InvAddr1 = CUr.InvAddr1;
+  ContactCUr.InvAddr2 = CUr.InvAddr2;
+  ContactCUr.InvAddr3 = CUr.InvAddr3;
+  ContactCUr.InvAddr4 = CUr.InvAddr4;
+  ContactCUr.Phone = CUr.Phone;
+  ContactCUr.Fax = CUr.Fax;
+  ContactCUr.Department = CUr.Department;
+  ContactCUr.CUType = 0;
+  ContactCUr.VEType = 0;
+  ContactCUr.GuestType = 0;
+  ContactCUr.CustType = 1;
+  lCUr.Code = ContactCUr.Code;
+  if (ReadFirstMain(lCUr,1,true)==false) then begin
+    if (RecordStore(ContactCUr,false)) then begin end;
+    ContactRelr.CustCode = CUr.Code;
+    ContactRelr.CustName = CUr.Name;
+    ContactRelr.ContactCode = ContactCUr.Code;
+    ContactRelr.ContactName = ContactCUr.Name;
+    ContactRelr.ContactMobile = ContactCUr.Mobile;
+    ContactRelr.ContactPhone = ContactCUr.Phone;
+    ContactRelr.ContacteMail = ContactCUr.eMail;
+    ContactRelr.ContactTitle = ContactCUr.Title;
+    ContactRelr.JobTitle = ContactCUr.JobDesc;
+    if (RecordStore(ContactRelr,false)) then begin end;
+    res = true;
+  end;
+LNewContactFromCU:;  
+  NewContactFromCU = res;
+  return;
+end;
+*/
+
+function Date XML_StringToDate(string sdate)
+begin 
+  Date ddate;
+
+  ddate.day = StringToInt(Right(sdate,2));
+  ddate.year = StringToInt(Left(sdate,4));
+  ddate.month = StringToInt(Mid(sdate,5,2));
+  XML_StringToDate = ddate;
+  return;
+end; 
+
+function string 10 FindVATFromPersentage(val percentage)
+begin
+  record VATCodeBlock VATCodeb;
+  row VATCodeBlock VATCoderw;
+  Integer rwcnt,i;
+  string 10 vatc;
+
+  BlockLoad(VATCodeb);
+  rwcnt = MatRowCnt(VATCodeb);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(VATCodeb,i,VATCoderw);
+    if (nonblank(VATCoderw.ExVatpr)) then begin
+      if (VATCoderw.ExVatpr==percentage) then begin
+        vatc = VATCoderw.VATCode;
+        i = rwcnt;
+      end;
+    end;
+  end;
+  FindVATFromPersentage = vatc;
+  return;
+end;
+
+procedure InvoiceItemGroup(xml xdata,string xmlroot,record IVVc IVr,boolean credit,integer m)
+begin
+  record AccVc Accr;
+  record IVVc IV2r;
+  string 255 xstrmain,xstr0,tstr,ipath,warning;
+  string 100 attr,vatval,vatrate;
+  row IVVc IVrw;
+  val t;
+  Integer attrcnt,i0,j,k,l;
+  Integer rownr;
+  Integer lastrow;
+  Integer sernrf,itemnum;
+  Boolean chsum,putf;
+
+//ts - 2018/04, should read multiple InvoiceItemGroup
+  xstrmain = xmlroot & "E_Invoice/Invoice[" & m & "]/InvoiceItem/";
+  rownr = MatRowCnt(IVr);
+
+  i0 = 0;
+  while (XmlNodeExists(xdata,xstrmain & "InvoiceItemGroup[" & i0 & "]")) begin
+    xstr0 = xmlroot & "E_Invoice/Invoice[" & m & "]/InvoiceItem/InvoiceItemGroup[" & i0 & "]/";
+    j = 0;
+    while (XmlNodeExists(xdata,xstr0 & "ItemEntry[" & j & "]")) begin
+      ipath = xstr0 & "ItemEntry[" & j & "]";
+      tstr =  XmlGet(xdata,ipath & "/SellerProductId");
+      if blank(tstr) then begin 
+        tstr =  XmlGet(xdata,ipath & "/Code");
+      end;
+//Envoice
+      if blank(tstr) then begin 
+        l = 0;
+        while (XmlNodeExists(xdata,ipath & "/ItemReserve[" & l & "]")) begin
+          if (XmlGetAttribute(xdata,ipath & "/ItemReserve[" & l & "]","extensionId")=="sellerProductId") then begin
+            tstr =  XmlGet(xdata,ipath & "/ItemReserve[" & l & "]/InformationContent");
+          end;
+          if (XmlGetAttribute(xdata,ipath & "/ItemReserve[" & l & "]","extensionId")=="eakSellerProductId") then begin
+            tstr =  XmlGet(xdata,ipath & "/ItemReserve[" & l & "]/InformationContent");
+          end;
+          if (XmlGetAttribute(xdata,ipath & "/ItemReserve[" & l & "]","extensionId")=="eakInvoiceItemId") then begin
+            tstr =  XmlGet(xdata,ipath & "/ItemReserve[" & l & "]/InformationContent");
+          end;
+          l = l + 1;
+        end;
+      end;
+//Envoice end
+      if nonblank(tstr) then begin 
+        ClearRow(IVr,IVrw,1);
+        IVrw.stp = 1;
+        IVrw.ArtCode = tstr;
+        MatRowPut(IVr,rownr,IVrw);
+        if IVVc_PasteArtCode(IVr,rownr,tstr,tstr,false,sernrf) then begin
+        end; 
+        itemnum = itemnum + 1;
+        lastrow = rownr;
+        MatRowGet(IVr,rownr,IVrw);
+        tstr = XmlGet(xdata,ipath & "/Accounting/JournalEntry/GeneralLedger");
+        if nonblank(tstr) then begin 
+          IVrw.SalesAcc = tstr;
+          Accr.AccNumber = IVrw.SalesAcc;
+          ReadFirstMain(Accr,1,true);
+          IVrw.PeriodCode = Accr.PeriodCode;
+          MatRowPut(IVr,rownr,IVrw);
+        end;
+        tstr = XmlGet(xdata,ipath & "/Accounting/JournalEntry/CostObjective");
+        if nonblank(tstr) then begin 
+          if (SetInSet(tstr,IVrw.Objects,)==false) then begin 
+            if nonblank(IVrw.Objects) then begin 
+              IVrw.Objects = IVrw.Objects & ",";
+            end;
+            IVrw.Objects = IVrw.Objects & tstr;
+            MatRowPut(IVr,rownr,IVrw);
+          end;
+        end;
+        tstr = "";
+        if (XmlNodeExists(xdata,ipath & "/ItemDetailInfo/ItemAmount")) begin
+          tstr = XmlGet(xdata,ipath & "/ItemDetailInfo/ItemAmount");  
+        end else begin 
+          tstr = XmlGet(xdata,ipath & "/ItemAmount");
+        end;   
+        if nonblank(tstr) then begin 
+          IVrw.Quant = StringToVal(tstr,M4UVal);
+          MatRowPut(IVr,rownr,IVrw);
+          IVVc_PasteQuantity(IVr,rownr);
+          MatRowGet(IVr,rownr,IVrw);
+        end;
+        tstr = "";
+        IVrw.Price = blankval;
+        if (XmlNodeExists(xdata,ipath & "/ItemDetailInfo/ItemPrice")) begin
+          tstr = XmlGet(xdata,ipath & "/ItemDetailInfo/ItemPrice");  //price
+        end else begin 
+          tstr = XmlGet(xdata,ipath & "/ItemPrice");  //price
+        end;
+        if nonblank(tstr) then begin
+          IVrw.Price = StringToVal(tstr,M423Val);
+          MatRowPut(IVr,rownr,IVrw);
+          IVVc_PastePrice(IVr,IV2r,rownr,warning);
+          MatRowGet(IVr,rownr,IVrw);
+        end;
+        tstr = XmlGet(xdata,ipath & "/SerialNumber");
+        if nonblank(tstr) then begin
+          MatRowPut(IVr,rownr,IVrw);
+          IVVc_PasteSerialNr(IVr,rownr,false);
+          MatRowGet(IVr,rownr,IVrw);
+        end;
+        tstr = XmlGet(xdata,ipath & "/ItemUnit");
+        if nonblank(tstr) then begin
+          IVrw.UnitCode = tstr;
+          MatRowPut(IVr,rownr,IVrw);
+          IVVc_PasteUnitCode(IVr,rownr);
+          MatRowGet(IVr,rownr,IVrw);
+        end;
+        tstr = XmlGet(xdata,ipath & "/VAT/VATRate");
+        if nonblank(tstr) then begin
+          t = StringToVal(tstr,M4Val);
+          tstr = FindVATFromPersentage(t);
+          if nonblank(tstr) then begin 
+            IVrw.VATCode = tstr;
+            MatRowPut(IVr,rownr,IVrw);
+            IVVc_PasteVATCode(IVr,rownr,"",chsum);
+            MatRowGet(IVr,rownr,IVrw);
+          end;
+        end;
+        vatval = XmlGet(xdata,ipath & "/VAT/SumBeforeVAT");
+        vatrate = XmlGet(xdata,ipath & "/VAT/VATRate");
+        if (XmlGetAttribute(xdata,ipath & "/Addition","addCode")=="DSC") then begin
+          tstr =  XmlGet(xdata,ipath & "/Addition/AddRate");
+          if nonblank(tstr) then begin
+            t = StringToVal(tstr,M41Val);
+            IVrw.vRebate = t * (-1); //Bk SK 071216
+            MatRowPut(IVr,rownr,IVrw);
+            if (IVDchrsum(IVr,rownr)) then begin
+              IVDchsum(IVr,rownr);
+            end;
+            MatRowGet(IVr,rownr,IVrw);
+          end;
+        end;
+        if (blank(IVrw.Price)) then begin
+          tstr = "";
+          if (XmlNodeExists(xdata,ipath & "/ItemDetailInfo/ItemSum")) begin
+            tstr = XmlGet(xdata,ipath & "/ItemDetailInfo/ItemSum");
+          end else begin 
+            tstr = XmlGet(xdata,ipath & "/ItemSum");
+          end;
+          if nonblank(tstr) then begin
+            IVrw.Sum = StringToVal(tstr,M4Val);
+            MatRowPut(IVr,rownr,IVrw);
+            if (IVVc_PasteSum(IVr,rownr,chsum,1)) then begin 
+              IVDchsum(IVr,rownr);
+            end;
+            MatRowGet(IVr,rownr,IVrw);    
+          end;
+        end;
+        tstr =  XmlGet(xdata,ipath & "/Description");
+        if nonblank(tstr) then begin
+          MatRowGet(IVr,rownr,IVrw);
+          IVrw.Spec = tstr;
+          MatRowPut(IVr,rownr,IVrw);
+        end;
+        rownr = MatRowCnt(IVr);
+      end;
+      j = j + 1;
+    end;
+    i0 = i0 + 1;
+  end;
+
+  IVSumup(IVr,true);   
+  
+  if (itemnum==1) and (IVr.Sum4==0)  then begin 
+    MatRowGet(IVr,lastrow,IVrw);
+    if ((IVrw.Price==0) or (IVrw.Price==blankval)) and (IVrw.vRebate!=100) and (IVrw.Price==0) then begin 
+      if nonblank(vatval) then begin 
+        t = StringToVal(vatval,M4Val);
+        IVrw.Price = t/IVrw.Quant;
+        if (IVrw.Price!=0) then begin 
+          MatRowPut(IVr,lastrow,IVrw);
+          IVVc_PastePrice(IVr,IV2r,lastrow,warning);
+          MatRowGet(IVr,lastrow,IVrw);
+          //VAT
+          if nonblank(vatrate) then begin
+            t = StringToVal(vatrate,M4Val);
+            tstr = FindVATFromPersentage(t);
+            if nonblank(tstr) then begin 
+              IVrw.VATCode = tstr;
+              MatRowPut(IVr,lastrow,IVrw);
+              IVVc_PasteVATCode(IVr,lastrow,"",chsum);
+            end;
+          end;
+        end; 
+      end;
+    end;
+  end; 
+  return;
+end;
+
+procedure InvoiceTotalGroup(xml xdata,string xmlroot,record IVVc IVr,boolean credit,integer k)
+begin
+  record AccVc Accr;
+  record IVVc IV2r;
+  string 255 xstr0,tstr,ipath,warning;
+  string 100 attr;
+  row IVVc IVrw;
+  val t;
+  Integer attrcnt,j;
+  Integer rownr;
+  Integer sernrf;
+
+  xstr0 = xmlroot & "E_Invoice/Invoice[" & k & "]/InvoiceTotalGroup";
+
+  j = 0;
+  rownr = MatRowCnt(IVr);
+  while (XmlNodeExists(xdata,xstr0 & "[" & j & "]")) begin
+    attr = XmlGetAttribute(xdata,xstr0 & "[" & j & "]","groupId");
+    if nonblank(attr) then begin 
+      ClearRow(IVr,IVrw,1);
+      IVrw.stp = 1;
+      IVrw.Spec = attr;
+      MatRowPut(IVr,rownr,IVrw);
+      rownr = rownr + 1;
+    end;
+    ipath = xstr0 & "[" & j & "]" & "/ItemEntry";
+    tstr =  XmlGet(xdata,ipath & "/SellerProductId");
+    if nonblank(tstr) then begin 
+      ClearRow(IVr,IVrw,1);
+      IVrw.stp = 1;
+      IVrw.ArtCode = tstr;
+      MatRowPut(IVr,rownr,IVrw);
+      if IVVc_PasteArtCode(IVr,rownr,tstr,tstr,false,sernrf) then begin
+      end; 
+      MatRowGet(IVr,rownr,IVrw);
+      tstr = XmlGet(xdata,ipath & "/Accounting/JournalEntry/GeneralLedger");
+      if nonblank(tstr) then begin 
+        IVrw.SalesAcc = tstr;
+        Accr.AccNumber = IVrw.SalesAcc;
+        ReadFirstMain(Accr,1,true);
+        IVrw.PeriodCode = Accr.PeriodCode;
+        MatRowPut(IVr,rownr,IVrw);
+      end;
+      tstr = XmlGet(xdata,ipath & "/Accounting/JournalEntry/CostObjective");
+      if nonblank(tstr) then begin 
+        if (SetInSet(tstr,IVrw.Objects)==false) then begin 
+          if nonblank(IVrw.Objects) then begin 
+            IVrw.Objects = IVrw.Objects & ",";
+          end;
+          IVrw.Objects = IVrw.Objects & tstr;
+          MatRowPut(IVr,rownr,IVrw);
+        end;
+      end;  
+      tstr = XmlGet(xdata,ipath & "/ItemAmount"); //kogus   
+      if nonblank(tstr) then begin 
+        IVrw.Quant = StringToVal(tstr,M4UVal);
+        MatRowPut(IVr,rownr,IVrw);
+        IVVc_PasteQuantity(IVr,rownr);
+        MatRowGet(IVr,rownr,IVrw);
+      end;
+      tstr = XmlGet(xdata,ipath & "/ItemPrice");  //price
+      if nonblank(tstr) then begin
+        IVrw.Price = StringToVal(tstr,M423Val);
+        MatRowPut(IVr,rownr,IVrw);
+        IVVc_PastePrice(IVr,IV2r,rownr,warning);
+        MatRowGet(IVr,rownr,IVrw);
+      end;
+      tstr = XmlGet(xdata,ipath & "/SerialNumber");
+      if nonblank(tstr) then begin
+        MatRowPut(IVr,rownr,IVrw);
+        IVVc_PasteSerialNr(IVr,rownr,false);
+        MatRowGet(IVr,rownr,IVrw);
+      end;
+      tstr = XmlGet(xdata,ipath & "/ItemUnit");
+      if nonblank(tstr) then begin
+        IVrw.UnitCode = tstr;
+        MatRowPut(IVr,rownr,IVrw);
+        IVVc_PasteUnitCode(IVr,rownr);
+        MatRowGet(IVr,rownr,IVrw);
+      end;
+      tstr = XmlGet(xdata,ipath & "/Description");
+      if nonblank(tstr) then begin
+        IVrw.Spec = tstr;
+        MatRowPut(IVr,rownr,IVrw);
+      end;
+
+      rownr = MatRowCnt(IVr);
+    end;
+
+    j = j + 1;
+  end;
+  return;
+end;
+
+updating
+procedure CreateNote(record IVVc IVr,string cashnote,string classif)
+begin
+  record NotepadVc Noter;
+
+  RecordNew(Noter);
+  Noter.SerNr = NextSerNr("NotePadVc",CurrentDate,-1,false,"");
+  Noter.Classification = classif;
+  LineTextPut(Noter,0,cashnote);
+  if (RecordStore(Noter,true)) then begin
+    CreateRecordLink(IVr,CurrentCompany,Noter,CurrentCompany);
+    CreateRecordLink(Noter,CurrentCompany,IVr,CurrentCompany);
+  end;     
+  return;
+end;
+
+
+procedure EArveFindPaymTerm(var record IVVc IVr,string paymentterm,boolean credit,date paydate,boolean cash)
+begin
+  record PDVc PDr;
+  string 5 pdcode;
+  record IVVc checkIVr;
+  Integer days;
+  date bdate;
+  boolean foundf,testf;
+
+  if nonblank(paymentterm) then begin 
+    PDr.Code = paymentterm;
+    if ReadFirstMain(PDr,1,true) then begin 
+      if (credit==false) and (PDr.PDType!=kInvoiceTypeCredit) then begin 
+        if (PDr.PDType==kInvoiceTypeCash) and (cash) then begin 
+          pdcode = PDr.Code;
+          goto LEArveFindPaymTerm; 
+        end;
+        if (cash==false) and (PDr.PDType!=kInvoiceTypeCash) then begin 
+          pdcode = PDr.Code;
+          goto LEArveFindPaymTerm; 
+        end;
+      end;
+      if (credit==true) and (PDr.PDType==kInvoiceTypeCredit) then begin 
+        pdcode = PDr.Code;
+        goto LEArveFindPaymTerm; 
+      end;
+    end;
+  end;
+  if (credit) or (cash) then begin
+    while LoopMain(PDr,1,true) begin
+      if (credit==true) and (PDr.PDType==kInvoiceTypeCredit) then begin 
+        pdcode = PDr.Code;
+        goto LEArveFindPaymTerm; 
+      end;
+      if (cash==true) and (PDr.PDType==kInvoiceTypeCash) then begin 
+        pdcode = PDr.Code;
+        goto LEArveFindPaymTerm; 
+      end;
+    end;
+  end;
+ LEArveFindPaymTerm:;
+  if nonblank(pdcode) then begin 
+    IVr.PayDeal = pdcode;
+    PastePDInInv(IVr,"",false);
+    foundf = true;
+    if (paydate!=bdate) and (IVr.PayDate!=paydate) then begin
+      foundf = false;
+    end;
+  end;
+  if (foundf==false) and nonblank(paydate) then begin
+    days = DateDiff(paydate,IVr.InvDate);
+    if (days > 0) then begin
+      PDr.Code = days;
+      if ReadFirstMain(PDr,1,true) then begin
+        IVr.PayDeal = PDr.Code;
+        PastePDInInv(IVr,"",false);
+        foundf = true;
+      end;
+      if (foundf==false) then begin
+        testf = true;
+        while LoopMain(PDr,1,testf) begin
+          if (PDr.pdays==days) then begin
+            IVr.PayDeal = PDr.Code;
+            PastePDInInv(IVr,"",false);
+            foundf = true;
+            testf = false;
+          end;
+        end;
+      end;
+    end;
+  end;
+  if (foundf==false) then begin
+    IVr.PayDeal = paymentterm;
+    IVr.PayDate = paydate;
+  end;
+  return;
+end;
+
+procedure CreateEARVEInvoice_SumGroup(xml xdata,string xmlroot,var record IVVc IVr,var boolean credit,integer k)
+begin
+  string 255 xstr0,tstr;
+  row IVVc IVrw;
+  val t;
+
+  xstr0 = xmlroot & "E_Invoice/Invoice[" & k & "]/InvoiceSumGroup";
+  
+  tstr = XmlGet(xdata,xstr0 & "/Currency");
+  if nonblank(tstr) then begin 
+    IVr.CurncyCode = tstr;
+    IVVc_PasteCurncyCode(IVr,IVr.CurncyCode,-1,true,true);
+  end;
+  tstr = XmlGet(xdata,xstr0 & "/Accounting/JournalEntry/GeneralLedger");
+  if nonblank(tstr) then begin 
+    IVr.ARAcc = tstr;
+  end;
+  tstr = XmlGet(xdata,xstr0 & "/Accounting/JournalEntry/CostObjective");
+  if nonblank(tstr) then begin 
+    if (SetInSet(tstr,IVr.Objects)==false) then begin 
+      if nonblank(IVr.Objects) then begin 
+        IVr.Objects = IVr.Objects & ",";
+      end;
+      IVr.Objects = IVr.Objects & tstr;
+    end;
+  end;
+
+  InvoiceTotalGroup(xdata,xmlroot,IVr,credit,k);
+  InvoiceItemGroup(xdata,xmlroot,IVr,credit,k);
+  return;
+end;
+  
+procedure CreateEARVEInvoice_Information(xml xdata,string xmlroot,var record IVVc IVr,var boolean credit,integer k)
+begin
+  row IVVc IVrw;
+  string 255 tstr,cashnote,xstr0,paymentterm;
+  LongInt CredInvoice;
+  val t;
+  boolean cash;
+
+  xstr0 = xmlroot & "E_Invoice/Invoice[" & k & "]/InvoiceInformation";  
+  
+  if (XmlGetAttribute(xdata,xstr0 & "/Type","type")=="CRE") then begin
+    credit = true;
+    tstr = XmlGet(xdata,xstr0 & "/Type/SourceInvoice");  
+    if nonblank(tstr) then begin 
+      CredInvoice = tstr;
+      ClearRow(IVr,IVrw,3);
+      IVrw.OrdRow = CredInvoice;
+      MatRowInsert(IVr,0,IVrw);   
+    end;
+  end;
+  tstr = XmlGet(xdata,xstr0 & "/ContractNumber");
+  if nonblank(tstr) then begin  
+    IVr.CredManNr = tstr;
+  end;
+  tstr = XmlGet(xdata,xstr0 & "/InvoiceNumber");
+  if nonblank(tstr) then begin  
+    IVr.OfficialSerNr = tstr;
+  end;
+  tstr = XmlGet(xdata,xstr0 & "/PaymentReferenceNumber");
+  if nonblank(tstr) then begin  
+    IVr.RefStr = tstr;
+  end;
+  cashnote = XmlGet(xdata,xstr0 & "/PaymentMethod");
+  tstr = XmlGet(xdata,xstr0 & "/InvoiceDate");
+  if nonblank(tstr) then begin  
+    IVr.InvDate = XML_StringToDate(Left(tstr,10));
+  end;
+  if (PasteCustInInv(IVr)) then begin
+  end;
+  tstr = XmlGet(xdata,xstr0 & "/DueDate");
+  if nonblank(tstr) then begin  
+    IVr.PayDate = XML_StringToDate(Left(tstr,10));
+  end;
+  paymentterm = XmlGet(xdata,xstr0 & "/PaymentTerm");
+  if nonblank(XmlGet(xdata,"E_Invoice/Invoice[" & k & "]/InvoiceInformation/PaymentMethod")) then begin 
+    cash = true;
+  end;
+  EArveFindPaymTerm(IVr,paymentterm,credit,IVr.PayDate,cash);
+  tstr = XmlGet(xdata,xstr0 & "/FineRatePerDay");
+  if nonblank(tstr) then begin  
+    t = StringToVal(tstr,M4Val);
+    t = t * 365;
+    tstr = t;
+    IVr.IntCode = tstr;
+  end;
+  tstr = XmlGet(xdata,xstr0 & "/Period/PeriodName");
+  if nonblank(tstr) then begin  
+    ClearRow(IVr,IVrw,1);
+    IVrw.Spec = tstr;
+    MatRowPut(IVr,0,IVrw);
+    ClearRow(IVr,IVrw,1);
+    tstr = XmlGet(xdata,xstr0 & "/Period/StartDate");
+    if nonblank(tstr) then begin  
+      IVrw.Spec = "Periood " & tstr;
+    end;
+    tstr = XmlGet(xdata,xstr0 & "/Period/EndDate");
+    if nonblank(tstr) then begin  
+      IVrw.Spec = IVrw.Spec & " - " & tstr;
+    end;
+    if nonblank(IVrw.Spec) then begin 
+      MatRowPut(IVr,MatRowCnt(IVr),IVrw);
+    end;
+  end;
+  tstr = XmlGet(xdata,xstr0 & "/InvoiceDeliverer/ContactDataRecord/ContactName");
+  if nonblank(tstr) then begin  
+    IVr.OurContact = tstr;
+  end;
+  tstr = XmlGet(xdata,xstr0 & "/ExtensionRecord/InformationName");
+  if nonblank(tstr) then begin  
+    IVr.InvComment = tstr;
+  end;
+  tstr = XmlGet(xdata,xstr0 & "/ExtensionRecord/InformationContent");
+  if nonblank(tstr) then begin  
+    //xstr0 = "E_Invoice/Invoice/InvoiceInformation";
+    //CreateNote(IVr,tstr,"Kommentaar");
+  end;
+  return;
+end;
+
+updating
+function string 20 CreateNewEArveCustomer(xml xdata,string xstr0,string uniquecode,string custname, string RegNr1, string VATNr)
+begin
+  record CUVc CUr,tmpCUr;
+  string 255 tstr;
+  string 20 customer;
+  array string 60 aAddr;
+  Integer acnt;
+
+  RecordNew(CUr);
+  acnt = 0;
+  CUr.Name = custname;
+  CUr.RegNr1 = RegNr1;
+  CUr.VATNr = VATNr;
+  tstr = XmlGet(xdata,xstr0 & "/BuyerParty/ContactData/LegalAddress/PostalAddress1");
+  if nonblank(tstr) then begin 
+    aAddr[aCnt] = tstr;
+    acnt = acnt + 1;
+  end;
+  tstr = XmlGet(xdata,xstr0 & "/BuyerParty/ContactData/LegalAddress/PostalAddress2");
+  if nonblank(tstr) then begin
+    aAddr[aCnt] = tstr;
+    acnt = acnt + 1;
+  end;
+  tstr = XmlGet(xdata,xstr0 & "/BuyerParty/ContactData/LegalAddress/City");
+  if nonblank(tstr) then begin
+    aAddr[aCnt] = tstr;
+    acnt = acnt + 1;
+  end;
+  tstr = XmlGet(xdata,xstr0 & "/BuyerParty/ContactData/LegalAddress/PostalCode");
+  if nonblank(tstr) then begin 
+    aAddr[aCnt] = tstr;
+    acnt = acnt + 1;
+  end;
+  CUr.InvAddr0 = aAddr[0];
+  CUr.InvAddr1 = aAddr[1];
+  CUr.InvAddr2 = aAddr[2];
+  CUr.InvAddr3 = aAddr[3];
+  tstr = XmlGet(xdata,xstr0 & "/BuyerParty/ContactData/LegalAddress/Country");
+  if nonblank(tstr) then begin 
+    CUr.CountryCode = tstr;
+  end;
+  //Contact Info
+  tstr = XmlGet(xdata,xstr0 & "/BuyerParty/ContactData/PhoneNumber");
+  CUr.Phone = tstr;
+  tstr = XmlGet(xdata,xstr0 & "/BuyerParty/ContactData/FaxNumber");
+  CUr.Fax = tstr;
+  tstr = XmlGet(xdata,xstr0 & "/BuyerParty/ContactData/URL");
+  CUr.wwwAddr = tstr;
+ //Bk - start: ts 2019/05
+ //tstr = XmlGet(xdata,xstr0 & "/BuyerParty/ContactData/EmailAddress");
+  tstr = XmlGet(xdata,xstr0 & "/BuyerParty/ContactData/E-mailAddress");
+  CUr.eMail = tstr;
+  tstr = XmlGet(xdata,xstr0 & "/BuyerParty/ContactData/ContactName");
+  CUr.Person = tstr;
+ //Bk - end
+ //Bk - start: TS 2015/01
+  if (XmlNodeExists(xdata,xstr0 & "/BuyerParty/Extension")) then begin
+    if (XmlGetAttribute(xdata,xstr0 & "/BuyerParty/Extension","extensionId")=="contactType") then begin
+      tstr = XmlGet(xdata,xstr0 & "/BuyerParty/Extension/InformationContent");
+      if (tstr == "private") then begin
+        CUr.CustType = 1;
+      end;
+    end;
+  end;
+ //Bk - end
+ //Bk - start: ts - 2019/04
+  tstr = "";
+  if nonblank(uniquecode) then begin 
+    tmpCUr.Code = uniquecode;
+    if (ReadFirstMain(tmpCUr,1,true)==false) then begin
+      tstr = uniquecode;
+    end;
+  end;
+  if (blank(tstr)) then begin
+    if (GetNextCustNr(tstr)) then begin
+    end;
+  end;
+  CUr.Code = tstr;
+ //Bk - end
+  if nonblank(CUr.Code) then begin 
+    if RecordInsert(CUr,true) then begin 
+      customer = CUr.Code;
+    end;
+/* //Bk, ts - 2019/04
+    tstr = XmlGet(xdata,xstr0 & "/BuyerParty/ContactData/ContactName");
+    if nonblank(tstr) then begin 
+      if NewContactFromCU(CUr,tstr) then begin
+      end;
+    end;
+*/
+  end;
+  CreateNewEArveCustomer = customer;
+  return;
+end;
+
+global
+function Boolean FindCustomerByName(string custname,string ckey,Integer NameCountry,string CountryCode,string CYCountryCode,Integer FindName,var string cucode)
+begin
+  record CUVc CUr;
+  Boolean res,testf;
+  string 100 subword;
+  Integer pos;
+  
+  CUr.Name = custname;
+  testf = true;
+  while (LoopKey(ckey,CUr,1,testf)) begin
+    if (CUr.Name!=custname) then begin
+      testf = false;
+    end;
+    if (testf) then begin
+      if (NameCountry==1) and (CUr.CountryCode==CountryCode) then begin
+        cucode = CUr.Code;
+        testf = false;
+        res = true;
+      end;
+      if (NameCountry==1) and blank(CountryCode) and (CUr.CountryCode==CYCountryCode) then begin
+        cucode = CUr.Code;
+      end;      
+      if (FindName==1) and (blank(cucode)) then begin
+        cucode = CUr.Code;
+        if (NameCountry==0) then begin
+          testf = false;
+          res = true;                
+        end;
+      end;
+    end;
+  end;
+  FindCustomerByName = res;
+  return;
+end;
+
+procedure SetDefaultValues(var Integer FindCode,var Integer FIndVATNr,var Integer FindRegNr,var Integer FindName,var Integer NameCountry,var string CompanyForms)
+begin
+  record EInvoiceSetBlock EISb;
+
+  BlockLoad(EISb);
+  if ((EISb.FindCode==0) and (EISb.FindVATNr==0) and (EISb.FindRegNr==0) and (EISb.FindName==0) and (EISb.NameCountry==0)) then begin
+    FindCode = 1;
+    FindVATNr = 1;
+    FindRegNr = 1;
+    FindName = 1;
+    NameCountry = 0;
+    CompanyForms = "O†,AS,MT†,U†,T†,FIE";
+  end else begin
+    FindCode = EISb.FindCode;
+    FindVATNr = EISb.FindVATNr;
+    FindRegNr = EISb.FindRegNr;
+    FindName = EISb.FindName;
+    NameCountry = EISb.NameCountry;
+    CompanyForms = EISb.CompanyForms;
+  end;
+  return;
+end;
+
+global updating
+function boolean EArveXML3In(xml xdata,string xmlroot,Integer k,var LongInt IVSerNr)
+begin
+  boolean res;
+  string 255 xstr,tstr,tstr2,xstr0,xstr1;
+  Integer i,j;
+  record CYBlock CYb;
+  record IVVc IVr;
+  record CUVc CUr;
+  record CompanyFormVc CFr;
+  boolean custfound,custnew,credit;
+  string 20 customer,RegNr1,VATNr,uniquecode; 
+  string 200 CompanyForms,custname,shortcustname,removedword,subword,subremovedword,countrycode,ckey;
+  Integer err1,err2,pos;
+  Integer FindCode,FindVATNr,FindRegNr,FindName,NameCountry;
+
+  i = 0;
+  res = true;
+  SetDefaultValues(FindCode,FindVATNr,FindRegNr,FindName,NameCountry,CompanyForms);
+
+  xstr0 = xmlroot & "E_Invoice/Invoice[" & k & "]/InvoiceParties";
+  //--- Seller Party
+/*//Bk, removed TS 2016/05, why it is here ?
+  if XmlNodeExists(xdata,xstr0 & "/SellerParty/UniqueCode") then begin 
+    tstr = XmlGet(xdata,xstr0 & "/SellerParty/UniqueCode");
+    if (CYBl.Bank2!=tstr) then begin 
+      MessageBox(0,"Failil on teine arvelduskonto.Palun kontrollige seadistust Ettev›tte andmed."); 
+      res = false;
+    end;
+  end;
+*/
+  //--- Byuer Party //Customer
+  uniquecode = XmlGet(xdata,xstr0 & "/BuyerParty/UniqueCode");
+  if (FindCode==1) then begin
+    if nonblank(uniquecode) then begin 
+      CUr.Code = uniquecode;
+      if ReadFirstMain(CUr,1,true) then begin 
+        if (CUr.CUType==1) then begin
+          custfound = true;
+          customer = CUr.Code; 
+        end;
+      end;
+    end;
+  end;
+  VATNr = XmlGet(xdata,xstr0 & "/BuyerParty/VATRegNumber");
+  if (custfound==false) then begin 
+    if (FindVATNr==1) then begin
+      if nonblank(VATNr) then begin
+        CUr.VATNr = VATNr;
+        if ReadFirstKey("ActVATNr",CUr,1,true) then begin 
+          custfound = true;
+          customer = CUr.Code; 
+        end;
+      end;
+    end;
+  end;
+  RegNr1 = XmlGet(xdata,xstr0 & "/BuyerParty/RegNumber");
+  if (custfound==false) then begin 
+    if (FindRegNr==1) then begin
+      if nonblank(RegNr1) then begin
+        CUr.RegNr1 = RegNr1;
+        if ReadFirstKey("ActRegNr1",CUr,1,true) then begin 
+          custfound = true;
+          customer = CUr.Code;
+        end;
+      end;
+    end;
+  end;
+  custname = XmlGet(xdata,xstr0 & "/BuyerParty/Name");
+  j = 0;
+  while (XmlNodeExists(xdata,xstr0 & "/BuyerParty/Extension[" & j & "]")) begin
+    xstr1 = xstr0 & "/BuyerParty/Extension[" & j & "]";
+    if (XmlGetAttribute(xdata,xstr1,"extensionId")=="eakInvPartyCountry") then begin
+      countrycode = XmlGet(xdata,xstr1 & "/InformationContent");
+    end;
+    if (XmlGetAttribute(xdata,xstr1,"extensionId")=="PartyCountryCode") then begin
+      countrycode = XmlGet(xdata,xstr1 & "/InformationContent");
+    end;
+    j = j + 1;
+  end;
+  if (custfound==false) then begin 
+    if (FindName==1) or (NameCountry==1) then begin
+      BlockLoad(CYb);
+      ckey = "ActName";
+      if nonblank(CompanyForms) then begin
+        shortcustname = RemoveShortWords(custname,CompanyForms,removedword);
+        CFr.Code = removedword;
+        if (ReadFirstMain(CFr,1,true)) then begin
+          subremovedword = CFr.Comment;
+        end;
+        custfound = FindCustomerByName(shortcustname & " " & removedword,ckey,NameCountry,countrycode,CYb.CountryCode,FindName,customer);
+        if (custfound==false) then begin
+          custfound = FindCustomerByName(removedword & " " & shortcustname,ckey,NameCountry,countrycode,CYb.CountryCode,FindName,customer);
+        end;
+        if (custfound==false) then begin
+          custfound = FindCustomerByName(shortcustname,ckey,NameCountry,countrycode,CYb.CountryCode,FindName,customer);
+        end;
+        if (custfound==false) and nonblank(subremovedword) then begin
+          pos = 0;
+          ExtractObj(subremovedword,pos,subword);
+          while (nonblank(subword) and custfound==false) begin
+            custfound = FindCustomerByName(shortcustname & " " & subword,ckey,NameCountry,countrycode,CYb.CountryCode,FindName,customer);
+            if (custfound==false) then begin
+              custfound = FindCustomerByName(subword & " " & shortcustname,ckey,NameCountry,countrycode,CYb.CountryCode,FindName,customer);
+            end;
+            ExtractObj(subremovedword,pos,subword);
+          end;
+        end;
+      end else begin
+        custfound = FindCustomerByName(custname,ckey,NameCountry,countrycode,CYb.CountryCode,FindName,customer);
+      end;
+    end;
+    if (nonblank(customer)) then begin
+      custfound = true;
+    end;
+  end;
+  if (custfound==false) then begin
+    customer = CreateNewEArveCustomer(xdata,xstr0,uniquecode,custname,RegNr1,VATNr);
+    if nonblank(customer) then begin 
+      CUr.Code = customer;
+      if ReadFirstMain(CUr,1,true) then begin 
+        custnew = true;
+      end else begin 
+        customer = ""; 
+      end;
+    end;  
+  end;
+  if custnew or custfound then begin 
+    RecordNew(IVr);
+    IVr.CustCode = customer;
+    //if (PasteCustInInv(IVr)) then begin
+    //end;
+    CreateEARVEInvoice_Information(xdata,xmlroot,IVr,credit,k);
+    CreateEARVEInvoice_SumGroup(xdata,xmlroot,IVr,credit,k);
+    IVSumup(IVr,true);  
+    IVr.NoEInvoice = 1;//Bk fix, ts - 2018/05
+    IVr.TransDate = IVr.InvDate;
+    IVVc_PasteTransDate(IVr,err1,err2);
+    if (IVr.SerNr==-1) then begin 
+      IVr.SerNr = NextSerNr("IVVc",IVr.TransDate,-1,false,IVr.LangCode);
+    end;  
+    if (RecordInsert(IVr,false)) then begin 
+      tstr = XmlGet(xdata,xmlroot & "E_Invoice/Invoice[" & k & "]/InvoiceInformation/PaymentMethod");
+      if nonblank(tstr) then begin  
+        CreateNote(IVr,tstr,"Sularaha");
+      end;
+      tstr = XmlGet(xdata,xmlroot & "E_Invoice/Invoice[" & k & "]/InvoiceInformation/PaymentTerm");
+      if nonblank(tstr) then begin 
+        CreateNote(IVr,tstr,"Tasumistingimus");
+      end; 
+      tstr = XmlGet(xdata,xmlroot & "E_Invoice/Invoice[" & k & "]/InvoiceInformation/ExtensionRecord/InformationContent");
+      if nonblank(tstr) then begin  
+        CreateNote(IVr,tstr,"Kommentaar");
+      end;
+     //Bk - start: ts 2018/05
+      IVSerNr = IVr.SerNr;
+     //Bk - end
+    end;
+  end;  
+  EArveXML3In = res;
+  return;
+end;
+
+global updating
+function boolean EArveXML2In(xml xdata,string xmlroot,Integer k)
+begin
+  Boolean res;
+  LongInt IVSerNr;
+  
+  res = EArveXML3In(xdata,xmlroot,k,IVSerNr);
+
+  EArveXML2In = res;
+  return;
+end;
+
+global
+updating procedure EArveXMLIn()
+begin
+  xml xdata;
+  Integer k,err;
+  record CYBlock CYBl;
+  string 255 xstr;
+  Boolean testf;
+  area a;
+
+/* //doesn't work if xml contains TAB-s, ts 2018/05
+  testf = NextImportLine(true);     
+  while (testf) begin
+    xstr = ImportField;
+    AddTextToArea(xstr,a);
+    testf = NextImportLine(true);     
+  end;
+
+  xdata = ParseXMLArea(a);
+*/
+  xdata = ParseXMLFile(GetImportFileName);
+
+  BlockLoad(CYBl);
+
+  k = 0;
+  while (XmlNodeExists(xdata,"E_Invoice/Invoice[" & k & "]")) begin
+    if (EArveXML2In(xdata,"",k)==false) then begin
+      goto LEARVEIn;
+    end;
+    k = k + 1;
+  end;
+LEARVEIn:;
+//*
+  while (TestEOF==false) begin
+    xstr = ImportField;
+    NextImportLine(true);     
+  end;      
+//*/  
+  return;
+end;

@@ -1,0 +1,260 @@
+//pangaliidestus
+external updating procedure ServiceSelectWClassSendMulti(string,string);
+external function Boolean CheckInternetEnabler();
+external function Boolean CheckEmailStr(string);
+external procedure GetUserEmail(string,var string);
+external updating procedure CloseServiceSelectWClassMulti(string,string);
+external procedure InitBankRequestsIdleTasks(boolean);
+
+global
+function boolean BankingInTestMode()
+begin
+  boolean res;
+  record BankServicesBlock BankServicesbl;
+
+  BlockLoad(BankServicesbl);
+  res = (BankServicesbl.TestFlag == 1);
+  BankingInTestMode = res;
+  return;
+end;
+
+global
+function boolean IsBankQueueActive()
+begin
+  boolean res;
+  record EInvoiceBlock EIb;
+
+  //this is general for all banks
+  BlockLoad(EIb);
+  if (EIb.Service20Flag == 1) then begin
+    res = true;
+  end;
+  IsBankQueueActive = res;
+  return;
+end;
+
+function boolean IsSGWStatementActive(string stmntType)
+begin
+  boolean res;
+  record BankServicesBlock BankServicebl;
+
+  BlockLoad(BankServicebl);
+  switch(stmntType) begin
+    case "TodayStatement":
+      res = (BankServicebl.Bank1TodayAccStmtFlag == 1);
+    case "Statement":
+      res = (BankServicebl.Bank1AccStmtFlag == 1);
+    case "ANY":
+      res = (BankServicebl.Bank1AccStmtFlag == 1 OR BankServicebl.Bank1TodayAccStmtFlag == 1);
+      //OR any other statement type if added
+  end;
+  IsSGWStatementActive = res;
+  return;
+end;
+
+global
+function boolean IsPartnerStmtActive(string partner, string stmntType)
+begin
+  boolean res;
+
+  if (IsBankQueueActive) then begin
+    switch(partner) begin
+      case "SGW": //bank1 only
+        res = IsSGWStatementActive(stmntType);
+      case "ANY":
+        res = IsSGWStatementActive(stmntType); //OR any other bank if added
+    end;
+  end;
+  IsPartnerStmtActive = res;
+  return;
+end;
+
+global
+function boolean IsPartnerEPayActive(string partner)
+begin
+  boolean res;
+  record BankServicesBlock BankServicebl;
+
+  BlockLoad(BankServicebl);
+  switch(partner) begin
+    case "SGW":
+      if (BankServicebl.Bank1EPayFlag == 1) then begin
+        res = true;
+      end;
+    case "ANY":
+      if (BankServicebl.Bank1EPayFlag == 1) then begin //OR any other bank if added
+        res = true;
+      end;
+  end;
+  IsPartnerEPayActive = res;
+  return;
+end;
+
+global
+function boolean BankQueueActiveInAnyComp()
+begin
+  boolean res;
+  record CompaniesBlock Compb;
+  row CompaniesBlock Comprw;
+  integer oldcomp,rwcnt,i;
+  
+  res = false;
+  oldcomp = CurrentCompany;  
+  BlockLoad(Compb);
+  rwcnt = MatRowCnt(Compb);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(Compb,i,Comprw);
+    if (SetCompanyCode(Comprw.CompCode,false)) then begin
+      if (IsBankQueueActive) then begin
+        res = true;
+        i = rwcnt;
+      end;
+    end;
+  end;
+  ResetCompany(oldcomp);
+  BankQueueActiveInAnyComp = res;
+  return;
+end;
+
+global
+function boolean BankStmtActiveInAnyComp()
+begin
+  boolean res;
+  record CompaniesBlock Compb;
+  row CompaniesBlock Comprw;
+  integer oldcomp,rwcnt,i;
+  
+  res = false;
+  oldcomp = CurrentCompany;  
+  BlockLoad(Compb);
+  rwcnt = MatRowCnt(Compb);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(Compb,i,Comprw);
+    if (SetCompanyCode(Comprw.CompCode,false)) then begin
+      if (IsPartnerStmtActive("ANY","ANY")) then begin
+        res = true;
+        i = rwcnt;
+      end;
+    end;
+  end;
+  ResetCompany(oldcomp);
+  BankStmtActiveInAnyComp = res;
+  return;
+end;
+
+function boolean CanActivateBankSend(string email, var string errMsg)
+begin
+  boolean res;
+  record CYBlock CYb;
+  record EInvoiceBlock EIb;
+  
+  res = true;
+  BlockLoad(CYb);
+  BlockLoad(EIb);
+  if(blank(email)) then begin
+    res = false;
+    errMsg = USetStr(2289);
+  end;
+  if(CheckEmailStr(email) == false) then begin
+    res = false;
+    errMsg = USetStr(31337);
+  end;
+  if (blank(CYb.OrgNr)) then begin
+    res = false;
+    errMsg = USetStr(34593);
+  end;
+  if (EIb.TestFlag==0) then begin
+    if (CheckInternetEnabler == false) then begin
+      res = false;
+      errMsg = USetStr(1500007);
+    end;
+  end;
+  CanActivateBankSend = res;
+  return;
+end;
+
+updating
+procedure SendBankSendActivRequest()
+begin
+  record RcVc RepSpec;
+  integer wn;
+  string 100 email;
+  string 255 errMsg;
+  boolean forced;
+
+  wn = CurWindow;
+  GetUserEmail(CurrentUser,email);
+  if (CanActivateBankSend(email,errMsg)) then begin
+    ServiceSelectWClassSendMulti("SGW",email); //other banks when required
+    //need to start forced because ServiceSelectWClassSendMulti is asyncÊand IsBankQueueActive returns false at this stage
+    forced = true;
+    InitBankRequestsIdleTasks(forced);
+    MessageBox(33491,"");
+  end else begin
+    MessageBox(0,errMsg);
+  end;
+  return;
+end;
+
+global updating
+procedure SendBankSendCloseRequest()
+begin
+  integer eInvSettw;
+  
+  eInvSettw = CurWindow;
+  CloseServiceSelectWClassMulti("20","");
+  MessageBox(33491,"");
+  CloseWindow(eInvSettw);
+  return;
+end;
+
+global updating
+procedure BankActivOK()
+begin
+  integer eInvSettw,wn;
+  record RcVc RepSpec;
+  record BankServicesBlock BankServicesbl;
+  
+  BlockLoad(BankServicesbl);
+  wn = CurWindow;
+  eInvSettw = MotherWindow(wn);
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec)
+  BankServicesbl.Bank1EPayFlag = RepSpec.flags[0];
+  BankServicesbl.Bank1AccStmtFlag = RepSpec.flags[1];
+  BankServicesbl.Bank1TodayAccStmtFlag = RepSpec.flags[2];
+  BankServicesbl.Bank1AgreementId = RepSpec.f1;
+  BlockStore(BankServicesbl);
+  SendBankSendActivRequest;
+  CloseWindow(wn);
+  CloseWindow(eInvSettw);
+  return;
+end;
+
+global
+procedure BankActivClose()
+begin
+  integer wn;
+  
+  wn = CurWindow;
+  CloseWindow(wn);
+  return;
+end;
+
+global
+procedure OpenBankActivWindow()
+begin
+  integer eInvSettw,wn;
+  record RcVc RepSpec;
+  record BankServicesBlock BankServicesbl;
+
+  BlockLoad(BankServicesbl);
+  RepSpec.flags[0] = BankServicesbl.Bank1EPayFlag;
+  RepSpec.flags[1] = BankServicesbl.Bank1AccStmtFlag;
+  RepSpec.flags[2] = BankServicesbl.Bank1TodayAccStmtFlag;
+  RepSpec.f1 = BankServicesbl.Bank1AgreementId;
+  eInvSettw = CurWindow;
+  wn = OpenWindow("BankActivWClass",1,eInvSettw,"","",RepSpec);    
+  return;
+end;
+

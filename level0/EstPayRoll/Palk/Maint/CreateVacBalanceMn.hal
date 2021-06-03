@@ -14,7 +14,7 @@ begin
   boolean testf;
   date sd,ed;
   
-  year=RepSpec.flags[1];
+  year = RepSpec.flags[1];
   ResetLoop(Contrr);
   Contrr.SerNr = -1;
   while (LoopMain(Contrr,1,true)) begin  

@@ -27,13 +27,6 @@ external procedure GetLangNr(string,var record LangNrVc);
 external procedure PrintValue(string,val,Integer,record LangNrVc,record SysFormatBlock,Boolean);
 external procedure DoARSFunction(record RcVc,Integer);
 external procedure SetFaxInfo(string,string,string,string);
-external procedure BPI_OneAPSFormOpenOnDate(record RcVc,record CUVc,
-                   var val,var val,var val,var val,var val,var val,var val,var val,var val,
-                   var Integer,var Integer,
-                   var val,var val,var val,var val,var val,var val,var val,var val,
-                   var Array Integer,var Array LongInt,var Array LongInt,var Array LongInt,
-                   var Array Date,var Array Date,var Array val,var Array val,var Array val,var Array val,var Array val,
-                   var Array string,var Array string,var Integer);// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 06 05 2019 y. at 12:24:41 PM
 external procedure BPI_RunVePer(record RcVc,var array val,var array val,var array val,var array string,var Integer,var val,var val,var val,var array Integer,var array LongInt,var array string,
                                   var array Date,var array Date,var array val,var array val,var array val,
                                   var array string,var Integer);

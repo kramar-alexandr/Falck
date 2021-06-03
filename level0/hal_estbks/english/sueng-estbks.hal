@@ -1,0 +1,70 @@
+event startup
+begin
+  SetLangMode(LangEnglish,"ENG",0);
+
+//eteenused
+  Setting("Imported sales invoices handling",EInvoiceSetTClass,modSL);
+  Setting("Company forms",CompanyFormLClass,modSL);
+  Setting("Sales Electronic Invoices",CUIVLClass,modSL);
+  Setting("Supplier invoices handling",SupEInvoiceSetTClass,modPL);
+  Setting("Company forms",CompanyFormLClass,modPL);
+  Setting("Electronic Invoices Queries Intervals",EInvQueryIntrvlTClass,modTC);
+  Setting("E-services statistics",CUServiceUsageLClass,modDBMain);
+  Setting("Expenses Reports",CUExpLClass,modExp);
+  Import("Electronic Invoice",EArveXMLIn,EArveXMLIn,modSL);
+  Maintenance("Define e-invoice receiving preferences",DefEInvRcvPrefVClass,DefEInvRcvPrefMn,modSL);
+  Report("Purchase Invoices Attachments",BK_VIPdfLinkRClass,BK_VIPdfLinkRn,0,modPL);
+
+//earvete erinouded
+  Setting("Electronic invoice object types",EInvObjTypeTCLass,modSY);
+
+//pangaliidestus
+  Register("Bank requests queue","Bank requests queue",BankReqQueVc,modTC);
+  Setting("Bank requests settings",BankServicesTClass,modTC);
+  Report("E-payments status (Books)",EPayStatRClass,BK_EPayStatRn,0,modPL);
+  Report("Bank statement status",BankStmntStatRClass,BankStmntStatRn,0,modSL);
+  Report("Bank statement status",BankStmntStatRClass,BankStmntStatRn,0,modPL);
+  Report("Bank statement status",BankStmntStatRClass,BankStmntStatRn,0,modNL);
+  Maintenance("Bank statement request",BankStmntVClass,BankStmntMn,modNL);
+  //cust - start KB 04.11.2019 - customer also has //pangaliidestus, so adding it
+  //if (IsBooks) then begin //to avoid problems if modSAL is put to ERP
+    Maintenance("Send payroll payments to bank",BankPayRollVClass,BankPayRollsMn,modSAL);
+  //end;
+  //cust - end
+
+//rik
+  Setting("Company Register Requests Settings",TXTSerClass,modTC);
+  Report("RIK info request",EstAddrLookupRClass,EstAddrLookupRn,0,modCRM);
+  Report("RIK info request",EstAddrLookupRClass,EstAddrLookupRn,0,modSL);
+
+//sepa eksport
+  Report("Converting bank accounts (IBAN)",ConverttoIBANRClass,ConverttoIBANRn,0,modTC);
+  Report("Data Validation (SEPA payments)",FindMisMatchSEPARClass,FindMisMatchSEPARn,0,modTC);
+  Maintenance("Convert bank account numbers (IBAN)",ConverttoIBANVClass,ConverttoIBANMn,modTC);
+
+//sepa import
+  Setting("SEPA Bank file Import",SEPABankFileTClass,modSL);
+  Setting("Statement archive",BankImportArhiveLClass,modNL); //refers to register SEPABankEntryVc, but is setting to have different LClass
+  Setting("Bank transactions identification",TRIdentTCLass,modNL);
+  Import("Banking File, SEPA",SEPAIn,SEPAIn,modSL);
+  Import("Banking File, SEPA",SEPAIn,SEPAIn,modPL);
+  Import("Banking File, SEPA",SEPAIn,SEPAIn,modNL);
+  Register("Unhandled transactions","Unhandled transactions",SEPABankEntryVc,modNL);
+  Report("Bank transactions import history",BankEntryHistRClass,BankEntryHistRn,0,modSL);
+  Report("Bank transactions import history",BankEntryHistRClass,BankEntryHistRn,0,modPL);
+  Report("Bank transactions import history",BankEntryHistRClass,BankEntryHistRn,0,modNL);
+
+//smaily
+  Setting("Smaily settings",SmailyTClass,modCRM);
+  Setting("Smaily request fields",SmailyFieldsTClass,modCRM);
+  Maintenance("Contact data to Smaily",CUtoSmailyVClass,CUtoSmailyMn,modCRM);
+
+//tsekk.ee
+  Setting("Costpocket Service Settings",TsekkSetTClass,modTC);
+
+//xml arve
+  Report("Data check (XML invoice)",FindMisMatchRClass,FindMisMatchRn,0,modDBMain);
+  Export("Electronic Invoice",eInvoiceEClass,eInvoiceEn,modInteg);
+
+  return;
+end;

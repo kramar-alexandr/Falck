@@ -12,7 +12,7 @@ begin
   LongInt res;
 
   OTr.SerNr = -1;
-  OTr.TransDate=CurrentDate;
+  OTr.TransDate = CurrentDate;
   if (SingleUserMode) then begin
     OTr.SerNr = NextSerNr("OpenTransVc",OTr.TransDate,-1,false,"");
   end;
@@ -37,11 +37,11 @@ begin
   if (SingleUserMode) then begin
     OTr.SerNr = NextSerNr("OpenTransVc",OTr.TransDate,-1,false,"");
   end;
-  OTr.TransDate=CurrentDate;
-  rwcnt=MatRowCnt(OTr);
+  OTr.TransDate = CurrentDate;
+  rwcnt = MatRowCnt(OTr);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(OTr,i,OTrw);
-    OTrw.CalcSerNr=-1;
+    OTrw.CalcSerNr = -1;
     MatRowPut(OTr,i,OTrw);
   end;
   OpenTransVcRecordDuplicate = res; 
@@ -58,8 +58,8 @@ begin
   integer rwcnt,i;
   string 255 tstr;
 
-  insertmode=1;
-  updatemode=2;
+  insertmode = 1;
+  updatemode = 2;
   res = 0;
 
   if (OT2r.Invalid!=0) then begin
@@ -116,7 +116,7 @@ begin
     goto LOpenTransVcRecordCheck;
   end;
     
-  rwcnt=MatRowCnt(OTr);
+  rwcnt = MatRowCnt(OTr);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(OTr,i,OTrw);
     if (OTrw.ContrSerNr<=0) then begin
@@ -169,7 +169,7 @@ begin
   end;
 LOpenTransVcRecordCheck:;
   if (res==-1) then begin
-    OTr.OKFlag=0;
+    OTr.OKFlag = 0;
     SetMarkFlag(OTr.OKFlag,OTr.OKMark);
   end;
   OpenTransVcRecordCheck = res;

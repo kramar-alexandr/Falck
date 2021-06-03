@@ -5,7 +5,7 @@ procedure PayRollDataEn(record RcVc RepSpec)
 begin
   string 255 comment;
 
-  comment=USetStr(1500440);
+  comment = USetStr(1500440);
   ExpBackupString(comment);
 //Tšštajad
   if (RepSpec.flags[0]!=0) then begin
@@ -146,6 +146,22 @@ begin
 //Kehtivad TSD reakoodid
   if (RepSpec.CorrM!=0) then begin
     BlockExport("TSDRowsBlock");
+  end;
+//Konteerimine, puhkusereserv
+  if (RepSpec.sm1!=0) then begin
+    RegisterExport("VacReservVc");
+  end;
+//Planeeritud puudumised
+  if (RepSpec.em1!=0) then begin
+    RegisterExport("PlanAbsenceVc");
+  end;
+//Tšštaja TMV miinimum summa
+  if (RepSpec.wholemonthf!=0) then begin
+    RegisterExport("ProgTaxVc");
+  end;
+//†mardamine, palk
+  if (RepSpec.basecurncy!=0) then begin
+    BlockExport("SalaryRoundBlock");
   end;
   return;
 end;

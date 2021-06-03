@@ -1,0 +1,111 @@
+// <halrule>server-only</halrule>
+//Bk //rik
+//xml tools
+external procedure EstEInvBuildString2(string,string,var string);
+external procedure EstEInvEndTag(string,area);
+external procedure EstEInvStartTag(string,area);
+external procedure EstEInvStartTag2(string,var string,area);
+external procedure EstEInvTagValue(string,string,integer,area); 
+
+global
+procedure DoSendAddrLookupRIKVer6(string regno,string namestr,var area reply,var boolean noResult,var boolean res) 
+begin
+  record ServiceCacheVc SCr;
+  record TXTSerBlock TXTSerbl;
+  boolean found;
+  string 60 tstr,funcName;
+  string 150 user,passwd;
+  xml xmlReply;
+  area a;
+
+  BlockLoad(TXTSerbl);
+  SCr.Code = "SENDESTADRLOOKUP";
+  SCr.Partner = "ESTADRLOOKUP";
+  found = ReadFirstMain(SCr,2,true);
+  if (found==false) then begin
+    SCr.Code = "SENDESTADRLOOKUP";
+    SCr.Partner = "";
+    found = ReadFirstMain(SCr,2,true);
+  end;
+
+  if (found) then begin
+    //switch to v6 if old sc is in use
+    if (SCr.ServiceHost == "ariregxml.rik.ee") then begin
+      SCr.ServiceHost = "ariregxmlv6.rik.ee";
+      SCr.FuncName = "";
+    end;
+    funcName = SCr.FuncName;
+    if (blank(funcName)) then begin
+      funcName = "/";
+    end;
+    user = TXTSerbl.dbUser;
+    passwd = TXTSerbl.dbPasswd;
+    EstEInvBuildString2("xmlns:xsi","http://www.w3.org/2001/XMLSchema-instance",tstr);
+    EstEInvBuildString2("xmlns:xsd","http://www.w3.org/2001/XMLSchema",tstr);
+    EstEInvBuildString2("xmlns:soapenv","http://schemas.xmlsoap.org/soap/envelope/",tstr);
+    EstEInvStartTag2("soapenv:Envelope",tstr,a);
+    EstEInvTagValue("soapenv:Header","",0,a);
+    EstEInvStartTag("soapenv:Body",a);
+    tstr = "";
+    EstEInvBuildString2("soapenv:encodingStyle","http://schemas.xmlsoap.org/soap/encoding/",tstr);
+    EstEInvBuildString2("xmlns","http://arireg.x-road.eu/producer/",tstr);
+    EstEInvStartTag2("ettevotjaRekvisiidid_v1",tstr,a);
+    tstr = "";
+    EstEInvStartTag2("keha",tstr,a);
+    tstr = "";
+    EstEInvBuildString2("xsi:type","xsd:string",tstr);
+    EstEInvStartTag2("ariregister_kasutajanimi",tstr,a);
+    AddTextToArea(user,a);
+    EstEInvEndTag("ariregister_kasutajanimi",a);
+    tstr = "";
+    EstEInvBuildString2("xsi:type","xsd:string",tstr);
+    EstEInvStartTag2("ariregister_parool",tstr,a);
+    AddTextToArea(passwd,a);
+    EstEInvEndTag("ariregister_parool",a);
+    tstr = "";
+    EstEInvBuildString2("xsi:type","xsd:string",tstr);
+    EstEInvStartTag2("ariregister_valjundi_formaat",tstr,a);
+    AddTextToArea("xml",a);
+    EstEInvEndTag("ariregister_valjundi_formaat",a);
+    if (blank(regno) and nonblank(namestr)) then begin
+      tstr = "";
+      EstEInvBuildString2("xsi:type","xsd:string",tstr);
+      EstEInvStartTag2("nimi",tstr,a);
+      AddTextToArea(namestr,a);
+      EstEInvEndTag("nimi",a);
+    end;
+    if (nonblank(regno)) then begin
+      tstr = "";
+      EstEInvBuildString2("xsi:type","xsd:integer",tstr);
+      EstEInvStartTag2("ariregistri_kood",tstr,a);
+      AddTextToArea(regno,a);
+      EstEInvEndTag("ariregistri_kood",a);
+    end;
+    tstr = "";
+    EstEInvBuildString2("xsi:type","xsd:integer",tstr);
+    EstEInvStartTag2("ettevotjate_arv_valjundis",tstr,a);
+    AddTextToArea(TXTSerbl.dbNumber,a);
+    EstEInvEndTag("ettevotjate_arv_valjundis",a);
+    EstEInvEndTag("keha",a);
+    EstEInvEndTag("ettevotjaRekvisiidid_v1",a);
+    EstEInvEndTag("soapenv:Body",a);
+    EstEInvEndTag("soapenv:Envelope",a);
+    res = SendWebRequest(SCr.ServiceHost,SCr.ServicePort,-1,true,"POST",funcName,"","",false,a,reply,10);
+    if (res) then begin
+      xmlReply = ParseXmlArea(reply);
+      if !(XmlNodeExists(xmlReply,"SOAP-ENV:Envelope/SOAP-ENV:Body/ns1:ettevotjaRekvisiidid_v1Response/ns1:keha/ns1:ettevotjad/ns1:Item/ns1:nimi")) then begin
+        noResult = true;
+      end;
+      if (XmlNodeExists(xmlReply,"SOAP-ENV:Envelope/SOAP-ENV:Body/SOAP-ENV:Fault/faultcode")) then begin
+        tstr = XmlGet(xmlReply,"SOAP-ENV:Envelope/SOAP-ENV:Body/SOAP-ENV:Fault/faultstring");
+        res = false;
+      end else begin
+        res = true;
+      end;
+    end else begin
+      LogText(0,"DoSendAddrLookupRIKVer6: Sending HALTED. Check user name and password");
+    end;
+  end;
+  return;
+end;
+

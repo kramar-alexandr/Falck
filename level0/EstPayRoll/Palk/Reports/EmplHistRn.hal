@@ -8,9 +8,9 @@ begin
   CPr.SerNr = transnr;
   ResetLoop(CPr);
   if (ReadFirstMain(CPr,1,true)) then begin
-    res=CPr.NetoTotal;
+    res = CPr.NetoTotal;
   end;
-  GetCPSum=res;
+  GetCPSum = res;
   return;
 end;
 
@@ -23,9 +23,9 @@ begin
   PPr.SerNr = transnr;
   if (ReadFirstMain(PPr,1,true)) then begin
     MatRowGet(PPr,rownr,PPrw);
-    res=PPrw.NetoSum;
+    res = PPrw.NetoSum;
   end;
-  GetPPSum=res;
+  GetPPSum = res;
   return;
 end;
 
@@ -37,8 +37,8 @@ begin
   record CPPPHistVc CPPPHistr;
   string 20 frempl,toempl;
   LongInt frcontr,tocontr;
-  boolean TrHs, TrHs1,TrHs2,testf,fbalflag,printempl,printcontr;
-  integer rw;
+  boolean TrHs,TrHs1,TrHs2,testf,fbalflag,printempl,printcontr;
+  integer rw,cnt;
   string 255 tstr;
   date sdate,edate,sd,ed,bdate;
   val fbalcontr,fbalempl,fbaltot;
@@ -46,8 +46,8 @@ begin
   val cpsum, cpsumcontr,cpsumempl,cpsumtot;
   val ppsum, ppsumcontr,ppsumempl,ppsumtot;
 
-  sdate=RepSpec.sStartDate;
-  edate=RepSpec.sEndDate;
+  sdate = RepSpec.sStartDate;
+  edate = RepSpec.sEndDate;
   rw = 1;
   StartReportJob(USetStr(1500443));
   frempl = FirstInRange(RepSpec.f1,20);
@@ -112,6 +112,7 @@ begin
   SetRepCol(7,440);
   SetRepCol(8,480);
 
+  cnt = 0;
   TrHs = true;
   ResetLoop(Emplr);
   Emplr.Code = frempl;
@@ -123,19 +124,19 @@ begin
         end;
       end;
       if (TrHs) then begin
-        printempl=true;
-        testf=true;
-        fbalempl=0;
-        balempl=0;
-        cpsumempl=0;
-        ppsumempl=0;
+        printempl = true;
+        testf = true;
+        fbalempl = 0;
+        balempl = 0;
+        cpsumempl = 0;
+        ppsumempl = 0;
         if (RepSpec.flags[1]==0) then begin
           if (Emplr.ClosedFlag!=0) then begin
             testf = false;
           end;
         end; 
         if (testf) then begin
-          TrHs1=true;
+          TrHs1 = true;
           ResetLoop(Contrr);
           Contrr.EmplCode = Emplr.Code;
           while (LoopKey("EmplCode",Contrr,1,TrHs1)) begin
@@ -143,8 +144,8 @@ begin
               TrHs1 = false;
             end;
             if (TrHs1) then begin
-              printcontr=true;
-              testf=true;
+              printcontr = true;
+              testf = true;
               if ((frcontr>0)) then begin
                 if ((Contrr.SerNr<frcontr) or (Contrr.SerNr>tocontr)) then begin
                   testf = false;
@@ -177,44 +178,44 @@ begin
                   OutString(5,0,USetStr(1500449),true);
                   EndFormat;
                   Gray_Divider(0,1);
-                  printempl=false;
+                  printempl = false;
                 end;
-                bal=0;
-                cpsum=0;
-                ppsum=0;
-                fbalcontr=0;
-                cpsumcontr=0;
-                ppsumcontr=0;
-                fbalflag=true;
-                sd=Contrr.StartDate;
-                ed=Contrr.EndDate;
+                bal = 0;
+                cpsum = 0;
+                ppsum = 0;
+                fbalcontr = 0;
+                cpsumcontr = 0;
+                ppsumcontr = 0;
+                fbalflag = true;
+                sd = Contrr.StartDate;
+                ed = Contrr.EndDate;
                 if (GetRightPeriod(sd,ed,RepSpec.sStartDate,RepSpec.sEndDate)) then begin
                   if (DateInRange(sd,RepSpec.sStartDate,sdate)) then begin
-                    sdate=sd;
+                    sdate = sd;
                   end; 
                   if (DateInRange(ed,edate,RepSpec.sEndDate)) then begin
-                    edate=ed;
+                    edate = ed;
                   end; 
                 end;
-                TrHs2=true;
+                TrHs2 = true;
                 ResetLoop(CPPPHistr);
-                CPPPHistr.ContrSerNr=Contrr.SerNr;
-                CPPPHistr.TransDate=bdate;
+                CPPPHistr.ContrSerNr = Contrr.SerNr;
+                CPPPHistr.TransDate = bdate;
                 while (LoopKey("ContrSerNr",CPPPHistr,2,TrHs2)) begin
                   if (CPPPHistr.ContrSerNr!=Contrr.SerNr) then begin
-                    TrHs2=false;  
+                    TrHs2 = false;  
                   end;
                   if (TrHs2) then begin
-                    testf=true;
+                    testf = true;
                     if (CPPPHistr.TransDate<sdate) then begin
                       if (CPPPHistr.TransType==0) then begin
-                        cpsum=GetCPSum(CPPPHistr.TransNr);
-                        fbalcontr=fbalcontr+cpsum;
+                        cpsum = GetCPSum(CPPPHistr.TransNr);
+                        fbalcontr = fbalcontr + cpsum;
                       end else begin
-                        ppsum=GetPPSum(CPPPHistr.TransNr,CPPPHistr.RowNr);
-                        fbalcontr=fbalcontr-ppsum;
+                        ppsum = GetPPSum(CPPPHistr.TransNr,CPPPHistr.RowNr);
+                        fbalcontr = fbalcontr - ppsum;
                       end;
-                      testf=false;
+                      testf = false;
                     end;
                     if (testf) then begin
                       if (printcontr) then begin
@@ -222,34 +223,34 @@ begin
                         StartFormat(15);
                         OutString(0,0,USetStr(1500414) & ": " & Contrr.SerNr,false);
                         EndFormat;
-                        printcontr=false;
+                        printcontr = false;
                       end;  
                       if (fbalflag) then begin
                         StartFormat(15);
                         OutString(3,0,USetStr(1500450),false);
                         OutString(1,0,fbalcontr,true);
                         EndFormat;
-                        fbalempl=fbalempl+fbalcontr;
-                        fbalflag=false;
-                        bal=fbalcontr;
+                        fbalempl = fbalempl + fbalcontr;
+                        fbalflag = false;
+                        bal = fbalcontr;
                       end;
                       if ((DateInRange(CPPPHistr.TransDate,sdate,edate))) then begin
                         Startformat(15);
                         OutString(0,0,CPPPHistr.TransDate,false);
                         if (CPPPHistr.TransType==0) then begin
-                          cpsum=GetCPSum(CPPPHistr.TransNr);
+                          cpsum = GetCPSum(CPPPHistr.TransNr);
                           OutString(2,0,USetStr(1500451),false);
                           OutLongInt(3,"DblCalcPayrollVc",CPPPHistr.TransNr,false);
                           OutString(4,0,cpsum,true);
-                          cpsumcontr=cpsumcontr+cpsum;
-                          bal=bal+cpsum;
+                          cpsumcontr = cpsumcontr + cpsum;
+                          bal = bal + cpsum;
                         end else begin
-                          ppsum=GetPPSum(CPPPHistr.TransNr,CPPPHistr.RowNr);
+                          ppsum = GetPPSum(CPPPHistr.TransNr,CPPPHistr.RowNr);
                           OutString(2,0,USetStr(1500452),false);
                           OutLongInt(3,"DblPaymPayrollVc",CPPPHistr.TransNr,false);
                           OutString(5,0,ppsum,true);
-                          ppsumcontr=ppsumcontr+ppsum;
-                          bal=bal-ppsum;
+                          ppsumcontr = ppsumcontr + ppsum;
+                          bal = bal - ppsum;
                         end;
                         OutString(1,0,bal,true);
                         Endformat;
@@ -257,6 +258,7 @@ begin
                     end;
                   end;
                 end;
+                cnt = cnt + 1;
               end;
               if (printcontr==false) then begin
               Gray_Divider(140,1);
@@ -266,9 +268,9 @@ begin
               OutString(4,0,cpsumcontr,true);
               OutString(5,0,ppsumcontr,true);
               OutString(1,0,bal,true);
-              cpsumempl=cpsumempl+cpsumcontr;
-              ppsumempl=ppsumempl+ppsumcontr;
-              balempl=balempl+bal;
+              cpsumempl = cpsumempl + cpsumcontr;
+              ppsumempl = ppsumempl + ppsumcontr;
+              balempl = balempl + bal;
               EndFormat;
               StartFormat(16);
               OutString(3,0,USetStr(1500454),false);
@@ -286,8 +288,7 @@ begin
             end;
           end;
         end;
-              if (printempl==false) then begin
-
+        if (printempl==false) and (cnt>0) then begin
         Black_Divider(140,1);
         StartFormat(15);
         OutString(50,0,USetStr(1500456),false);
@@ -297,10 +298,10 @@ begin
         OutString(4,0,cpsumempl,true);
         OutString(5,0,ppsumempl,true);
         OutString(1,0,balempl,true);
-        cpsumtot=cpsumtot+cpsumempl;
-        ppsumtot=ppsumtot+ppsumempl;
-        fbaltot=fbaltot+fbalempl;
-        baltot=baltot+balempl;
+        cpsumtot = cpsumtot + cpsumempl;
+        ppsumtot = ppsumtot + ppsumempl;
+        fbaltot = fbaltot + fbalempl;
+        baltot = baltot + balempl;
         EndFormat;
         StartFormat(15);
         OutString(3,0,USetStr(1500454),false);
@@ -319,6 +320,7 @@ begin
       end;
     end;
   end;
+  if (cnt>1) then begin
   Black_Divider(140,1);
   StartFormat(15);
   OutString(2,0,USetStr(1500457),false);
@@ -341,6 +343,7 @@ begin
   OutString(3,0,USetStr(1500455),false);
   OutString(1,0,baltot,true);
   EndFormat;
+  end;
   EndJob;
 LEmplHistRn:;
   return;

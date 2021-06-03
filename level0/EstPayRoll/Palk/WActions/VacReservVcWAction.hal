@@ -1,0 +1,54 @@
+function boolean VacReservDClassTaxCodeEFAfter(integer wn,integer rownr,integer changedf)
+  begin  
+  record VacReservVc VRr;
+  row VacReservVc VRrw;
+  record TaxVc Taxr;
+
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,VRr);
+    DeselectWindow(wn,false);
+    MatRowGet(VRr,rownr,VRrw);
+    Taxr.Code = VRrw.TaxCode;
+    ClearRow(VRr,VRrw,1);
+    VRrw.TaxCode = Taxr.Code;
+    if (ReadFirstMain(Taxr,1,true)) then begin
+      VRrw.Name = Taxr.Name;
+    end;
+    MatRowPut(VRr,rownr,VRrw);
+    PutWindowRecord(wn,VRr);
+  end;
+  VacReservDClassTaxCodeEFAfter = true;
+  return;
+end;
+
+function boolean VacReservDClassCodeEFAfter(integer wn,integer rownr,integer changedf)
+  begin  
+  record VacReservVc VRr;
+  record AccGroupVc AGr;
+
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,VRr);
+    DeselectWindow(wn,false);
+    AGr.Code = VRr.Code;
+    if (ReadFirstMain(AGr,1,true)) then begin
+      VRr.Name = AGr.Name;
+    end;
+    VRr.Percent = 100;
+    PutWindowRecord(wn,VRr);
+  end;
+  VacReservDClassCodeEFAfter = true;
+  return;
+end;
+
+global
+function boolean VacReservDClassAfterEditField(integer wn,string fieldname,integer fn, integer rownr,integer changed)
+begin
+  boolean res;
+
+  switch (fieldname) begin
+    case "Code": res = VacReservDClassCodeEFAfter(wn,rownr,changed);
+    case "TaxCode": res = VacReservDClassTaxCodeEFAfter(wn,rownr,changed);
+  end;
+  VacReservDClassAfterEditField = res;
+  return;
+end;

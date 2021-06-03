@@ -1,0 +1,243 @@
+//pangaliidestus
+procedure PrintColumnHeaders()
+begin
+  StartFormat(15);
+  OutString(0,0,USetStr(12667),false); //ser.
+  OutString(2,0,USetStr(12448),false); //sum
+  OutString(3,0,USetStr(12001),false); //date
+  OutString(1,0,USetStr(12156),true); //status
+  EndFormat;
+  Gray_Divider(0,1);
+  return;
+end;
+
+procedure PrintRepHeader(record RcVc RepSpec)
+begin
+  Header(0,RepSpec.f1,1);
+  EndHeader;
+  return;
+end;
+
+procedure SetReportColumns()
+begin
+  SetRepCol(2,80);
+  SetRepCol(3,160);
+  SetRepCol(4,220);
+  return;
+end;
+
+procedure LoopOP(record RcVc RepSpec)
+begin
+  record OPVc OPr;
+  record BankReqQueVc BankReqQuer;
+  boolean inBankQue,TrHs;
+  longint fromRec,toRec;
+
+  TrHs = true;
+  fromRec = FirstInRange(RepSpec.f1,20);
+  toRec = LastInRange(RepSpec.f1,20);
+  OPr.SerNr = fromRec;
+  while LoopMain(OPr,1,TrHs) begin
+    if (OPr.SerNr > toRec) then begin
+      TrHs = false;
+    end;
+    if (TrHs) then begin
+      BankReqQuer.RecordType = "OPVc";
+      BankReqQuer.RecordID = OPr.SerNr & "";
+      inBankQue = false;
+      if (ReadFirstKey("RecordIDType",BankReqQuer,2,true)) then begin
+        inBankQue = true;
+      end else begin
+      //find in matrix index
+        ResetLoop(BankReqQuer);
+        RecordClear(BankReqQuer);
+        BankReqQuer.RecordType = "OPVc";
+        if (ReadFirstKey("RowRecordIDType:" & OPr.SerNr,BankReqQuer,1,true)) then begin
+          inBankQue = true;
+        end;
+      end;
+      StartFormat(15);
+      OutString(0,0,OPr.SerNr,false);
+      OutString(2,0,OPr.CurPayVal,false);
+      OutString(3,0,OPr.PayDate,false);
+      if (inBankQue AND (BankReqQuer.Status != 2 OR BankReqQuer.ReplyStatCode != 1)) then begin
+        OutStringID(4,"DblSetBankReqDone",UsetStr(1501109),false,BankReqQuer.SerNr);
+      end;
+      if (inBankQue) then begin
+        OutString(1,0,BankReqQuer.StatusMessage,true);
+      end else begin
+        OutString(1,0,USetStr(1501061),true);
+      end;
+      EndFormat;
+    end;
+  end;
+  return;
+end;
+
+procedure LoopPP(record RcVc RepSpec)
+begin
+  record PPVc PPr;
+  record BankReqQueVc BankReqQuer;
+  boolean inBankQue,TrHs;
+  longint fromRec,toRec;
+
+  TrHs = true;
+  fromRec = FirstInRange(RepSpec.f1,20);
+  toRec = LastInRange(RepSpec.f1,20);
+  PPr.SerNr = fromRec;
+  while LoopMain(PPr,1,TrHs) begin
+    if (PPr.SerNr > toRec) then begin
+      TrHs = false;
+    end;
+    if (TrHs) then begin
+      BankReqQuer.RecordType = "PPVc";
+      BankReqQuer.RecordID = PPr.SerNr & "";
+      inBankQue = false;
+      if (ReadFirstKey("RecordIDType",BankReqQuer,2,true)) then begin
+        inBankQue = true;
+      end else begin
+      //find in matrix index
+        ResetLoop(BankReqQuer);
+        RecordClear(BankReqQuer);
+        BankReqQuer.RecordType = "PPVc";
+        if (ReadFirstKey("RowRecordIDType:" & PPr.SerNr,BankReqQuer,1,true)) then begin
+          inBankQue = true;
+        end;
+      end;
+      StartFormat(15);
+      OutString(0,0,PPr.SerNr,false);
+      OutString(2,0,PPr.PayVal,false);
+      OutString(3,0,PPr.PayDate,false);
+      if (inBankQue AND (BankReqQuer.Status != 2 OR BankReqQuer.ReplyStatCode != 1)) then begin
+        OutStringID(4,"DblSetBankReqDone",UsetStr(1501109),false,BankReqQuer.SerNr);
+      end;
+      if (inBankQue) then begin
+        OutString(1,0,BankReqQuer.StatusMessage,true);
+      end else begin
+        OutString(1,0,USetStr(1501061),true);
+      end;
+      EndFormat;
+    end;
+  end;
+  return;
+end;
+
+procedure LoopPaymPayroll(record RcVc RepSpec)
+begin
+  record PaymPayrollVc PaymPayrollr;
+  record BankReqQueVc BankReqQuer;
+  boolean inBankQue,TrHs;
+  longint fromRec,toRec;
+
+  TrHs = true;
+  fromRec = FirstInRange(RepSpec.f1,20);
+  toRec = LastInRange(RepSpec.f1,20);
+  PaymPayrollr.SerNr = fromRec;
+  while LoopMain(PaymPayrollr,1,TrHs) begin
+    if (PaymPayrollr.SerNr > toRec) then begin
+      TrHs = false;
+    end;
+    if (TrHs) then begin
+      BankReqQuer.RecordType = "PaymPayrollVc";
+      BankReqQuer.RecordID = PaymPayrollr.SerNr & "";
+      inBankQue = false;
+      if (ReadFirstKey("RecordIDType",BankReqQuer,2,true)) then begin
+        inBankQue = true;
+      end else begin
+      //find in matrix index
+        ResetLoop(BankReqQuer);
+        RecordClear(BankReqQuer);
+        BankReqQuer.RecordType = "PaymPayrollVc";
+        if (ReadFirstKey("RowRecordIDType:" & PaymPayrollr.SerNr,BankReqQuer,1,true)) then begin
+          inBankQue = true;
+        end;
+      end;
+      StartFormat(15);
+      OutString(0,0,PaymPayrollr.SerNr,false);
+      OutString(2,0,PaymPayrollr.NetoTotal,false);
+      OutString(3,0,PaymPayrollr.PaymDate,false);
+      if (inBankQue AND (BankReqQuer.Status != 2 OR BankReqQuer.ReplyStatCode != 1)) then begin
+        OutStringID(4,"DblSetBankReqDone",UsetStr(1501109),false,BankReqQuer.SerNr);
+      end;
+      if (inBankQue) then begin
+        OutString(1,0,BankReqQuer.StatusMessage,true);
+      end else begin
+        OutString(1,0,USetStr(1501061),true);
+      end;
+      EndFormat;
+    end;
+  end;
+  return;
+end;
+
+procedure PrintPayments(record RcVc RepSpec, string recordType)
+begin
+  switch(recordType) begin
+    case "OPVc": LoopOP(RepSpec);
+    case "PPVc": LoopPP(RepSpec);
+    case "PaymPayrollVc": LoopPaymPayroll(RepSpec);
+  end;
+  return;
+end;
+
+procedure BK_EPayStatCommon(record RcVc RepSpec, string recordType)
+begin
+  StartReportJob(USetStr(15099));
+  PrintRepHeader(RepSpec);
+  SetReportColumns;
+  PrintColumnHeaders;
+  PrintPayments(RepSpec,recordType);
+  EndJob;
+  return;
+end;
+
+global
+procedure BK_EPayStatRn(record RcVc RepSpec)
+begin
+  BK_EPayStatCommon(RepSpec,"OPVc");
+  return;
+end;
+
+global
+procedure BK_EPPStatRn(record RcVc RepSpec)
+begin
+  BK_EPayStatCommon(RepSpec,"PPVc");
+  return;
+end;
+
+global
+procedure BK_EPaymPayrollStatRn(record RcVc RepSpec)
+begin
+  BK_EPayStatCommon(RepSpec,"PaymPayrollVc");
+  return;
+end;
+
+global updating
+procedure DblSetBankReqDone(string dblstr,string l,Integer currepwn)
+begin
+  record BankReqQueVc BankReqQuer,oldBankReqQuer;
+  record RcVc RepSpec;
+  string 255 tstr,res;
+  integer wn,nwn;
+  longint serNr;
+  integer pos;
+
+  tstr = l;
+  pos = 0;
+  if (nonblank(l)) then begin
+    serNr = StringToLongInt(l);
+    if (serNr != -1) then begin
+      BankReqQuer.SerNr = serNr;
+      if (ReadFirstMain(BankReqQuer,1,true)) then begin
+        RecordCopy(oldBankReqQuer,BankReqQuer);
+        BankReqQuer.Status = 2;
+        BankReqQuer.ReplyStatCode = 1;
+        BankReqQuer.StatusMessage = USetStr(1501070);
+        RecordUpdate(oldBankReqQuer,BankReqQuer,true);
+        MessageBox(10115,"");
+      end;
+    end;
+  end;
+  return;
+end;
+

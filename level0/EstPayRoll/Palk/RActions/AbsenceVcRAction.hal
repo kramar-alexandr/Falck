@@ -13,7 +13,7 @@ begin
   LongInt res;
 
   Absr.SerNr = -1;
-  Absr.StartDate=CurrentDate;
+  Absr.StartDate = CurrentDate;
   if (SingleUserMode) then begin
     Absr.SerNr = NextSerNr("AbsenceVc",Absr.StartDate,-1,false,"");
   end;
@@ -32,7 +32,7 @@ begin
   if (SingleUserMode) then begin
     Absr.SerNr = NextSerNr("AbsenceVc",Absr.StartDate,-1,false,"");
   end;
-  Absr.CalcSerNr=-1;
+  Absr.CalcSerNr = -1;
 
   AbsenceVcRecordDuplicate = res; 
   return;
@@ -55,8 +55,8 @@ begin
   string 20 illabstype,vacabstype;
   boolean yearflag;
   
-  insertmode=1;
-  updatemode=2;
+  insertmode = 1;
+  updatemode = 2;
   res = 0;
 
   if (stat!=insertmode) then begin
@@ -164,7 +164,7 @@ begin
 
   vacabstype = GetVacAbsTypeCode(Absr.ContrSerNr);
   if (Absr.AbsTypeCode==vacabstype) then begin
-    rwcnt=MatRowCnt(Absr);
+    rwcnt = MatRowCnt(Absr);
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(Absr,i,Absrw);
       if (Absrw.Year<=0) then begin
@@ -202,7 +202,7 @@ begin
     end;
     VBr.ContrSerNr = Absr.ContrSerNr;
     if (ReadFirstKey("ContrSerNr",VBr,1,true)) then begin
-      rwcnt=MatRowCnt(Absr);
+      rwcnt = MatRowCnt(Absr);
       rwcnt1 = MatRowCnt(VBr);
       for (i=0;i<rwcnt;i=i+1) begin
         MatRowGet(Absr,i,Absrw);
@@ -224,7 +224,7 @@ begin
 LAbsenceVcRecordCheck:;
   AbsenceVcRecordCheck = res;
   if (res==-1) then begin
-    Absr.OKFlag=0;
+    Absr.OKFlag = 0;
     SetMarkFlag(Absr.OKFlag,Absr.OKMark);
   end;
   return;
@@ -292,7 +292,48 @@ begin
   AbsenceVcRecordRemoveTest = res; 
   return;
 end;
+
+updating procedure AbsenceUpdatePlanAbs(record AbsenceVc Absr)
+begin
+  record PlanAbsenceVc PlanAbsr,oldPlanAbsr;
+  row PlanAbsenceVc PlanAbsrw;
+  Integer i,rwcnt;
+  Boolean TrHs;
   
+  TrHs = true;
+  while (LoopBackKey("SerNr",PlanAbsr,1,TrHs)) begin
+    if (TrHs) then begin
+      rwcnt = MatRowCnt(PlanAbsr);
+      for (i=0;i<rwcnt;i=i+1) begin
+        MatRowGet(PlanAbsr,i,PlanAbsrw);
+        if (PlanAbsrw.AbsenceNr==Absr.SerNr) then begin
+          RecordCopy(oldPlanAbsr,PlanAbsr);
+          MatRowGet(PlanAbsr,i,PlanAbsrw);
+          PlanAbsrw.AbsenceNr = -1;
+          MatRowPut(PlanAbsr,i,PlanAbsrw);
+          PlanAbsr.CalcFlag = 0;
+          RecordUpdate(oldPlanAbsr,PlanAbsr,false);        
+          TrHs = false;
+          i = rwcnt;
+        end;
+      end;
+    end;  
+  end;
+  return;
+end;
+  
+global
+updating function LongInt AbsenceVcRecordRemoveAfter(var record AbsenceVc Absr,record AbsenceVc Abs2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+
+  if (Absr.PlanedFlag!=0) then begin
+    AbsenceUpdatePlanAbs(Absr);
+  end;
+  AbsenceVcRecordRemoveAfter = res;
+  return;
+end;
+
 global
 updating function LongInt AbsenceVcRecordImport(var record AbsenceVc Absr,record AbsenceVc Abs2r,LongInt long3,LongInt long4)
 begin

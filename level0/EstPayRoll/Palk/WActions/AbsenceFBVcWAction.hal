@@ -15,7 +15,6 @@ begin
   if (AFBr.OKFlag!=0) then begin
     res = false;
   end;
-
   AbsenceFBDClassDeleteRowTest = res;
   return;
 end;
@@ -89,7 +88,6 @@ function boolean AbsenceFBDClassContrSerNrEFAfter(integer wn,integer rownr,integ
     MatRowPut(AFBr,rownr,AFBrw);
     PutWindowRecord(wn,AFBr);
   end;
-
   AbsenceFBDClassContrSerNrEFAfter = true;
   return;
 end;
@@ -102,7 +100,6 @@ begin
   switch (fieldname) begin
     case "ContrSerNr": res = AbsenceFBDClassContrSerNrEFAfter(wn,rownr,changed);
   end;
-
   AbsenceFBDClassAfterEditField = res;
   return;
 end;

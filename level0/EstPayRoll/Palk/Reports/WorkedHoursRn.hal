@@ -20,7 +20,6 @@ procedure WorkedHoursRn(record RcVc RepSpec)
 begin
   record EmplVc Emplr;
   record ContractVc Contrr;
-  row ContractVc Contrrw;
   record WorkedHoursVc WHr;
   row WorkedHoursVc WHrw;
   string 20 frempl,toempl,tstr;
@@ -33,8 +32,8 @@ begin
 
   rw = 1;
   StartReportJob(USetStr(1500508));
-  year=RepSpec.flags[1];
-  month=RepSpec.flags[2];
+  year = RepSpec.flags[1];
+  month = RepSpec.flags[2];
   frempl = FirstInRange(RepSpec.f1,20);
   toempl = LastInRange(RepSpec.f1,20);
   frcontr = FirstInRange(RepSpec.f2,20);
@@ -129,7 +128,7 @@ begin
         end;
       end;
       if (TrHs) then begin
-        testf=true;
+        testf = true;
         if (Emplr.ClosedFlag!=0) then begin
           testf = false;
         end;
@@ -175,12 +174,12 @@ begin
                   if (WHr.Year!=year) then begin TrHs2=false; end;
                   if (WHr.Month!=month) then begin TrHs2=false; end;
                   if (TrHs2) then begin
-                    testf1=true;                      
+                    testf1 = true;                      
                     if (WHr.OKFlag!=1) then begin
-                      testf1=false;
+                      testf1 = false;
                     end;
                     if (testf1) then begin
-                      rwcnt=MatRowCnt(WHr);
+                      rwcnt = MatRowCnt(WHr);
                       for (j=0;j<rwcnt;j=j+1) begin
                         testf2 = true;
                         MatRowGet(WHr,j,WHrw);
@@ -260,8 +259,8 @@ begin
                                 end;  
                                 dcnt = dcnt+1;
                               end;                        
-                              EndFormat;
                             end;
+                            EndFormat;
                           end;
                         end;
                       end;
@@ -284,10 +283,10 @@ begin
                   OutString(6,0,daystot,true);
                   OutString(1,0,hourstot,true);                       
                   EndFormat;
+                  StartFormat(15);
+                  EndFormat;
+                  Gray_Divider(0,1);
                 end;   
-                StartFormat(15);
-                EndFormat;
-                Gray_Divider(0,1);
               end;
             end;  
           end;
@@ -296,6 +295,5 @@ begin
     end;
   end;  
   EndJob;
-LCalcPayrollRn:;
   return;
 end;

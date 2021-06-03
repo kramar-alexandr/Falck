@@ -1,3 +1,4 @@
+external function Boolean SetInSet2(string,string);
 external function Boolean TestIVInvoiceARAP(record RcVc,record IVVc);
 external function Boolean TestVIInvoiceARAP(record RcVc,record VIVc);
 external procedure PrintARAPPerDate_Backdated(record RcVc,record CUVc,var Boolean,
@@ -1154,7 +1155,7 @@ begin
         if (CUr.CustCat!=RepSpec.FirstAcc) then begin testf = false; end;
       end;
       if (nonblank(RepSpec.f4)) then begin    
-        if (SetInSet(RepSpec.f4,CUr.Classification)==false) then begin
+        if (SetInSet2(RepSpec.f4,CUr.Classification)==false) then begin
           testf = false;
         end;
       end;
@@ -1223,9 +1224,11 @@ begin
        OutString(2,0,USetStr(2707),false);
        OutString(3,0,USetStr(2422),false);
        OutString(4,0,USetStr(2428),true);
-        if(RepSpec.Media==mtExcel)then begin
-        	OutString(4,0,"",true);
-        end;
+//CUST-BEGIN
+       if(RepSpec.Media==mtExcel)then begin
+         OutString(4,0,"",true);
+       end;
+//CUST-END
        OutStringAdjust(5,0,USetStr(2434),true,M4Val);
       EndFormat;       
     case 1:

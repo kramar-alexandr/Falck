@@ -1,3 +1,5 @@
+external function roundmode GetSalaryRoundMode(string);
+
 global
 function boolean PieceWorkTypeDClassActiveEditField(integer wn,string fieldname,integer fn,integer wnst,integer rownr,integer changed)
 begin
@@ -38,8 +40,24 @@ function boolean PieceWorkTypeDClassContrSerNrEFAfter(integer wn,integer rownr,i
     MatRowPut(PWTr,rownr,PWTrw);
     PutWindowRecord(wn,PWTr);
   end;
-
   PieceWorkTypeDClassContrSerNrEFAfter = true;
+  return;
+end;
+       
+function boolean PieceWorkTypeDClassTariffEFAfter(integer wn,integer rownr,integer changedf)
+  begin  
+  record PieceWorkTypeVc PWTr;
+  row PieceWorkTypeVc PWTrw;
+
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,PWTr);
+    DeselectWindow(wn,false);
+    MatRowGet(PWTr,rownr,PWTrw);
+    PWTrw.Tariff = round(PWTrw.Tariff,GetSalaryRoundMode("PWTariff"));
+    MatRowPut(PWTr,rownr,PWTrw);
+    PutWindowRecord(wn,PWTr);
+  end;
+  PieceWorkTypeDClassTariffEFAfter = true;
   return;
 end;
 
@@ -50,8 +68,8 @@ begin
 
   switch (fieldname) begin
     case "ContrSerNr": res = PieceWorkTypeDClassContrSerNrEFAfter(wn,rownr,changed);
+    case "Tariff": res = PieceWorkTypeDClassTariffEFAfter(wn,rownr,changed);
   end;
-
   PieceWorkTypeDClassAfterEditField = res;
   return;
 end;

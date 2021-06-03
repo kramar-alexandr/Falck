@@ -1,0 +1,18 @@
+//Bk
+window ERTClass:1
+  wtag("language","EST"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  WindowBegin("Valuutakursside seadistus",ERTClass,CGSbl,-);
+  SetWRect(20,80,420,200);//EST redesigned to fit long text /KLS //##cc  report and fix in core!
+  SetBlid(ERBlock);
+  vs = 20; h=190;
+  CheckBox(h=50,v=15,0,"Uuenda baasvaluuta kursse",BCRates);
+  CheckBox(h,v+=16,0,"Kirjuta olemasolev kurss Ÿle",OverwriteExistRate);
+  CheckBox(h,v+=16,0,"Kasuta valuutakursside uuendamise teenust automaatselt",IdleTask);
+  CheckBox(h,v+=16,0,"Vahetuskursi #VAT# seadus",VATLawExchangeRate);
+  //EditFieldTL(h+50,v+=25, 70,"Aeg",M4Time,Normal,0,ERTime,false,PasteCurTime);//Bk KB 06.02.2018 disabled, now PeriodicTask
+  EditFieldTL(h+50,v+=20, 70,"B2 Val. kood",M4Code,Normal,5,B2CurCode,false,CurncyCodeSClass);
+
+  EndWindow;
+end;

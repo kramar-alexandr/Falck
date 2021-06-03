@@ -38,13 +38,13 @@ begin
   string 255 tstr;
   LongInt updatemode,insertmode;
   
-  insertmode=1;
-  updatemode=2;
+  insertmode = 1;
+  updatemode = 2;
   res = 0;
   
   if (blank(ISCOr.Code)) then begin
     if (stat==updatemode) and nonblank(ISCO2r.Code) then begin
-      ISCOr.Code=ISCO2r.Code;
+      ISCOr.Code = ISCO2r.Code;
     end else begin
       if (GetNextISCONr(ISCOr.Code)) then begin end;
     end;
@@ -74,7 +74,7 @@ begin
   record PositionVc Posr;  
 
   Posr.ISCOCode = iscocode;
-  res=ReadFirstKey("ISCOCode",Posr,1,true);
+  res = ReadFirstKey("ISCOCode",Posr,1,true);
 
   ISCOrInUse = res; 
   return;

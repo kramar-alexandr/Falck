@@ -1,0 +1,168 @@
+//palk
+external function string 255 AddStr(string,string,string);
+
+procedure PrintRepHeader(record RcVc RepSpec)
+begin
+  integer rw;
+  string 20 frEmpl,toEmpl,frContr,toContr;
+
+  rw = 1;
+  if (nonblank(RepSpec.f1)) then begin
+    frEmpl = FirstInRange(RepSpec.f1,20);
+    toEmpl = LastInRange(RepSpec.f1,20);
+    Header(rw,USetStr(1500478) & " " & frEmpl & " : " & toEmpl,1);
+    rw = rw + 1;
+  end;
+  if (nonblank(RepSpec.f2)) then begin
+    frContr = FirstInRange(RepSpec.f2,20);
+    toContr = LastInRange(RepSpec.f2,20);
+    Header(rw,USetStr(1500414) & " " & frContr & " : " & toContr,1);
+    rw = rw + 1;
+  end;
+  if (nonblankDate(RepSpec.d1)) then begin
+    Header(rw,USetStr(1500519) & " " & RepSpec.d1,1);
+    rw = rw + 1;
+  end;
+  if (RepSpec.flags[0] != 0) then begin
+    Header(rw,USetStr(1500504),1);
+    rw = rw + 1;
+  end;
+  EndHeader;
+  return;
+end;
+
+procedure SetReportColumns()
+begin
+  SetRepCol(2,60);
+  SetRepCol(3,140);
+  SetRepCol(4,210);
+  SetRepCol(5,280);
+  SetRepCol(6,330);
+  SetRepCol(7,400);
+  return;
+end;
+
+procedure PrintColumnHeaders()
+begin
+  StartFormat(15);
+  OutString(0,0,USetStr(1500414),false); //tššlepingu nr
+  OutString(2,0,USetStr(1500395),false); //nimi
+  OutString(3,0,USetStr(1500566),false); //tššlepingu algus
+  OutString(4,0,USetStr(1500567),false); //tššlepingu l›pp
+  OutString(5,0,USetStr(1500518),false); //tasuliik
+  OutString(6,0,USetStr(1500569),false); //puhk. pŠevi aastas
+  OutString(7,0,USetStr(1500396),false); //objekt
+  OutString(1,0,USetStr(1500466),true); //staatus
+  EndFormat;
+  Black_Divider(0,1);
+  return;
+end;
+
+function boolean ContrRowIsActive(row ContractVc Contractrw)
+begin
+  boolean res;
+
+  res = true;
+  if (nonblankdate(Contractrw.EDate)) then begin
+    res = false;
+    goto LContrRowIsActive;
+  end;
+LContrRowIsActive:;
+  ContrRowIsActive = res;
+  return;
+end;
+
+procedure PrintContracts(record RcVc RepSpec)
+begin
+  record ContractVc Contractr;
+  row ContractVc Contractrw;
+  boolean TrHs,testf;
+  longint frContr,toContr;
+  string 20 statusStr;
+  string 20 frEmpl,toEmpl;
+  integer rwcnt,i;
+  array string 20 paymTypeCodes;
+
+  frContr = StringToLongInt(FirstInRange(RepSpec.f2,20));
+  toContr = StringToLongInt(LastInRange(RepSpec.f2,20));
+  frEmpl = FirstInRange(RepSpec.f1,20);
+  toEmpl = LastInRange(RepSpec.f1,20);
+  if (blank(toEmpl)) then begin
+    toEmpl = frEmpl; //example: 1:1
+  end;
+  TrHs = true;
+  Contractr.SerNr = frContr;
+  while LoopMain(Contractr,1,TrHs) begin
+    testf = true;
+    if (toContr>0 AND Contractr.SerNr>toContr) then begin
+      TrHs = false;
+    end;
+    if (nonblank(frEmpl) AND Contractr.EmplCode<frEmpl) then begin
+      testf = false;
+    end;
+    if (nonblank(toEmpl) AND Contractr.EmplCode>toEmpl) then begin
+      testf = false;
+    end;
+    if (RepSpec.flags[0]==0 AND (Contractr.Status==2 OR Contractr.Status==3)) then begin
+      testf = false;
+    end;
+    if (nonblankdate(RepSpec.d1) AND Contractr.StartDate<RepSpec.d1) then begin
+      testf = false;
+    end;
+    if (TrHs and testf) then begin
+      ClearArray(paymTypeCodes);
+      rwcnt = MatRowCnt(Contractr);
+      for (i=0;i<rwcnt;i=i+1) begin
+        MatRowGet(Contractr,i,Contractrw);
+        if (ContrRowIsActive(Contractrw)) then begin
+          paymTypeCodes[paymTypeCodes.length] = Contractrw.PaymTypeCode;
+        end;
+      end;
+      //contract general data
+      StartFormat(15);
+      OutString(0,"DblContractVc",Contractr.SerNr,false);
+      OutString(2,0,Contractr.Firstname & " " & Contractr.Surname,false);
+      OutString(3,0,Contractr.StartDate,false);
+      OutString(4,0,Contractr.EndDate,false);
+      if (RepSpec.Media == mtFile OR RepSpec.Media == mtExcel) then begin
+        OutString(0,0,"",false);
+      end;
+      OutString(6,0,Contractr.VacDaysNorm,false);
+      OutString(7,0,Contractr.ObjCode,false);
+      switch(Contractr.Status) begin
+        case 0: statusStr = USetStr(12778);
+        case 1: statusStr = USetStr(1500467);
+        case 2: statusStr = USetStr(1500570);
+        case 3: statusStr = USetStr(12424);
+      end;
+      OutString(1,0,statusStr,true);
+      EndFormat;
+      //contract paymtypes
+      for (i=0;i<paymTypeCodes.length;i=i+1) begin
+        StartFormat(15);
+        if (RepSpec.Media == mtFile OR RepSpec.Media == mtExcel) then begin
+          OutString(0,0,"",false);
+          OutString(0,0,"",false);
+          OutString(0,0,"",false);
+          OutString(0,0,"",false);
+        end;
+        OutString(5,"DblPaymTypeVc",paymTypeCodes[i],false);
+        EndFormat;
+      end;
+      Gray_Divider(0,1);
+    end;
+  end;
+  return;
+end;
+
+global
+procedure ContrListRn(record RcVc RepSpec)
+begin
+  StartReportJob(USetStr(19180));
+  PrintRepHeader(RepSpec);
+  SetReportColumns;
+  PrintColumnHeaders;
+  PrintContracts(RepSpec);
+  EndJob;
+  return;
+end;

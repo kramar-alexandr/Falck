@@ -1,0 +1,20 @@
+global
+function LongInt VacReservVcRecordCheck(var record VacReservVc VRr,record VacReservVc VR2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  
+  res = 0;
+  if blank(VRr.Code) then begin
+    RecordCheckError(1500345,"",-1,"Code");      
+    res = -1; 
+    goto LVacReservVcRecordCheck;
+  end;
+  if blank(VRr.Percent) or (VRr.Percent>100) or (VRr.Percent<0) then begin
+    RecordCheckError(1500314,"",-1,"Percent");      
+    res = -1; 
+    goto LVacReservVcRecordCheck;
+  end;
+LVacReservVcRecordCheck:;
+  VacReservVcRecordCheck = res;
+  return;
+end;

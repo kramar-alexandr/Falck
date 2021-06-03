@@ -1,18 +1,184 @@
 external function string 20 GetContrAccGroupCode(LongInt,string,string,date,var string);
 
-global
-procedure PaymPayrollRn(record RcVc RepSpec)
+procedure PrintEmplTotal(val neto,val bruto)
+begin
+  if (neto!=0) or (bruto!=0) then begin
+    Gray_Divider(0,1);
+    Black_Divider(6,1);
+    StartFormat(15);
+    OutString(6,0,USetStr(1500456) & ":",false);
+    OutVal(8,0,neto,M4Val,true);
+    OutVal(1,0,bruto,M4Val,true);
+    EndFormat;
+    StartFormat(15);
+    EndFormat;
+  end;
+  return;
+end;
+
+procedure PrintPaymPayroll(string frempl,string toempl,string pmacc,string accgr,integer keyflag,LongInt frcontr,LongInt tocontr,LongInt frppr,LongInt toppr,date sdate,date edate,var val netotot,var val brutotot)
 begin
   record CPPPHistVc CPPPHistr;
   record PaymPayrollVc PPr;
   row PaymPayrollVc PPrw;
   record CalcPayrollVc CPr;
   row CalcPayrollVc CPrw;
-  string 20 frempl,toempl,tstr,ckey;
-  LongInt frcontr,tocontr,frppr,toppr;
-  integer rw,keys,keyflag;
+  string 20 ckey,curempl;
+  integer keys;
   boolean TrHs,testf;
+  val neto, bruto;
+
+  if (keyflag==0) then begin
+    keys = 2;
+    ckey = "TransDate";
+    CPPPHistr.TransDate = sdate;
+    CPPPHistr.TransType = 1;
+  end;
+  if (keyflag==1) then begin
+    keys = 2;
+    ckey = "TransNr";
+    CPPPHistr.TransNr = frppr;
+    CPPPHistr.TransType = 1;
+  end;
+  if (keyflag==2) then begin
+    keys = 3;
+    ckey = "ContrSerNr";
+    CPPPHistr.ContrSerNr = frcontr;
+    CPPPHistr.TransDate = sdate;
+    CPPPHistr.TransType = 1;
+  end;
+  if (keyflag==3) then begin
+    keys = 3;
+    ckey = "TransDate";
+    CPPPHistr.TransDate = sdate;
+    CPPPHistr.TransType = 1;
+    CPPPHistr.EmplCode = frempl;
+  end;
+  if (keyflag==4) then begin
+    keys = 3;
+    ckey = "ECode";
+    CPPPHistr.EmplCode = "";
+    CPPPHistr.TransDate = sdate;
+    CPPPHistr.TransType = 1;
+  end;
+  neto = 0;
+  bruto = 0;
+  curempl = "";
+  TrHs = true;
+  while (LoopKey(ckey,CPPPHistr,keys,TrHs)) begin
+    testf = true;
+    if (keyflag==0) then begin
+      if (DateInRange(CPPPHistr.TransDate,sdate,edate)==false) then begin
+        TrHs = false;
+      end;
+      if (CPPPHistr.TransType!=1) then begin
+        testf = false;
+      end;
+    end;
+    if (keyflag==1) then begin
+      if ((CPPPHistr.TransNr<frppr) or (CPPPHistr.TransNr>toppr)) then begin
+        TrHs = false;
+      end;
+      if (CPPPHistr.TransType!=1) then begin
+        testf = false;
+      end;
+    end;
+    if (keyflag==2) then begin
+      if ((CPPPHistr.ContrSerNr<frcontr) or (CPPPHistr.ContrSerNr>tocontr)) then begin
+        TrHs = false;
+      end;
+      if (DateInRange(CPPPHistr.TransDate,sdate,edate)==false) then begin
+        testf = false;
+      end;
+      if (CPPPHistr.TransType!=1) then begin
+        testf = false;
+      end;
+    end;    
+    if (keyflag==3) then begin
+      if (DateInRange(CPPPHistr.TransDate,sdate,edate)==false) then begin
+        TrHs = false;
+      end;
+      if (CPPPHistr.TransType!=1) then begin
+        testf = false;
+      end;
+      if ((CPPPHistr.EmplCode<frempl) or (CPPPHistr.EmplCode>toempl)) then begin
+        testf = false;
+      end;
+    end;
+    if (keyflag==4) then begin
+      if (CPPPHistr.EmplCode!=curempl) then begin
+        if (curempl!="") then begin
+          PrintEmplTotal(neto,bruto);
+          neto = 0;
+          bruto = 0;
+        end;
+        curempl = CPPPHistr.EmplCode;
+      end;
+      if (DateInRange(CPPPHistr.TransDate,sdate,edate)==false) then begin
+        testf = false;
+      end;
+      if (CPPPHistr.TransType!=1) then begin
+        testf = false;
+      end;
+    end;
+    if (TrHs) and (testf) then begin
+      PPr.SerNr = CPPPHistr.TransNr;
+      if (ReadFirstMain(PPr,1,true)) then begin
+        if (PPr.OKFlag!=1) then begin
+          testf = false;
+        end;
+        if (PPr.Invalid==1) then begin
+          testf = false;
+        end;
+        if (nonblank(pmacc)) then begin
+          if (PPr.PMCode!=pmacc) then begin
+            testf = false;
+          end;
+        end;
+        if (testf) then begin
+          MatRowGet(PPr,CPPPHistr.RowNr,PPrw);
+          CPr.SerNr = PPrw.CalcSerNr;
+          if (ReadFirstMain(CPr,1,true)) then begin
+            MatRowGet(CPr,PPrw.CalcRowNr,CPrw);
+            if (nonblank(accgr)) then begin
+              if (GetContrAccGroupCode(PPrw.ContrSerNr,CPrw.PosCode,PPrw.PaymTypeCode,CPr.CalcDate,CPPPHistr.EmplCode)!=accgr) then begin
+                testf = false;
+              end;
+            end;
+          end;
+          if (testf) then begin
+            StartFormat(15);
+            OutLongInt(0,"DblPaymPayrollVc",CPPPHistr.TransNr,false);
+            OutString(2,0,PPrw.PDate,false);
+            OutString(3,"DblContractVc",PPrw.ContrSerNr,false);
+            OutLongInt(4,"DblCalcPayrollVc",PPrw.CalcSerNr,false);
+            OutString(5,0,CPr.CalcDate,false);
+            OutString(6,0,PPrw.Firstname & " " & PPrw.Surname,false);
+            OutString(7,0,PPrw.PaymTypeCode,false);
+            OutVal(8,0,PPrw.NetoSum,M4Val,true);
+            OutVal(1,0,PPrw.BrutoSum,M4Val,true);
+            EndFormat;
+            neto = neto + PPrw.NetoSum;
+            bruto = bruto + PPrw.BrutoSum;
+            netotot = netotot + PPrw.NetoSum;
+            brutotot = brutotot + PPrw.BrutoSum;
+          end;
+        end;
+      end;  
+    end;  
+  end;  
+  PrintEmplTotal(neto,bruto);
+  return;
+end;
+
+global
+procedure PaymPayrollRn(record RcVc RepSpec)
+begin
+  string 20 frempl,toempl,tstr,ckey,pmacc,accgr;
+  LongInt frcontr,tocontr,frppr,toppr;
+  integer rw,keyflag;
   val netotot,brutotot;
+  date sdate,edate;
   
   rw = 1;
   StartReportJob(USetStr(1500474));
@@ -22,18 +188,21 @@ begin
   tocontr = LastInRange(RepSpec.f3,20);
   frempl = FirstInRange(RepSpec.f2,20);
   toempl = LastInRange(RepSpec.f2,20);
-
+  pmacc = RepSpec.f4;
+  accgr = RepSpec.f5;
+  sdate = RepSpec.sStartDate;
+  edate = RepSpec.sEndDate;
+  
   tstr = USetStr(5261);
   tstr = tstr & RepSpec.sStartDate & " : " & RepSpec.sEndDate;
   Header(rw,tstr,1);
   rw = rw + 1;
   
-  keyflag=0;
-  
+  keyflag = 0;
   if (blank(RepSpec.f1)) then begin
     tstr = USetStr(1500475);
   end else begin
-    keyflag=1;
+    keyflag = 1;
     tstr = USetStr(1500476) & ": ";
     tstr = tstr & RepSpec.f1;
   end;
@@ -43,7 +212,7 @@ begin
   if (blank(RepSpec.f3)) then begin
     tstr = USetStr(1500386);
   end else begin
-    keyflag=2;
+    keyflag = 2;
     tstr = USetStr(1500414) & ": ";
     tstr = tstr & RepSpec.f3;
   end;
@@ -53,7 +222,7 @@ begin
   if (blank(RepSpec.f2)) then begin
     tstr = USetStr(1500486);
   end else begin
-    keyflag=3;
+    keyflag = 3;
     tstr = USetStr(1500385) & ": ";
     tstr = tstr & RepSpec.f2;
   end;
@@ -73,140 +242,43 @@ begin
     Header(rw,tstr,1);
     rw = rw + 1; 
   end;
+  if (RepSpec.flags[0]!=0) then begin
+    if (keyflag==0) then begin
+      keyflag = 4;
+      tstr = USetStr(1500580);
+      Header(rw,tstr,1);
+      rw = rw + 1; 
+    end;
+  end;
   EndHeader;
 
-  SetRepCol(2,60);
-  SetRepCol(3,120);
-  SetRepCol(4,180);
-  SetRepCol(5,280);
-  SetRepCol(6,400);
+  SetRepCol(2,50);
+  SetRepCol(3,110);
+  SetRepCol(4,160);
+  SetRepCol(5,210);
+  SetRepCol(6,270);
+  SetRepCol(7,350);
+  SetRepCol(8,420);
 
   StartFormat(15);
   OutString(0,0,USetStr(1500476),false);
-  OutString(2,0,USetStr(1500414),false);
-  OutString(3,0,USetStr(1500441),false);
-  OutString(4,0,USetStr(1500478),false);
+  OutString(2,0,USetStr(1500479),false);
+  OutString(3,0,USetStr(1500577),false);
+  OutString(4,0,USetStr(1500578),false);
   OutString(5,0,USetStr(1500479),false);
-  OutString(6,0,USetStr(1500480),true);
-  OutString(1,0,USetStr(1500481),true);
+  OutString(6,0,USetStr(1500579),false);
+  OutString(7,0,USetStr(1500518),false);
+  OutString(8,0,USetStr(1500502),true);
+  OutString(1,0,USetStr(1500503),true);
   EndFormat;
   Gray_Divider(0,1);
-
-  if (keyflag==0) then begin
-    keys = 2;
-    ckey = "TransDate";
-    CPPPHistr.TransDate=RepSpec.sStartDate;
-    CPPPHistr.TransType=1;
-  end;
-  if (keyflag==1) then begin
-    keys = 2;
-    ckey = "TransNr";
-    CPPPHistr.TransNr=frppr;
-    CPPPHistr.TransType=1;
-  end;
-  if (keyflag==2) then begin
-    keys = 3;
-    ckey = "ContrSerNr";
-    CPPPHistr.ContrSerNr=frcontr;
-    CPPPHistr.TransDate=RepSpec.sStartDate;
-    CPPPHistr.TransType=1;
-  end;
-  if (keyflag==3) then begin
-    keys = 3;
-    ckey = "TransDate";
-    CPPPHistr.TransDate=RepSpec.sStartDate;
-    CPPPHistr.TransType=1;
-    CPPPHistr.EmplCode=frempl;
-  end;
-  TrHs=true;
-  while (LoopKey(ckey,CPPPHistr,keys,TrHs)) begin
-    testf=true;
-    if (keyflag==0) then begin
-      if (DateInRange(CPPPHistr.TransDate,RepSpec.sStartDate,RepSpec.sEndDate)==false) then begin
-        TrHs = false;
-      end;
-      if (CPPPHistr.TransType!=1) then begin
-        testf = false;
-      end;
-    end;
-    if (keyflag==1) then begin
-      if ((CPPPHistr.TransNr<frppr) or (CPPPHistr.TransNr>toppr)) then begin
-        TrHs = false;
-      end;
-      if (CPPPHistr.TransType!=1) then begin
-        testf = false;
-      end;
-    end;
-    if (keyflag==2) then begin
-      if ((CPPPHistr.ContrSerNr<frcontr) or (CPPPHistr.ContrSerNr>tocontr)) then begin
-        TrHs = false;
-      end;
-      if (DateInRange(CPPPHistr.TransDate,RepSpec.sStartDate,RepSpec.sEndDate)==false) then begin
-        testf = false;
-      end;
-      if (CPPPHistr.TransType!=1) then begin
-        testf = false;
-      end;
-    end;    
-    if (keyflag==3) then begin
-      if (DateInRange(CPPPHistr.TransDate,RepSpec.sStartDate,RepSpec.sEndDate)==false) then begin
-        TrHs = false;
-      end;
-      if (CPPPHistr.TransType!=1) then begin
-        testf = false;
-      end;
-      if ((CPPPHistr.EmplCode<frempl) or (CPPPHistr.EmplCode>toempl)) then begin
-        testf = false;
-      end;
-    end;
-    if (TrHs) and (testf) then begin
-      PPr.SerNr=CPPPHistr.TransNr;
-      if (ReadFirstMain(PPr,1,true)) then begin
-        if (PPr.OKFlag!=1) then begin
-          testf=false;
-        end;
-        if (PPr.Invalid==1) then begin
-          testf=false;
-        end;
-        if (nonblank(RepSpec.f4)) then begin
-          if (PPr.PMCode!=RepSpec.f4) then begin
-            testf=false;
-          end;
-        end;
-        if (testf) then begin
-          MatRowGet(PPr,CPPPHistr.RowNr,PPrw);
-          if (nonblank(RepSpec.f5)) then begin
-            CPr.SerNr=PPrw.CalcSerNr;
-            if (ReadFirstMain(CPr,1,true)) then begin
-              MatRowGet(CPr,PPrw.CalcRowNr,CPrw);
-              if (GetContrAccGroupCode(PPrw.ContrSerNr,CPrw.PosCode,PPrw.PaymTypeCode,CPr.CalcDate,CPPPHistr.EmplCode)!=RepSpec.f5) then begin
-                testf=false;
-              end;
-            end;
-          end;
-          if (testf) then begin
-            StartFormat(15);
-            OutLongInt(0,"DblPaymPayrollVc",CPPPHistr.TransNr,false);
-            OutString(2,"DblContractVc",PPrw.ContrSerNr,false);
-            OutLongInt(3,"DblCalcPayrollVc",PPrw.CalcSerNr,false);
-            OutString(4,0,PPrw.Firstname & " " & PPrw.Surname,false);
-            OutString(5,0,PPrw.PaymTypeCode,false);
-            OutVal(6,0,PPrw.NetoSum,M4Val,true);
-            OutVal(1,0,PPrw.BrutoSum,M4Val,true);
-            EndFormat;
-            netotot=netotot+PPrw.NetoSum;
-            brutotot=brutotot+PPrw.BrutoSum;
-          end;
-        end;
-      end;  
-    end;  
-  end;  
-  Gray_Divider(0,1);
+  PrintPaymPayroll(frempl,toempl,pmacc,accgr,keyflag,frcontr,tocontr,frppr,toppr,sdate,edate,netotot,brutotot);
+  Black_Divider(6,1);
   StartFormat(15);
   EndFormat;
   StartFormat(15);
-  OutString(5,0,USetStr(1500457),false);
-  OutVal(6,0,netotot,M4Val,true);
+  OutString(6,0,USetStr(1500457) & ":",false);
+  OutVal(8,0,netotot,M4Val,true);
   OutVal(1,0,brutotot,M4Val,true);
   EndFormat;
   EndJob;

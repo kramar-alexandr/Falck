@@ -48,8 +48,8 @@ begin
   LongInt updatemode,insertmode;
   boolean yearflag;
   
-  insertmode=1;
-  updatemode=2;
+  insertmode = 1;
+  updatemode = 2;
   res = 0;
 
   if (VDFB2r.Invalid!=0) then begin
@@ -62,7 +62,6 @@ begin
       goto LVacDaysFBVcRecordCheck;
     end;
   end;
-  
   if (stat==updatemode) then begin
     if (VDFBr.SerNr<=0)  then begin
       VDFBr.SerNr = VDFB2r.SerNr;
@@ -71,7 +70,6 @@ begin
   if (VDFBr.SerNr==-1) then begin
     if (GetNextVacDaysFBSerNr(VDFBr.SerNr)) then begin end;
   end;
-
   if (stat==insertmode) or (stat==updatemode and VDFBr.SerNr!=VDFB2r.SerNr) then begin
     VDFB3r.SerNr = VDFBr.SerNr;
     if (ReadFirstMain(VDFB3r,1,true)) then begin
@@ -91,7 +89,7 @@ begin
     goto LVacDaysFBVcRecordCheck;
   end;
  
-  rwcnt=MatRowCnt(VDFBr);
+  rwcnt = MatRowCnt(VDFBr);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(VDFBr,i,VDFBrw);
     if (VDFBrw.ContrSerNr<=0) then begin
@@ -124,7 +122,7 @@ begin
   end;
 LVacDaysFBVcRecordCheck:;
   if (res==-1) then begin
-    VDFBr.OKFlag=0;
+    VDFBr.OKFlag = 0;
     SetMarkFlag(VDFBr.OKFlag,VDFBr.OKMark);
   end;
   VacDaysFBVcRecordCheck = res;

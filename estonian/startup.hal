@@ -1,0 +1,13 @@
+event startup
+begin
+
+  SetLangMode(LangEstonian,"EST",0);
+	
+	Setting("Falck - Automatically Created Objects",AutoCrObjTClass,modNL);// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 25 June 2018 14:31:58
+	
+//sepa eksport
+  Export("SEPA maksed",MPEClass,MPEn,modPL);//Bk HAL
+  //see /halcust/level0/hal_estbks/estonian/suest-estbks.hal for added BK services
+
+  return;
+end;

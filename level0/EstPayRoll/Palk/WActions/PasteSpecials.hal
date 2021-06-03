@@ -29,11 +29,11 @@ begin
       if (found) then begin
         if ((CPUnr.NetoSum>0) or (CPUnr.SocTaxSum>0)) then begin
           if (calcsernr!=CPUnr.CalcSerNr) then begin
-            calcsernr=CPUnr.CalcSerNr;
-            tstr="Arvestuse nr.:     ";
-            tstr=tstr & calcsernr;
-            TrHs=true;
-            neto=0;
+            calcsernr = CPUnr.CalcSerNr;
+            tstr = "Arvestuse nr.:     ";
+            tstr = tstr & calcsernr;
+            TrHs = true;
+            neto = 0;
             ResetLoop(CPUn2r);
             CPUn2r.ContrSerNr = contrsernr;
             CPUn2r.CalcSerNr = calcsernr;
@@ -41,7 +41,7 @@ begin
               if (CPUn2r.ContrSerNr!=contrsernr) then begin TrHs = false; end;
               if (CPUn2r.CalcSerNr!=calcsernr) then begin TrHs = false; end;
               if (TrHs) then begin
-                neto=neto+CPUn2r.NetoSum;
+                neto = neto + CPUn2r.NetoSum;
               end;
             end;
             M4PadString(tstr,40," ",false,tstr);
@@ -92,8 +92,8 @@ begin
     if (Abs2r.EmplCode!=Absr.EmplCode) then begin found = false; end;
     if (found) then begin
       if (PrevIllAbsSerNrOK(Abs2r.SerNr,Absr.SerNr,Abs2r.EmplCode)) then begin
-        tstr="Puudumise nr.:     ";
-        tstr=tstr & Abs2r.SerNr;
+        tstr = "Puudumise nr.:     ";
+        tstr = tstr & Abs2r.SerNr;
         M4PadString(tstr,40," ",false,tstr);
         tstr = tstr & Abs2r.StartDate & " : " & Abs2r.EndDate;
         if (nonblank(tstr)) then begin
@@ -153,7 +153,7 @@ begin
   for (i=0;i<acnt;i=i+1) begin
     SetListString(wn,len(astr[i]),astr[i],false);    
   end;
-  TSDErrorSClassOnOpenWindow=false;
+  TSDErrorSClassOnOpenWindow = false;
   return;
 end;
 
@@ -167,6 +167,6 @@ begin
   for (i=0;i<acnt;i=i+1) begin
     SetListString(wn,len(astr[i]),astr[i],false);    
   end;
-  TSDRowsSClassOnOpenWindow=false;
+  TSDRowsSClassOnOpenWindow = false;
   return;
 end;

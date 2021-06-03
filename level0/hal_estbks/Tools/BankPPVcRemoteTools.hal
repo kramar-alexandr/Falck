@@ -1,0 +1,163 @@
+//pangaliidestus
+external procedure GetUserName(string,var string);
+external function Boolean GetPMRow(string,var row PMBlock);
+external function boolean IsPartnerEPayActive(string);
+external function string 10 BankSWIFTToPartnerCode(string);
+external procedure BankingDebugMsg(string,string);
+external updating procedure MarkBankQueRecordSent(var record BankReqQueVc,string);
+external updating procedure MarkBankQueRecordTried(var record BankReqQueVc,string);
+external function integer BankQueStatusNew();
+external function integer BankQueReplyProgress();
+external function integer BankQueReplySuccess();
+external function integer BankQueReplyError();
+external procedure BankFillReqQueRowsFromXML(var record BankReqQueVc,xml);
+external function integer GetNbOfTxsFromXML(xml);
+
+function string 10 GetPartnerFromPayMode(string payModeCode)
+begin
+  string 10 res;
+  row PMBlock PMblrw;
+  string 10 bankCode;
+  record BankVc Bankr;
+
+  if (GetPMRow(payModeCode,PMblrw)) then begin
+    Bankr.Code = PMblrw.BankCode;
+    if (ReadFirstMain(Bankr,1,true)) then begin
+      res = BankSWIFTToPartnerCode(Bankr.SWIFT);
+    end;
+  end;
+  GetPartnerFromPayMode = res;
+  return;
+end;
+
+global
+function string 255 GetUniqueFileNameForPP(record PPVc PPr)
+begin
+  string 255 res;
+
+  res = "pp_" & PPr.SerNr & "_comp_" & CurrentCompany & "_" & CurrentUser;
+  GetUniqueFileNameForPP = res;
+  return;
+end;
+
+function string 60 GetMsgIDFromXmlArea(area xmlArea)
+begin
+  string 60 res;
+  xml parsedXML;
+
+  parsedXML = ParseXmlArea(xmlArea);
+  res = XmlGet(parsedXML,"Document/CstmrCdtTrfInitn/GrpHdr/MsgId");
+  GetMsgIDFromXmlArea = res;
+  return;
+end;
+
+global
+function boolean PPCanAddToBankQueue(record PPVc PPr, var string errMsg)
+begin
+  boolean res;
+  record BankReqQueVc BankReqQuer;
+  row PPVc PPrw;
+  record CYBlock CYb;
+  string 60 userName;
+  string 10 partner;
+  integer rwcnt,i;
+
+  BlockLoad(CYb);
+  res = true;
+  if (PPr.DoneFlag != 0) then begin
+    res = false;
+    errMsg = USetStr(1137);
+    goto LPPCanAddToBankQueue;
+  end;
+  //find in header index
+  BankReqQuer.RecordID = PPr.SerNr & "";
+  BankReqQuer.RecordType = "PPVc";
+  if (ReadFirstKey("RecordIDType",BankReqQuer,2,true)) then begin
+    res = false;
+    errMsg = USetStr(1501062);
+    goto LPPCanAddToBankQueue;
+  end;
+  //find in matrix index
+  ResetLoop(BankReqQuer);
+  RecordClear(BankReqQuer);
+  BankReqQuer.RecordType = "PPVc";
+  if (ReadFirstKey("RowRecordIDType:" & PPr.SerNr,BankReqQuer,1,true)) then begin
+    res = false;
+    errMsg = USetStr(1501062);
+    goto LPPCanAddToBankQueue;
+  end;
+  if (blank(CYb.OrgNr)) then begin
+    res = false;
+    errMsg = USetStr(1501063);
+    goto LPPCanAddToBankQueue;
+  end;
+  if (PPr.OrderedFlag == 0) then begin
+    res = false;
+    errMsg = USetStr(1501064);
+    goto LPPCanAddToBankQueue;
+  end;
+  partner = GetPartnerFromPayMode(PPr.PayMode);
+  switch(partner) begin
+    case "SGW":
+      if (IsPartnerEPayActive(partner) == false) then begin
+        res = false;
+        errMsg = USetStr(1501065) & partner & ": " & USetStr(1501066);
+        goto LPPCanAddToBankQueue;
+      end;
+    otherwise
+      res = false;
+      errMsg = USetStr(1501067) & PPr.PayMode;
+      goto LPPCanAddToBankQueue;
+  end;
+  //checking rows
+  rwcnt = MatRowCnt(PPr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    //no bankref in PPVc
+    /*
+    MatRowGet(PPr,i,PPrw);
+    if (blank(PPrw.BankRefStr)) then begin
+      res = false;
+      errMsg = USetStr(13205) & " " & USetStr(15094);
+      goto LPPCanAddToBankQueue;
+    end;
+    */
+  end;
+LPPCanAddToBankQueue:;
+  PPCanAddToBankQueue = res;
+  return;
+end;
+
+global 
+updating function boolean PPAddToBankReqQueue(record PPVc PPr, area xmlFileArea, string fileName, var record BankReqQueVc BankReqQuer)
+begin
+  boolean res;
+  record CYBlock CYb;
+  string 60 userName;
+  xml parsedXML;
+
+  parsedXML = ParseXMlArea(xmlFileArea);
+  BlockLoad(CYb);
+  GetUserName(CurrentUser,userName);
+  RecordNew(BankReqQuer);
+  BankReqQuer.RegNr = CYb.OrgNr;
+  BankReqQuer.UserName = userName;
+  BankReqQuer.BankReqType = "Payment"; //do not translate
+  BankReqQuer.RecordType = "PPVc";
+  BankReqQuer.RecordID = PPr.SerNr & "";
+  //BankReqQuer.MsgID = GetMsgIDFromXML(parsedXML);
+  BankReqQuer.ReqFileName = fileName;
+  BankReqQuer.Status = BankQueStatusNew;
+  BankReqQuer.SendAttempts = 0;
+  BankReqQuer.StatusMessage = USetStr(1501068);
+  BankReqQuer.CreationDate = CurrentDate;
+  BankReqQuer.CreationTime = CurrentTime;
+  BankReqQuer.Partner = GetPartnerFromPayMode(PPr.PayMode);
+  BankReqQuer.NbOfTxs = GetNbOfTxsFromXML(parsedXML);
+  BankReqQuer.SerNr = NextSerNr("BankReqQueVc",BankReqQuer.CreationDate,-1,false,"");
+  BankFillReqQueRowsFromXML(BankReqQuer,parsedXML);
+  if (RecordInsert(BankReqQuer,true)) then begin
+    res = true;
+  end;
+  PPAddToBankReqQueue = res;
+  return;
+end;

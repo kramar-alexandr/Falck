@@ -1,4 +1,3 @@
-external function integer CountVacDaysNorm(LongInt,integer,date,date);
 external function boolean GetRightPeriod(var date,var date,date,date);
 external function boolean GetBackXMonthsPeriod(var date,var date,integer);
 external function val GetCPSumForPeriod(LongInt,date,date);
@@ -8,6 +7,39 @@ external function LongInt GetCalendarDays(date,date);
 external function val GetAbsenceFBDaysForPeriod(LongInt,string,date,date,var integer,var integer);
 external function LongInt GetExceptDays(date,var date);
 external function roundmode GetSalaryRoundMode(string);
+external function LongInt GetByDateVacDaysToUse(LongInt,date,date,date,var LongInt);
+
+function val GetTaxPerc(date paymdate,integer taxtype,val bruto)
+begin  
+  record TaxVc Taxr;
+  row TaxVc Taxrw;
+  integer rwcnt,i;
+  boolean foundf;
+  val res;
+
+  res = 0;
+  foundf = true;
+  Taxr.TaxType = taxtype;
+  while (LoopBackKey("TaxType",Taxr,1,foundf)) begin
+    if (Taxr.TaxType<>taxtype) then begin
+      foundf = false;
+    end;
+    if (foundf) then begin
+      rwcnt = MatRowCnt(Taxr);
+      for (i=0;i<rwcnt;i=i+1) begin
+        MatRowGet(Taxr,i,Taxrw);
+        if ((DateInRange(paymdate,Taxrw.SDate,Taxrw.EDate))) then begin
+          if ((bruto>=Taxrw.FromSum) and (bruto<=Taxrw.ToSum)) then begin
+            res = Taxrw.Percent;
+            foundf = false;
+          end;
+        end;
+      end;
+    end;
+  end;
+  GetTaxPerc = res;
+  return;
+end;
 
 global
 procedure DblContractVc(string dblstr,string l,integer currepwn)
@@ -48,13 +80,13 @@ begin
   row VacBalanceVc VBrw;
   string 20 frempl,toempl;
   LongInt frcontr,tocontr;
-  boolean TrHs, TrHs1,TrHs2,testf,printempl;
-  integer rw,toyear,vacdaysnorm,vacdaystouse,vacdaysused,tmpint;
-  val sumtot,sumperday;
+  boolean TrHs, TrHs1,testf,printempl;
+  integer rw,toyear,vacdaysnorm,vacdaystouse,tmpint;
+  val sumtot,sumperday,bruto,brutotot,soctax,emplunemplins,total;
   LongInt absworkdays,abscaldays,caldays,abscalnoexcdays,vbnr,absfbdays;
   string 255 tstr;
   integer rwcnt,i;
-  date sd,ed,todate,sdate,edate;
+  date todate,sdate,edate;
   
   rw = 1;
   StartReportJob(USetStr(1500482));
@@ -87,6 +119,13 @@ begin
   Header(rw,tstr,1);
   rw = rw + 1;
 
+  if (nonblank(RepSpec.ObjStr)) then begin
+    tstr = USetStr(2317);
+    tstr = tstr & RepSpec.ObjStr;
+    Header(rw,tstr,1);
+    rw = rw + 1; 
+  end;
+
   if (nonblank(RepSpec.f3)) then begin
     tstr = USetStr(1500444) & ": ";
     tstr = tstr & RepSpec.f3;
@@ -94,9 +133,9 @@ begin
     rw = rw + 1; 
   end;
 
-  todate=RepSpec.d1;
+  todate = RepSpec.d1;
   if blank(todate) then begin
-    todate=CurrentDate;
+    todate = CurrentDate;
   end;
   tstr = USetStr(1500460) & " " & todate;
   Header(rw,tstr,1);
@@ -116,7 +155,7 @@ begin
   EndFormat;
   Gray_Divider(0,1);
 
-  toyear=GetYear(todate);
+  toyear = GetYear(todate);
   TrHs = true;
   ResetLoop(Emplr);
   Emplr.Code = frempl;
@@ -128,13 +167,13 @@ begin
         end;
       end;
       if (TrHs) then begin
-        printempl=true;
-        testf=true;
+        printempl = true;
+        testf = true;
         if (Emplr.ClosedFlag!=0) then begin
           testf = false;
         end;
         if (testf) then begin
-          TrHs1=true;
+          TrHs1 = true;
           ResetLoop(Contrr);
           Contrr.EmplCode = Emplr.Code;
           while (LoopKey("EmplCode",Contrr,1,TrHs1)) begin
@@ -142,7 +181,7 @@ begin
               TrHs1 = false;
             end;
             if (TrHs1) then begin
-              testf=true;
+              testf = true;
               if ((frcontr>0)) then begin
                 if ((Contrr.SerNr<frcontr) or (Contrr.SerNr>tocontr)) then begin
                   testf = false;
@@ -150,6 +189,11 @@ begin
               end;
               if (Contrr.Status!=1) then begin
                 testf = false;
+              end; 
+              if (nonblank(RepSpec.ObjStr)) then begin
+                if (SetInSet(RepSpec.ObjStr,Contrr.ObjCode)==false) then begin
+                  testf = false;
+                end;
               end; 
               if (nonblank(RepSpec.f3)) then begin
                 if (Contrr.AccGroupCode!=RepSpec.f3) then begin
@@ -160,61 +204,25 @@ begin
                 if (printempl) then begin
                   StartFormat(15);
                   EndFormat;
-                  Gray_Divider(0,1);
                   StartFormat(15);
                   OutString(0,"DblEmplVc",Emplr.Code,false);
                   OutString(70,0,Emplr.Firstname & " " & Emplr.Surname,false);
                   EndFormat;
-                  printempl=false;
+                  printempl = false;
                 end;
-                vacdaystouse=0;
-                vacdaysused=0;
-                sumtot=0;
-                vbnr=-1;
-                TrHs2=true;
-                ResetLoop(VBr);
-                VBr.OKFlag=1;
-                VBr.ContrSerNr=Contrr.SerNr;
-                while (LoopKey("OKFlag",VBr,2,TrHs2)) begin
-                  if (VBr.OKFlag!=1) then begin
-                    TrHs2=false;  
-                  end;
-                  if (VBr.ContrSerNr!=Contrr.SerNr) then begin
-                    TrHs2=false;  
-                  end;
-                  if (TrHs2) then begin
-                    vbnr=VBr.SerNr;
-                    rwcnt=MatRowCnt(VBr);
-                    for (i=0;i<rwcnt;i=i+1) begin
-                      MatRowGet(VBr,i,VBrw);  
-                      if (VBrw.Year<toyear) then begin
-                        if (VBrw.VacDaysStatus==1) then begin
-                          vacdaystouse=vacdaystouse+VBrw.VacDaysToUse;
-                        end;
-                      end else begin
-                        vacdaysused=vacdaysused+VBrw.VacDaysUsed;
-                      end;
-                    end;
-                  end;
-                end;      
-                vacdaystouse=vacdaystouse-vacdaysused;
-                sd.day=1;
-                sd.month=1;
-                sd.year=toyear;
-                ed=todate;
-                if (GetRightPeriod(sd,ed,Contrr.StartDate,Contrr.EndDate)) then begin
-                  vacdaystouse=vacdaystouse+CountVacDaysNorm(Contrr.SerNr,toyear,sd,ed);
-                  sdate=sd;
-                  edate=ed;
-                  if (GetBackXMonthsPeriod(sdate,edate,6)) then begin
-                    if (GetRightPeriod(sdate,edate,Contrr.StartDate,Contrr.EndDate)) then begin
-                      sumtot=GetCPSumForPeriod(Contrr.SerNr,sdate,edate);
-                      sumtot=sumtot+GetSalaryFBSumForPeriod(Contrr.SerNr,sdate,edate);
-                      abscaldays=GetAbsenceDays(Contrr.SerNr,"",sdate,edate,absworkdays,abscalnoexcdays);                    
-                      absfbdays=GetAbsenceFBDaysForPeriod(Contrr.SerNr,"",sdate,edate,tmpint,tmpint);
-                      caldays=((GetCalendarDays(sdate,edate))-(GetExceptDays(sdate,edate))-abscalnoexcdays-absfbdays);
-                      sumperday=round((sumtot/caldays),GetSalaryRoundMode("2"));
-                    end;
+                sumtot = 0;
+                edate = todate;
+                vacdaystouse = GetByDateVacDaysToUse(Contrr.SerNr,Contrr.StartDate,Contrr.EndDate,todate,vbnr);
+                if (GetBackXMonthsPeriod(sdate,edate,6)) then begin
+                  if (GetRightPeriod(sdate,edate,Contrr.StartDate,Contrr.EndDate)) then begin
+                    sumtot = GetCPSumForPeriod(Contrr.SerNr,sdate,edate);
+                    sumtot = sumtot + GetSalaryFBSumForPeriod(Contrr.SerNr,sdate,edate);
+                    abscaldays = GetAbsenceDays(Contrr.SerNr,"",sdate,edate,absworkdays,abscalnoexcdays);                    
+                    absfbdays = GetAbsenceFBDaysForPeriod(Contrr.SerNr,"",sdate,edate,tmpint,tmpint);
+                    caldays = ((GetCalendarDays(sdate,edate))-(GetExceptDays(sdate,edate))-abscalnoexcdays-absfbdays);
+                    sumperday = round((sumtot/caldays),GetSalaryRoundMode("2"));
+                    bruto = vacdaystouse*sumperday;
+                    brutotot = brutotot + bruto;
                   end;
                 end;
                 StartFormat(15);
@@ -223,8 +231,9 @@ begin
                 OutString(3,"DblVacBalanceVc",vbnr,false);
                 OutString(4,0,vacdaystouse,false);
                 OutString(5,0,sumperday,false);
-                OutString(1,0,(vacdaystouse*sumperday),true);
+                OutString(1,0,bruto,true);
                 Endformat;
+                Gray_Divider(0,1);
               end;
             end;
           end;
@@ -232,6 +241,35 @@ begin
       end;
     end;
   end;
+  soctax = brutotot*GetTaxPerc(todate,5,brutotot)/100; //Sotsiaalmaks
+  emplunemplins = brutotot*GetTaxPerc(todate,6,brutotot)/100; //Tššandja tšštuskindlustus
+  total = brutotot + soctax + emplunemplins;
+  StartFormat(15);
+  EndFormat;
+  Black_Divider(4,1);
+  StartFormat(15);
+  tstr = USetStr(1500574) & ":";
+  OutString(4,0,tstr,false);
+  OutVal(1,0,brutotot,M4Val,true);
+  EndFormat;
+  StartFormat(15);
+  tstr = USetStr(1500575) & ":";
+  OutString(4,0,tstr,false);
+  OutVal(1,0,soctax,M4Val,true);
+  EndFormat;
+  StartFormat(15);
+  tstr = USetStr(1500576) & ":";
+  OutString(4,0,tstr,false);
+  OutVal(1,0,emplunemplins,M4Val,true);
+  EndFormat;
+  Black_Divider(4,1);
+  StartFormat(15);
+  EndFormat;
+  StartFormat(15);
+  tstr = USetStr(1500457) & ":";
+  OutString(4,0,tstr,false);
+  OutVal(1,0,total,M4Val,true);
+  EndFormat;
   EndJob;
 LVacBalToUseRn:;
   return;

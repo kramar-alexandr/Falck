@@ -14,7 +14,7 @@ external function Integer NumberofDocumentPages(string,Integer);
 external function val MulRateToBase1(var string,val,val,val,val,val,val,roundmode);
 external procedure CommonDocumentFields(record RcVc);
 external procedure BPI_DoPrintARSForm2(record RcVc,record CUVc,
-                         val,val,val,val,val,val,val,val,
+                         var val,var val,val,val,val,val,var val,val,
                          Integer,Integer,
                          val,val,val,val,val,val,val,val,val,
                          val,val,val,val,val,val,val,val,val,val,

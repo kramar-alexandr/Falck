@@ -34,7 +34,7 @@ begin
   record BailiffVc Bailr;
   integer updatemode;
     
-  res=true;
+  res = true;
   GetWindowRecord(wn,Bailr);
   if (Bailr.OKFlag!=0) then begin
     res = false;

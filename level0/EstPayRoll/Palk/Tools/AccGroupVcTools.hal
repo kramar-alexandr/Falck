@@ -31,14 +31,14 @@ begin
   Contrr.SerNr = -1;
   while (LoopMain(Contrr,1,true)) begin  
     if (Contrr.AccGroupCode==agcode) then begin
-      res=true;
+      res = true;
       goto LAGrInUse;
     end;
-    rwcnt=MatRowCnt(Contrr);
+    rwcnt = MatRowCnt(Contrr);
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(Contrr,i,Contrrw);
       if (Contrrw.AccGroupCode==agcode) then begin
-        res=true;
+        res = true;
         goto LAGrInUse;
       end;
     end;
@@ -47,10 +47,9 @@ begin
 //Lausendamine, Palk
   BlockLoad(SalSettingRec);
   if (SalSettingRec.AccGroupCode==agcode) then begin
-    res=true;
+    res = true;
     goto LAGrInUse;
   end;
-
 LAGrInUse:;
   AGrInUse = res; 
   return;

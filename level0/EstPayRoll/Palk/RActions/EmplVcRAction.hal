@@ -24,7 +24,7 @@ function LongInt EmplVcRecordDuplicate(var record EmplVc Emplr,record EmplVc Emp
 begin
   LongInt res;
  
-  Emplr.ClosedFlag=0;
+  Emplr.ClosedFlag = 0;
   SetMarkFlag(Emplr.ClosedFlag,Emplr.ClosedMark);  
   if (SingleUserMode) then begin
     if (GetNextEmplNr(Emplr.Code)) then begin end;
@@ -49,8 +49,8 @@ begin
   LongInt updatemode,insertmode;
   boolean closedcontr;
 
-  insertmode=1;
-  updatemode=2;
+  insertmode = 1;
+  updatemode = 2;
   res = 0;
 
   if (blank(Emplr.Code)) then begin
@@ -100,9 +100,9 @@ begin
   end;
 
   if (nonblank(Emplr.BirthDate)) then begin
-    d=GetDay(Emplr.BirthDate);
-    m=GetMonth(Emplr.BirthDate);
-    y=GetYear(Emplr.BirthDate);
+    d = GetDay(Emplr.BirthDate);
+    m = GetMonth(Emplr.BirthDate);
+    y = GetYear(Emplr.BirthDate);
     if ((d<1) or (d>31) or (m<1) or (m>12) or (y<1000) or (y>2999)) then begin
       RecordCheckError(1500439,Emplr.BirthDate,-1,"BirthDate");      
       res = -1; 
@@ -128,11 +128,11 @@ begin
     end;
   end;
 
-  rwcnt=MatRowCnt(Emplr);
+  rwcnt = MatRowCnt(Emplr);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(Emplr,i,Emplrw);
     if nonblank(Emplrw.TaxCode) then begin
-      Taxr.Code=Emplrw.TaxCode;
+      Taxr.Code = Emplrw.TaxCode;
       if (ReadFirstMain(Taxr,1,true)==false) then begin
         RecordCheckError(1500303," " & Emplrw.TaxCode,i,"TaxCode");      
         res = -1; 

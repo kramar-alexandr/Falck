@@ -148,7 +148,7 @@ begin
   end;
 
   ExportPlainXml("<Dbtr>",2);
-  ExportTagXml("Nm",ConvertXmlString(CYb.CompName,false),3);
+  ExportTagXml("Nm",ConvertXmlString(Left(CYb.CompName,70),false),3);
   if(nonblank(CYb.Addr0) and nonblank(CYb.Addr1)) then begin
     ExportPlainXml("<PstlAdr>",3);
     ExportTagXml("Ctry",left(CYb.Bank2,2),4);
@@ -319,9 +319,9 @@ begin
         Emplr.Code = Contrr.EmplCode;
         ReadFirstMain(Emplr,1,true);
         if nonblank(Emplr.RecipientName) and nonblank(Emplr.RecipientBankAcc) then begin
-          bankacc=Emplr.RecipientBankAcc;
+          bankacc = Emplr.RecipientBankAcc;
         end else begin
-          bankacc=Emplr.BankAccount;
+          bankacc = Emplr.BankAccount;
         end;
         prevacnt = acnt;
         AddToPerSupplierArray(1,PPrw,emplcode,bankacc,curcode,PPr.PMCode,PPr.PaymDate,PPr.SerNr,apremplcode,aprbankacc,aprreccur,aprnetoval,aprpmcode,aprdate,aprfirstser,acnt);
@@ -352,7 +352,7 @@ begin
   ExportTagXml("NbOfTxs",NbOfTxs,2);
   ExportTagXml("CtrlSum",ValToString(CtrlSum,M4UVal,"",".",0),2);
   ExportPlainXml("<InitgPty>",2);
-  ExportTagXml("Nm",ConvertXmlString(CYb.CompName,false),3);
+  ExportTagXml("Nm",ConvertXmlString(Left(CYb.CompName,70),false),3);
   if(nonblank(CYb.Addr0) and nonblank(CYb.Addr1) and nonblank(CYb.CountryCode)) then begin
     ExportPlainXml("<PstlAdr>",3);
     ExportTagXml("Ctry",CYb.CountryCode,4);
@@ -368,11 +368,11 @@ begin
   for (i=0;i<acnt;i=i+1) begin
     Emplr.Code = apremplcode[i];
     ReadFirstMain(Emplr,1,true);
-    name="";
+    name = "";
     if nonblank(Emplr.RecipientName) and nonblank(Emplr.RecipientBankAcc) then begin
-      name=Emplr.RecipientName;
+      name = Emplr.RecipientName;
     end else begin
-      name=Emplr.Firstname & " " & Emplr.Surname;
+      name = Emplr.Firstname & " " & Emplr.Surname;
     end;
 
     ExportPlainXml("<CdtTrfTxInf>",1);
@@ -387,7 +387,7 @@ begin
     ExportPlainXml("</Amt>",2);
 
     ExportPlainXml("<Cdtr>",2);
-    ExportTagXml("Nm",ConvertXmlString(name,false),3); 
+    ExportTagXml("Nm",ConvertXmlString(Left(name,70),false),3); 
     if (nonblank(Emplr.Addr1) or nonblank(Emplr.Addr2)) then begin
       ExportPlainXml("<PstlAdr>",3);
       ExportTagXml("Ctry",Left(aprbankacc[i],2),2);

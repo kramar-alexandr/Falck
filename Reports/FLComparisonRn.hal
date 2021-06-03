@@ -1,0 +1,414 @@
+//<halrule>server-only</hal-rule>
+external inner procedure TRExtYc(record TRVc,var string);
+external inner function Boolean CheckObjsType(string,string);
+external inner function Boolean SetInSet2(string,string);
+external inner procedure HT2Per(Date, Date , var string);
+external inner function val FindAccTurnover(string,string,date,date,record ObjBalVc,Integer,Integer,string,Integer);
+
+procedure FindOneObjectBalance(record RcVc RepSpec,string objstr,var val resv,string acc)
+BEGIN
+  record TRVc TRr;
+  row TRVc TRrw;
+  Integer i,rwcnt;
+  Boolean TrHs;
+/*
+  record ObjBalVc ObjBalr;
+  Boolean TrHs;
+  val t;
+  
+  resv = 0;
+  ObjBalr.Object = objstr;
+  TrHs = true;
+  while (LoopKey("ObjAccKey",ObjBalr,1,TrHs)) begin    
+    if (ObjBalr.Object<>objstr) then begin TrHs = false; end;
+    if (TrHs) then begin
+      if (ObjBalr.AccNumber!=acc) then begin
+        t = FindAccTurnover(ObjBalr.AccNumber,objstr,RepSpec.sStartDate,RepSpec.sEndDate,ObjBalr,0,RepSpec.basecurncy,"",0);
+        resv = resv + t;
+      end;
+    end;
+  end;
+*/
+
+  resv = 0;
+  TrHs = true;
+  TRr.TransDate = RepSpec.sStartDate;
+  TRr.IntYc = VIYc;
+  while (LoopKey("IntYc",TRr,2,TrHs)) begin
+    if (TRr.IntYc!=VIYc or TRr.TransDate>RepSpec.sEndDate) then begin
+      TrHs = false;
+    end else begin
+      rwcnt = MatRowCnt(TRr);
+      for (i=0;i<rwcnt;i=i+1) begin
+        MatRowGet(TRr,i,TRrw);
+        if (SetInSet(objstr,TRrw.Objects)) then begin
+          if (TRrw.DebVal!=0) then begin
+            resv = resv + TRrw.DebVal;
+          end;
+        end;
+      end;
+    end;
+  end;
+  RETURN;  
+END;
+
+global
+function string 60 GetObjectWithObjectType(string objtype,string objectlist)
+begin
+  string 60 res,tstr;  
+  longint pos,pos2;
+  record ObjVc Objr;
+  
+  if (nonblank(objtype)) then begin 
+    while (GetNextSubstring(objectlist,pos,",",tstr)) begin
+      Objr.Code = tstr;
+      if (ReadFirstMain(Objr,1,true)) then begin
+        if (Objr.OTCode==objtype) then begin 
+          res = tstr;
+          goto LGetObjectWithObjectType;
+        end; 
+      end;    
+    end;    
+  end; 
+
+LGetObjectWithObjectType:;
+  GetObjectWithObjectType = res;
+  return;
+end;
+
+procedure GetDebitInfo(record ObjVc Objr,record RcVc RepSpec,var val tot,var Date lastdate,var string lastinvoice)
+begin
+  record TRVc TRr;
+  row TRVc TRrw;
+  Integer i,rwcnt;
+  Boolean TrHs,foundf;
+  val resv;
+  record ObjBalVc ObjBalr;
+  record AccVc Accr;
+  val t,t2;
+
+
+  lastdate = "";
+  lastinvoice = "";
+  resv = 0;
+
+  TrHs = true;
+  while (LoopMain(Accr,1,TrHs)) begin
+    ObjBalr.AccNumber = Accr.AccNumber;
+    ObjBalr.Object = Objr.Code;    
+    if (ReadFirstMain(ObjBalr,2,true)) then begin
+      t = GetTurnover(ObjBalr,"transdebit",RepSpec.sStartDate,RepSpec.sEndDate);
+      if (t!=0) then begin
+        TrHs = false;
+        foundf = true;
+      end;
+    end;
+  end;
+
+  if (foundf) then begin
+    TrHs = true;
+    TRr.TransDate = RepSpec.sStartDate;
+    TRr.IntYc = VIYc;
+    while (LoopKey("IntYc",TRr,2,TrHs)) begin
+      if (TRr.IntYc!=VIYc or TRr.TransDate>RepSpec.sEndDate) then begin
+        TrHs = false;
+      end else begin
+        rwcnt = MatRowCnt(TRr);
+        for (i=0;i<rwcnt;i=i+1) begin
+          MatRowGet(TRr,i,TRrw);
+          if (SetInSet(Objr.Code,TRrw.Objects)) then begin
+            if (TRrw.DebVal!=0) then begin
+              resv = resv + TRrw.DebVal;
+              if (lastdate<TRr.TransDate) then begin
+                lastdate = TRr.TransDate;
+                lastinvoice = TRr.Number;
+              end;
+            end;
+          end;
+        end;
+      end;
+    end;
+  end;
+
+  tot = resv;
+  
+  return;
+end;
+
+procedure GetCreditInfo(record ObjVc Objr,record RcVc RepSpec,var val tot,var Date lastdate,var string lastinvoice)
+begin
+  record TRVc TRr;
+  row TRVc TRrw;
+  Integer i,rwcnt;
+  Boolean TrHs,foundf;
+  val resv;
+  record ObjBalVc ObjBalr;
+  record AccVc Accr;
+  val t,t2;
+  
+  lastdate = "";
+  lastinvoice = "";
+  resv = 0;
+
+  TrHs = true;
+  while (LoopMain(Accr,1,TrHs)) begin
+    ObjBalr.AccNumber = Accr.AccNumber;
+    ObjBalr.Object = Objr.Code;    
+    if (ReadFirstMain(ObjBalr,2,true)) then begin
+      t = GetTurnover(ObjBalr,"transcredit",RepSpec.sStartDate,RepSpec.sEndDate);
+      if (t!=0) then begin
+        TrHs = false;
+        foundf = true;
+      end;
+    end;
+  end;
+
+  if (foundf) then begin
+    TrHs = true;
+    TRr.TransDate = RepSpec.sStartDate;
+    TRr.IntYc = IVYc;
+    while (LoopKey("IntYc",TRr,2,TrHs)) begin
+      if (TRr.IntYc!=IVYc or TRr.TransDate>RepSpec.sEndDate) then begin
+        TrHs = false;
+      end else begin
+
+        rwcnt = MatRowCnt(TRr);
+        for (i=0;i<rwcnt;i=i+1) begin
+          MatRowGet(TRr,i,TRrw);
+          if (SetInSet(Objr.Code,TRrw.Objects)) then begin
+            if (TRrw.CredVal!=0) then begin
+              resv = resv + TRrw.CredVal;
+              if (lastdate<TRr.TransDate) then begin
+                lastdate = TRr.TransDate;
+                lastinvoice = TRr.Number;
+              end;
+            end;
+          end;
+        end;
+      end;
+    end;
+  end;
+
+  tot = resv;
+  
+  return;
+end;
+
+procedure FLComparisonOverview(record RcVc RepSpec)
+begin
+  record ObjVc Objr;
+  Boolean TrHs,testf;
+  val totdebit,totcredit;
+  Date lastcreditdate,lastdebitdate;
+  string 255 lastcreditinvoice,lastdebitinvoice
+
+
+  SetRepCol(2,130);
+  SetRepCol(3,140);
+  SetRepCol(4,190);
+  SetRepCol(5,310);
+  SetRepCol(6,330);
+  SetRepCol(7,380);
+  SetRepCol(8,480);
+
+  StartFormat(15);
+  OutString(0,0,USetStr(13000008),false);
+  OutString(2,0,USetStr(13000009),true);
+  OutString(3,0,USetStr(13000010),false);
+  OutString(4,0,USetStr(13000011),false);
+  OutString(5,0,USetStr(13000012),true);
+  OutString(6,0,USetStr(13000013),false);
+  OutString(7,0,USetStr(13000014),false);
+  OutString(8,0,USetStr(13000015),true);
+  EndFormat;
+  StartFormat(1);
+  Gray_divider(0,1);
+  EndFormat;
+
+  TrHs = true;
+  Objr.Code = RepSpec.f2;
+  while (LoopMain(Objr,1,TrHs)) begin
+    if (nonblank(RepSpec.f2) and Objr.Code!=RepSpec.f2) then begin
+      TrHs = false;
+    end else begin
+      testf = true;
+      if (nonblank(RepSpec.f3) and RepSpec.f3!=Objr.OTCode) then begin
+        testf = false;
+      end;
+      if (testf) then begin
+        GetDebitInfo(Objr,RepSpec,totdebit,lastdebitdate,lastdebitinvoice);
+        GetCreditInfo(Objr,RepSpec,totcredit,lastcreditdate,lastcreditinvoice);
+        if (totcredit!=0 or totdebit!=0) then begin
+          StartFormat(15);
+          OutString(0,"DblFLComparison",Objr.Code,false);
+          OutString(2,0,totdebit,true);
+          OutString(3,0,lastdebitdate,false);
+          OutString(4,"DblVIVc",lastdebitinvoice,false);
+          OutString(5,0,totcredit,true);
+          OutString(6,0,lastcreditdate,false);
+          OutString(7,"DblIVVc",lastcreditinvoice,false);
+          OutString(8,0,totcredit-totdebit,true);
+          EndFormat;
+        end;
+      end;
+    end;
+  end;
+
+
+  return;
+end;
+
+global
+procedure FLComparisonRn(record RcVc RepSpec)
+begin
+  record TRVc TRr;
+  row TRVc TRrw;
+  Integer i,rwcnt;
+  Boolean TrHs,TrHs2,testf;
+  string 255 fracc,toacc;
+  record AccVc Accr;
+  record VIVc VIr;
+  record IVVc IVr;
+  val debval,credval,t,totdebval,totcredval;
+  string 255 tstr,objstr;
+
+  StartReportJob(USetStr(13000000));
+  
+  HT2Per(RepSpec.sStartDate,RepSpec.sEndDate,tstr);
+  Header(1,tstr,1);
+  if (nonblank(RepSpec.f1)) then begin
+    Header(2,USetStr(13000007) & " " & RepSpec.f1,1);
+  end;
+  EndHeader;
+
+  if (RepSpec.ArtMode==0) then begin
+    FLComparisonOverview(RepSpec);
+  end else begin
+    fracc = FirstInRange(RepSpec.f1,20);
+    toacc = LastInRange(RepSpec.f1,20);
+
+    SetRepCol(2,70);
+    SetRepCol(3,140);
+    SetRepCol(4,190);
+    SetRepCol(5,320);
+    SetRepCol(6,380);
+
+    StartFormat(15);
+    OutString(0,0,USetStr(13000001),false);
+    OutString(2,0,USetStr(13000002),false);
+    OutString(3,0,USetStr(13000003),false);
+    if (RepSpec.flags[2]==1) then begin
+      OutString(4,0,USetStr(13000004),false);
+    end;
+    OutString(5,0,USetStr(13000005),true);
+    OutString(6,0,USetStr(13000006),true);
+    EndFormat;
+    StartFormat(1);
+    Gray_divider(0,1);
+    EndFormat;
+
+    TrHs = true;
+    Accr.AccNumber = fracc;
+    while (LoopMain(Accr,1,TrHs)) begin
+      if (nonblank(toacc) and Accr.AccNumber>toacc) then begin
+        TrHs = false;
+      end else begin
+        ResetLoop(TRr);
+        TRr.IntYc = 0;
+        TRr.TransDate = RepSpec.sStartDate;
+        TrHs2 = true;
+        while (LoopKey("AccNumberReconsf:" & Accr.AccNumber,TRr,1,TrHs2)) begin
+          if (TRr.TransDate>RepSpec.sEndDate) then begin 
+            TrHs = false; 
+          end else begin
+            rwcnt = MatRowCnt(TRr);
+            for (i=0;i<rwcnt;i=i+1) begin
+              MatRowGet(TRr,i,TRrw);
+              testf = true;
+              if (TRrw.AccNumber==Accr.AccNumber) then begin
+                if (nonblank(RepSpec.f2)) then begin        
+                  if (SetInSet2(RepSpec.f2,TRrw.Objects)==false) then begin
+                    testf = false;
+                  end;
+                end;
+                if (RepSpec.flags[3]==0 and TRrw.Reconsf==1) then begin
+                  testf = false;
+                end;
+                if (RepSpec.flags[4]==0 and TRrw.Reconsf==0) then begin
+                  testf = false;
+                end;
+                if (testf) then begin
+                  if (nonblank(RepSpec.f3) and CheckObjsType(RepSpec.f3,TRrw.Objects)==false) then begin
+                    testf = false;
+                  end;
+                end;
+                if (testf) then begin
+                  StartFormat(15);
+                  credval = TRrw.CredVal;
+                  debval = TRrw.DebVal;
+                  switch (TRr.IntYc) begin
+                    case IVYc: 
+                      if (i==1) then begin
+                        IVr.SerNr = TRr.Number;
+                        if (ReadFirstMain(IVr,1,true)) then begin
+                          OutString(0,"DblIVVc",IVr.SerNr,false);
+                          OutString(2,0,IVr.OfficialSerNr,false);
+                          if (nonblank(RepSpec.f4) and CheckObjsType(RepSpec.f4,TRrw.Objects)==true) then begin
+                            objstr = GetObjectWithObjectType(RepSpec.f4,TRrw.Objects);
+                            if (nonblank(objstr)) then begin
+                              FindOneObjectBalance(RepSpec,objstr,t,TRrw.AccNumber);
+                              if (t!=0) then begin
+                                credval = t;
+                              end;
+                            end;
+                          end;
+                        end;
+                      end;
+                    case VIYc: 
+                      VIr.SerNr = TRr.Number;
+                      if (ReadFirstMain(VIr,1,true)) then begin
+                        OutString(0,"DblVIVc",VIr.SerNr,false);
+                        OutString(2,0,VIr.InvoiceNr,false);
+                      end;
+                    otherwise
+                      TRExtYc(TRr,tstr);
+                      OutString(0,"DblTrans",tstr,false);
+                      OutString(2,0,"",false);
+
+                  end;
+                  OutDate(3,0,TRr.TransDate,false);
+                  if (RepSpec.flags[2]==1) then begin
+                    OutString(4,0,TRrw.Objects,false);
+                  end;
+                  OutVal(5,0,TRrw.DebVal,M4Val,true);
+                  OutVal(6,0,credval,M4Val,true);
+                  totdebval = totdebval + TRrw.DebVal;
+                  totcredval = totcredval + credval;
+                  EndFormat;
+                end;
+              end;
+            end;
+          end;
+        end;
+      end;
+    end;
+
+    StartFormat(1);
+    Gray_divider(0,1);
+    EndFormat;
+
+    StartFormat(15);
+    OutString(4,0,USetStr(3192),false);
+    OutVal(5,0,totdebval,M4Val,true);
+    OutVal(6,0,totcredval,M4NegVal,true);
+    EndFormat;
+    StartFormat(15);
+    OutString(4,0,USetStr(3194),false);
+    OutVal(6,0,totdebval-totcredval,M4NegVal,true);
+    EndFormat;
+  end;
+
+  EndJob;
+
+  return;
+end;

@@ -1,0 +1,222 @@
+//Bk //tsekk.ee
+remote procedure GetUserEmail(string,var string);
+external function Boolean CheckInternetEnabler();
+remote procedure RegisterForEstEInvoicing2(string,string,string);
+external procedure GetUserName(string,var string);
+external procedure ExtractObjWithSeparator(string,string,Boolean,var Integer,var string);
+external function Boolean CheckEmailStr(string);
+remote updating procedure CloseServicesThroughHTS(string,string);
+remote function boolean UnRegisterTokenAtTsekk();
+
+//Tsekk.ee
+external procedure OpenBrowserWindowTsekk(string);
+remote procedure InitIdleTasksTsekk();
+external updating procedure GenerateAndSaveToken();
+
+function boolean CorrectUserName(string userName)
+begin
+  boolean res;
+  string 255 firstName,lastName;
+  integer pos;
+  
+  res = false;
+  pos = 0;
+  ExtractObjWithSeparator(" ",userName,false,pos,firstName);
+  ExtractObjWithSeparator(" ",userName,false,pos,lastName);
+  if(nonblank(firstName) AND nonblank(lastName)) then begin
+    res = true;
+  end;
+  CorrectUserName = res;
+  return;
+end;
+
+function boolean CanActivateTsekk(string email, string userName, var string errMsg)
+begin
+  boolean res;
+  record CYBlock CYb;
+  
+  res = true;
+  BlockLoad(CYb);
+  if(blank(email)) then begin
+    res = false;
+    errMsg = USetStr(2289);
+  end;
+  if(CheckEmailStr(email) == false) then begin
+    res = false;
+    errMsg = USetStr(31337);
+  end;
+  if(CorrectUserName(userName) == false) then begin
+    res = false;
+    errMsg = USetStr(1500208);
+  end;
+  if (blank(CYb.CountryCode)) then begin
+    res = false;
+    errMsg = USetStr(20277);
+  end;
+  if (blank(CYb.OrgNr)) then begin
+    res = false;
+    errMsg = USetStr(34593);
+  end;
+
+  CanActivateTsekk = res;
+  return;
+end;
+
+global
+function boolean IsTsekkActivated()
+begin
+  boolean res;
+  record EInvoiceBlock EInvoicer;
+
+  BlockLoad(EInvoicer);
+  if (EInvoicer.TsekkActivFlag == 1) then begin
+    res = true;
+  end;
+  IsTsekkActivated = res;
+  return;
+end;
+
+global
+procedure OpenTermsWindowTsekk()
+begin
+  record RcVc RepSpec;
+  integer wn;
+  record EInvoiceBlock EIb;
+  record CYBlock CYb;
+  string 100 email,userName;
+  record TsekkSetBlock TsekkSetbl;
+
+  wn = CurWindow;
+  BlockLoad(EIb);
+  BlockLoad(CYb);
+  if (EIb.TestFlag==0) then begin
+    if (CheckInternetEnabler==false) then begin
+      MessageBox(1500007,"");
+      CloseWindow(wn);
+      goto SKIP;
+    end;
+  end;
+  BlockLoad(TsekkSetbl);
+  if(blank(TsekkSetbl.AccountEmail)) then begin
+    GetUserEmail(CurrentUser,email);
+  end else begin
+    email = TsekkSetbl.AccountEmail;
+  end;
+  if(blank(TsekkSetbl.AccountUserName)) then begin
+    GetUserName(CurrentUser,userName);
+  end else begin
+    userName = TsekkSetbl.AccountUserName;
+  end;
+  RepSpec.f1 = email;
+  RepSpec.f2 = CYb.OrgNr;
+  RepSpec.f3 = userName;
+  OpenWindow("TsekkTermsWClass",0,wn,"","",RepSpec);
+SKIP:;
+  return;
+end;
+
+global
+procedure OpenDeActivTsekk()
+begin
+  integer eInvSettw;
+  record RcVc RepSpec;
+
+  eInvSettw = CurWindow;
+  OpenWindow("TsekkCloseServiceWClass",0,eInvSettw,"","",RepSpec);
+  return;
+end;
+
+global
+procedure CloseActiveWindowTsekk()
+begin
+  integer wn;
+
+  wn = CurWindow;
+  CloseWindow(wn); 
+  return;
+end;
+
+global
+procedure OpenTermsInBrowserTsekk()
+begin
+  OpenWebBrowser("https://costpocket.com/et");
+  return;
+end;
+
+global updating
+procedure SendDeActivReqTsekk()
+begin
+  integer deactw,eInvSettw;
+  
+  deactw = CurWindow;
+  eInvSettw = MotherWindow(deactw);
+  CloseServicesThroughHTS("13","");
+  UnRegisterTokenAtTsekk;
+  MessageBox(33491,"");
+  CloseWindow(deactw);
+  CloseWindow(eInvSettw);
+  return;
+end;
+
+global updating
+procedure SendActivReqTsekk()
+begin
+  string 255 email,userName,errMsg;
+  record TsekkSetBlock TsekkSetbl;
+  record RcVc RepSpec;
+  integer termsw,eInvSettw;
+  
+  termsw = CurWindow;
+  DeselectWindow(termsw,true);
+  GetWindowRecord(termsw,RepSpec);
+  eInvSettw = MotherWindow(termsw);
+  BlockLoad(TsekkSetbl);
+  email = RepSpec.f1;
+  userName = RepSpec.f3;
+  TsekkSetbl.AccountEmail = email;
+  TsekkSetbl.AccountUserName = userName;
+  BlockStore(TsekkSetbl);
+  if(CanActivateTsekk(email,username,errMsg)) then begin
+    GenerateAndSaveToken;
+    RegisterForEstEInvoicing2("TSEKKEE",email,userName);
+    InitIdleTasksTsekk;
+    MessageBox(1500000,"");
+    CloseWindow(termsw);
+    CloseWindow(eInvSettw);
+  end else begin
+    MessageBox(0,errMsg);
+  end;
+  BlockLoad(TsekkSetbl); //load again because it is updated during RegisterForEstEInvoicing2
+  if(blank(TsekkSetbl.AccessToken)) then begin
+    MessageBox(1500202,"");
+  end;
+  return;
+end;
+
+global
+procedure SendLogInReqTsekk()
+begin
+  record TsekkSetBlock TsekkSetbl;
+
+  BlockLoad(TsekkSetbl);
+  if(nonblank(TsekkSetbl.AccessToken)) then begin
+    OpenBrowserWindowTsekk(TsekkSetbl.AccessToken);
+  end else begin
+    MessageBox(1500202,"");
+  end;
+  return;
+end;
+
+global
+procedure OpenTsekkSettings()
+begin
+  record TsekkSetBlock TsekkSetbl;
+  integer wn;
+  record EInvoiceBlock EIb;
+  string 100 tstr;
+
+  wn = CurWindow;
+  BlockLoad(TsekkSetbl);
+  OpenWindow("TsekkSetTClass",0,wn,"","",TsekkSetbl);
+  return;
+end;

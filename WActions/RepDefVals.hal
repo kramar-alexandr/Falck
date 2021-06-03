@@ -1,0 +1,33 @@
+
+
+global
+procedure FLComparisonRClassReportDefaults(integer wn)
+begin
+  record RcVc RepSpec;
+
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"FLComparisonRClass");
+  RepSpec.flags[1] = 1;
+  RepSpec.flags[2] = 1;
+  RepSpec.flags[3] = 1;
+  RepSpec.flags[4] = 1;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure DblFLComparison(string dblstr,string l,integer currepwn)
+begin
+  record RcVc RepSpec;
+
+  if (nonblank(dblstr)) then begin
+    GetWindowRecord(currepwn,RepSpec);
+    RepSpec.ArtMode = 1;
+    RepSpec.f2 = dblstr;
+    RunReport(RepSpec,0);
+  end;
+  return;
+end;
+

@@ -1,0 +1,165 @@
+//pangaliidestus
+
+//these are technical statuses of request itself, if it was processed, has the answer etc
+global
+function integer BankQueStatusNew()
+begin
+  BankQueStatusNew = 0;
+  return;
+end;
+
+global
+function integer BankQueStatusSent()
+begin
+  BankQueStatusSent = 1;
+  return;
+end;
+
+global
+function integer BankQueStatusReplied()
+begin
+  BankQueStatusReplied = 2;
+  return;
+end;
+
+global
+function integer BankQueStatusFailed()
+begin
+  BankQueStatusFailed = 3;
+  return;
+end;
+
+//these are statuses of bank operation success i.e. payment etc
+global
+function integer BankQueReplyProgress()
+begin
+  BankQueReplyProgress = 0;
+  return;
+end;
+
+global
+function integer BankQueReplySuccess()
+begin
+  BankQueReplySuccess = 1;
+  return;
+end;
+
+global
+function integer BankQueReplyError()
+begin
+  BankQueReplyError = 2;
+  return;
+end;
+
+global
+procedure BankFillReqQueRowsFromXML(var record BankReqQueVc BankReqQuer, xml xmlData)
+begin
+  row BankReqQueVc BankReqQuerw;
+  string 255 xkey,xsubkey;
+  integer i,j;
+
+  i = 0;
+  xkey = "Document/CstmrCdtTrfInitn/";
+  while (XmlNodeExists(xmlData,xkey & "PmtInf[" & i & "]")) begin
+    j = 0;
+    while (XmlNodeExists(xmlData,xkey & "PmtInf[" & i & "]/CdtTrfTxInf[" & j & "]")) begin
+      ClearRow(BankReqQuer,BankReqQuerw,1);
+      if (nonblank(BankReqQuer.RecordID)) then begin
+        BankReqQuerw.RecordID = BankReqQuer.RecordID;
+      end else begin
+        BankReqQuerw.RecordID = XmlGet(xmlData,xkey & "PmtInf[" & i & "]/CdtTrfTxInf[" & j & "]/PmtId/InstrId");
+      end;
+      //Bk code is exporting many CdtTrfTxInf within one PmtInf from one record, so InstrId is same for all of them
+      BankReqQuerw.PmtInfId = XmlGet(xmlData,xkey & "PmtInf[" & i & "]/PmtInfId");
+      MatRowPut(BankReqQuer,MatRowCnt(BankReqQuer),BankReqQuerw);
+      j = j + 1;
+    end;
+    i = i + 1;
+  end;
+  return;
+end;
+
+global
+function integer GetNbOfTxsFromXML(xml xmlData)
+begin
+  integer res;
+  string 255 xkey;
+
+  xkey = "Document/CstmrCdtTrfInitn/GrpHdr/NbOfTxs";
+  res = StringToInt(XmlGet(xmlData,xkey));
+  GetNbOfTxsFromXML = res;
+  return;
+end;
+
+global
+updating procedure MarkBankQueRecordFailed(var record BankReqQueVc BankReqQuer, string errMsg)
+begin
+  record BankReqQueVc oldBankReqQuer;
+
+  RecordCopy(oldBankReqQuer,BankReqQuer);
+  BankReqQuer.Status = BankQueStatusFailed;
+  BankReqQuer.SendDate = CurrentDate;
+  BankReqQuer.SendTime = CurrentTime;
+  BankReqQuer.SendAttempts = BankReqQuer.SendAttempts + 1;
+  BankReqQuer.StatusMessage = USetStr(1501075) & errMsg;
+  BankReqQuer.ReplyStatCode = BankQueReplyError;
+  RecordUpdate(oldBankReqQuer,BankReqQuer,false);
+  return;
+end;
+
+global
+updating procedure MarkBankQueRecordSent(var record BankReqQueVc BankReqQuer, string uniqueID)
+begin
+  record BankReqQueVc oldBankReqQuer;
+
+  RecordCopy(oldBankReqQuer,BankReqQuer);
+  BankReqQuer.Status = BankQueStatusSent;
+  BankReqQuer.ReqUniqueID = uniqueID;
+  BankReqQuer.SendDate = CurrentDate;
+  BankReqQuer.SendTime = CurrentTime;
+  BankReqQuer.SendAttempts = BankReqQuer.SendAttempts + 1;
+  BankReqQuer.StatusMessage = USetStr(1501090) & USetStr(1501077);
+  RecordUpdate(oldBankReqQuer,BankReqQuer,false);
+  return;
+end;
+
+global
+updating procedure MarkBankQueRecordReplied(var record BankReqQueVc BankReqQuer, string infoMsg, integer replyStatCode)
+begin
+  record BankReqQueVc oldBankReqQuer;
+
+  RecordCopy(oldBankReqQuer,BankReqQuer);
+  BankReqQuer.Status = BankQueStatusReplied;
+  BankReqQuer.ReplyDate = CurrentDate;
+  BankReqQuer.ReplyTime = CurrentTime;
+  BankReqQuer.StatusMessage = USetStr(1501076) & infoMsg;
+  BankReqQuer.ReplyStatCode = replyStatCode;
+  RecordUpdate(oldBankReqQuer,BankReqQuer,false);
+  return;
+end;
+
+global
+updating procedure MarkBankQueRecordPartReplied(var record BankReqQueVc BankReqQuer, string infoMsg)
+begin
+  record BankReqQueVc oldBankReqQuer,nextBankReqQuer;
+
+  RecordCopy(oldBankReqQuer,BankReqQuer);
+  BankReqQuer.Status = BankQueStatusSent;
+  BankReqQuer.ReplyDate = CurrentDate;
+  BankReqQuer.ReplyTime = CurrentTime;
+  BankReqQuer.StatusMessage = USetStr(1501090) & infoMsg;
+  RecordUpdate(oldBankReqQuer,BankReqQuer,false);
+  return;
+end;
+
+global
+updating procedure MarkBankQueRecordTried(var record BankReqQueVc BankReqQuer, string errMsg)
+begin
+  record BankReqQueVc oldBankReqQuer;
+  //do not change the status here
+  RecordCopy(oldBankReqQuer,BankReqQuer);
+  BankReqQuer.SendAttempts = BankReqQuer.SendAttempts + 1;
+  BankReqQuer.StatusMessage = USetStr(1501090) & errMsg;
+  RecordUpdate(oldBankReqQuer,BankReqQuer,false);
+  return;
+end;

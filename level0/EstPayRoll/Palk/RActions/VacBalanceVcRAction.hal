@@ -11,7 +11,6 @@ begin
   end else begin
     VBr.SerNr = -1;
   end;
-
   VacBalanceVcRecordDefaults = res; 
   return;
 end;
@@ -21,7 +20,7 @@ function LongInt VacBalanceVcRecordDuplicate(var record VacBalanceVc VBr,record 
 begin
   LongInt res;
  
-  VBr.OKFlag=0;
+  VBr.OKFlag = 0;
   SetMarkFlag(VBr.OKFlag,VBr.OKMark);
   if (SingleUserMode) then begin
     if (GetNextVacBalSerNr(VBr.SerNr)) then begin end;
@@ -44,8 +43,8 @@ begin
   string 255 tstr;
   LongInt updatemode,insertmode;
   
-  insertmode=1;
-  updatemode=2;
+  insertmode = 1;
+  updatemode = 2;
   res = 0;
 
   if (stat!=insertmode) then begin
@@ -77,7 +76,7 @@ begin
     goto LVacBalanceVcRecordCheck;
   end;
 
-  rwcnt=MatRowCnt(VBr);
+  rwcnt = MatRowCnt(VBr);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(VBr,i,VBrw);
     if (VBrw.Year<=0) then begin
@@ -126,7 +125,7 @@ begin
   end;
   LVacBalanceVcRecordCheck:;
   if (res==-1) then begin
-    VBr.OKFlag=0;
+    VBr.OKFlag = 0;
     SetMarkFlag(VBr.OKFlag,VBr.OKMark);
   end;
   VacBalanceVcRecordCheck = res;

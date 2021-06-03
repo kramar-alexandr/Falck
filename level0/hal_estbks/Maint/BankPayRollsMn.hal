@@ -1,0 +1,8 @@
+//pangaliidestus
+
+global updating 
+procedure BankPayRollsMn(record RcVc RepSpec)
+begin
+  //this is dummy maintenance procedure, actual work is done in BankPayRollVClassOnOKWindow
+  return;
+end;

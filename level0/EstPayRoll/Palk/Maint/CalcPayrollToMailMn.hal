@@ -176,26 +176,26 @@ begin
   tocontr = LastInRange(RepSpec.f2,10);
   if (nonblank(RepSpec.f3)) then begin
     ckey = "SerNr";
-    CPr.SerNr=frcp;
+    CPr.SerNr = frcp;
   end else begin
-    ckey="CalcDate";
+    ckey = "CalcDate";
     CPr.CalcDate = RepSpec.sStartDate;
   end;
-  TrHs=true;
+  TrHs = true;
   while (LoopKey(ckey,CPr,1,TrHs)) begin
     testf = true; 
     if (nonblank(RepSpec.f3)) then begin
       if (CPr.SerNr>tocp) then begin 
         testf = false;
         if (ckey=="SerNr") then begin 
-          TrHs=false; 
+          TrHs = false; 
         end;   
       end;
     end else begin
       if (DateInRange(CPr.CalcDate,RepSpec.sStartDate,RepSpec.sEndDate)==false) then begin 
         testf = false;
         if (ckey=="CalcDate") then begin 
-          TrHs=false; 
+          TrHs = false; 
         end;
       end;
     end;

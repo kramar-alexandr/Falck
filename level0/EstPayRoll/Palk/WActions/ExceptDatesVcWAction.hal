@@ -12,7 +12,6 @@ function boolean ExceptDatesDClassYearEFAfter(integer wn,integer rownr,integer c
       PutWindowRecord(wn,EDr);
     end;
   end;
-
   ExceptDatesDClassYearEFAfter = true;
   return;
 end;
@@ -25,7 +24,6 @@ begin
   switch (fieldname) begin
     case "Year": res = ExceptDatesDClassYearEFAfter(wn,rownr,changed);
   end;
-
   ExceptDatesDClassAfterEditField = res;
   return;
 end;

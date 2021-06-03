@@ -1,0 +1,340 @@
+//Bk //tsekk.ee
+external updating procedure ProcessReceived2Reply(string,area,string,var date,var time,Boolean,Boolean,Boolean,var Integer);
+external updating procedure AttachFileToVEVI(var record VEIVVc,string,Area,boolean,boolean,boolean);
+external function LongInt DaysInYear(Integer);
+external function roundmode SetRoundModeD(Integer);
+external procedure AddMinutesToDateTime(var date,var time,longint);
+//KB 04.12.2017 new functions
+remote procedure SimpleDebugMsg(string, string);
+external function integer ParseFullHTTPHeader(area,var vector string);
+
+global //for qupdating
+updating procedure UpdateTsekkInv()
+begin
+  record TsekkSetBlock TsekkSetbl;
+
+  BlockLoad(TsekkSetbl); //always read the existing state from main thread
+  TsekkSetbl.LastInvDate = CurrentDate;
+  TsekkSetbl.LastInvTime = CurrentTime;
+  BlockStore(TsekkSetbl);
+  return;
+end;
+
+global //for qupdating
+updating procedure UpdateTsekkReqSuccess(date sdate,time stime)
+begin
+  record TsekkSetBlock TsekkSetbl;
+
+  BlockLoad(TsekkSetbl); //always read the existing state from main thread
+  TsekkSetbl.LastSuccessReqDate = sdate;
+  TsekkSetbl.LastSuccessReqTime = stime;
+  BlockStore(TsekkSetbl);
+  return;
+end;
+
+procedure XMLStringToDateTime(string XMLdateTimeStr, var date datep, var time timep)
+begin
+  //YYYY-MM-DDTHH:mm:ss.SSSZ
+  timep.hour = StringToInt(Mid(XMLdateTimeStr,11,2));
+  timep.minute = StringToInt(Mid(XMLdateTimeStr,14,2));
+  timep.second = StringToInt(Mid(XMLdateTimeStr,17,2));
+  datep.year = StringToInt(Mid(XMLdateTimeStr,0,4));
+  datep.month = StringToInt(Mid(XMLdateTimeStr,5,2));
+  datep.day = StringToInt(Mid(XMLdateTimeStr,8,2));
+  return;
+end;
+
+function LongInt UTCDateToDays(Date dat)
+begin
+  LongInt res;
+  Integer i;
+  LongInt dir;
+
+  res = 0;
+  for (i=1970;i<dat.year;i=i+1) begin
+    res = res + DaysInYear(i);
+  end;
+  for (i=1;i<dat.month;i=i+1) begin
+    res = res + DaysInMonth(dat.Year,i);
+  end;
+  res = res + dat.day - 1;
+  UTCDateToDays = res;
+  return;
+end;
+
+function longint DateTimeToSeconds(date givenDate, time givenTime)
+begin
+  longint res;
+  integer restest;
+  longint secondsInHour, secondsInMinute, hoursInDay;
+  
+  secondsInHour = 3600;
+  secondsInMinute = 60;
+  hoursInDay = 24;
+  res = (UTCDateToDays(givenDate) * hoursInDay * secondsInHour) + (givenTime.hour * secondsInHour + givenTime.minute * secondsInMinute + givenTime.second);
+  DateTimeToSeconds = res;
+  return;
+end;
+
+procedure UTCToLocalDateTime(date UTCDate, time UTCTime,var date locDate, var time locTime)
+begin
+  integer gmtOffset;
+  longint diffSeconds;
+  integer secondsInMin;
+
+  diffSeconds = DateTimeToSeconds(CurrentDate,CurrentTime) - CurrentUnixUTCTime;
+  gmtOffset = Round(diffSeconds / 3600,SetRoundModeD(0));
+  locDate = UTCDate;
+  locTime = UTCTime;
+  AddMinutesToDateTime(locDate,locTime,gmtOffset * 60);
+  return;
+end;
+
+procedure GetHostDateTimeFromReply(var date hostDate, var time hostTime, area reply)
+begin
+  string 255 tstr;
+  vector string 255 httpHeaders;
+  date locDate;
+  time locTime;
+
+  ParseFullHTTPHeader(reply,httpHeaders);
+  tstr = httpHeaders["Server-Date-Time-String"]; //server returns GMT time, +0
+  if (nonblank(tstr)) then begin
+    XMLStringToDateTime(tstr,hostDate,hostTime);
+  end;
+  //in case missing for any reason, best choise is just to use our local date and time
+  if (blankdate(hostDate) OR blanktime(hostTime)) then begin
+    hostDate = CurrentDate;
+    hostTime = CurrentTime;
+    //SimpleDebugMsg("Costpocket","HostDate and HostTime are manually set to " & hostDate & " " & hostTime);
+  end else begin
+    UTCToLocalDateTime(hostDate,hostTime,locDate,locTime);
+    hostDate = locDate;
+    hostTime = locTime;
+  end;
+  return;
+end;
+
+function boolean CorrectEInvoiceReply(area reply, xml xmlReply)
+begin
+  boolean res;
+  date hostToDate;
+  time hostToTime;
+
+  res = true;
+  if(GetAreaLength(reply) <= 0) then begin
+    res = false;
+    goto LCorrectEInvoiceReply;
+  end;
+  //partner is returning E_Invoice element even if no invoices
+  if (XmlNodeExists(xmlReply,"E_Invoice") == false) then begin
+    res = false;
+    goto LCorrectEInvoiceReply;
+  end else begin
+    GetHostDateTimeFromReply(hostToDate,hostToTime,reply);
+    qupdating.UpdateTsekkReqSuccess(hostToDate,hostToTime);
+    if (XmlNodeExists(xmlReply,"E_Invoice/Invoice[0]")) then begin
+      qupdating.UpdateTsekkInv;
+    end;
+  end;
+LCorrectEInvoiceReply:;
+  CorrectEInvoiceReply = res;
+  return;
+end;
+
+procedure AddXMLRootElementToArea(var area targetArea)
+begin
+  integer firstTagStartPos;
+  area xmlArea,rootElemOpenTagArea;
+  string 255 startText;
+
+  SetAreaZeroSize(rootElemOpenTagArea);
+  SetAreaZeroSize(xmlArea);
+  startText = "<E_Invoice";
+  firstTagStartPos = FindStringInArea(startText,targetArea);
+  GetAreaFromArea(targetArea,firstTagStartPos,GetAreaLength(targetArea)-firstTagStartPos,xmlArea);
+  AddTextToArea("<TsekkRootElement>",rootElemOpenTagArea);
+  AddTextToArea("</TsekkRootElement>",xmlArea);
+  InsertAreaBeforeArea(rootElemOpenTagArea,xmlArea);
+  SetAreaZeroSize(targetArea);
+  InsertAreaBeforeArea(xmlArea,targetArea);
+  return;
+end;
+
+procedure InsertHTTPRequestHeaderREST(var area targetArea)
+begin
+  record TsekkSetBlock TsekkSetbl;
+
+  BlockLoad(TsekkSetbl);
+  if(nonblank(TsekkSetbl.AccessToken)) then begin
+    AddTextToArea("ConsumerId: " & TsekkSetbl.AccessToken,targetArea);
+    AddTextToArea(chr(13) & chr(10),targetArea);
+    AddTextToArea("SubscriberId: hansaworld",targetArea);
+    AddTextToArea(chr(13) & chr(10),targetArea);
+    AddTextToArea("standardbooks-build-number: " & VersionBuild,targetArea);
+    AddTextToArea(chr(13) & chr(10),targetArea);
+    AddTextToArea("Accept: application/xml",targetArea);
+    AddTextToArea(chr(13) & chr(10),targetArea);
+    AddTextToArea(chr(13) & chr(10),targetArea);
+  end;
+  return;
+end;
+
+function string 30 GetFormatedFromDate(date theDate, time theTime)
+begin
+  string 30 res;
+  string 10 timePart,datePart;
+
+  //example "2017-11-15T00:00:00+00:00"
+  datePart = DateToString(theDate,"YYYY-MM-DD");
+  timePart = theTime & "";
+  res = datePart & "T" & timePart;
+  GetFormatedFromDate = res;
+  return;
+end;
+
+global
+updating procedure ProcessReceivedPdfTsekk(area reply,var integer cnt)//ts - 2018, added paramater for e-service statistic
+begin
+  record VEIVVc VEIVr;
+  string 255 xkey,regnr,fname;
+  LongInt InvoiceID;
+  Integer i;
+  Boolean testf,TrHs;
+  area base64area;
+  record TsekkSetBlock TsekkSetbl;
+  xml xdata;
+
+  BlockLoad(TsekkSetbl);
+  if(TsekkSetbl.NoPdfFlag == 1) then begin
+    goto LProcessReceivedPdfTsekk;
+  end;
+
+  xdata = ParseXmlArea(reply);
+  i = 0;
+  xkey = "TsekkRootElement/E_Invoice/Invoice[" & i & "]/AttachmentFile";
+  while (XmlNodeExists(xdata,xkey)) begin
+    SimpleDebugMsg("Costpocket","Found attachment " & i);
+    testf = false;
+    fname = XmlGet(xdata,xkey & "/FileName");
+    if (blank(fname)) then begin
+      fname = "invoice." & "pdf";
+    end;
+    invoiceID = StringToLongInt(XmlGetAttribute(xdata,"TsekkRootElement/E_Invoice/Invoice[" & i & "]","invoiceId"));
+    if (nonblank(invoiceID)) then begin
+      TrHs = true;
+      ResetLoop(VEIVr);
+      while (LoopMain(VEIVr,1,TrHs)) begin
+        if (VEIVr.VESerNr == invoiceID) then begin
+          XmlGetArea(xdata,xkey & "/FileBase64",base64area);
+          AttachFileToVEVI(VEIVr,fname,base64area,true,false,true);
+          SetAreaZeroSize(base64area);
+          TsekkSetbl.LastPDFInvNr = VEIVr.SerNr;
+          SimpleDebugMsg("Costpocket","Saved attachment " & i & " " & fname);
+          TrHs = false;
+        end;
+      end;
+    end;
+    i = i + 1;
+    xkey = "TsekkRootElement/E_Invoice/Invoice[" & i & "]/AttachmentFile";
+  end;
+  BlockStore(TsekkSetbl);
+  cnt = i;
+LProcessReceivedPdfTsekk:;
+  return;
+end;
+
+function boolean SendRequestToPartnerTsekk(var area reply,var xml xmlReply,string service,string partner,string RequestType,string param,string authphrase,boolean debugMode) 
+begin
+  record ServiceCacheVc SCr;
+  record TsekkSetBlock TsekkSetbl;
+  boolean res;
+  string 255 funcName,timeStamp;
+  area head,requestArea;
+  date curDate;
+  time curTime;
+
+  BlockLoad(TsekkSetbl);
+  if(Len(RequestType) > 0) then begin
+    SCr.Code = service;
+    SCr.Partner = partner;
+    if (ReadFirstMain(SCr,2,true)==true) then begin end;
+    InsertHTTPRequestHeaderREST(head);
+    if(len(authphrase) > 0) then begin
+      InsertAreaBeforeArea(head,requestArea);
+      if(TsekkSetbl.NoPdfFlag == 0) then begin
+        funcName = SCr.FuncName & "/" & RequestType & "?fromDate=" & param;
+      end else begin
+        funcName = SCr.FuncName & "/" & RequestType & "?fromDate=" & param & "&noAttachment=true";
+      end;
+      SimpleDebugMsg("Costpocket","Request to: Host:" & SCr.ServiceHost & " Port:" & SCr.ServicePort & " FuncName:" & funcName);
+      res = SendRawWebRequest(SCr.ServiceHost,SCr.ServicePort,true,"GET",funcName,"","",false,requestArea,reply,20);
+      curDate = CurrentDate;
+      curTime = CurrentTime;
+      timeStamp = curDate.day & "_" & curDate.month & "_" & curDate.year & "_" &
+                  curTime.hour & "_" & curTime.minute & "_" & curtime.second;
+      //debug request
+      if(debugMode AND DirExists("debug/costpocket")) then begin
+        AddTextToArea(chr(13) & chr(10),requestArea);
+        AddTextToArea(chr(13) & chr(10),requestArea);
+        AddTextToArea("Request URL: " & SCr.ServiceHost & funcName,requestArea);
+        WriteAreaToFile(requestArea,"debug/costpocket/request_comp" & CurrentCompany & "_" & timeStamp & ".xml",0);
+      end;
+      //debug reply
+      if(debugMode AND DirExists("debug/costpocket")) then begin
+        WriteAreaToFile(reply,"debug/costpocket/reply_comp" & CurrentCompany & "_" & timeStamp & ".xml",0);
+      end;
+      xmlReply = ParseXmlArea(reply);
+      if(CorrectEInvoiceReply(reply,xmlReply) == false) then begin
+        res = false;
+        SimpleDebugMsg("Costpocket","Unexpected e-invoice reply received from server, check debug file");
+      end;
+    end else begin
+      SimpleDebugMsg("Costpocket","SendRequestToPartnerTsekk failed, access token is empty");
+      res = false;
+    end;
+  end;
+  SendRequestToPartnerTsekk = res;
+  return;
+end;
+  
+procedure SendInvoiceRequest(record EInvoiceBlock EIb,string service,string partner,var area reply,var xml xdata)
+begin
+  record TsekkSetBlock TsekkSetbl;
+  string 100 param;
+  date SendDate;
+  time SendTime;
+  
+  BlockLoad(TsekkSetbl);
+  SendDate = TsekkSetbl.LastSuccessReqDate;
+  SendTime = TsekkSetbl.LastSuccessReqTime;
+  SetAreaZeroSize(reply);
+  if (partner == "TSEKKEE") then begin
+    if(blankdate(SendDate) or blanktime(SendTime)) then begin
+      SendDate = AddDay(CurrentDate, - GetDay(CurrentDate)+1);
+      SendTime.hour = 00;
+      SendTime.minute = 00;
+      SendTime.second = 00;
+      SimpleDebugMsg("Costpocket","SendDate and SendTime are manually set to " & SendDate & " " & SendTime);
+    end;
+    param = GetFormatedFromDate(SendDate,SendTime);
+    if (SendRequestToPartnerTsekk(reply,xdata,service,partner,"receiptsXml",param,TsekkSetbl.AccessToken,(EIb.DebugFlag==1))) then begin
+    end;
+  end;
+  return;
+end;
+
+global
+procedure GetTsekkEInvoice(record EInvoiceBlock EIb,string service,string partner,var integer cnt)//ts - 2018/04, added parameter for e-service statistic
+begin
+  area reply;
+  xml xdata;
+  date dummyDate;
+  time dummyTime;
+
+  SendInvoiceRequest(EIb,service,partner,reply,xdata);
+  AddXMLRootElementToArea(reply); //to distinguish partner invoices in common e-inv processing function
+  qupdating.ProcessReceived2Reply(partner,reply,"",dummyDate,dummyTime,0,0,0,cnt);//ts - 2018/04, added parameter for automated actions, do not create VIVc from Costpocket transaction
+  qupdating.ProcessReceivedPdfTsekk(reply,cnt);
+  return;
+end;

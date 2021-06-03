@@ -1,0 +1,60 @@
+//pangaliidestus
+remote procedure InitBankRequestsIdleTasks(boolean);
+
+global
+function boolean BankServicesTCLassOnOKWindow(integer wn)
+begin
+  record BankServicesBlock BankServicesbl;
+  boolean res,forced,toBeStarted;
+  
+  res = true;
+  GetWindowRecord(wn,BankServicesbl);
+  if (BankServicesbl.Bank1AccStmtFlag == 1 OR BankServicesbl.Bank1TodayAccStmtFlag == 1) then begin
+  //OR any other bank
+    forced = true;
+    toBeStarted = true;
+  end;
+  if (toBeStarted) then begin
+    InitBankRequestsIdleTasks(forced);
+  end;
+  BankServicesTCLassOnOKWindow = res;
+  return;
+end;
+
+global
+procedure CloseBankInfo()
+begin
+  integer wn;
+
+  wn = CurWindow;
+  CloseWindow(wn); 
+  return;
+end;
+
+global
+procedure OpenSGWHomePage()
+begin
+  integer wn;
+  string 255 link;
+
+  wn = CurWindow;
+  link = "https://www.swedbank.ee/business/d2d/ebanking/gateway?language=EST";
+  if (nonblank(link)) then begin
+    OpenWebBrowser(link);
+  end;
+  return;
+end;
+
+global
+procedure OpenSGWActivPage()
+begin
+  integer wn;
+  string 255 link;
+
+  wn = CurWindow;
+  link = "https://www.excellent.ee/sgw_aktiveerimine_in_dev";
+  if (nonblank(link)) then begin
+    OpenWebBrowser(link);
+  end;
+  return;
+end;

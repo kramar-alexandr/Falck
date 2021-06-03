@@ -16,7 +16,7 @@ begin
     res = true;
     goto L1;
   end;
-  for (i=0; i<rwcnt ;i=i+1) begin
+  for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(OTSerr,i,OTSerrw);
     if ((sernr<OTSerrw.TSerStart) or (sernr>OTSerrw.TSerEnd)) then begin
       goto L2;
@@ -43,12 +43,12 @@ begin
   boolean res;
   integer rwcnt,i;
   
-  res=false;
-  rwcnt=MatRowCnt(OTr);
+  res = false;
+  rwcnt = MatRowCnt(OTr);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(OTr,i,OTrw);
     if (OTrw.CalcSerNr>0) then begin
-      res=true;
+      res = true;
     end;
   end; 
 LOTrInUse:;
@@ -63,11 +63,11 @@ begin
   record PositionVc Posr;
   integer rwcnt,i,rw;
   
-  rw=rownr;
+  rw = rownr;
   ResetLoop(Posr);
-  Posr.Code="";
+  Posr.Code = "";
   while (LoopMain(Posr,1,true)) begin  
-    rwcnt=MatRowCnt(Contrr);
+    rwcnt = MatRowCnt(Contrr);
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(Contrr,i,Contrrw);
       if (Contrrw.PosCode==Posr.Code) then begin
@@ -75,10 +75,10 @@ begin
           OTrw.ContrSerNr = Contrr.SerNr;
           OTrw.Firstname = Contrr.Firstname;
           OTrw.Surname = Contrr.Surname;
-          OTrw.PosCode=Contrrw.PosCode;
-          OTrw.ObjCode=Contrrw.ObjCode;
+          OTrw.PosCode = Contrrw.PosCode;
+          OTrw.ObjCode = Contrrw.ObjCode;
           MatRowInsert(OTr,rownr,OTrw);
-          rownr=rownr+1;
+          rownr = rownr + 1;
           goto L3;
         end;
       end;  
@@ -89,14 +89,14 @@ L3:;
     OTrw.ContrSerNr = Contrr.SerNr;
     OTrw.Firstname = Contrr.Firstname;
     OTrw.Surname = Contrr.Surname;
-    OTrw.PosCode="";
-    OTrw.Tariff=blankval;
-    OTrw.Amount=blankval;
-    OTrw.Sum=blankval;
-    OTrw.ObjCode="";
-    OTrw.CalcSerNr=-1;
+    OTrw.PosCode = "";
+    OTrw.Tariff = blankval;
+    OTrw.Amount = blankval;
+    OTrw.Sum = blankval;
+    OTrw.ObjCode = "";
+    OTrw.CalcSerNr = -1;
     MatRowInsert(OTr,rownr,OTrw);
-    rownr=rownr+1;
+    rownr = rownr + 1;
   end;
   return;
 end;

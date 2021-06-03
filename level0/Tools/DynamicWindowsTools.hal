@@ -653,6 +653,7 @@ begin
   record PRVc PRr;
   record Bud1Vc Bud1r;
   record Bud2Vc Bud2r;
+  record APAccBlock APb;
     
   res = false;
   plbl = subset;
@@ -692,12 +693,18 @@ begin
       rownr = WindowActiveRow(wn);
       if (rownr>=0) then begin
         MatRowGet(OPr,rownr,OPrw);
-        tstr = OPrw.PayMode;
-        if (blank(tstr)) then begin
-          tstr = OPr.PayMode;
+        switch (OPrw.stp) begin
+          case kPaymentRowTypeSettlementDiscount:
+            BlockLoad(APb);
+            accnr = APb.PERebAcc;
+          otherwise
+            tstr = OPrw.PayMode;
+            if (blank(tstr)) then begin
+              tstr = OPr.PayMode;
+            end;
+            if (GetPMRow(tstr,PMrw)) then begin end;
+            accnr = PMrw.AccNr;
         end;
-        if (GetPMRow(tstr,PMrw)) then begin end;
-        accnr = PMrw.AccNr;
       end;
       if (blank(accnr)) then begin
 //        accnr = OPr.CostAcc;

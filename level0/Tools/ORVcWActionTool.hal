@@ -1,3 +1,4 @@
+external updating function Boolean FormLinkDocumentFilenames(record MailVc,string);
 external function Boolean GetFirstItem(var string,var record INVc);
 external procedure ORPasteRvrsVATCode(var record ORVc,Boolean);
 forward procedure ORVc_PasteCurncyCode(var record ORVc,string);
@@ -331,17 +332,9 @@ BEGIN
       end;
     end;
     ORrw.vRebate = vreb;
-    if (INr.ExplodeRec==0) then begin
-      if (baseprice<>0) then begin
-        ORrw.BasePrice = baseprice;
-      end;
-    end;
     if (calcuntiqf) then begin
       ORrw.UnitFactQuant = CalcUnitFactor(ORrw.UnitCode,ORrw.Quant);
     end;
-    t = ORrw.BasePrice;
-    chsum = CostPriceForGP(ORrw.ArtCode,ORrw.SerialNr,ORr.PriceList,ORr.CustCode,t);
-    ORrw.BasePrice = t;
     MatRowPut(ORr,rownr,ORrw);
     chrsum = true;
     if (INr.ExplodeRec!=0) then begin
@@ -392,6 +385,8 @@ BEGIN
   string 10 custemail;
   row MailTextVc MTrw;
   Integer IgnoreRecordDetails;
+  transaction Boolean gPDFEmailf;
+  transaction string 255 gaPDFEmailFiles;
   
   res = 0;
   if (ReadFirstMain(ORr,0,true)) then begin end;  
@@ -540,15 +535,12 @@ LORHIDDENLine:;
   if (blank(docname)) then begin
     docname = "OrdForm";
   end;
-  fname = "tmp/" & USetStr(1816) & " " & ORr.SerNr & ".pdf";
-  SetDocumentFilename(fname);
+  gPDFEmailf = true;
   SetMedia(mtPdf);
   PrintDocument(ORr,docname,false);
-  if (FileExists(fname)) then begin
-    RecordLinkFile(fname,0,Mailr,CurrentCompany);
-  end;
-  SetDocumentFilename("");
-  Delete_File(fname);
+  FormLinkDocumentFilenames(Mailr,gaPDFEmailFiles);
+  SetDocumentFilename("");  
+  gPDFEmailf = false;
 
 LCreateMailFromORD:;  
   CreateMailFromORD = res;
@@ -697,6 +689,13 @@ BEGIN
   RETURN;
 END;
 
+global
+procedure ORVc_PasteRebCode(var record ORVc ORr)
+begin
+  ORDUpdatePrices(ORr,false);
+  return;
+end;
+
 procedure ORVc_GetPriceList_Argentinean(var record ORVc ORr,record CUVc CUr)
 begin
   record MachineCashVc MCr;
@@ -732,6 +731,7 @@ procedure ORVc_GetPriceList2(var record ORVc ORr,Boolean foundcupl)
 begin
   record CUVc CUr;
   record CCatVc CCatr;
+  record PDVc PDr;
   Date d;
   Time blankt;
   string 255 tstr,oldpricelist;
@@ -747,6 +747,12 @@ begin
           ORr.PriceList = CCatr.PLCode;
         end;
       end;
+    end;
+  end;
+  if (blank(ORr.PriceList)) then begin
+    PDr.Code = ORr.PayDeal;
+    if (GetPD(PDr)) then begin
+      ORr.PriceList = PDr.PriceList;
     end;
   end;
   tstr = ORr.PriceList;
@@ -900,11 +906,14 @@ BEGIN
     ORVc_FillupTaxTemplate(ORp);
     ORp.CustTaxTemplateCode = taxtemplatecode;
   end;
-  if (vatcode!=ORp.CustVATCode) and (nonblank(vatcode)) then begin
+  if (vatcode!=ORp.CustVATCode) then begin
     ORp.CustVATCode = vatcode;
     rwcnt = MatRowCnt(ORp);
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(ORp,i,ORrw);
+      if (blank(vatcode)) then begin
+        GetItemVATCode(ORrw.ArtCode,ORp.ExportFlag,vatcode,true);
+      end;
       ORrw.VATCode = vatcode;
       MatRowPut(ORp,i,ORrw);
       if (ORDchrsum(ORp,i)) then begin

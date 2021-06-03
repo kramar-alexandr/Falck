@@ -1,0 +1,1215 @@
+//Bk //telema
+//Bk //other dev
+remote function Boolean PUVc_PasteVECode(var record PUVc);//Bk, fix ts 2019/03
+external procedure PUSumUp(var record PUVc);
+external updating function LongInt VIVcRecordCheck(record VIVc,record VIVc,LongInt,LongInt);
+external function date AccPeriodDueDate(date);
+external function Integer APIInstallNr(LongInt,Date);
+external function Boolean CurncyCodeRegistered(string);
+external procedure GetAPAcc(string,var string);
+external function Date FindDueDateInAccPeriod(Date);
+external procedure CalcCashDiscount(var record VIVc);
+external function LongInt NextFreeCashSerNr(row PMBlock,Boolean);
+external function Boolean GetPD(var record PDVc);
+external function LongInt DateDiff(Date,Date);
+external function val MulRateToBase1(var string,val,val,val,val,val,val,roundmode);
+external procedure VIVc_PastePayDeal(var record VIVc);
+external function val FindVAT(string,val,Integer,Integer);
+external procedure VICalcVals(var record VIVc);
+external function Boolean GetAccName(string,var string,Integer);
+external procedure VISumup(record VIVc,var val);
+external procedure VIGetRate(var record VIVc);
+external procedure VICalcEReb(var record VIVc);
+external function Boolean PasteVendInVI(var record VIVc,var string,Boolean);
+external function LongInt GetCurUserLastNr(string);
+external procedure PUCalcPerc(val,string,var val);
+external function Boolean IsVATCodeDefined(string);
+//external updating procedure SaveERecordStatus_WithRow(string,string,LongInt,string,string,Integer,string,string,string,LongInt,Integer,string,string);
+//external function string 100 CreateCompID();
+remote procedure PUDClassSumEFAfterRemote(var record PUVc,Integer);//Bk, fix ts 2019/03
+//Bk - start
+external function string 255 RemoveShortWords(string,string,var string);
+external procedure ExtractObj(string,var Integer,var string);
+external function Boolean FindCustomerByName(string,string,Integer,string,string,Integer,var string);
+external procedure PasteAccObj(string,var string);
+external function string 60 AddObjectToObjectList(string,string);
+//Bk - end
+
+procedure AddVEIVRowToVI(Boolean GroupByAcc,Boolean UseRowComment,string VECostAcc,string VEIVCostAcc,Integer InclVAT,row VEIVVc VEIVrw,var record VIVc VIp)
+begin
+  row VIVc VIrw;
+  Integer i,rwcnt;
+  string 10 costacc;
+  Boolean rowexistsf;
+  string 255 tstr;
+  val v;
+  record INVc INr;
+
+  rwcnt = MatRowCnt(VIp);
+  if (blank(VEIVrw.VEArtCode) and blank(VEIVrw.VESum)) then begin
+    ClearRow(VIp,VIrw,kInvoiceRowTypeNormal);
+    VIrw.Comment = VEIVrw.VESpec;    
+    MatRowPut(VIp,rwcnt,VIrw);
+  end else begin
+    costacc = VEIVrw.CostAcc;
+    if (blank(costacc)) then begin
+      costacc = VEIVCostAcc;
+    end;
+    if (HasLocalization("EST")) then begin
+      if (blank(costacc)) then begin
+        INr.Code = VEIVrw.ArtCode;
+        if (ReadFirstMain(INr,1,true)) then begin
+          costacc = INr.CostAcc;
+        end;
+      end;
+    end;
+    if (blank(costacc)) then begin
+      costacc = VECostAcc;
+    end;
+    if (GroupByAcc) then begin
+      for (i=0;i<rwcnt;i=i+1) begin
+        MatRowGet(VIp,i,VIrw);
+        if (VIrw.stp==kInvoiceRowTypeNormal) then begin
+         //Bk - start //fix, ts 2018/07
+         // if (costacc==VIrw.AccNumber) and (VIrw.VATCode==VEIVrw.VATCode) and ((VIrw.Item==VEIVrw.ArtCode) or blank(VEIVrw.ArtCode)) then begin
+          if (costacc==VIrw.AccNumber) and (VIrw.Objects==VEIVrw.Objects) and (VIrw.VATCode==VEIVrw.VATCode) and ((VIrw.Item==VEIVrw.ArtCode) or blank(VEIVrw.ArtCode)) then begin
+         //Bk - end
+            rowexistsf = true;
+            if (InclVAT!=0) then begin    
+              v = VEIVrw.VESum - FindVAT(VEIVrw.VATCode,VEIVrw.VESum,1,0);       
+            end else begin
+              v = VEIVrw.VESum;
+            end;
+            VIrw.Sum = VIrw.Sum + v;
+            VIrw.qty = VIrw.qty + VEIVrw.Quant;
+            if (nonblank(VIrw.Sum)) then begin//Bk + //fix
+              MatRowPut(VIp,i,VIrw);
+              i = rwcnt;
+            end;//Bk +
+          end;
+        end;
+      end;
+    end;
+    if (rowexistsf==false) then begin
+      ClearRow(VIp,VIrw,kInvoiceRowTypeNormal);
+      VIrw.AccNumber = costacc;
+      GetAccName(VIrw.AccNumber,tstr,60);
+      if (nonblank(VEIVrw.ArtCode) or UseRowComment) then begin
+        VIrw.Comment = VEIVrw.VESpec;    
+      end;
+      if (blank(VIrw.Comment) or GroupByAcc) then begin
+        VIrw.Comment = tstr;    
+      end;
+      VIrw.VATCode = VEIVrw.VATCode;
+      VIrw.TaxTemplateCode = VEIVrw.TaxTemplateCode;
+      if (InclVAT!=0) then begin    
+        VIrw.Sum = VEIVrw.VESum - FindVAT(VEIVrw.VATCode,VEIVrw.VESum,1,0);
+      end else begin
+        VIrw.Sum = VEIVrw.VESum;
+      end;
+      VIrw.Objects = VEIVrw.Objects;
+      VIrw.qty = VEIVrw.Quant;
+      VIrw.Item = VEIVrw.ArtCode;
+      if (VIrw.stp==6) then begin
+        VIrw.PrepayNr = -1;
+      end;    
+      VIrw.OrdRow = VEIVrw.VEOrdRow;
+      if (VIrw.OrdRow<0) then begin
+        VIrw.OrdRow = -2;
+      end;
+      if (nonblank(VIrw.Sum)) then begin//Bk + //fix
+        MatRowPut(VIp,rwcnt,VIrw);
+      end;//Bk +
+    end;
+  end;
+  return;
+end;
+
+global
+updating procedure VICalcInstallment(record VIVc VIp,Date tdp,val sump,string instcode,var LongInt pdaysp,Boolean createsupp)
+BEGIN
+  record InstallmentVc Intr;
+  row InstallmentVc Insrw;
+  record APInstallVc APIr;
+  record APInstallVc oldAPIr;
+  Integer rwcnt,i;
+  date tdr;
+  val sum,t;
+  Boolean found,delf;
+  record PDVc PDr;
+  
+  PDr.Code = VIp.PayDeal;
+  if (GetPD(PDr)==false) then begin
+    goto LVICalcInstallment;
+  end;
+  tdr = AddDay(tdp,PDr.pdays);
+  pdaysp = 0;
+  if (sump==0) then begin
+    delf = true;
+  end else begin
+    delf = false;
+  end;
+  Intr.Code = PDr.Installment;
+  if (ReadFirstMain(Intr,1,true)) then begin
+    rwcnt = MatRowCnt(Intr);
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(Intr,i,Insrw);
+      if (Insrw.Months!=-1) then begin
+        tdr = AddMonth(tdr,Insrw.Months);
+//       tdr.day = 1;// You can control this from the rest of the Payment term fields 
+      end;
+      if (Insrw.Days!=-1) then begin
+        tdr = AddDay(tdr,Insrw.Days);
+      end;
+      if (createsupp) then begin          
+        APIr.VISerNr = VIp.SerNr;
+        APIr.DueDate = tdr;
+        found = ReadFirstKey("VISerNr",APIr,2,true);
+        RecordCopy(oldAPIr,APIr);
+        if (found) then begin
+        end else begin
+          APIr.VISerNr = VIp.SerNr;
+          APIr.DueDate = tdr;
+          APIr.VECode = VIp.VECode;
+          APIr.CurncyCode = VIp.CurncyCode;
+          APIr.RVal = 0;
+          APIr.BookRVal = 0;
+        end;
+        PUCalcPerc(sump,Insrw.Prc,t);
+        APIr.RVal = t;
+        sum = MulRateToBase1(VIp.CurncyCode,sump,VIp.FrRate,VIp.ToRateB1,VIp.ToRateB2,VIp.BaseRate1,VIp.BaseRate2,DefaultCurRoundOff);
+        PUCalcPerc(sum,Insrw.Prc,t);
+        APIr.BookRVal = t;
+        if (delf==false) then begin
+          if (found) then begin
+            if (RecordUpdate(oldAPIr,APIr,found)==0) then begin
+            end;
+          end else begin
+            APIr.InstallNr = APIInstallNr(APIr.VISerNr,APIr.DueDate);
+            if (RecordStore(APIr,true)) then begin
+            end;
+          end;
+        end else begin
+          if (found==true) then begin
+            RecordDelete(oldAPIr);
+          end;
+        end;
+      end;
+    end;
+    if (createsupp==false) then begin
+      pdaysp = DateDiff(tdr,tdp);
+    end;
+  end;
+LVICalcInstallment:;  
+  RETURN;
+END;
+
+procedure VICalcInstallment2(record VIVc VIp,Date tdp,val sump,string instcode,var LongInt pdaysp)
+begin
+  record InstallmentVc Intr;
+  row InstallmentVc Insrw;
+  Integer rwcnt,i;
+  date tdr;
+  val sum,t;
+  Boolean found,delf;
+  record VIVc origVIr;
+  string 20 linstcode;
+  record PDVc PDr;
+  
+  linstcode = instcode;
+  if (VIp.InvType==kInvoiceTypeCredit or VIp.InvType==kInvoiceTypeCreditSpecialSales) then begin
+    origVIr.SerNr = VIp.CredInv;
+    if (ReadFirstMain(origVIr,1,true)) then begin 
+      PDr.Code = origVIr.PayDeal;
+      if (GetPD(PDr)) then begin    
+        linstcode = PDr.Installment;
+      end;
+    end;
+  end;
+  tdr = tdp;
+  pdaysp = 0;
+  if (sump==0) then begin
+    delf = true;
+  end else begin
+    delf = false;
+  end;
+  Intr.Code = linstcode;
+  if (ReadFirstMain(Intr,1,true)) then begin
+    rwcnt = MatRowCnt(Intr);
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(Intr,i,Insrw);
+      if (Insrw.Months!=-1) then begin
+       tdr = AddMonth(tdr,Insrw.Months);
+//       tdr.day = 1;// You can control this from the rest of the Payment term fields 
+      end;
+      if (Insrw.Days!=-1) then begin
+        tdr = AddDay(tdr,Insrw.Days);
+      end;      
+    end;
+    pdaysp = DateDiff(tdr,tdp);
+  end;
+  return;
+end;
+
+global
+procedure VICalcEReb1(var record VIVc VIp,Boolean changeduedatef)
+BEGIN
+  record PDVc PDr;
+  record PMBlock PMb;
+  row PMBlock PMrw;
+  LongInt pdays;
+  Date td,blankd;
+  LongInt restdays;
+  Integer i,mrwcnt;
+  record SRBlock SRRec;
+  LongInt newnr;
+  record MainCLBlock MCLb;
+  string 255 tstr;
+  record VIVc orgVIr;
+  
+  PDr.Code = VIp.PayDeal;
+  if (!GetPD(PDr)) then begin
+
+    BlockLoad(MCLb);
+    BlockLoad(PMb);
+    mrwcnt = MatRowCnt(PMb);
+    for (i = 0; i<mrwcnt; i=i+1) begin
+      MatRowGet(PMb,i,PMrw);
+      if (PMrw.Code==VIp.PayDeal) then begin
+        VIp.DueDate = VIp.InvDate;
+        if (VIp.InvType!=kInvoiceTypeDownpayment) then begin
+          VIp.InvType = kInvoiceTypeCash;
+        end;
+        VIp.RebVal = blankval;
+        VIp.RebVal2 = blankval;
+        if (PMrw.TSerStartOut!=-1) then begin
+          if (MCLb.CommonNoSer!=0) then begin
+            VIp.SerNr = NextFreeCashSerNr(PMrw,false);
+          end;
+        end;
+        VIp.APAcc = PMrw.AccNr;
+        VIp.CredMark = "";
+        goto LVICalcEReb;
+      end;
+    end;
+    VIp.PayDeal = "";
+    VIp.CredMark = "";
+    goto LVICalcEReb;
+  end;
+  pdays = PDr.pdays;
+  if (VIp.InvType!=kInvoiceTypeDownpayment) then begin
+    VIp.InvType = PDr.PDType;
+    if (VIp.InvType==0) then begin VIp.InvType = kInvoiceTypeNormal; end;
+  end;
+  VIp.pdays = PDr.pdays;
+  VIp.RebVal = blankval;
+  VIp.RebVal2 = blankval;
+  if (PDr.pdvrebt!=0) or (PDr.pdvrebt2!=0) then begin
+    CalcCashDiscount(VIp);
+  end;
+  VIp.RebDate = blankd;
+  VIp.RebDate2 = blankd;
+  if (nonblankdate(VIp.InvDate)) then begin
+    if (PDr.pdvrebt!=blankval) then begin
+      if (PDr.pdrdays!=-1) then begin
+        VIp.RebDate = AddDay(VIp.InvDate,PDr.pdrdays);
+      end;
+    end;
+    if (PDr.pdvrebt2!=blankval) then begin
+      if (PDr.pdrdays2!=-1) then begin
+        VIp.RebDate2 = AddDay(VIp.InvDate,PDr.pdrdays2);
+      end;
+    end;
+  end;
+  if (blankdate(VIp.DueDate) or changeduedatef) then begin 
+    VIp.DueDate = VIp.InvDate;
+    if (pdays!=-1) then begin
+      VIp.DueDate = AddDay(VIp.InvDate,pdays);
+    end;
+    if (PDr.PDType==kInvoiceTypeDownpayment) then begin 
+      VIp.DueDate = AccPeriodDueDate(VIp.InvDate);
+    end;   
+  end;
+  switch (VIp.InvType) begin
+    case kInvoiceTypeEmployee:
+      VIp.CredMark = "";
+    case kInvoiceTypeInterest:
+      VIp.InvType = 1;
+      td = VIp.InvDate;
+      td = AddMonth(td,1);
+      if (PDr.pdays==0) then begin
+        td = AddMonth(td,1);
+      end;
+      td = AddDay(td,-GetDay(td)+1);
+      restdays = DateDiff(td,VIp.InvDate);
+      if (PDr.pdays>=0) then begin
+        restdays = restdays - 1;
+      end;
+      pdays = PDr.pdays + restdays;
+      VIp.DueDate = AddDay(VIp.InvDate,pdays);
+      VIp.CredMark = "";
+    case kInvoiceTypeDownpayment:
+      if (PDr.pdays>0) then begin
+        VIp.DueDate = AddDay(VIp.DueDate,PDr.pdays);
+      end;
+      VIp.CredMark = "";
+    case kInvoiceTypeCashInvoiceReceiptPRT:
+      VIp.APAcc = PDr.pdCashAcc;
+      VIp.CredMark = "";
+    case kInvoiceTypeCash:
+      VIp.APAcc = PDr.pdCashAcc;
+      VIp.CredMark = "";
+    case kInvoiceTypeCreditSpecialSales: 
+      goto LkInvoiceTypeCredit;
+    case kInvoiceTypeCredit:
+LkInvoiceTypeCredit:;
+//      if (VIp.CredInv<=0) then begin
+//        VIp.APAcc = "";
+//      end;
+      VIp.CredMark = USetStr(1078);
+      if (VIp.SerNr<=0) then begin
+        newnr = GetCurUserLastNr("CreditVIVc");
+        if (newnr==-1) then begin
+          BlockLoad(SRRec);
+          newnr = SRRec.LastCredVINr;
+        end;
+        if (newnr>0) then begin
+          VIp.SerNr = NextSerNr("VIVc",VIp.TransDate,newnr,false,VIp.LangCode);
+        end;
+       end;
+    otherwise
+      VIp.CredMark = "";
+      GetAPAcc(VIp.VECode,tstr);
+      VIp.APAcc = tstr;
+      if (VIp.SerNr<=0) and SingleUserMode then begin
+        newnr = GetCurUserLastNr("VIVc");
+        if (newnr==-1) then begin
+          BlockLoad(SRRec);
+          newnr = SRRec.LastVINr;
+        end;
+        if (newnr>0) then begin
+          VIp.SerNr = NextSerNr("VIVc",VIp.TransDate,newnr,false,VIp.LangCode);
+        end;
+      end;
+  end;
+  VIp.InstallmentInv = 0;
+  if (nonblank(PDr.Installment)) then begin
+    if ((VIp.InvType==kInvoiceTypeNormal or VIp.InvType==kInvoiceTypeNormalSpecialSales) or (VIp.InvType==kInvoiceTypeInterest)) then begin
+      VICalcInstallment2(VIp,VIp.DueDate,VIp.PayVal,PDr.Installment,restdays);
+      VIp.InstallmentInv = 1;
+      if (restdays!=-1) then begin
+        VIp.DueDate = AddDay(VIp.DueDate,restdays);
+      end;
+    end;
+  end;
+LVICalcEReb:;
+  RETURN;
+END;
+
+global
+procedure VICalcEReb(var record VIVc VIp)
+BEGIN
+  VICalcEReb1(VIp,true);
+  RETURN;
+END;
+
+//Bk - start, ts 2018/07
+procedure SetDefaultValues(var Integer FindCode,var Integer FIndVATNr,var Integer FindRegNr,var Integer FindName,var Integer NameCountry,var string CompanyForms)
+begin
+  record SupEInvoiceSetBlock SEISb;
+
+  BlockLoad(SEISb);
+  if ((SEISb.FindCode==0) and (SEISb.FindVATNr==0) and (SEISb.FindRegNr==0) and (SEISb.FindName==0) and (SEISb.NameCountry==0)) then begin
+    FindCode = 1;
+    FindVATNr = 1;
+    FindRegNr = 1;
+    FindName = 1;
+    NameCountry = 0;
+    CompanyForms = "O†,AS,MT†,U†,T†,FIE";
+  end else begin
+    FindCode = SEISb.FindCode;
+    FindVATNr = SEISb.FindVATNr;
+    FindRegNr = SEISb.FindRegNr;
+    FindName = SEISb.FindName;
+    NameCountry = SEISb.NameCountry;
+    CompanyForms = SEISb.CompanyForms;
+  end;
+  return;
+end;
+
+global
+function string 20 FindVEVIContact(record VEIVVc VEIVr)
+begin
+  record CYBlock CYb;
+  record CUVc VEr;
+  record CompanyFormVc CFr;
+  string 255 CompanyForms,shortcustname,removedword,subword,subremovedword,ckey;
+  string 20 cucode;
+  Boolean foundf;
+  Integer FindCode,FindVATNr,FindRegNr,FindName,NameCountry,pos;
+  
+  cucode = "";
+  SetDefaultValues(FindCode,FindVATNr,FindRegNr,FindName,NameCountry,CompanyForms);
+
+  if (FindCode==1) then begin
+    VEr.Code = VEIVr.VECode;
+    foundf = ReadFirstMain(VEr,1,true);
+  end;
+  if (foundf==false) then begin
+    if (FindVATNr==1) then begin
+      if (nonblank(VEIVr.VEVATNr)) then begin
+        VEr.VATNr = VEIVr.VEVATNr;
+        foundf = ReadFirstKey("VEActVATNr",VEr,1,true);
+        if (foundf==false) then begin
+          VEr.VATNr = StripNonDigits(VEIVr.VEVATNr);
+          foundf = ReadFirstKey("VEActVATNr",VEr,1,true);
+        end;
+      end;
+    end;
+  end;
+  if (foundf==false) then begin
+    if (FindRegNr==1) then begin
+      if (nonblank(VEIVr.VERegNr1)) then begin
+        VEr.RegNr1 = VEIVr.VERegNr1;
+        foundf = ReadFirstKey("VEActRegNr1",VEr,1,true);
+      end;
+    end;
+  end;
+/*
+  if (foundf==false) then begin
+    if (FindIBAN==1) then begin
+      if (nonblank(VEIVr.VEBank1)) then begin
+        VEr.BankAccount = VEIVr.VEBank1;
+        foundf = ReadFirstKey("ActBankAccount",VEr,1,true);
+        if (VEr.VEType == 0) then begin
+          VEr.BankAccount = VEIVr.VEBank1;
+          foundf = ReadLastKey("ActBankAccount",VEr,1,true);
+        end;
+        if (foundf==false) then begin
+          VEr.IBANCode = VEIVr.VEBank1;
+          foundf = ReadFirstKey("ActIBAN",VEr,1,true);
+          if (VEr.VEType == 0) then begin
+            VEr.IBANCode = VEIVr.VEBank1;
+            foundf = ReadLastKey("ActIBAN",VEr,1,true);
+          end;
+        end;
+      end;
+      if (foundf==false) then begin
+        if (nonblank(VEIVr.VEBank2)) then begin
+          VEr.BankAccount = VEIVr.VEBank2;
+          foundf = ReadFirstKey("ActBankAccount",VEr,1,true);
+          if (VEr.VEType == 0) then begin
+            VEr.BankAccount = VEIVr.VEBank2;
+            foundf = ReadLastKey("ActBankAccount",VEr,1,true);
+          end;
+          if (foundf==false) then begin
+            VEr.IBANCode = VEIVr.VEBank2;
+            foundf = ReadFirstKey("ActIBAN",VEr,1,true);
+            if (VEr.VEType == 0) then begin
+              VEr.IBANCode = VEIVr.VEBank2;
+              foundf = ReadLastKey("ActIBAN",VEr,1,true);
+            end;
+          end;
+        end;
+      end;
+      if (foundf==false) then begin
+        if (nonblank(VEIVr.VEPayToAccount)) then begin
+          VEr.BankAccount = VEIVr.VEPayToAccount;
+          foundf = ReadFirstKey("ActBankAccount",VEr,1,true);
+          if (VEr.VEType == 0) then begin
+            VEr.BankAccount = VEIVr.VEPayToAccount;
+            foundf = ReadLastKey("ActBankAccount",VEr,1,true);
+          end;
+          if (foundf==false) then begin
+            VEr.IBANCode = VEIVr.VEPayToAccount;
+            foundf = ReadFirstKey("ActIBAN",VEr,1,true);
+            if (VEr.VEType == 0) then begin
+              VEr.IBANCode = VEIVr.VEPayToAccount;
+              foundf = ReadLastKey("ActIBAN",VEr,1,true);
+            end;
+          end;
+        end;
+      end;
+    end;
+  end;
+*/
+  if (foundf) then begin
+    cucode = VEr.Code;
+  end;
+  if (foundf==false) then begin
+    if (FindName==1) or (NameCountry==1) then begin
+      BlockLoad(CYb);
+      ckey = "VEActName";
+      if nonblank(CompanyForms) then begin
+        shortcustname = RemoveShortWords(VEIVr.VECompName,CompanyForms,removedword);
+        CFr.Code = removedword;
+        if (ReadFirstMain(CFr,1,true)) then begin
+          subremovedword = CFr.Comment;
+        end;
+        foundf = FindCustomerByName(shortcustname & " " & removedword,ckey,NameCountry,VEIVr.VECountryCode,CYb.CountryCode,FindName,cucode);
+        if (foundf==false) then begin 
+          foundf = FindCustomerByName(removedword & " " & shortcustname,ckey,NameCountry,VEIVr.VECountryCode,CYb.CountryCode,FindName,cucode);
+        end;
+        if (foundf==false) then begin 
+          foundf = FindCustomerByName(shortcustname,ckey,NameCountry,VEIVr.VECountryCode,CYb.CountryCode,FindName,cucode);
+        end;
+        if (foundf==false) and nonblank(subremovedword) then begin
+          pos = 0;
+          ExtractObj(subremovedword,pos,subword);
+          while (nonblank(subword) and foundf==false) begin
+            foundf = FindCustomerByName(shortcustname & " " & subword,ckey,NameCountry,VEIVr.VECountryCode,CYb.CountryCode,FindName,cucode);
+            if (foundf==false) then begin 
+              foundf = FindCustomerByName(subword & " " & shortcustname,ckey,NameCountry,VEIVr.VECountryCode,CYb.CountryCode,FindName,cucode);
+            end;
+            ExtractObj(subremovedword,pos,subword);
+          end;
+        end;
+      end else begin
+        foundf = FindCustomerByName(VEIVr.VECompName,ckey,NameCountry,VEIVr.VECountryCode,CYb.CountryCode,FindName,cucode);
+      end;
+    end;
+  end;
+  FindVEVIContact = cucode;
+  return;
+end;
+//Bk - end
+
+//bk - start
+procedure  EXC_PasteObjToAcc(var record VIVc VIp)
+begin
+  row VIVc VIrw;
+  record EInvoiceBlock SupEInvoiceSetBl;
+  integer i,rwcnt;
+  string 255 tstr;
+
+  rwcnt = MatRowCnt(VIp);
+  if (MatRowCnt(VIp)>0) then begin 
+    BlockLoad(SupEInvoiceSetBl);
+    if (SupEInvoiceSetBl.UseAccObject==1) then begin 
+      for (i=0;i<rwcnt;i=i+1) begin
+        MatRowGet(VIp,i,VIrw);
+        if nonblank(VIrw.AccNumber) then begin 
+          PasteAccObj(VIrw.AccNumber,tstr);
+          VIrw.Objects = AddObjectToObjectList(VIrw.Objects,tstr);        
+          MatRowPut(VIp,i,VIrw);  
+        end;
+      end;    
+    end;
+  end;    
+  return;
+end;  
+//bk -end
+
+updating function Integer PasteVEIVInVI(record VEIVVc VEIVr,var record VIVc VIp)
+begin
+  record EInvoiceBlock EIb;
+  Integer res;
+  record CUVc VEr;
+  Boolean testf,GroupByAcc,UseRowComment,manycostaccf;
+  record VITBlock VITRec;
+  string 255 tstr;
+  row VEIVVc VEIVrw;
+  Integer i,rwcnt,trwcnt;
+  row VIVc VIrw;
+  val t;
+  
+  BlockLoad(EIb);
+  GroupByAcc = EIb.VEIVRowTransfer==0;
+  if (HasLocalization("EST")) then begin
+    UseRowComment = EIb.VEIVRowComment==1;
+  end;
+  res = 1434;
+  if (nonblank(VEIVr.OurOrdNr)) then begin
+//    goto LPasteVEIVInVI;
+  end;
+  VIp.TransDate = VEIVr.TransDate;
+  VIp.InvDate = VEIVr.InvDate;
+  VIp.DueDate = VEIVr.PayDate;
+  VIp.InvoiceNr = VEIVr.InvoiceNr;
+  if (blank(VIp.InvoiceNr)) then begin
+    VIp.InvoiceNr = VEIVr.VESerNr;
+  end;
+  VIp.Comment = VEIVr.InvComment;
+  VIp.POSerNr = VEIVr.OurOrdNr;
+  VIp.CredInv = VEIVr.CredInv;
+  VIp.VATVal = VEIVr.Sum3;
+/* //Bk - start
+  if (blank(VEIVr.VECode)) then begin
+    if (nonblank(VEIVr.VEVATNr)) then begin
+      VEr.VATNr = VEIVr.VEVATNr;
+      testf = ReadFirstKey("VATNr",VEr,1,true);
+      if (testf==false) then begin
+        VEr.VATNr = StripNonDigits(VEIVr.VEVATNr);
+        testf = ReadFirstKey("VATNr",VEr,1,true);
+      end;
+    end;
+    if (testf==false) then begin
+      VEr.VATNr = "FI" & StripNonDigits(VEIVr.VEVATNr);
+      testf = ReadFirstKey("VATNr",VEr,1,true);
+    end;
+    if (testf==false) then begin
+      if (nonblank(VEIVr.VEBank1)) then begin
+        VEr.IBANCode = VEIVr.VEBank1;
+        testf = ReadFirstKey("ActIBAN",VEr,1,true);
+      end;
+    end;
+    if (testf==false) then begin
+      if (nonblank(VEIVr.VEBank2)) then begin
+        VEr.IBANCode = VEIVr.VEBank2;
+        testf = ReadFirstKey("ActIBAN",VEr,1,true);
+      end;
+    end;
+  end else begin
+    VEr.Code = VEIVr.VECode;
+    testf = ReadFirstMain(VEr,1,true);
+  end;
+*/
+  if (nonblank(VEIVr.VECode)) then begin
+    VEr.Code = VEIVr.VECode;
+    testf = ReadFirstMain(VEr,1,true);
+  end else begin
+    VEr.Code = FindVEVIContact(VEIVr);
+    if (nonblank(VEr.Code)) then begin
+      testf = ReadFirstMain(VEr,1,true);
+    end;
+  end;
+//Bk - end
+  if (VEr.blockedFlag!=0) then begin
+    testf = false;
+  end;
+  if (testf==false) then begin
+    res = 1434;
+    goto LPasteVEIVInVI;
+  end;
+//  BlockLoad(VITRec);
+//  if (VITRec.TransferItems!=2) then begin 
+//    if (blank(VEr.AccCost)) then begin 
+//      res = 1434;  
+//      goto LPasteVEIVInVI; 
+//    end;
+//  end;
+  VIp.VECode = VEr.Code;
+  if (PasteVendInVI(VIp,tstr,false)) then begin
+    if (nonblank(VEIVr.OurPayDeal)) then begin
+      VIp.PayDeal = VEIVr.OurPayDeal;
+      VIVc_PastePayDeal(VIp);
+    end;
+ /* disabled, only in BK 
+//Bk - start: ts 2019/10
+    if (nonblank(VEIVr.APAcc)) then begin
+      VIp.APAcc = VEIVr.APAcc;
+    end;
+//Bk - end
+*/
+//Bk - start //fix, ts - 2018/04
+/*
+    if (nonblank(VEIVr.VEBank1)) then begin
+      VIp.BankAcc = VEIVr.VEBank1;
+    end;
+*/
+    VIp.BankAcc = VEIVr.VEBank2; //KB 16.10.2019 //always overwrite, even if blank
+    VIp.BankCode = VEIVr.VEBankCode; //KB 16.10.2019 //always overwrite, even if blank
+//Bk - end
+    if (nonblank(VEIVr.VEPayToAccount)) then begin
+      VIp.BankAcc = VEIVr.VEPayToAccount;
+    end;
+    VIp.PayToName = VEIVr.VEPayToName;
+    VIp.CurncyCode = VEIVr.CurncyCode;
+    if (CurncyCodeRegistered(VIp.CurncyCode)==false) then begin
+      res = 1260;  
+      goto LPasteVEIVInVI; 
+    end;
+    VICalcEReb(VIp);
+  end else begin
+    res = 1434;  
+    goto LPasteVEIVInVI; 
+  end;
+  VIp.RefStr = VEIVr.CalcFinRef;
+  rwcnt = MatRowCnt(VEIVr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(VEIVr,i,VEIVrw);
+    testf = true;
+    if (VEIVrw.stp==3) then begin testf = false; end; 
+    if (VEIVrw.stp==4) then begin testf = false; end; 
+    if (VEIVrw.stp==5) then begin testf = false; end; 
+    if (VEIVrw.stp==7) then begin testf = false; end; 
+    if (VEIVrw.stp==8) then begin testf = false; end; 
+    if (VEIVrw.stp==9) then begin testf = false; end; 
+    if (VEIVrw.stp==101) then begin testf = false; end; 
+    if (blank(VEIVrw.VESum) and nonblank(VEIVrw.ArtCode)) then begin testf = false; end;
+    if (HasLocalization("FIN")==false) and (HasLocalization("EST")==false) then begin
+      if (blank(VEIVrw.VEArtCode)) then begin testf = false; end;
+    end;
+//    if (blank(VEIVrw.ArtCode)) then begin testf = false; end;
+    if (testf) then begin
+      trwcnt = MatRowCnt(VIp);
+      AddVEIVRowToVI(GroupByAcc,UseRowComment,VEr.AccCost,VEIVr.CostAcc,VEIVr.InclVAT,VEIVrw,VIp);
+      if (trwcnt!=MatRowCnt(VIp) and MatRowCnt(VIp)>1) then begin manycostaccf = true; end;
+    end;
+  end;
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(VIp,i,VIrw);
+    VIp.PayVal = VIp.PayVal + VIrw.Sum;
+  end;
+  if (manycostaccf==false) then begin
+    ClearRow(VEIVr,VEIVrw,1);
+    MatRowGet(VIp,0,VIrw);
+    VEIVrw.VESum = VEIVr.Sum1 - VIrw.Sum;
+    if (VEIVrw.VESum != 0) then begin
+      AddVEIVRowToVI(GroupByAcc,UseRowComment,VEr.AccCost,VEIVr.CostAcc,VEIVr.InclVAT,VEIVrw,VIp);
+    end;
+    VIp.PayVal = VEIVr.Sum4;
+    VIp.VATVal = VEIVr.Sum3;
+  end;
+  VIGetRate(VIp);
+  VICalcVals(VIp);
+  
+  //bk nk - start 01.10.2018
+  EXC_PasteObjToAcc(VIp);
+  //bk nk - end 01.10.2018
+  VISumup(VIp,t);
+  if (manycostaccf) then begin
+    if (VIp.CalcVATVal==0) then begin
+      for (i=0;i<rwcnt;i=i+1) begin
+        MatRowGet(VEIVr,i,VEIVrw);
+        if (VEIVrw.stp==101) then begin 
+          VIp.PayVal = VIp.PayVal + VEIVrw.VESum;
+        end; 
+      end;
+    end else begin
+      VIp.PayVal = VIp.PayVal + VIp.CalcVATVal;
+    end;
+  end;
+  res = 0;
+//  VIp.PayVal = VEIVr.Sum4;
+LPasteVEIVInVI:;  
+  PasteVEIVInVI = res;
+  RETURN;    
+END;
+
+global
+function LongInt ValidateVEIV(record VEIVVc VEIVr,var string fieldname,var Integer rownr)
+begin
+  LongInt res;
+  row VEIVVc VEIVrw;
+  Integer i,rwcnt;
+  record EInvoiceBlock EIb;
+
+  res = 0;
+  BlockLoad(EIb);
+  rwcnt = MatRowCnt(VEIVr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(VEIVr,i,VEIVrw);
+    if (VEIVrw.stp==1 and VEIVrw.VESum!=blankval) then begin
+      if (EIb.NoVATOnVEIVVcRow==0 and !IsVATCodeDefined(VEIVrw.VATCode)) then begin
+        res = 20809;
+        fieldname = "VATCode";
+        rownr = i;
+        goto LValidateVEIV;
+      end;
+    end;
+  end;
+  
+LValidateVEIV:;
+  ValidateVEIV = res;
+  return;
+end;
+
+global
+//Bk, new function name used for //eteenused
+updating function LongInt CreateVIFromVEIV2(LongInt veivnr,var record VIVc VIp,Boolean checkOKStatus)
+begin
+  LongInt res; //Bk, orig has Integer as res with result as Comparison in case on limit exceeded
+  record VEIVVc VEIVr,OldVEIVr;
+  record POVc POr;
+  record SRBlock SRRec;
+  LongInt newnr;
+  record ICBlock ICb;
+  record VIVc oldVIr;
+//Bk +
+  record VIVc VIr;
+
+  BlockLoad(ICb);
+  VEIVr.SerNr = veivnr;
+  if (ReadFirstMain(VEIVr,1,true)) then begin end;
+  if (checkOKStatus) then begin //Bk +
+    if (VEIVr.OKStatus>1) then begin
+      res = 20803;
+      goto LCreateVIFromVEIV;
+    end;
+  end; //Bk +
+  if (VEIVr.VISerNr!=-1) then begin
+//Bk - start, ts 2018/08
+    //res = 20808;
+    VIr.SerNr = VEIVr.VISerNr;
+    if (ReadFirstMain(VIr,1,true)) then begin
+      if (VIr.InvoiceNr==VEIVr.InvoiceNr) then begin
+        res = 1501007;
+        goto LCreateVIFromVEIV;
+      end;
+    end;
+    res = 1501008;
+//Bk - end
+    goto LCreateVIFromVEIV;
+  end;
+  RecordNew(VIp);
+  res = PasteVEIVInVI(VEIVr,VIp);
+  if (res!=0) then begin
+    goto LCreateVIFromVEIV;
+  end;  
+  if (VIp.SerNr==-1) then begin
+    BlockLoad(SRRec);
+    newnr = GetCurUserLastNr("VIVc");
+    if (newnr==-1) then begin
+      newnr = SRRec.LastVINr;      
+    end;    
+    VIp.SerNr = NextSerNr("VIVc",VIp.TransDate,newnr,false,"");
+    //Bk - start
+    //if (VIp.SerNr==-1) then begin goto LCreateVIFromVEIV; end;
+    if (VIp.SerNr==-1) then begin
+      res = 1501003;
+      goto LCreateVIFromVEIV;
+    end;
+    //Bk - end
+  end;
+  if ((MatRowCnt(VIp)>0) and (VIp.SerNr!=-1)) then begin
+    if (RecordStore(VIp,false)) then begin 
+      RecordCopy(OldVEIVr,VEIVr);
+      VEIVr.VISerNr = VIp.SerNr;
+     //Bk - start: ts 2018/07
+      VEIVr.VECode = VIp.VECode;
+      VEIVr.OKStatus = 1;
+      VEIVr.OKFlag = 18;
+     //Bk - end
+      RecordUpdate(OldVEIVr,VEIVr,false);
+      CopyRecordLinks(VEIVr,VIp);
+      CreateRecordLink(VIp,CurrentCompany,VEIVr,CurrentCompany);  
+      CreateRecordLink(VEIVr,CurrentCompany,VIp,CurrentCompany);  
+/* //allow VIVr.SerNr change
+      if (HasLocalization("EST")) then begin
+        BlockLoad(CYb);
+        BlockLoad(IEb);
+        CompID = CreateCompID;
+        SaveERecordStatus_WithRow("VEIVVc",VEIVr.VISerNr,VEIVr.VESerNr,IEb.CustomerCode,"SuppInv",1,CompID,VEIVr.RejectReason & ";" & VEIVr.OurContact,"EARVEKESKUS2",VEIVr.VersionNr,2,CYb.VATNr,CYb.OrgNr);
+      end;
+*/
+      if (VIp.POSerNr>0) then begin
+        POr.SerNr = VIp.POSerNr;
+        if (ReadFirstMain(POr,1,true)) then begin
+          CreateRecordLink(VIp,CurrentCompany,POr,CurrentCompany);  
+          CreateRecordLink(POr,CurrentCompany,VIp,CurrentCompany);  
+        end;
+      end;
+      if (ICb.AutoOKVI) then begin
+        RecordCopy(oldVIr,VIp);
+        VIp.OKFlag = 1;
+        if (RecordUpdate(oldVIr,VIp,true)!=0) then begin
+          VIp.OKFlag = 0;
+        end;
+      end;
+   //Bk - start
+    end else begin
+      res = 1501004;
+   //Bk - end
+    end;
+  end else begin
+   //Bk - start
+   // res = -1;
+    res = 1501005;
+   //Bk - end
+  end;
+LCreateVIFromVEIV:;  
+  CreateVIFromVEIV2 = res;
+  return;
+end;
+
+procedure AddVEIVRowToPU(Boolean GroupByAcc,Boolean UseRowComment,string VECostAcc,string VEIVCostAcc,Integer InclVAT,row VEIVVc VEIVrw,var record PUVc PUp)
+begin
+  row PUVc PUrw;
+  Integer i,rwcnt;
+  string 10 costacc;
+  Boolean rowexistsf;
+  string 255 tstr;
+  val v;
+  record INVc INr;
+  record PIVc PIr;
+
+  rwcnt = MatRowCnt(PUp);
+  ClearRow(PUp,PUrw,kInvoiceRowTypeNormal);
+  PUrw.CredAcc = costacc;
+  GetAccName(PUrw.CredAcc,tstr,60);
+
+  if (blank(VEIVrw.ArtCode) or UseRowComment) then begin
+    PUrw.Spec = VEIVrw.VESpec;    
+  end else begin
+    if (nonblank(VEIVrw.ArtCode)) then begin
+      INr.Code = VEIVrw.ArtCode;
+      if (ReadFirstMain(INr,1,true)) then begin
+        PUrw.Spec = INr.Name;
+      end;
+    end;
+  end;
+  if (blank(PUrw.Spec)) then begin// or GroupByAcc why would we group by account in GR?
+    PUrw.Spec = tstr;    
+  end;
+  PUrw.VATCode = VEIVrw.VATCode;
+  PUrw.TaxTemplateCode = VEIVrw.TaxTemplateCode;
+  if (InclVAT!=0) then begin    
+    PUrw.Sum = VEIVrw.VESum - FindVAT(VEIVrw.VATCode,VEIVrw.VESum,1,0);
+  end else begin
+    PUrw.Sum = VEIVrw.VESum;
+  end;
+  PUrw.Objects = VEIVrw.Objects;
+  PUrw.Quant = VEIVrw.Quant;
+  if (blank(PUrw.Quant)) then begin
+    PUrw.Quant = VEIVrw.VEQuant;
+  end;
+  PUrw.ArtCode = VEIVrw.ArtCode;
+  PUrw.OrdRow = VEIVrw.VEOrdRow;
+  if (PUrw.OrdRow<0) then begin
+    PUrw.OrdRow = -2;
+  end;
+  MatRowPut(PUp,rwcnt,PUrw);
+  PUDClassSumEFAfterRemote(PUp,rwcnt);
+  return;
+end;
+
+updating function Integer PasteVEIVInPU(record VEIVVc VEIVr,var record PUVc PUp)
+begin
+  record EInvoiceBlock EIb;
+  Integer res;
+  record CUVc VEr;
+  Boolean testf,GroupByAcc,UseRowComment,manycostaccf;
+  record VITBlock VITRec;
+  string 255 tstr;
+  row VEIVVc VEIVrw;
+  Integer i,rwcnt,trwcnt;
+  row PUVc PUrw;
+  val t;
+
+  BlockLoad(EIb);
+  GroupByAcc = EIb.VEIVRowTransfer==0;
+  if (HasLocalization("EST")) then begin
+    UseRowComment = EIb.VEIVRowComment==1;
+  end;
+  res = 1434;
+  if (nonblank(VEIVr.OurOrdNr)) then begin
+//    goto LPasteVEIVInPU;
+  end;
+  PUp.TransDate = VEIVr.TransDate;
+  PUp.Comment = VEIVr.InvComment;
+  PUp.PONr = VEIVr.OurOrdNr;
+  PUp.VATVal = VEIVr.Sum3;
+  if (blank(VEIVr.VECode)) then begin
+    if (nonblank(VEIVr.VEVATNr)) then begin
+      VEr.VATNr = VEIVr.VEVATNr;
+      testf = ReadFirstKey("VATNr",VEr,1,true);
+      if (testf==false) then begin
+        VEr.VATNr = StripNonDigits(VEIVr.VEVATNr);
+        testf = ReadFirstKey("VATNr",VEr,1,true);
+      end;
+    end;
+    if (testf==false) then begin
+      VEr.VATNr = "FI" & StripNonDigits(VEIVr.VEVATNr);
+      testf = ReadFirstKey("VATNr",VEr,1,true);
+    end;
+    if (testf==false) then begin
+      if (nonblank(VEIVr.VERegNr1)) then begin
+        VEr.VATNr = VEIVr.VERegNr1;
+        testf = ReadFirstKey("RegNr1",VEr,1,true);
+        if (testf==false) then begin
+          VEr.VATNr = StripNonDigits(VEIVr.VERegNr1);
+          testf = ReadFirstKey("RegNr1",VEr,1,true);
+        end;
+      end;
+    end;
+    if (testf==false) then begin
+      if (nonblank(VEIVr.VEBank1)) then begin
+        VEr.IBANCode = VEIVr.VEBank1;
+        testf = ReadFirstKey("ActIBAN",VEr,1,true);
+      end;
+    end;
+    if (testf==false) then begin
+      if (nonblank(VEIVr.VEBank2)) then begin
+        VEr.IBANCode = VEIVr.VEBank2;
+        testf = ReadFirstKey("ActIBAN",VEr,1,true);
+      end;
+    end;
+  end else begin
+    VEr.Code = VEIVr.VECode;
+    testf = ReadFirstMain(VEr,1,true);
+  end;
+  if (VEr.blockedFlag!=0) then begin
+    testf = false;
+  end;
+  if (testf==false) then begin
+    res = 1434;
+    goto LPasteVEIVInPU;
+  end;
+  PUp.VECode = VEr.Code;
+  if (PUVc_PasteVECode(PUp)) then begin
+    PUp.CurncyCode = VEIVr.CurncyCode;
+    if (CurncyCodeRegistered(PUp.CurncyCode)==false) then begin
+      res = 1260;  
+      goto LPasteVEIVInPU; 
+    end;
+  end else begin
+    res = 1434;  
+    goto LPasteVEIVInPU; 
+  end;
+  rwcnt = MatRowCnt(VEIVr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(VEIVr,i,VEIVrw);
+    testf = true;
+    if (VEIVrw.stp==3) then begin testf = false; end; 
+    if (VEIVrw.stp==4) then begin testf = false; end; 
+    if (VEIVrw.stp==5) then begin testf = false; end; 
+    if (VEIVrw.stp==7) then begin testf = false; end; 
+    if (VEIVrw.stp==8) then begin testf = false; end; 
+    if (VEIVrw.stp==9) then begin testf = false; end; 
+    if (VEIVrw.stp==101) then begin testf = false; end; 
+    if (blank(VEIVrw.VESum) and nonblank(VEIVrw.ArtCode)) then begin testf = false; end;
+    if (testf) then begin
+      trwcnt = MatRowCnt(PUp);
+      AddVEIVRowToPU(GroupByAcc,UseRowComment,VEr.AccCost,VEIVr.CostAcc,VEIVr.InclVAT,VEIVrw,PUp);
+    end;
+  end;
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(PUp,i,PUrw);
+    PUp.PayVal = PUp.PayVal + PUrw.Sum;
+  end;
+  PUSumup(PUp);
+  res = 0;
+LPasteVEIVInPU:;  
+  PasteVEIVInPU = res;
+  return;    
+end;
+
+global
+updating function Integer CreatePUFromVEIV(LongInt veivnr,var record PUVc PUp)
+begin
+  Integer res;
+  record VEIVVc VEIVr,OldVEIVr;
+  record POVc POr;
+  record SRBlock SRRec;
+  LongInt newnr;
+  record ICBlock ICb;
+  record VIVc oldVIr;
+
+  BlockLoad(ICb);
+  VEIVr.SerNr = veivnr;
+  if (ReadFirstMain(VEIVr,1,true)) then begin end;
+  if (VEIVr.OKStatus!=1) then begin
+    res = 20803;
+    goto LCreatePUFromVEIV;
+  end;
+  if (VEIVr.PUSerNr!=-1) then begin
+    res = 20799;
+    goto LCreatePUFromVEIV;
+  end;
+  RecordNew(PUp);
+  res = PasteVEIVInPU(VEIVr,PUp);
+  if (res!=0) then begin
+    goto LCreatePUFromVEIV;
+  end;  
+  if (PUp.SerNr==-1) then begin
+    BlockLoad(SRRec);
+    newnr = GetCurUserLastNr("PUVc");
+    if (newnr==-1) then begin
+      newnr = SRRec.LastVINr;      
+    end;    
+    PUp.SerNr = NextSerNr("PUVc",PUp.TransDate,newnr,false,"");
+    if (PUp.SerNr==-1) then begin goto LCreatePUFromVEIV; end;
+  end;
+  if ((MatRowCnt(PUp)>0) and (PUp.SerNr!=-1)) then begin
+    if (RecordStore(PUp,false)) then begin 
+      RecordCopy(OldVEIVr,VEIVr);
+      VEIVr.PUSerNr = PUp.SerNr;
+      RecordUpdate(OldVEIVr,VEIVr,false);
+      CopyRecordLinks(VEIVr,PUp);
+      CreateRecordLink(PUp,CurrentCompany,VEIVr,CurrentCompany);  
+      CreateRecordLink(VEIVr,CurrentCompany,PUp,CurrentCompany);  
+    end;
+  end else begin
+    res = -1;
+  end;
+LCreatePUFromVEIV:;  
+  CreatePUFromVEIV = res;
+  return;
+end;
+
+global
+function Boolean PastePayRecVI(record VIVc VIp,string VECode)
+begin
+  record CUVc VEr;
+  record CCatVc CCatr;
+  record VGVc VGr;
+  Boolean found;
+  record APAccBlock APb;
+ 
+  BlockLoad(APb);
+  VEr.Code = VECode;
+  found = ReadFirstMain(VEr,1,true);
+  if (found) then begin
+    if (HasLocalization("SWE")==false) then begin
+      //cust - start - comment added by KB 22.04.2019
+      if (nonblank(VEr.AccOperator)) then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 04, 18 04 2019 y. at 9:56:10 AM
+        VIp.BankCode = VEr.AccOperator;
+        VIp.BankAcc = "";// Edit ************************** BPI Ukraine - KramarAlexandr - 04, 18 04 2019 y. at 9:56:14 AM
+      end;
+      //cust - end
+      if (blank(VIp.BankAcc)) then begin
+        VIp.BankAcc = VEr.IBANCode;
+      end;
+      if (blank(VIp.BankAcc)) then begin
+        VIp.BankAcc = VEr.BankAccount;
+      end;
+      if (blank(VIp.BankAcc)) then begin
+        VIp.BankAcc = VEr.Bank;
+      end;
+      //cust - start - removed, comment added by KB 22.04.2019 - BPI change?
+      /*
+      if (nonblank(VEr.AccOperator)) then begin
+        VIp.BankCode = VEr.AccOperator;
+      end;
+      */
+      //cust - end
+      if (nonblank(VEr.SortCode)) then begin
+        VIp.SortCode = VEr.SortCode;      
+      end;
+    end;
+    if (nonblank(VEr.AccAP)) then begin
+      VIp.APAcc = VEr.AccAP;
+    end;
+    if (nonblank(VEr.CustCat) and blank(VEr.AccAP)) then begin
+      
+      if (blank(VEr.VECat)) then begin
+        CCatr.Code = VEr.CustCat;
+        if (ReadFirstMain(CCatr,1,true)) then begin
+          if (nonblank(CCatr.AccAP)) then begin
+            VIp.APAcc = CCatr.AccAP;
+          end;
+        end;
+      end else begin
+        VGr.Code = VEr.VECat;
+        if (ReadFirstMain(VGr,1,true)) then begin
+          if (nonblank(VGr.AccAP)) then begin
+            VIp.APAcc = VGr.AccAP;
+          end;
+        end;
+      end;
+    end;
+    VICalcEReb(VIp);
+    switch (VEr.OPBookVAT) begin
+      case 1:
+        VIp.OPBookVAT = VEr.OPBookVAT;
+      case 2:
+        VIp.OPBookVAT = 0;
+      otherwise
+        VIp.OPBookVAT = APb.OPBookVAT;
+    end;
+  end;
+  PastePayRecVI = found;
+  RETURN;
+END;
+

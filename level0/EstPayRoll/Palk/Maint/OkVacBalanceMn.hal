@@ -1,37 +1,9 @@
-external procedure SetMarkFlag(integer,var integer);
-
-global
-updating procedure OKVBrLsm()
-begin
-  Integer wn;
-  record VacBalanceVc VBr;
-  record VacBalanceVc oldVBr; 
-  LongInt i;
-  boolean testf;
-  
-  wn = CurWindow;
-  i = 1;
-  while (GetRecordFromBrowse(VBr,wn,i)) begin
-    testf = true;
-    if (VBr.OKFlag!=0) then begin testf = false; end;
-    if (testf) then begin
-       RecordCopy(oldVBr,VBr);
-       VBr.OKFlag = 1;
-       SetMarkFlag(VBr.OKFlag,VBr.OKMark);
-       if (RecordUpdate(oldVBr,VBr,true)==0) then begin
-       end;
-    end;
-    i = i + 1;
-  end;
-  UpdateBrowses("VacBalanceVc");
-  return;
-end;
+external updating function Boolean RecordAction_rlVBrLOK(var record VacBalanceVc,Boolean);
 
 global
 updating procedure OkVacBalanceMn(record RcVc RepSpec)
 begin
   record VacBalanceVc VBr;
-  record VacBalanceVc oldVBr; 
   LongInt frvbr,tovbr;
   boolean TrHs,testf;
   
@@ -52,10 +24,7 @@ begin
     end;
     if (VBr.OKFlag!=0) then begin testf = false; end;
     if (testf) then begin
-       RecordCopy(oldVBr,VBr);
-       VBr.OKFlag = 1;
-       SetMarkFlag(VBr.OKFlag,VBr.OKMark);
-       if (RecordUpdate(oldVBr,VBr,true)==0) then begin end;
+      if (RecordAction_rlVBrLOK(VBr,true)) then begin end; //Bk, ts 2019/01
     end;
   end;
   return;

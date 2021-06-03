@@ -1,0 +1,31 @@
+external function Boolean StandardHansa();
+
+window PurInvVClass:1// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 11:37:53 AM
+  wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+  WindowBegin("Create Payments Suggestion",PurInvVClass,CGMnt,RcType);
+  SetWRect(20,93,412,370);
+  vs=20;
+  EditFieldTL(h=150,v=6, 82,"From Due Date",M4Date,Normal,0,d1,false,PasteCurDate);
+  EditFieldTL(h,v+=20, 82,"To Due Date",M4Date,Normal,0,d2,false,PasteCurDate);
+  EditFieldTL(h,v+=20 ,82,"#Supplier#",M4UStr,Normal,41,f1,false,VESClass);
+  EditFieldTL(h,v+=vs ,82,"Category",   M4UStr,Normal,10,LastAcc,false,VGSClass);
+  EditFieldTL(h,v+=20 ,82,"Classification",M4UStr,Normal,60,f4,false,CClassSClass);
+  EditFieldTL(h,v+=20 ,82,"Currency",M4UStr,Normal,5,f2,false,CurncyCodeSClass);
+  EditFieldTL(h,v+=20 ,100,"Maximum Amount",M4Str,Normal,255,f3,true,0);
+  EditFieldTL(h,v+=20 ,30,"Pay Mode",M4Code,Normal,2,FirstAcc,false,PMSClass);
+  EditFieldTL(h,v+=20 ,82,"Pay Date",M4Date,Normal,0,RegDate,false,PasteCurDate);
+  EditFieldTL(h,v+=20 ,82,"Factoring company",M4UStr,Normal,41,f10,false,VESClass);// Edit ************************** BPI Ukraine - KramarAlexandr - 02, 18 06 2019 y. at 11:38:51 AM
+  CheckBox(20,vm=(v+=22),0,"Pay On Due Date",flags[2]);
+  CheckBox(20,v+=16,0,"Use Settlement Discount",flags[1]);
+  CheckBox(20,v+=16,0,"Incl. Credit Invoices",flags[3]);
+  CheckBox(20,v+=16,0,"One #Supplier# Per Payment",flags[4]);
+  if (StandardHansa==false) then begin
+    CheckBox(20,v+=16,0,"Create part Payments",flags[6]);
+  end;
+  ButtonFrame(h=250,v=vm+16,123,2,"Sorting");
+  RadioButton(h,v,0,0,"Due Date",flags[5]);
+  RadioButton(h,v+=16,1,0,"#Supplier#",flags[5]);
+  EndWindow;
+end;

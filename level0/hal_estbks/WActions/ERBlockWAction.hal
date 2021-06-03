@@ -1,0 +1,19 @@
+//Bk //valuutakursid
+remote updating procedure ERTClassOnOKWindowRemote(record ERBlock,record ERBlock);
+
+global
+updating function Boolean ERTClassOnOKWindow(Integer wn)
+begin
+  record ERBlock ERb;
+  record ERBlock ERprevb;
+  Time t;
+
+  GetWindowRecord(wn,ERb);
+ //Bk - start
+  GetPrevWindowRecord(wn,ERprevb);
+  ERTClassOnOKWindowRemote(ERb,ERprevb);
+ //Bk - end
+LERTClassOnOKWindow:;  
+  ERTClassOnOKWindow = true;
+  return;
+end;

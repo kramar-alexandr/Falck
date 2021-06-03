@@ -1,0 +1,207 @@
+event startup //keep for convenience
+begin
+  SetLangMode(LangEstonian,"EST",0);
+
+  StrSetAdd(3);
+  StrSetText(ExpFromVEIV,"Kulutuste koostamine tarnija e-arvetest");
+  StrSetText(RemoveAttachFiles,"Ettevõtte attach failide kustutamine");
+  StrSetText(DisallowPrintEInvoicesFromIV,"Ära luba trükkida e-arveid arve kaardilt");
+  EndStrSet;
+
+//eteenused
+  SetBegin(10667);
+  SetText(0,"vali teenus");
+  SetText(1,"HansaWorld");
+  SetText(7,"Arvete saatmine (Fitek)");
+  SetText(2,"Arvete saatmine (Omniva)");
+  SetText(8,"Tarnija arvete vastuvõtmine (Fitek)");
+  SetText(3,"Tarnija arvete vastuvõtmine (Omniva)");
+  SetText(4,"Pensioni liitumispäring");
+  SetText(5,"Äriregistri päring");
+  SetText(6,"Valuutakursside päring");
+  EndSet;
+
+  //sepa import
+  SetBegin(1670);
+  SetText(0,"Ära koosta");
+  SetText(1,"Kanne");
+  SetText(IPYc,"Laekumine");
+  SetText(OPYc,"Tasumine");
+  EndSet;
+
+  //smaily
+  SetBegin(1668);
+  SetText(0,"Välja sisu");
+  SetText(1,"Seotud kaardilt kirjeldus");
+  EndSet;
+
+  StrSetBegin(1669);
+  StrSetText("FiscalFlag","Ainult fiskaalarved");
+  StrSetText("ANACode","ANA kood");
+  StrSetText("InvoiceToCode","Arve saaja");
+  StrSetText("InvAddr0","Arveaadress 1");
+  StrSetText("InvAddr1","Arveaadress 2");
+  StrSetText("InvAddr2","Arveaadress 3");
+  StrSetText("InvAddr3","Arveaadress 4");
+  StrSetText("InvAddr4","Arveaadress 5");
+  StrSetText("BankAccount","Arveldusarve");
+  StrSetText("Bank" ,"Arveldusarve 2");
+
+  StrSetText("eMail","E-mail");
+  StrSetText("EDIFlag","EDI klient");
+  StrSetText("OnAccount","Ettemaks");
+  StrSetText("Fax","Faks");
+
+  StrSetText("VEType","Hankija");
+  StrSetText("SortCode","Harukontor");
+  StrSetText("RebCode","Hinnaal. maatriks");
+  StrSetText("PLCode","Hinnakiri");
+  StrSetText("WarnText1","Hoiatus müügil");
+
+  StrSetText("IBANCode","IBAN Kood");
+  StrSetText("LangCode","Keel");
+  StrSetText("Classification","Klassifikaatorid");
+  StrSetText("CustCat","Kliendiklass");
+  StrSetText("CUType","Klient");
+  StrSetText("VATNr","KMKR nr.");
+  StrSetText("Comment","Kommentaar");
+  StrSetText("Comment0","Kommentaar 1");
+  StrSetText("Comment1","Kommentaar 2");
+  StrSetText("Comment2","Kommentaar 3");
+  StrSetText("Code","Kood");
+  StrSetText("DateCreated","Koostamise kp.");
+  StrSetText("AccCost","Kulukonto");
+
+  StrSetText("LocationCode","Ladu");
+  StrSetText("DelAddr0","Lähetusaadress 1");
+  StrSetText("DelAddr1","Lähetusaadress 2");
+  StrSetText("DelAddr2","Lähetusaadress 3");
+  StrSetText("DelAddr3","Lähetusaadress 4");
+  StrSetText("DelAddr4","Lähetusaadress 5");
+  StrSetText("ShipDeal","Lähetustingimus");
+  StrSetText("ShipMode","Lähetusviis");
+
+  StrSetText("SearchKey","Lühikood");
+
+  StrSetText("MinOrdSum","Min. tell. summa");
+  StrSetText("Mobile","Mobiiltelefon");
+  StrSetText("AltPhone","Muu telefon");
+  StrSetText("RemndrFlag","Märgukirjad");
+  StrSetText("CreditLimit","Müügi krediidilimiit");
+  StrSetText("VATCode" ,"Müügi KM-kood");
+  StrSetText("Objects","Müügi objektid");
+  StrSetText("PayDeal","Müügi tas.ting.");
+  StrSetText("SalesGroup","Müügigrupp");
+  StrSetText("SalesMan","Müügimees");
+
+  StrSetText("TheirCode","Nende hankija kood");
+  StrSetText("Name","Nimi");
+  StrSetText("WebDisplays","Näita veebis");
+
+  StrSetText("UserStr1","Omakirjeldatud väli 1");
+  StrSetText("UserStr2","Omakirjeldatud väli 2");
+  StrSetText("UserStr3","Omakirjeldatud väli 3");
+  StrSetText("UserStr4","Omakirjeldatud väli 4");
+  StrSetText("UserStr5","Omakirjeldatud väli 5");
+  StrSetText("UserVal1","Omakirjeldatud väli 6");
+  StrSetText("UserVal2","Omakirjeldatud väli 7");
+  StrSetText("UserVal3","Omakirjeldatud väli 8");
+  StrSetText("UserDate1","Omakirjeldatud väli 9");
+  StrSetText("UserDate2","Omakirjeldatud väli 1");
+  StrSetText("UserDate3","Omakirjeldatud väli 1");
+  StrSetText("OnHoldFlag","Ootel");
+  StrSetText("Department","Osakond");
+  StrSetText("OnAccAccAP","Ostu ettemaksukonto");
+  StrSetText("RefStr","Ostu viide");
+  StrSetText("AccAP","Ostuvõlakonto");
+
+  StrSetText("AccOperator","Pangakood");
+  StrSetText("Person","Peam. kontaktisik");
+  StrSetText("MainDispGroup","Peaklassifikaator");
+
+  StrSetText("RegNr1","Reg.nr.1");
+  StrSetText("RegNr2","Reg.nr.2");
+  StrSetText("Region","Regioon");
+  StrSetText("CountryCode","Riik");
+
+  StrSetText("SIPCode","SIP");
+  StrSetText("SkypeName","Skype nimi");
+  StrSetText("blockedFlag","Suletud");
+
+  StrSetText("Sorting","Teekond");
+  StrSetText("Phone","Telefon");
+  StrSetText("OrderComment","Tell. kommentaar");
+  StrSetText("Salutation1","Tervitus 1");
+  StrSetText("Salutation2","Tervitus 2");
+  StrSetText("Salutation3","Tervitus 3");
+  StrSetText("FreightCode","Transp.kood");
+  StrSetText("FreightNr","Transpordi nr.");
+  StrSetText("CustType","Tüüp");
+
+  StrSetText("CompItemCode","Vaikimisi artikkel");
+  StrSetText("CurncyCode","Valuuta");
+  StrSetText("WebStartPage","Veebi alglehekülg");
+  StrSetText("WebConf","Veebi konverents");
+  StrSetText("wwwAddr","Veebileht");
+  StrSetText("DateChanged","Viimati muudetud");
+  StrSetText("Title","Viisakustiitel");
+  StrSetText("InterestFlag","Viivis");
+  StrSetText("IntRate","Viivise %");
+
+  StrSetText("NoLetterPosting","Ära koosta masskirju");
+  StrSetText("NoMailPosting","Ära koosta massmaile");
+  
+  EndStrSet;
+
+  //pangaliidestus
+  SetBegin(1671);
+  SetText(0,"Uus");
+  SetText(1,"Saadetud");
+  SetText(2,"Vastatud");
+  SetText(3,"Viga");
+  EndSet;
+
+  SetBegin(1672);
+  SetText(0,"Töötlemisel");
+  SetText(1,"Tehtud");
+  SetText(2,"Viga");
+  EndSet;
+
+  //scoro liidestus
+  SetBegin(1680);
+  SetText(0,"Uus");
+  SetText(1,"Saadetud");
+  SetText(2,"Tühistatud");
+  SetText(3,"Viga");
+  EndSet;
+
+  SetBegin(1681);
+  SetText(0,"Puudub");
+  SetText(1,"Käibemaksukoodid");
+  SetText(2,"Isikud");
+  EndSet;
+
+  SetBegin(1682);
+  SetText(0,"Puudub");
+  SetText(1,"Artiklid");
+  SetText(2,"Arved");
+  SetText(3,"Ostuarved");
+  EndSet;  
+
+//Bk SEPA start
+  StrSetBegin(668);
+  StrSetText(SEPA,"SEPA tsoon");
+  StrSetText(Foreign,"Välispank");
+  EndStrSet;
+//Bk SEPA end
+
+//earvete erinouded
+  StrSetBegin(680);
+  StrSetText("ContractNumber","ContractNumber");
+  StrSetText("InvoiceContentCode","InvoiceContentCode");
+  EndStrSet;
+//earvete end
+
+  return;
+end;
+

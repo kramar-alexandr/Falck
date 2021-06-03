@@ -267,7 +267,6 @@ begin
         if (nonblank(RepSpec.f4)) then begin
           testf = (SetinSet2(RepSpec.f4,VEr.Classification));
         end;
-        
         if (instf==false) then begin
           if (nonblank(RepSpec.f3)) then begin
             if (RepSpec.flags[6]==0) then begin

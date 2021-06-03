@@ -1,0 +1,2092 @@
+//Bk //vatinf
+external function roundmode SetRoundModeD(Integer);
+external function val MulRateToBase1(var string,val,val,val,val,val,val,roundmode);
+external procedure CalcKeyRn(string,string,Integer,Integer,string,Integer,Integer,Integer,Integer,string,string,string,var val);
+external procedure MulVATIV(string,val,var val,var val,Integer,Integer);
+external function string 60 AddObjectToObjectList(string,string);
+external procedure GetObjs(string,string,var string);
+external function string 255 AddStr(string,string,string);
+external procedure HT2Per(Date, Date ,var string);
+external function string 255 ConvertXml(string);
+external procedure NewLineExport();
+
+procedure ExportTheLevel(Integer level)
+begin
+  string 255 tstr;
+  Integer i;
+  
+  tstr = "";
+  for (i=0;i<level;i=i+1) begin
+    tstr = tstr & "  ";
+  end;
+  ExportPadString(tstr,len(tstr)," ",false);
+  return;
+end;
+
+procedure ExportPlainString(string value,Integer level)
+begin
+  ExportTheLevel(level);
+  ExportPadString(value,len(value)," ",false);
+  return;
+end;
+
+procedure AddTag_String(string tag,string attrib,string attribvalue,string value,Integer level)
+begin
+  if (blank(value)) then begin
+    if (blank(attrib)) then begin
+      ExportPlainString("<" & tag & "/>",level);
+    end else begin
+      ExportPlainString("<" & tag & " " & attrib & "=" & """" & attribvalue & """" & "/>",level);
+    end;
+  end else begin
+    if (blank(attrib)) then begin
+      ExportPlainString("<" & tag & ">",level);
+    end else begin
+      ExportPlainString("<" & tag & " " & attrib & "=" & """" & attribvalue & """" & ">",level);
+    end;
+    ExportPlainString(ConvertStringToCodePage("UTF-8",ConvertXml(value)),0);
+    ExportPlainString("</" & tag & ">",0);
+  end;
+  NewLineExport;
+  return;
+end;
+
+procedure PrintHeaderAfter(Integer Typ)
+begin
+  Black_Divider(0,1);
+  StartFormat(15);
+  OutString(0,0,"1 - " & USetStr(34565),false);
+  if (Typ == 1) then begin
+    OutString(220,0,"6 - " & USetStr(34570),false);
+  end else begin
+    OutString(220,0,"6 - " & USetStr(34580),false);
+  end;
+  EndFormat;
+  StartFormat(15);
+  OutString(0,0,"2 - " & USetStr(34566),false);
+  if (Typ == 1) then begin
+    OutString(220,0,"7 - " & USetStr(34571),false);
+  end else begin
+    OutString(220,0,"7 - " & USetStr(34581),false);
+  end;
+  EndFormat;
+  StartFormat(15);
+  OutString(0,0,"3 - " & USetStr(34567),false);
+  if (Typ == 1) then begin
+    OutString(220,0,"8 - " & USetStr(34572),false);
+  end else begin
+    OutString(220,0,"8 - " & USetStr(34582),false);
+  end;
+  EndFormat;
+  StartFormat(15);
+  OutString(0,0,"4 - " & USetStr(34568),false);
+  if (Typ == 1) then begin
+    OutString(220,0,"9 - " & USetStr(34573),false);
+  end else begin
+    OutString(220,0,"9 - " & USetStr(34574),false);
+  end;
+  EndFormat;
+  StartFormat(15);
+  OutString(0,0,"5 - " & USetStr(34569),false);
+  if (Typ == 1) then begin
+    OutString(220,0,"10 - " & USetStr(34574),false);
+  end;
+  EndFormat;
+  return;
+end;
+
+procedure PrintHeader(Integer Typ)
+begin
+  StartFormat(15);
+  OutString(0,0,"1",false);
+  OutString(40,0,"2",false);
+  OutString(80,0,"3",false);
+  if (Typ == 1) then begin
+    OutString(180,0,"4",false);
+    OutString(230,0,"5",false);
+    OutString(280,0,"6",true);
+    OutString(330,0,"7",true);
+    OutString(380,0,"8",true);
+    OutString(430,0,"9",true);
+    OutString(1,0,"10",true);
+  end else begin
+    OutString(230,0,"4",false);
+    OutString(280,0,"5",true);
+    OutString(330,0,"6",true);
+    OutString(380,0,"7",true);
+    OutString(430,0,"8",true);
+    OutString(1,0,"9",true);
+  end;
+  EndFormat;
+  Black_Divider(0,1);
+  return;
+end;
+
+procedure PrintRow(Integer rows,string RegNr1,string CUCode,string Name,string SerNr,date TransDate,val psum,string Comment,val pvatsum,val psum2,string objs,Boolean showCompName,Boolean pos_sales,Boolean mothcomp)
+begin
+  val sum,sum2,vatsum;
+  string 60 tstr;
+
+  sum = psum; sum2 = psum2; vatsum = pvatsum;
+  if (sum2 > 0) and (sum2 > sum) then begin
+    sum2 = sum;
+    vatsum = sum;
+  end;
+  if (sum2 < 0) and (sum > sum2) then begin
+    sum2 = sum;
+    vatsum = sum;
+  end;
+  StartFormat(15);
+  OutString(0,0,rows,false);
+  OutString(40,0,Trim(RegNr1),false);
+  if (!showCompName) and (nonblank(RegNr1)) then begin
+    OutString(80,0,"",false);
+  end else begin
+    if (mothcomp) then begin
+      OutStringID(80,"DblCUVc",Name,false,CUCode);
+    end else begin
+      OutStringID(80,0,Name,false,CUCode);
+    end;
+  end;
+  OutString(180,0,SerNr,true);
+  OutDate(230,0,TransDate,true);
+  tstr = ValToString(sum,M4Val,"",".",0);
+  OutString(280,0,tstr,true);
+  OutString(330,0,Comment,true);
+  if (pos_sales) then begin
+    tstr = ValToString(vatsum,M4Val,"",".",0);
+    OutString(380,0,tstr,true);
+  end else begin
+    OutVal(380,0,blankval,M4Val,true);
+  end;
+  tstr = ValToString(sum2,M4Val,"",".",0);
+  OutString(430,0,tstr,true);
+  OutString(1,0,objs,true);
+  EndFormat;
+  return;
+end;
+
+procedure PrintRow2(Integer rows,string RegNr1,string VECode,string Name,string SerNr,date TransDate,val sum,val vatsum,val sum2,string objs,Boolean showCompName,Boolean pos_sales,Boolean mothcomp)
+begin
+  string 60 tstr;
+  
+  StartFormat(15);
+  OutString(0,0,rows,false);
+  OutString(40,0,Trim(RegNr1),false);
+  if (!showCompName) and (nonblank(RegNr1)) then begin
+    OutString(80,0,"",false);
+  end else begin
+    if (mothcomp) then begin
+      OutStringID(80,"DblCUVc",Name,false,VECode);
+    end else begin
+      OutStringID(80,0,Name,false,VECode);
+    end;
+  end;
+  OutString(230,0,SerNr,true);
+  OutDate(280,0,TransDate,true);
+  tstr = ValToString(sum,M4Val,"",".",0);
+  OutString(330,0,tstr,true);
+  if (pos_sales) then begin
+    tstr = ValToString(sum2,M4Val,"",".",0);
+    OutString(380,0,tstr,true);
+  end;
+  tstr = ValToString(sum2,M4Val,"",".",0);
+  OutString(430,0,tstr,true);
+  OutString(1,0,objs,true);
+  EndFormat;
+  return;
+end;
+
+procedure AddRow(Integer rows,string RegNr1,string Name,string SerNr,date TransDate,val psum,string Comment,val pvatsum,val psum2,string objs,Boolean sumf,Boolean showCompName,Boolean pos_sales)
+begin
+  val sum,sum2,vatsum;
+
+  sum = psum; sum2 = psum2; vatsum = pvatsum;
+  if (sum2 > 0) and (sum2 > sum) then begin
+    sum2 = sum;
+    vatsum = sum;
+  end;
+  if (sum2 < 0) and (sum > sum2) then begin
+    sum2 = sum;
+    vatsum = sum;
+  end;
+  ExportPlainString("<saleLine>",3);
+  NewLineExport;
+  AddTag_String("buyerRegCode","","",Trim(RegNr1),4);
+  if (!showCompName) and (nonblank(RegNr1)) then begin
+    AddTag_String("buyerName","","","",4);
+  end else begin
+    AddTag_String("buyerName","","",Name,4);
+  end;
+  AddTag_String("invoiceNumber","","",SerNr,4);
+  if (!sumf) then begin
+    AddTag_String("invoiceDate","","",DateToString(TransDate,"YYYY-MM-DD"),4);
+  end;
+  AddTag_String("invoiceSum","","",ValToString(sum,M4Val,"",".",0),4);
+  AddTag_String("taxRate","","",Comment,4);
+  if (pos_sales) then begin
+    AddTag_String("invoiceSumForRate","","",ValToString(vatsum,M4Val,"",".",0),4);
+  end;
+  if (sum2!=blankval) then begin
+    AddTag_String("sumForRateInPeriod","","",ValToString(sum2,M4Val,"",".",0),4);
+  end;
+  AddTag_String("comments","","",objs,4);
+  ExportPlainString("</saleLine>",3);
+  NewLineExport;
+  return;
+end;
+
+procedure AddRow2(Integer rows,string RegNr1,string Name,string SerNr,date TransDate,val sum,string Comment,val vatsum,val sum2,string objs,Boolean sumf,Boolean showCompName,Boolean pos_sales)
+begin
+  ExportPlainString("<purchaseLine>",3);
+  NewLineExport;
+  AddTag_String("sellerRegCode","","",Trim(RegNr1),4);
+  if (!showCompName) and (nonblank(RegNr1)) then begin
+    AddTag_String("sellerName","","","",4);
+  end else begin
+    AddTag_String("sellerName","","",Name,4);
+  end;
+  AddTag_String("invoiceNumber","","",SerNr,4);
+  if (!sumf) then begin
+    AddTag_String("invoiceDate","","",DateToString(TransDate,"YYYY-MM-DD"),4);
+  end;
+  AddTag_String("invoiceSumVat","","",ValToString(sum,M4Val,"",".",0),4);
+  if (pos_sales) then begin
+    AddTag_String("vatSum","","",ValToString(sum2,M4Val,"",".",0),4);
+  end;
+  AddTag_String("vatInPeriod","","",ValToString(sum2,M4Val,"",".",0),4);
+  AddTag_String("comments","","",objs,4);
+  ExportPlainString("</purchaseLine>",3);
+  NewLineExport;
+  return;
+end;
+
+procedure PrintReportRow(string RegNr1,array string tmpCUCode,array string tmpCUName,record SMVc cuVATr,var Integer rows,Boolean showCompName,Boolean pos_sales,Boolean mothcomp)
+begin
+  row SMVc SMrw;
+  Integer rwcnt,i;
+  
+  rwcnt = MatRowCnt(cuVATr);
+  for (i=0; i<rwcnt; i=i+1) begin
+    MatRowGet(cuVATr,i,SMrw);
+    if (SMrw.CredVal!=blankval) then begin
+      PrintRow(rows,RegNr1,tmpCUCode[SMrw.DebVal2],tmpCUName[SMrw.DebVal2],SMrw.AccNumber,SMrw.TransDate,SMrw.CredVal,SMrw.Comment,SMrw.DebVal,SMrw.DebVal,SMrw.ExtraComment,showCompName,pos_sales,mothcomp);
+      rows = rows + 1;
+    end;
+  end;
+  return;
+end;
+
+procedure PrintReportRow2(string RegNr1,array string tmpVECode,array string tmpVEName,record SMVc cuVATr,var Integer rows,Boolean showCompName,Boolean pos_sales,Boolean mothcomp)
+begin
+  row SMVc SMrw;
+  Integer rwcnt,i;
+
+  rwcnt = MatRowCnt(cuVATr);
+  for (i=0; i<rwcnt; i=i+1) begin
+    MatRowGet(cuVATr,i,SMrw);
+    if (SMrw.CredVal!=blankval) then begin
+      PrintRow2(rows,RegNr1,tmpVECode[SMrw.DebVal2],tmpVEName[SMrw.DebVal2],SMrw.AccNumber,SMrw.TransDate,SMrw.CredVal,blankval,SMrw.DebVal,SMrw.ExtraComment,showCompName,pos_sales,mothcomp);
+      rows = rows + 1;
+    end;
+  end;
+  return;
+end;
+
+procedure AddReportRow(string RegNr1,array string tmpCUName,record SMVc cuVATr,var Integer rows,Boolean sumf,Boolean showCompName,Boolean pos_sales)
+begin
+  row SMVc SMrw;
+  Integer rwcnt,i;
+  
+  rwcnt = MatRowCnt(cuVATr);
+  for (i=0; i<rwcnt; i=i+1) begin
+    MatRowGet(cuVATr,i,SMrw);
+    if (SMrw.CredVal!=blankval) then begin
+      AddRow(rows,RegNr1,tmpCUName[SMrw.DebVal2],SMrw.AccNumber,SMrw.TransDate,SMrw.CredVal,SMrw.Comment,SMrw.DebVal,SMrw.DebVal,SMrw.ExtraComment,sumf,showCompName,pos_sales);
+      rows = rows + 1;
+    end;
+  end;
+  return;
+end;
+
+procedure AddReportRow2(string RegNr1,array string tmpVEName,record SMVc cuVATr,var Integer rows,Boolean sumf,Boolean showCompName,Boolean pos_sales)
+begin
+  row SMVc SMrw;
+  Integer rwcnt,i;
+  
+  rwcnt = MatRowCnt(cuVATr);
+  for (i=0; i<rwcnt; i=i+1) begin
+    MatRowGet(cuVATr,i,SMrw);
+    if (SMrw.CredVal!=blankval) then begin
+      AddRow2(rows,RegNr1,tmpVEName[SMrw.DebVal2],SMrw.AccNumber,SMrw.TransDate,SMrw.CredVal,SMrw.Comment,blankval,SMrw.DebVal,SMrw.ExtraComment,sumf,showCompName,pos_sales);
+      rows = rows + 1;
+    end;
+  end;
+  return;
+end;
+
+procedure SetupVATArray(var record SMVc VATr,var vector boolean vVATCode,var string VATAccStr)
+begin
+  row SMVc SMrw;
+  Integer rwcnt,i,vatcnt,j;
+  record VATCodeBlock VATRec;
+  row VATCodeBlock VATrw;
+  string 20 tstr;
+  val proc;
+  boolean addf;
+  
+  BlockLoad(VATRec);  
+  rwcnt = MatRowCnt(VATRec);
+  vatcnt = 0;
+  for (i=0; i<rwcnt; i=i+1) begin
+    MatRowGet(VATRec,i,VATrw);
+    if (VATrw.ExVatpr > 0) or (VATrw.Tax1pr > 0) then begin
+      addf = false;
+      vVATCode[VATrw.VATCode] = true;
+      if (SetInSet(VATrw.PurchVATAcc,VATAccStr)==false) then begin
+        VATAccStr = AddStr(VATAccStr,VATrw.PurchVATAcc,",");
+      end;
+      if (nonblank(VATrw.Tax1Acc)) then begin
+        if (SetInSet(VATrw.Tax1Acc,VATAccStr)==false) then begin
+          VATAccStr = AddStr(VATAccStr,VATrw.Tax1Acc,",");
+        end;
+      end;
+      for (j=0; j<vatcnt; j=j+1) begin
+        MatRowGet(VATr,j,SMrw);
+        if (SMrw.CurCredVal == VATrw.ExVatpr) and (SMrw.CredVal2 == VATrw.Tax1pr) then begin
+          SMrw.Objects = SMrw.Objects & "," & VATrw.VATCode;
+          MatRowPut(VATr,j,SMrw);
+          addf = true;
+        end;
+      end;
+      if (addf == false) then begin
+        if (blank(VATrw.ExVatpr) or (VATrw.ExVatpr==0)) then begin
+          proc = VATrw.Tax1pr;
+        end else begin
+          proc = VATrw.ExVatpr;
+        end;
+        tstr = ValToString(proc,M4UVal,"","",0);
+        SMrw.VATCode = "0";
+        SMrw.Objects = VATrw.VATCode;
+        SMrw.Comment = tstr;
+        SMrw.CurCredVal = VATrw.ExVatpr;
+        SMrw.CredVal2 = VATrw.Tax1pr;
+        MatRowPut(VATr,vatcnt,SMrw);
+        vatcnt = vatcnt + 1;
+        tstr = tstr & USetStr(34575);
+        SMrw.VATCode = "1";
+        SMrw.Objects = VATrw.VATCode;
+        SMrw.Comment = tstr;
+        SMrw.CurCredVal = VATrw.ExVatpr;
+        SMrw.CredVal2 = VATrw.Tax1pr;
+        MatRowPut(VATr,vatcnt,SMrw);
+        vatcnt = vatcnt + 1;
+      end;
+    end;
+  end;
+  return;
+end;
+
+procedure ClearVATRecordValues(var record SMVc VATr)
+begin
+  row SMVc SMrw;
+  Integer rwcnt,i;
+  Date blankd;
+
+  rwcnt = MatRowCnt(VATr);
+  for (i=0; i<rwcnt; i=i+1) begin
+    MatRowGet(VATr,i,SMrw);
+    SMrw.DebVal = blankval;
+    SMrw.CredVal = blankval;
+    SMrw.AccNumber = "";
+    SMrw.ExtraComment = "";
+    SMrw.TransDate = blankd;
+    MatRowPut(VATr,i,SMrw);
+  end;
+  return;
+end;
+
+procedure AddVATRecordValues(var record SMVc VATr,string VATCode,string SerNr,date ivdate,val v,val ivsum,string specialsales,string objs,Integer pos)
+begin
+  row SMVc SMrw;
+  Integer rwcnt,i;
+
+  if (blank(VATCode)) then begin
+    rwcnt = MatRowCnt(VATr);
+    for (i=0; i<rwcnt; i=i+1) begin
+      MatRowGet(VATr,i,SMrw);
+      if (SMrw.VATCode == specialsales) then begin
+        SMrw.DebVal = SMrw.DebVal + v;
+        SMrw.CredVal = ivsum;
+        SMrw.AccNumber = SerNr;
+        SMrw.ExtraComment = AddObjectToObjectList(SMrw.ExtraComment,objs);
+        SMrw.TransDate = ivdate;
+        SMrw.DebVal2 = pos;
+        MatRowPut(VATr,i,SMrw);
+        i = rwcnt;
+      end;
+    end;
+  end else begin
+    rwcnt = MatRowCnt(VATr);
+    for (i=0; i<rwcnt; i=i+1) begin
+      MatRowGet(VATr,i,SMrw);
+      if (SMrw.VATCode == specialsales) and (SetInSet(VATCode,SMrw.Objects)) then begin
+        if (blank(VATCode) or (SMrw.CurCredVal > 0)) then begin
+          SMrw.DebVal = SMrw.DebVal + v;
+        end;
+        SMrw.CredVal = ivsum;
+        SMrw.AccNumber = SerNr;
+        SMrw.ExtraComment = AddObjectToObjectList(SMrw.ExtraComment,objs);
+        SMrw.TransDate = ivdate;
+        SMrw.DebVal2 = pos;
+        MatRowPut(VATr,i,SMrw);
+        i = rwcnt;
+      end;
+    end;
+  end;
+  return;
+end;
+
+procedure CalcVATFromTR(LongInt VISerNr,string VATAccStr,var val v)
+begin
+  record TRVc TRr;
+  row TRVc TRrw;
+  Integer rwcnt,i;
+  
+  v = 0;
+  TRr.IntYc = VIYc;
+  TRr.Number = VISerNr;
+  if (ReadFirstMain(TRr,2,true)) then begin
+    rwcnt = MatRowCnt(TRr);
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(TRr,i,TRrw);
+      if ((TRrw.stp == 1) and (TRrw.ovst == 0)) then begin
+        if (SetInSet(TRrw.AccNumber,VATAccStr) == true) then begin
+          v = v + TRrw.DebVal - TRrw.CredVal;
+        end;
+      end;
+    end;
+  end;
+  return;
+end;
+
+procedure AddVATToVATArray(record SMVc VATInr,var record SMVc TotVATr,Integer addline)
+BEGIN
+  Integer i,vatcnt,vatrow;
+  row SMVc VATInrw;
+  row SMVc TotVATrw;
+  
+  if (addline==0) then begin
+    vatcnt = MatRowCnt(VATInr);
+    for (i=0;i<vatcnt;i=i+1) begin
+      MatRowGet(VATInr,i,VATInrw);
+      MatRowGet(TotVATr,i,TotVATrw);
+      TotVATrw.VATCode = VATInrw.VATCode;
+      TotVATrw.Objects = VATInrw.Objects;
+      TotVATrw.Comment = VATInrw.Comment;
+      TotVATrw.DebVal = TotVATrw.DebVal + VATInrw.DebVal;
+      TotVATrw.CredVal = TotVATrw.CredVal + VATInrw.CredVal;
+      TotVATrw.CurCredVal = VATInrw.CurCredVal;
+      TotVATrw.CredVal2 = VATInrw.CredVal2;
+      MatRowPut(TotVATr,i,TotVATrw);
+    end;
+  end else begin
+    vatcnt = MatRowCnt(VATInr);
+    vatrow = MatRowCnt(TotVATr);
+    for (i=0;i<vatcnt;i=i+1) begin
+      MatRowGet(VATInr,i,VATInrw);
+      MatRowPut(TotVATr,vatrow,VATInrw);
+      vatrow = vatrow + 1;
+    end;
+  end;
+  RETURN;
+END;
+
+procedure AddIVToVATArray(record IVVc IVr,var record SMVc ivVATr,vector boolean vVATCode,string extobjs,string ObjType,var val totsales,var val totcredit,Boolean showOfficialSerNr,Integer pos)
+begin
+  record IVVc orgIVr;
+  row IVVc IVrw;
+  Integer i,rwcnt;
+  val frrate,to1,to2,br1,br2;
+  val v,vb1,ivsumb1,taxsum,vatsum;
+  string 60 objs,mainobjs,node,SerNr;
+  Boolean vatf;
+
+  ClearVATRecordValues(ivVATr);
+  frrate = IVr.FrRate;
+  to1 = IVr.ToRateB1;
+  to2 = IVr.ToRateB2;
+  br1 = IVr.BaseRate1;
+  br2 = IVr.BaseRate2;
+  if (IVr.InvType==kInvoiceTypeCredit or IVr.InvType==kInvoiceTypeCreditSpecialSales) then begin
+    orgIVr.SerNr = IVr.CredInv;
+    if (ReadFirstMain(orgIVr,1,true)) then begin
+      frrate = orgIVr.FrRate;
+      to1 = orgIVr.ToRateB1;
+      to2 = orgIVr.ToRateB2;
+      br1 = orgIVr.BaseRate1;
+      br2 = orgIVr.BaseRate2;
+    end;
+  end;
+  if (IVr.InclVAT!=0) then begin
+    v = IVr.Sum4 - IVr.Sum3;
+  end else begin
+    v = IVr.Sum1;
+  end;
+  ivsumb1 = MulRateToBase1(IVr.CurncyCode,v,frrate,to1,to2,br1,br2,DefaultCurRoundOff);        
+  if (IVr.InvType==kInvoiceTypeCredit or IVr.InvType==kInvoiceTypeCreditSpecialSales) then begin
+    ivsumb1 = -ivsumb1;
+  end;
+  if (nonblank(ObjType)) then begin
+    GetObjs(ObjType,IVr.Objects,mainobjs);
+  end;
+  rwcnt = MatRowCnt(IVr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(IVr,i,IVrw);
+    if ((IVrw.stp==kInvoiceRowTypeNormal) or (IVrw.stp==kInvoiceRowTypeStructuredItemComponent) or (IVrw.stp==kInvoiceRowTypeDownpayment) or (IVrw.stp==kInvoiceRowTypeCorrection) or (IVrw.stp==kInvoiceRowTypeInterest)) then begin
+      if (vVATCode[IVrw.VATCode]==true) then begin
+        vatf = true;
+        if (blank(mainobjs)) then begin
+          if (nonblank(ObjType)) then begin
+            GetObjs(ObjType,IVrw.Objects,objs);
+          end;
+        end;
+        node = "0";
+
+        if ((nonblank(objs) and (SetInSet(objs,extobjs))) or (nonblank(mainobjs) and (SetInSet(mainobjs,extobjs)))) then begin
+          node = "1";
+        end;
+        v = IVrw.Sum;
+        if (IVr.InclVAT!=0) then begin 
+          MulVATIV(IVrw.VATCode,IVrw.Sum,vatsum,taxsum,IVr.InclVAT,IVr.NoTAXonVAT);
+          v = v - vatsum;
+        end;
+        vb1 = MulRateToBase1(IVr.CurncyCode,v,frrate,to1,to2,br1,br2,DefaultCurRoundOff);        
+        if (IVr.InvType==kInvoiceTypeCredit or IVr.InvType==kInvoiceTypeCreditSpecialSales) then begin
+          if (IVrw.stp!=kInvoiceRowTypeCorrection) then begin
+            vb1 = -vb1;
+          end;
+        end;
+        SerNr = IVr.SerNr;
+        if (showOfficialSerNr) and nonblank(IVr.OfficialSerNr) then begin
+          SerNr = IVr.OfficialSerNr;
+        end;
+        AddVATRecordValues(ivVATr,IVrw.VATCode,SerNr,IVr.InvDate,vb1,ivsumb1,node,objs & mainobjs,pos);
+      end;
+    end;
+  end;
+  if (vatf) then begin
+    if (IVr.InvType==kInvoiceTypeCredit or IVr.InvType==kInvoiceTypeCreditSpecialSales) then begin
+      totcredit = totcredit - ivsumb1;
+    end else begin
+      totsales = totsales + ivsumb1;
+    end;
+  end;
+  return;
+end;
+
+function boolean CuCheckSLLimitInPeriod(string CUCode,date SDate,date EDate,val LimitSL,vector boolean vVATCode,string extobjs,record SMVc VATr,var record SMVc cuVATr,string ObjType,Integer Print,Boolean sumf,Boolean showOfficialSerNr,var Integer rows,var val totsales,var val totcredit,Integer pos,var LongInt IVLooppos)
+begin
+  record IPrsVc IPrsr;
+  record IVVc IVr,orgIVr;
+  row IVVc IVrw;
+  record SMVc ivVATr;
+  record SMVc credIvVATr;
+  Integer rwcnt,i;
+  Boolean res,foundf,testf,vatf;
+  val v,vb1;
+
+  AddVATToVATArray(VATr,ivVATr,0);
+
+  if (IVLooppos > -1) then begin
+    SetLoopPosition(IPrsr,IVLooppos);
+  end;
+  IPrsr.CustCode = CUCode;
+  IPrsr.TransDate = SDate;
+  foundf = true;
+  while (LoopKey("CustTransKey",IPrsr,2,foundf)) begin
+    if (IPrsr.CustCode!=CUCode) then begin foundf = false; end;
+    if (IPrsr.TransDate>EDate) then begin foundf = false; end;
+    if (foundf) then begin
+      switch (IPrsr.TransType) begin
+        case kIPrsTransTypeInvoice:
+          IVr.SerNr = IPrsr.TransNr;
+          testf = true;
+          if (ReadFirstMain(IVr,1,true)==false) then begin testf = false; end;
+          if (IVr.OKFlag==0) then begin testf = false; end;
+          if (IVr.Invalid!=0) then begin testf = false; end;          
+          if (IVr.InvType==kInvoiceTypePrepayment) then begin testf = false; end;
+          if (testf) then begin
+            if (Print == 1) then begin
+              AddIVToVATArray(IVr,ivVATr,vVATCode,extobjs,ObjType,totsales,totcredit,showOfficialSerNr,pos);
+              if (sumf) then begin
+                AddVATToVATArray(ivVATr,cuVATr,0);
+              end else begin
+                AddVATToVATArray(ivVATr,cuVATr,1);              
+              end;
+//Bk - start: TS 2015/06
+              if (MatRowCnt(cuVATr) >= 32000) then begin
+                IVLooppos = GetLoopPosition(IPrsr);
+                goto LCuCheckSLLimitInPeriod;
+              end;
+//Bk - end
+            end else begin
+              vatf = false;
+              rwcnt = MatRowCnt(IVr);
+              for (i=0; i<rwcnt; i=i+1) begin
+                MatRowGet(IVr,i,IVrw);
+                if (IVrw.ovst==0) and ((IVrw.stp==kInvoiceRowTypeNormal) or (IVrw.stp==kInvoiceRowTypeStructuredItemComponent) or (IVrw.stp==kInvoiceRowTypeDownpayment) or (IVrw.stp==kInvoiceRowTypeCorrection) or (IVrw.stp==kInvoiceRowTypeInterest)) then begin      
+                  if (vVATCode[IVrw.VATCode]==true) then begin
+                    vatf = true;
+                    i = rwcnt;
+                  end;
+                end;
+              end;
+              if (vatf) then begin
+                if (IVr.InclVAT!=0) then begin
+                  v = IVr.Sum4 - IVr.Sum3;
+                end else begin
+                  v = IVr.Sum1;
+                end;
+                vb1 = MulRateToBase1(IVr.CurncyCode,v,IVr.FrRate,IVr.ToRateB1,IVr.ToRateB2,IVr.BaseRate1,IVr.BaseRate2,DefaultCurRoundOff);        
+                if (IVr.InvType==kInvoiceTypeCredit or IVr.InvType==kInvoiceTypeCreditSpecialSales) and (IVr.CredInv!=-1) then begin
+                  totcredit = totcredit + vb1;
+                  if (totcredit >= LimitSL) then begin
+                    res = true;
+                    goto LCuCheckSLLimitInPeriod;
+                  end;
+                end else begin
+                  totsales = totsales + vb1;
+                  if (totsales >= LimitSL) then begin
+                    res = true;
+                    goto LCuCheckSLLimitInPeriod;
+                  end;
+                end;
+              end;
+            end;
+          end;
+      end;
+    end;
+  end;
+  IVLooppos = -1;
+LCuCheckSLLimitInPeriod:;
+  CuCheckSLLimitInPeriod = res;
+  return;
+end;
+
+function boolean CheckSLLimitInPeriod(date SDate,date EDate,val LimitSL,vector boolean vVATCode,string extobjs,var string LastCUChecked,record SMVc VATr,string ObjType,Integer Print,Boolean sumf,Boolean showOfficialSerNr,Boolean Expf,Boolean showCompName,Boolean pos_sales,Boolean mothcomp)
+begin
+  record CUVc CUr;
+  record SMVc cuVATr;
+  string 20 CUrRegNr;
+  array string 20 tmpCUCode;
+  array string 200 tmpCUName;
+  Integer rows,pos;
+  Boolean res,TrHs,testf;
+  val v,totsales,totcredit;
+  LongInt IVLooppos;
+
+  rows = 1;
+  res = false;
+  CUr.RegNr1 = LastCUChecked;
+  TrHs = true;
+  while (LoopKey("RegNr1",CUr,1,TrHs)) begin
+    testf = true;
+    if (CUr.CUType <> 1) then begin testf = false; end;
+    if (CUr.CustType == 1) then begin testf = false; end;
+    if (CUr.ExportFlag <> 0) then begin testf = false; end;
+    if (TrHs and testf) then begin
+      if (CUr.RegNr1 <> CUrRegNr) or (blank(CUr.RegNr1)) then begin
+        if (totsales >= LimitSL) or (totcredit >= LimitSL) then begin
+          res = true;
+          if (Print == 0) then begin
+            if (blank(LastCUChecked)) then begin LastCUChecked = CurRegNr; end;
+            goto LCheckSLLimitInPeriod;
+          end;
+          if (Expf) then begin
+            AddReportRow(CUrRegNr,tmpCUName,cuVATr,rows,sumf,showCompName,pos_sales);
+          end else begin
+            PrintReportRow(CUrRegNr,tmpCUCode,tmpCUName,cuVATr,rows,showCompName,pos_sales,mothcomp);
+          end;
+        end;
+        RecordClear(cuVATr);  
+        totsales = 0;
+        totcredit = 0;
+        pos = 0;
+      end;
+IVRepeatLoop:;
+      res = CuCheckSLLimitInPeriod(CUr.Code,SDate,EDate,LimitSL,vVATCode,extobjs,VATr,cuVATr,ObjType,Print,sumf,showOfficialSerNr,rows,totsales,totcredit,pos,IVLooppos);
+      if (Print == 0) and (res) then begin
+        if (blank(LastCUChecked)) then begin LastCUChecked = CurRegNr; end;
+        goto LCheckSLLimitInPeriod;
+      end;
+      tmpCUCode[pos] = CUr.Code;
+      tmpCUName[pos] = CUr.Name;
+      CurRegNr = CUr.RegNr1;
+      pos = pos + 1;
+//Bk - start: TS 2015/06
+      if (IVLooppos > 0) then begin
+        if (Expf) then begin
+          AddReportRow(CUrRegNr,tmpCUName,cuVATr,rows,sumf,showCompName,pos_sales);
+        end else begin
+          PrintReportRow(CUrRegNr,tmpCUCode,tmpCUName,cuVATr,rows,showCompName,pos_sales,mothcomp);
+        end;
+        RecordClear(cuVATr);  
+        pos = 0;
+        goto IVRepeatLoop;
+      end;
+//Bk - end
+    end;
+  end;
+  if (totsales >= LimitSL) or (totcredit >= LimitSL) then begin
+    if (Expf) then begin
+      AddReportRow(CurRegNr,tmpCUName,cuVATr,rows,sumf,showCompName,pos_sales);
+    end else begin
+      PrintReportRow(CurRegNr,tmpCUCode,tmpCUName,cuVATr,rows,showCompName,pos_sales,mothcomp);
+    end;
+  end;
+LCheckSLLimitInPeriod:;
+  CheckSLLimitInPeriod = res;
+  return;
+end;
+
+procedure AddVIToVATArray(record VIVc VIr,var record SMVc viVATr,vector boolean vVATCode,string VATAccStr,Integer VATCalcType,string extobjs,string ObjType,var val totpurchase,var val totcredit,Integer pos)
+begin
+  record VIVc orgVIr;
+  row VIVc VIrw;
+  Integer i,rwcnt;
+  val frrate,to1,to2,br1,br2;
+  val v,t1,rowsumb1,vb1,visumb1,calcvb1;
+  string 60 newobjs,objs,mainobjs,node;
+  string 255 accstr;
+  Boolean vatf;
+
+  ClearVATRecordValues(viVATr);
+  frrate = VIr.FrRate;
+  to1 = VIr.ToRateB1;
+  to2 = VIr.ToRateB2;
+  br1 = VIr.BaseRate1;
+  br2 = VIr.BaseRate2;
+  if (VIr.InvType==kInvoiceTypeCredit or VIr.InvType==kInvoiceTypeCreditSpecialSales) then begin
+    orgVIr.SerNr = VIr.CredInv;
+    if (ReadFirstMain(orgVIr,1,true)) then begin
+      frrate = orgVIr.FrRate;
+      to1 = orgVIr.ToRateB1;
+      to2 = orgVIr.ToRateB2;
+      br1 = orgVIr.BaseRate1;
+      br2 = orgVIr.BaseRate2;
+    end;
+  end;
+  v = VIr.PayVal;
+  visumb1 = MulRateToBase1(VIr.CurncyCode,v,frrate,to1,to2,br1,br2,DefaultCurRoundOff);        
+  v = VIr.VATVal;
+  vb1 = MulRateToBase1(VIr.CurncyCode,v,frrate,to1,to2,br1,br2,DefaultCurRoundOff);        
+  switch (VATCalcType) begin
+    case 0:
+      v = VIr.CalcVATVal + VIr.TAX1Sum;
+      calcvb1 = MulRateToBase1(VIr.CurncyCode,v,frrate,to1,to2,br1,br2,DefaultCurRoundOff);        
+    case 1: calcvb1 = vb1;
+    case 2: CalcVATFromTR(VIr.SerNr,VATAccStr,calcvb1);
+  end;
+  if (VIr.InvType==kInvoiceTypeCredit or VIr.InvType==kInvoiceTypeCreditSpecialSales) then begin
+    if (VIrw.stp!=kInvoiceRowTypeCorrection) then begin
+      visumb1 = -visumb1;
+      if (VATCalcType != 2) then begin
+        calcvb1 = -calcvb1;
+      end;
+      vb1 = -vb1;
+    end;
+  end;
+  if (nonblank(ObjType)) then begin
+    GetObjs(ObjType,VIr.Objects,mainobjs);
+  end;
+  node = "0";
+  rwcnt = MatRowCnt(VIr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(VIr,i,VIrw);
+    if ((VIrw.stp==kInvoiceRowTypeNormal) or (VIrw.stp==kInvoiceRowTypeStructuredItemComponent) or (VIrw.stp==kInvoiceRowTypeDownpayment) or (VIrw.stp==kInvoiceRowTypeCorrection) or (VIrw.stp==kInvoiceRowTypeInterest)) then begin
+      if (vVATCode[VIrw.VATCode]==true) then begin
+        vatf = true;
+        if (nonblank(ObjType)) then begin
+          GetObjs(ObjType,VIrw.Objects,newobjs);
+          if (SetInSet(newobjs,objs)) then begin
+            objs = AddStr(objs,newobjs,",");
+          end;
+        end;
+      end;
+    end;
+  end;
+  if (vatf) then begin
+    if ((nonblank(objs) and (SetInSet(objs,extobjs))) or (nonblank(mainobjs) and (SetInSet(mainobjs,extobjs)))) then begin
+      node = "1";
+    end;
+    AddVATRecordValues(viVATr,"",VIr.InvoiceNr,VIr.InvDate,calcvb1,visumb1,node,objs & mainobjs,pos);
+    if (VIr.InvType==kInvoiceTypeCredit or VIr.InvType==kInvoiceTypeCreditSpecialSales) then begin
+      totcredit = totcredit - visumb1 + vb1;
+    end else begin
+      totpurchase = totpurchase + visumb1 - vb1;
+    end;
+  end;
+  return;
+end;
+
+procedure AddExpToVATArray(record ExpVc Expr,string VECode,var record SMVc veVATr,record SMVc VATr,vector boolean vVATCode,string extobjs,string ObjType,var val totpurchase,var val totcredit,Boolean sumf,Integer pos)
+begin
+  row ExpVc Exprw;
+  record SMVc viVATr;
+  Integer i,rwcnt;
+  val frrate,to1,to2,br1,br2;
+  val v,vb1,rowsumb1,visumb1;
+  string 60 objs,node;
+  string 20 prevdocnr;
+  vector val vDocNr;
+  vector val v2DocNr;
+  vector boolean VIChecked;
+  Boolean addf;
+  date td;
+
+  AddVATToVATArray(VATr,viVATr,0);
+
+  SortRows(Expr,"DocNr",true);
+  rwcnt = MatRowCnt(Expr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(Expr,i,Exprw);
+    if (Exprw.VECode == VECode) and (nonblank(Exprw.DocNr)) then begin
+      vDocNr[Exprw.DocNr] = vDocNr[Exprw.DocNr] + Exprw.Sum;
+      v2DocNr[Exprw.DocNr] = v2DocNr[Exprw.DocNr] + Exprw.Sum - Exprw.VATSum;
+    end;
+  end;
+  frrate = Expr.FrRate;
+  to1 = Expr.ToRateB1;
+  to2 = Expr.ToRateB2;
+  br1 = Expr.BaseRate1;
+  br2 = Expr.BaseRate2;
+  rwcnt = MatRowCnt(Expr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(Expr,i,Exprw);
+    if (Exprw.VECode == VECode) then begin
+      if (vVATCode[Exprw.VATCode]==true) then begin
+        if ((addf) and (blank(Exprw.DocNr) or (prevdocnr!=Exprw.DocNr))) then begin
+          if (sumf) then begin
+            AddVATToVATArray(viVATr,veVATr,0);
+          end else begin
+            AddVATToVATArray(viVATr,veVATr,1);              
+          end;
+          RecordClear(viVATr);
+          AddVATToVATArray(VATr,viVATr,0);
+        end;
+        GetObjs(ObjType,Exprw.Objects,objs);
+        node = "0";
+        if ((nonblank(objs) and (SetInSet(objs,extobjs)))) then begin
+          node = "1";
+        end;
+        if (blank(Exprw.DocNr)) then begin
+          v = Exprw.Sum;
+        end else begin
+          v = vDocNr[Exprw.DocNr];
+        end;
+        visumb1 = MulRateToBase1(Expr.CurncyCode,v,frrate,to1,to2,br1,br2,DefaultCurRoundOff);        
+        v = Exprw.Sum - Exprw.VATSum;
+        rowsumb1 = MulRateToBase1(Expr.CurncyCode,v,frrate,to1,to2,br1,br2,DefaultCurRoundOff);        
+        v = Exprw.VATSum;
+        vb1 = MulRateToBase1(Expr.CurncyCode,v,frrate,to1,to2,br1,br2,DefaultCurRoundOff);        
+        td = Expr.DocDate;
+        if (nonblank(Exprw.ExpDate)) then begin
+          td = Exprw.ExpDate;
+        end;
+        AddVATRecordValues(viVATr,"",Exprw.DocNr,td,vb1,visumb1,node,objs,pos);
+        addf = true;
+        if (blank(Exprw.DocNr)) then begin
+          totpurchase = totpurchase + rowsumb1;
+        end else begin
+          if (VIChecked[Exprw.DocNr]==false) then begin
+            totpurchase = totpurchase + v2DocNr[Exprw.DocNr];
+            VIChecked[Exprw.DocNr] = true;
+          end;
+        end;
+        prevdocnr = Exprw.DocNr;
+      end;
+    end;
+  end;
+  if (addf) then begin
+    if (sumf) then begin
+      AddVATToVATArray(viVATr,veVATr,0);
+    end else begin
+      AddVATToVATArray(viVATr,veVATr,1);              
+    end;
+  end;
+  return;
+end;
+
+function boolean veCheckPLLimitInPeriod(string VECode,date SDate,date EDate,val LimitPL,vector boolean vVATCode,string VATAccStr,Integer VATCalcType,string extobjs,record SMVc VATr,var record SMVc veVATr,string ObjType,Integer Print,Boolean sumf,var Integer rows,var val totpurchase,var val totcredit,Integer pos,var LongInt VILooppos,var LongInt ExpLooppos)
+begin
+  record OPrsVc OPrsr;
+  record VIVc VIr;
+  row VIVc VIrw;
+  record ExpVc Expr;
+  row ExpVc Exprw;
+  record SMVc viVATr;
+  Integer rwcnt,i;
+  Boolean res,foundf,testf,vatf;
+  val v,vb1;
+
+  AddVATToVATArray(VATr,viVATr,0);
+
+  if (VILooppos > -1) then begin
+    SetLoopPosition(OPrsr,VILooppos);
+  end;
+  OPrsr.VECode = VECode;
+  OPrsr.TransDate = SDate;
+  foundf = true;
+  while (LoopKey("MainKey",OPrsr,2,foundf)) begin
+    if (OPrsr.VECode!=VECode) then begin foundf = false; end;
+    if (OPrsr.TransDate>EDate) then begin foundf = false; end;
+    if (foundf) then begin	
+      switch (OPrsr.TransType) begin
+        case kOPrsTransTypeInvoice:
+          VIr.SerNr = OPrsr.TransNr;
+          testf = true;
+          if (ReadFirstMain(VIr,1,true)==false) then begin testf = false; end;        
+          if (VIr.OKFlag==0) then begin testf = false; end;
+          if (VIr.Invalid!=0) then begin testf = false; end;
+          if (VIr.InvType==kInvoiceTypePrepayment) then begin testf = false; end;
+          if (testf) then begin
+            if (Print == 1) then begin
+              AddVIToVATArray(VIr,viVATr,vVATCode,VATAccStr,VATCalcType,extobjs,ObjType,totpurchase,totcredit,pos);
+              if (sumf) then begin
+                AddVATToVATArray(viVATr,veVATr,0);
+              end else begin
+                AddVATToVATArray(viVATr,veVATr,1);              
+              end;
+//Bk - start: TS 2015/06
+              if (MatRowCnt(veVATr) >= 32000) then begin
+                VILooppos = GetLoopPosition(OPrsr);
+                goto LveCheckPLLimitInPeriod;
+              end;
+//Bk - end
+            end else begin
+              vatf = false;
+              rwcnt = MatRowCnt(VIr);
+              for (i=0; i<rwcnt; i=i+1) begin
+                MatRowGet(VIr,i,VIrw);
+                if (VIrw.ovst==0) and ((VIrw.stp==kInvoiceRowTypeNormal) or (VIrw.stp==kInvoiceRowTypeStructuredItemComponent) or (VIrw.stp==kInvoiceRowTypeInterest)) then begin      
+                  if (vVATCode[VIrw.VATCode]==true) then begin
+                    vatf = true;
+                    i = rwcnt;
+                  end;
+                end;
+              end;
+              if (vatf) then begin
+                v = VIr.PayVal - VIr.VATVal;
+                vb1 = MulRateToBase1(VIr.CurncyCode,v,VIr.FrRate,VIr.ToRateB1,VIr.ToRateB2,VIr.BaseRate1,VIr.BaseRate2,DefaultCurRoundOff);        
+                if ((VIr.InvType==kInvoiceTypeCredit or VIr.InvType==kInvoiceTypeCreditSpecialSales)) then begin
+                  totcredit = totcredit + vb1;
+                  if (totcredit >= LimitPL) then begin
+                    res = true;
+                    goto LveCheckPLLimitInPeriod;
+                  end;
+                end else begin
+                  totpurchase = totpurchase + vb1;
+                  if (totpurchase >= LimitPL) then begin
+                    res = true;
+                    goto LveCheckPLLimitInPeriod;
+                  end;
+                end;
+              end;
+            end;
+          end;
+      end;
+    end;
+  end;
+  VILooppos = -1;
+  if (ExpLooppos > -1) then begin
+    SetLoopPosition(Expr,ExpLooppos);
+  end;
+  Expr.TransDate = SDate;
+  foundf = true;
+  ResetLoop(Expr);
+  while (LoopKey("TransDate",Expr,1,foundf)) begin
+    if (Expr.TransDate>EDate) then begin
+      foundf = false;
+    end;  
+    if (foundf) then begin
+      testf = true;
+      if (Expr.OKFlag == 0) then begin
+        testf = false;
+      end;
+      if (Expr.Invalid!=0) then begin testf = false; end;
+      if (testf) then begin
+        if (Print == 1) then begin
+          AddExpToVATArray(Expr,VECode,veVATr,VATr,vVATCode,extobjs,ObjType,totpurchase,totcredit,sumf,pos);
+//Bk - start: TS 2015/06
+          if (MatRowCnt(veVATr) >= 32000) then begin
+            ExpLooppos = GetLoopPosition(Expr);
+            goto LveCheckPLLimitInPeriod;
+          end;
+//Bk - end
+        end else begin
+          rwcnt = MatRowCnt(Expr);
+          for (i=0;i<rwcnt;i=i+1) begin
+            MatRowGet(Expr,i,Exprw);
+            if (Exprw.VECode == VECode) then begin
+              if (vVATCode[Exprw.VATCode]==true) then begin
+                v = Exprw.Sum - Exprw.VATSum;
+                vb1 = MulRateToBase1(Expr.CurncyCode,v,Expr.FrRate,Expr.ToRateB1,Expr.ToRateB2,Expr.BaseRate1,Expr.BaseRate2,DefaultCurRoundOff);        
+                totpurchase = totpurchase + vb1;
+                if (totpurchase >= LimitPL) then begin
+                  res = true;
+                  goto LveCheckPLLimitInPeriod;
+                end;
+              end;
+            end;
+          end;
+        end;
+      end;
+    end;
+  end;
+  ExpLooppos = -1;
+LveCheckPLLimitInPeriod:;
+  veCheckPLLimitInPeriod = res;
+  return;
+end;
+
+function boolean CheckPLLimitInPeriod(date SDate,date EDate,val LimitPL,vector boolean vVATCode,string VATAccStr,Integer VATCalcType,string extobjs,var string LastVEChecked,record SMVc VATr,string ObjType,Integer Print,Boolean sumf,boolean Expf,Boolean showCompName,Boolean pos_sales,boolean mothcomp)
+begin
+  record CUVc VEr;
+  record SMVc veVATr;
+  string 20 VErRegNr;
+  array string 20 tmpVECode;
+  array string 200 tmpVEName;
+  Boolean res,TrHs,testf;
+  Integer rows,pos;
+  val totpurchase,totcredit;
+  LongInt VILooppos,ExpLooppos;
+  
+  rows = 1;
+  res = false;
+  VEr.RegNr1 = LastVEChecked;
+  TrHs = true;
+  ResetLoop(VEr);
+  while (LoopKey("RegNr1",VEr,1,TrHs)) begin
+    testf = true;
+    if (VEr.VEType <> 1) then begin testf = false; end;
+    if (VEr.CustType == 1) then begin testf = false; end;
+    if (VEr.ExportFlag <> 0) then begin testf = false; end;
+    if (TrHs and testf) then begin
+      if (VEr.RegNr1 <> VErRegNr) or (blank(VEr.RegNr1)) then begin
+        if (totpurchase >= LimitPL) or (totcredit >= LimitPL) then begin
+          res = true;
+          if (Print == 0) then begin
+            if (blank(LastVEChecked)) then begin LastVEChecked = VErRegNr; end;
+            goto LCheckPLLimitInPeriod;
+          end;
+          if (Expf) then begin
+            AddReportRow2(VErRegNr,tmpVEName,veVATr,rows,sumf,showCompName,pos_sales);
+          end else begin
+            PrintReportRow2(VErRegNr,tmpVECode,tmpVEName,veVATr,rows,showCompName,pos_sales,mothcomp);
+          end;
+        end;
+        RecordClear(veVATr);  
+        totpurchase = 0;
+        totcredit = 0;
+        pos = 0;
+      end;
+VIRepeatLoop:;
+      res = veCheckPLLimitInPeriod(VEr.Code,SDate,EDate,LimitPL,vVATCode,VATAccStr,VATCalcType,extobjs,VATr,veVATr,ObjType,Print,sumf,rows,totpurchase,totcredit,pos,VILooppos,ExpLooppos);
+      if (Print == 0) and (res) then begin
+        LastVEChecked = VEr.RegNr1;
+        goto LCheckPLLimitInPeriod;
+      end;
+      tmpVECode[pos] = VEr.Code;
+      tmpVEName[pos] = VEr.Name;
+      VErRegNr = VEr.RegNr1;
+      pos = pos + 1;
+//Bk - start: TS 2015/06
+      if (VILooppos > 0) or (ExpLooppos > 0) then begin
+        if (Expf) then begin
+          AddReportRow2(VErRegNr,tmpVEName,veVATr,rows,sumf,showCompName,pos_sales);
+        end else begin
+          PrintReportRow2(VErRegNr,tmpVECode,tmpVEName,veVATr,rows,showCompName,pos_sales,mothcomp);
+        end;
+        RecordClear(veVATr);  
+        pos = 0;
+        goto VIRepeatLoop;
+      end;
+//Bk - end
+    end;
+  end;
+  if (totpurchase >= LimitPL) or (totcredit >= LimitPL) then begin
+    if (Expf) then begin
+      AddReportRow2(VErRegNr,tmpVEName,veVATr,rows,sumf,showCompName,pos_sales);
+    end else begin
+      PrintReportRow2(VErRegNr,tmpVECode,tmpVEName,veVATr,rows,showCompName,pos_sales,mothcomp);
+    end;
+  end;
+LCheckPLLimitInPeriod:;
+  CheckPLLimitInPeriod = res;
+  return;
+end;
+
+procedure AddLineFromRepDef(record UserDefRepVc UserDefRepr,string RowCode,string comment,Integer RowType,Boolean Expf)
+begin
+  row UserDefRepVc UserDefReprw;
+  Integer gKsprwcnt,i;
+  string 255 tstr;
+  val v;
+
+  gKsprwcnt = MatRowCnt(UserDefRepr);
+  for (i=0; i<gKsprwcnt; i=i+1) begin
+    MatRowGet(UserDefRepr,i,UserDefReprw);
+    if (UserDefReprw.Code==RowCode) then begin
+      v = blankval;
+      CalcKeyRn(UserDefReprw.Code,UserDefReprw.defstr,0,0,"",0,0,0,0,"","","",v);
+      switch (RowType) begin
+        case 0:
+          v = Round(v,SetRoundModeD(2));
+          tstr = ValToString(v,M4Val,"",".",0);
+        otherwise
+          tstr = ValToString(v,M40Val,"",".",0);
+      end;
+      if (nonblank(tstr)) then  begin
+        if (Expf) then begin
+          AddTag_String(comment,"","",tstr,2);
+        end else begin
+          StartFormat(15);
+          OutString(0,0,UserDefReprw.Comment,false);
+          OutString(1,0,tstr,true);
+          EndFormat;
+        end;
+      end;
+    end;
+  end;
+  return;
+end;
+
+procedure AddLineFromGroupRepDef(string RowComment,string XMLTag,Integer RowType,val total,Boolean Expf)
+begin
+  string 255 tstr;
+  val v;
+
+  if nonblank(total) and nonblank(RowComment) then begin
+    v = total;
+    switch (RowType) begin
+      case 0:
+        v = Round(v,SetRoundModeD(2));
+        tstr = ValToString(v,M4Val,"",".",0);
+      otherwise
+        tstr = ValToString(v,M40Val,"",".",0);
+    end;
+    if (nonblank(tstr)) then  begin
+      if (Expf) then begin
+        AddTag_String(XMLTag,"","",tstr,2);
+      end else begin
+        StartFormat(15);
+        OutString(0,0,RowComment,false);
+        OutString(1,0,tstr,true);
+        EndFormat;
+      end;
+    end;
+  end;
+  return;
+end;
+
+procedure GetValFromRepDef(record UserDefRepVc UserDefRepr,string RowCode,var string RowComment,var val v)
+begin
+  row UserDefRepVc UserDefReprw;
+  Integer gKsprwcnt,i;
+
+  RowComment = "";
+  v = blankval;
+  gKsprwcnt = MatRowCnt(UserDefRepr);
+  for (i=0; i<gKsprwcnt; i=i+1) begin
+    MatRowGet(UserDefRepr,i,UserDefReprw);
+    if (UserDefReprw.Code==RowCode) then begin
+      CalcKeyRn(UserDefReprw.Code,UserDefReprw.defstr,0,0,"",0,0,0,0,"","","",v);
+      RowComment = UserDefReprw.Comment;
+    end;
+  end;
+  return;
+end;
+
+procedure PreRunReportRows(string reportname)
+begin
+  record UserDefRepVc UserDefRepr;
+  row UserDefRepVc UserDefReprw;
+  Integer rwcnt,i;
+  val v;
+  
+  UserDefRepr.shortname = reportname;
+  if (ReadFirstMain(UserDefRepr,1,true)) then begin
+    rwcnt = MatRowCnt(UserDefRepr);
+    for (i=0; i<rwcnt; i=i+1) begin
+      MatRowGet(UserDefRepr,i,UserDefReprw);
+      CalcKeyRn(UserDefReprw.Code,UserDefReprw.defstr,0,0,"",0,0,0,0,"","","",v);
+    end;
+  end;
+end;
+
+procedure CollectMainFormElements(var array string aMainFormCode,var array string aMainFormXML,var array Integer aMainFormType,var Integer aCnt,var string extobjs)
+begin
+  record XBRLSettingsVc XSr;
+  row XBRLSettingsVc XSrw;
+  record XBRLElementVc XEr;
+  Integer i,rwcnt;
+
+  aCnt = 0;
+  XSr.ReportType = kXBRLElementReportTypeD_VAT;
+  if (ReadFirstMain(XSr,1,true)) then begin
+    rwcnt = MatRowCnt(XSr);
+    for (i=0; i<rwcnt; i=i+1) begin
+      MatRowGet(XSr,i,XSrw);
+      if (XSrw.XBRLElement == "ERIKORD") then begin
+        extobjs = XSrw.FieldName;
+      end else begin
+        XEr.Code = XSrw.XBRLElement;
+        if (ReadFirstMain(XEr,1,true)) then begin
+          if (nonblank(XEr.XMLElement)) then begin
+            aMainFormCode[aCnt] = XEr.Code;
+            aMainFormXML[aCnt] = XEr.XMLElement;
+            aMainFormType[aCnt] = XEr.FieldType;
+            aCnt = aCnt + 1;
+          end;
+        end;
+      end;
+    end;
+  end else begin
+    aMainFormCode[aCnt] = "1"; aMainFormXML[aCnt] = "transactions20"; aMainFormType[aCnt] = 0; aCnt = aCnt + 1;
+    aMainFormCode[aCnt] = "1.1"; aMainFormXML[aCnt] = "selfSupply20"; aMainFormType[aCnt] = 0; aCnt = aCnt + 1;
+    aMainFormCode[aCnt] = "2"; aMainFormXML[aCnt] = "transactions9"; aMainFormType[aCnt] = 0; aCnt = aCnt + 1;
+    aMainFormCode[aCnt] = "2.1"; aMainFormXML[aCnt] = "selfSupply9"; aMainFormType[aCnt] = 0; aCnt = aCnt + 1;
+    aMainFormCode[aCnt] = "3"; aMainFormXML[aCnt] = "transactionsZeroVat"; aMainFormType[aCnt] = 0; aCnt = aCnt + 1;
+    aMainFormCode[aCnt] = "3.1"; aMainFormXML[aCnt] = "euSupplyInclGoodsAndServicesZeroVat"; aMainFormType[aCnt] = 0; aCnt = aCnt + 1;
+    aMainFormCode[aCnt] = "3.1.1"; aMainFormXML[aCnt] = "euSupplyGoodsZeroVat"; aMainFormType[aCnt] = 0; aCnt = aCnt + 1;
+    aMainFormCode[aCnt] = "3.2"; aMainFormXML[aCnt] = "exportZeroVat"; aMainFormType[aCnt] = 0; aCnt = aCnt + 1;
+    aMainFormCode[aCnt] = "3.2.1"; aMainFormXML[aCnt] = "salePassengersWithReturnVat"; aMainFormType[aCnt] = 0; aCnt = aCnt + 1;
+    aMainFormCode[aCnt] = "5"; aMainFormXML[aCnt] = "inputVatTotal"; aMainFormType[aCnt] = 0; aCnt = aCnt + 1;
+    aMainFormCode[aCnt] = "5.1"; aMainFormXML[aCnt] = "importVat"; aMainFormType[aCnt] = 0; aCnt = aCnt + 1;
+    aMainFormCode[aCnt] = "5.2"; aMainFormXML[aCnt] = "fixedAssetsVat"; aMainFormType[aCnt] = 0; aCnt = aCnt + 1;
+    aMainFormCode[aCnt] = "5.3"; aMainFormXML[aCnt] = "carsVat"; aMainFormType[aCnt] = 0; aCnt = aCnt + 1;
+    aMainFormCode[aCnt] = "5.3_1"; aMainFormXML[aCnt] = "numberOfCars"; aMainFormType[aCnt] = 1; aCnt = aCnt + 1;
+    aMainFormCode[aCnt] = "5.4"; aMainFormXML[aCnt] = "carsPartialVat"; aMainFormType[aCnt] = 0; aCnt = aCnt + 1;
+    aMainFormCode[aCnt] = "5.4_1"; aMainFormXML[aCnt] = "numberOfCarsPartial"; aMainFormType[aCnt] = 1; aCnt = aCnt + 1;
+    aMainFormCode[aCnt] = "6"; aMainFormXML[aCnt] = "euAcquisitionsGoodsAndServicesTotal"; aMainFormType[aCnt] = 0; aCnt = aCnt + 1;
+    aMainFormCode[aCnt] = "6.1"; aMainFormXML[aCnt] = "euAcquisitionsGoods"; aMainFormType[aCnt] = 0; aCnt = aCnt + 1;
+    aMainFormCode[aCnt] = "7"; aMainFormXML[aCnt] = "acquisitionOtherGoodsAndServicesTotal"; aMainFormType[aCnt] = 0; aCnt = aCnt + 1;
+    aMainFormCode[aCnt] = "7.1"; aMainFormXML[aCnt] = "acquisitionImmovablesAndScrapMetalAndGold"; aMainFormType[aCnt] = 0; aCnt = aCnt + 1;
+    aMainFormCode[aCnt] = "8"; aMainFormXML[aCnt] = "supplyExemptFromTax"; aMainFormType[aCnt] = 0; aCnt = aCnt + 1;
+    aMainFormCode[aCnt] = "9"; aMainFormXML[aCnt] = "supplySpecialArrangements"; aMainFormType[aCnt] = 0; aCnt = aCnt + 1;
+    aMainFormCode[aCnt] = "10"; aMainFormXML[aCnt] = "adjustmentsPlus"; aMainFormType[aCnt] = 0; aCnt = aCnt + 1;
+    aMainFormCode[aCnt] = "11"; aMainFormXML[aCnt] = "adjustmentsMinus"; aMainFormType[aCnt] = 0; aCnt = aCnt + 1;
+  end;
+  return;
+end;
+
+procedure CollectCompaniesData(var array String aCompCode,var Integer aCompCnt,var array string aMainFormSpec,var array val aMainFormVal,array string aMainFormCode,Integer aCnt,string maincomp,string GroupVATNr)
+begin
+  record UserDefRepVc UserDefRepr;
+  record VATInfReportBlock VIRb;
+  record CompaniesBlock CBb;
+  row CompaniesBlock CBrw;
+  record CYBlock CYb;
+  Integer rwcnt,i,compno,a;
+  string 255 RowComment;
+  Boolean testf;
+  val v;
+
+  aCompCnt = 0;
+  BlockLoad(CBb);
+  rwcnt = MatRowCnt(CBb);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(CBb,i,CBrw);
+    if (SetCompanyCode(CBrw.CompCode,false)) then begin
+      BlockLoad(CYb);
+      testf = true;
+      if (CBrw.CompCode != maincomp) then begin
+        BLockLoad(CYb);
+        if (CYb.VATNr != GroupVATNr) then begin
+          testf = false;
+        end;
+      end;
+      if (testf) then begin
+        BlockLoad(VIRb);
+        if (nonblank(VIRb.VATReportDef)) then begin
+          PreRunReportRows(VIRb.VATReportDef);
+          UserDefRepr.shortname = VIRb.VATReportDef;
+          if (ReadFirstMain(UserDefRepr,1,true)) then begin
+            if (aCnt > 0) then begin
+              for (a=0; a<aCnt; a=a+1) begin
+                GetValFromRepDef(UserDefRepr,aMainFormCode[a],RowComment,v);
+                aMainFormSpec[a] = RowComment;
+                aMainFormVal[a] = aMainFormVal[a] + v;
+              end;
+            end;   
+          end;   
+        end;   
+        aCompCode[aCompCnt] = CBrw.CompCode;
+        aCompCnt = aCompCnt + 1;
+      end;
+    end;
+  end;
+  return;
+end;
+
+procedure ExportGroupInfoFromVATReport(array string aMainFormSPec,array string aMainFormXML,array val aMainFormVal,array Integer aMainFormType,Integer aCnt,Boolean Expf)
+begin
+  Integer i;
+
+  for (i=0; i<aCnt; i=i+1) begin
+    AddLineFromGroupRepDef(aMainFormSpec[i],aMainFormXML[i],aMainFormType[i],aMainFormVal[i],Expf);
+  end;
+  return;
+end;
+
+
+procedure ExportInfoFromVATReport(string reportname,var string extobjs,Boolean Expf)
+begin
+  record UserDefRepVc UserDefRepr;
+  record XBRLSettingsVc XSr;
+  row XBRLSettingsVc XSrw;
+  record XBRLElementVc XEr;
+  Integer i,rwcnt;
+
+  extobjs = "01";
+  
+  PreRunReportRows(reportname);
+
+  UserDefRepr.shortname = reportname;
+  if (ReadFirstMain(UserDefRepr,1,true)) then begin
+    XSr.ReportType = kXBRLElementReportTypeD_VAT;
+    if (ReadFirstMain(XSr,1,true)) then begin
+      rwcnt = MatRowCnt(XSr);
+      for (i=0; i<rwcnt; i=i+1) begin
+        MatRowGet(XSr,i,XSrw);
+        if (XSrw.XBRLElement == "ERIKORD") then begin
+          extobjs = XSrw.FieldName;
+        end else begin
+          if (Expf) then begin
+            XEr.Code = XSrw.XBRLElement;
+            if (ReadFirstMain(XEr,1,true)) then begin
+              if (nonblank(XEr.XMLElement)) then begin
+                AddLineFromRepDef(UserDefRepr,XEr.Code,XEr.XMLElement,XEr.FieldType,Expf);  
+              end;    
+            end;    
+          end else begin
+            AddLineFromRepDef(UserDefRepr,XSrw.XBRLElement,"",XSrw.FieldType,Expf);  
+          end;
+        end;
+      end;
+    end else begin
+      AddLineFromRepDef(UserDefRepr,"1","transactions20",0,Expf);
+      AddLineFromRepDef(UserDefRepr,"1.1","selfSupply20",0,Expf);
+      AddLineFromRepDef(UserDefRepr,"2","transactions9",0,Expf);
+      AddLineFromRepDef(UserDefRepr,"2.1","selfSupply9",0,Expf);
+      AddLineFromRepDef(UserDefRepr,"3","transactionsZeroVat",0,Expf);
+      AddLineFromRepDef(UserDefRepr,"3.1","euSupplyInclGoodsAndServicesZeroVat",0,Expf);
+      AddLineFromRepDef(UserDefRepr,"3.1.1","euSupplyGoodsZeroVat",0,Expf);
+      AddLineFromRepDef(UserDefRepr,"3.2","exportZeroVat",0,Expf);
+      AddLineFromRepDef(UserDefRepr,"3.2.1","salePassengersWithReturnVat",0,Expf);
+      AddLineFromRepDef(UserDefRepr,"5","inputVatTotal",0,Expf);
+      AddLineFromRepDef(UserDefRepr,"5.1","importVat",0,Expf);
+      AddLineFromRepDef(UserDefRepr,"5.2","fixedAssetsVat",0,Expf);
+      AddLineFromRepDef(UserDefRepr,"5.3","carsVat",0,Expf);
+      AddLineFromRepDef(UserDefRepr,"5.3_1","numberOfCars",1,Expf);
+      AddLineFromRepDef(UserDefRepr,"5.4","carsPartialVat",0,Expf);
+      AddLineFromRepDef(UserDefRepr,"5.4_1","numberOfCarsPartial",1,Expf);
+      AddLineFromRepDef(UserDefRepr,"6","euAcquisitionsGoodsAndServicesTotal",0,Expf);
+      AddLineFromRepDef(UserDefRepr,"6.1","euAcquisitionsGoods",0,Expf);
+      AddLineFromRepDef(UserDefRepr,"7","acquisitionOtherGoodsAndServicesTotal",0,Expf);
+      AddLineFromRepDef(UserDefRepr,"7.1","acquisitionImmovablesAndScrapMetalAndGold",0,Expf);
+      AddLineFromRepDef(UserDefRepr,"8","supplyExemptFromTax",0,Expf);
+      AddLineFromRepDef(UserDefRepr,"9","supplySpecialArrangements",0,Expf);
+      AddLineFromRepDef(UserDefRepr,"10","adjustmentsPlus",0,Expf);
+      AddLineFromRepDef(UserDefRepr,"11","adjustmentsMinus",0,Expf);
+    end;
+  end;
+  return;
+end;
+
+global
+procedure VATInfRn(record RcVc RepSpec)
+begin
+  record CYBlock CYb;
+  record VATInfReportBlock VIRb;
+  record SMVc VATr;
+  record UserVc USr;
+  string 255 tstr,extobjs;
+  boolean SLf,PLf,GroupSales;
+  vector boolean vVATCode;
+  string 255 VATAccStr;
+  string 20 LastCUChecked,LastVEChecked;
+  val v;
+  transaction record RcVc KeyRepSpec;
+//group form
+  record CompaniesBlock Cb;
+  row CompaniesBlock Cbrw;
+  array string 60 aMainFormCode,aMainFormXML,aCompCode;
+  array string 255 aMainFormSpec;
+  array Integer aMainFormType;
+  array val aMainFormVal;
+  string 20 GroupVATNr,maincomp;
+  Integer aCnt,aCompCnt,a;
+
+  StartReportJob(USetStr(34550));
+  HT2Per(RepSpec.sStartDate,RepSpec.sEndDate,tstr);
+  Header(1,tstr,1);
+  EndHeader;
+  if (RepSpec.flags[10]==0) then begin
+    if (GetDay(RepSpec.sStartDate)!=1) or (GetDay(RepSpec.sEndDate)!=DaysInMonth(GetYear(RepSpec.sEndDate),GetMonth(RepSpec.sEndDate))) then begin
+      StartFormat(15);
+      OutString(0,0,USetStr(1163),false);
+      EndFormat;
+      goto LVATInfRn;
+    end;
+    if (GetMonth(RepSpec.sStartDate)!=GetMonth(RepSpec.sEndDate)) or (GetYear(RepSpec.sStartDate)!=GetYear(RepSpec.sEndDate)) then begin
+      StartFormat(15);
+      OutString(0,0,USetStr(1163),false);
+      EndFormat;
+      goto LVATInfRn;
+    end;
+  end;
+  RecordCopy(KeyRepSpec,RepSpec);
+  BLockLoad(CYb);  
+  BLockLoad(VIRb);  
+  GroupSales = (RepSpec.flags[4]==1);
+  if (GroupSales) then begin
+    GroupVATNr = CYb.VATNr;
+    maincomp = CurrentCompany;
+    CollectMainFormElements(aMainFormCode,aMainFormXML,aMainFormType,aCnt,extobjs);
+    CollectCompaniesData(aCompCode,aCompCnt,aMainFormSpec,aMainFormVal,aMainFormCode,aCnt,maincomp,GroupVATNr);
+    ResetCompany(StringToInt(maincomp));
+//    if (SetCompany(StringToInt(maincomp),false)) then begin end;
+  end;
+  USr.Code = CurrentUser;
+  if (ReadFirstMain(USr,1,true)) then begin end;
+  SetRepCol(2,270);
+  SetRepCol(3,100);
+  SetRepCol(4,280);
+  StartFormat(15);
+  OutString(1,"DblVATInfEn",USetStr(34585),true);
+  EndFormat;
+  StartFormat(35);
+  EndFormat;
+  StartFormat(15);
+  OutString(0,0,USetStr(34579),false);
+  EndFormat;
+  Gray_Divider(0,1);
+  StartFormat(15);
+  OutString(0,0,USetStr(34551),false);
+  OutString(1,0,CYb.OrgNr,true);
+  EndFormat;
+  StartFormat(15);
+  OutString(0,0,USetStr(34552),false);
+  OutString(1,0,USr.IDCode,true);
+  EndFormat;
+  StartFormat(15);
+  OutString(0,0,USetStr(34553),false);
+  OutString(1,0,GetYear(RepSpec.sStartDate),true);
+  EndFormat;
+  StartFormat(15);
+  OutString(0,0,USetStr(34554),false);
+  OutString(1,0,GetMonth(RepSpec.sStartDate),true);
+  EndFormat;
+  switch (RepSpec.flags[5]) begin
+    case 0: tstr = "1";
+    case 1: tstr = "2";
+  end;
+  StartFormat(15);
+  OutString(0,0,USetStr(34555),false);
+  OutString(1,0,tstr,true);
+  EndFormat;
+//MAIN
+  Gray_Divider(0,1);
+  StartFormat(35);
+  EndFormat;
+  StartFormat(15);
+  OutString(0,0,USetStr(34578),false);
+  EndFormat;
+  Gray_Divider(0,1);
+  SetupVATArray(VATr,vVATCode,VATAccStr);
+  if (RepSpec.flags[0]==1) then begin
+    SLf = false;
+  end else begin
+    SLf = RepSpec.flags[6];
+    if (SLf==false) then begin
+      SLf = CheckSLLimitInPeriod(RepSpec.sStartDate,RepSpec.sEndDate,VIRb.LimitSL,vVATCode,extobjs,LastCUChecked,VATr,VIRb.ObjType,0,RepSpec.flags[2]==1,RepSpec.flags[9]==1,false,RepSpec.flags[8]==0,RepSpec.flags[7]==1,true);
+    end;
+  end;
+  StartFormat(15);
+  OutString(0,0,USetStr(34556),false);
+  tstr = USetStr(34583);
+  if (SLf) then begin
+    tstr = USetStr(34584);
+  end;
+  OutString(1,0,tstr,true);
+  EndFormat;
+  if (RepSpec.flags[1]==1) then begin
+    PLf = false;
+  end else begin
+    PLf = RepSpec.flags[6];
+    if (PLf==false) then begin
+      PLf = CheckPLLimitInPeriod(RepSpec.sStartDate,RepSpec.sEndDate,VIRb.LimitPL,vVATCode,VATAccStr,RepSpec.Comparison,extobjs,LastVEChecked,VATr,VIRb.ObjType,0,RepSpec.flags[3]==1,false,RepSpec.flags[8]==0,RepSpec.flags[7]==1,true);
+    end;
+  end;
+  StartFormat(15);
+  OutString(0,0,USetStr(34557),false);
+  tstr = USetStr(34583);
+  if (PLf) then begin
+    tstr = USetStr(34584);
+  end;
+  OutString(1,0,tstr,true);
+  EndFormat;
+  StartFormat(15);
+  OutString(0,0,USetStr(34558),false);
+  switch (RepSpec.flags[2]) begin
+    case 0: tstr = USetStr(34584);
+    case 1: tstr = USetStr(34583);
+  end;
+  OutString(1,0,tstr,true);
+  EndFormat;
+  StartFormat(15);
+  OutString(0,0,USetStr(34559),false);
+  switch (RepSpec.flags[3]) begin
+    case 0: tstr = USetStr(34584);
+    case 1: tstr = USetStr(34583);
+  end;
+  OutString(1,0,tstr,true);
+  EndFormat;
+//info from VAT report definition
+  if (GroupSales) then begin
+    ExportGroupInfoFromVATReport(aMainFormSpec,aMainFormXML,aMainFormVal,aMainFormType,aCnt,false);
+  end else begin
+    ExportInfoFromVATReport(VIRb.VATReportDef,extobjs,false);
+  end;
+//DETAILS, SALES
+  Gray_Divider(0,1);
+  StartFormat(35);
+  EndFormat;
+  StartFormat(15);
+  OutString(0,0,USetStr(34576),false);
+  EndFormat;
+  Gray_Divider(0,1);
+  StartFormat(15);
+  OutString(0,0,USetStr(34560),false);
+  OutString(160,0,CYb.CompName,true);
+  OutString(320,0,USetStr(34561),false);
+  OutString(1,0,CYb.OrgNr,true);
+  EndFormat;
+  StartFormat(15);
+  OutString(0,0,USetStr(34553),false);
+  OutString(160,0,GetYear(RepSpec.sStartDate),true);
+  OutString(320,0,USetStr(34562),false);
+  OutString(1,0,RepSpec.sStartDate & ":" & RepSpec.sEndDate,true);
+  EndFormat;
+  StartFormat(15);
+  if (SLf == false) then begin
+    OutString(0,0,USetStr(34563),false);
+  end;
+  if (RepSpec.flags[2] == 1) then begin
+    OutString(380,0,USetStr(34564),false);
+  end;
+  EndFormat;
+  if (SLf) then begin
+    PrintHeader(1);
+    SLf = CheckSLLimitInPeriod(RepSpec.sStartDate,RepSpec.sEndDate,VIRb.LimitSL,vVATCode,extobjs,LastCUChecked,VATr,VIRb.ObjType,1,RepSpec.flags[2]==1,RepSpec.flags[9]==1,false,RepSpec.flags[8]==0,RepSpec.flags[7]==1,true);    
+    PrintHeaderAfter(1);
+  end;
+  if (GroupSales) then begin
+    for (a=0; a<aCompCnt; a=a+1) begin
+      if (aCompCode[a] != maincomp) then begin
+        if (SetCompanyCode(aCompCode[a],false)) then begin
+          BlockLoad(VIRb);
+          BlockLoad(CYb);
+          ClearVATRecordValues(VATr);
+          VATAccStr = "";
+          SetupVATArray(VATr,vVATCode,VATAccStr);
+          LastCUChecked = "";
+          SLf = CheckSLLimitInPeriod(RepSpec.sStartDate,RepSpec.sEndDate,VIRb.LimitSL,vVATCode,extobjs,LastCUChecked,VATr,VIRb.ObjType,0,RepSpec.flags[2]==1,RepSpec.flags[9]==1,false,RepSpec.flags[8]==0,RepSpec.flags[7]==1,false);      
+          Gray_Divider(0,1);
+          StartFormat(35);
+          EndFormat;
+          StartFormat(15);
+          OutString(0,0,USetStr(34576),false);
+          EndFormat;
+          Gray_Divider(0,1);
+          StartFormat(15);
+          OutString(0,0,USetStr(34560),false);
+          OutString(160,0,CYb.CompName,true);
+          OutString(320,0,USetStr(34561),false);
+          OutString(1,0,CYb.OrgNr,true);
+          EndFormat;
+          StartFormat(15);
+          OutString(0,0,USetStr(34553),false);
+          OutString(160,0,GetYear(RepSpec.sStartDate),true);
+          OutString(320,0,USetStr(34562),false);
+          OutString(1,0,RepSpec.sStartDate & ":" & RepSpec.sEndDate,true);
+          EndFormat;
+          StartFormat(15);
+          if (SLf == false) then begin
+            OutString(0,0,USetStr(34563),false);
+          end;
+          if (RepSpec.flags[2] == 1) then begin
+            OutString(380,0,USetStr(34564),false);
+          end;
+          EndFormat;
+          if (SLf) then begin
+            PrintHeader(1);
+            SLf = CheckSLLimitInPeriod(RepSpec.sStartDate,RepSpec.sEndDate,VIRb.LimitSL,vVATCode,extobjs,LastCUChecked,VATr,VIRb.ObjType,1,RepSpec.flags[2]==1,RepSpec.flags[9]==1,false,RepSpec.flags[8]==0,RepSpec.flags[7]==1,false);    
+            PrintHeaderAfter(1);
+          end;
+        end;
+      end; 
+    end;
+    ResetCompany(StringToInt(maincomp));
+  end;
+
+//DETAILS, PURCHASE
+  BlockLoad(CYb);
+  Gray_Divider(0,1);
+  StartFormat(35);
+  EndFormat;
+  StartFormat(15);
+  OutString(0,0,USetStr(34577),false);
+  EndFormat;
+  Gray_Divider(0,1);
+  StartFormat(15);
+  OutString(0,0,USetStr(34560),false);
+  OutString(160,0,CYb.CompName,true);
+  OutString(320,0,USetStr(34561),false);
+  OutString(1,0,CYb.OrgNr,true);
+  EndFormat;
+  StartFormat(15);
+  OutString(0,0,USetStr(34553),false);
+  OutString(160,0,GetYear(RepSpec.sStartDate),true);
+  OutString(320,0,USetStr(34562),false);
+  OutString(1,0,RepSpec.sStartDate & ":" & RepSpec.sEndDate,true);
+  EndFormat;
+  StartFormat(15);
+  if (PLf == false) then begin
+    OutString(0,0,USetStr(34563),false);
+  end;
+  if (RepSpec.flags[3] == 1) then begin
+    OutString(380,0,USetStr(34564),false);
+  end;
+  EndFormat;
+  if (PLf) then begin
+    PrintHeader(0);
+    PLf = CheckPLLimitInPeriod(RepSpec.sStartDate,RepSpec.sEndDate,VIRb.LimitPL,vVATCode,VATAccStr,RepSpec.Comparison,extobjs,LastVEChecked,VATr,VIRb.ObjType,1,RepSpec.flags[3]==1,false,RepSpec.flags[8]==0,RepSpec.flags[7]==1,true);
+    PrintHeaderAfter(0);
+  end;
+  if (GroupSales) then begin
+    for (a=0; a<aCompCnt; a=a+1) begin
+      if (aCompCode[a] != maincomp) then begin
+        if (SetCompanyCode(aCompCode[a],false)) then begin
+          LastVEChecked = "";
+          BlockLoad(VIRb);
+          BlockLoad(CYb);
+          ClearVATRecordValues(VATr);
+          VATAccStr = "";
+          SetupVATArray(VATr,vVATCode,VATAccStr);
+          PLf = CheckPLLimitInPeriod(RepSpec.sStartDate,RepSpec.sEndDate,VIRb.LimitPL,vVATCode,VATAccStr,RepSpec.Comparison,extobjs,LastVEChecked,VATr,VIRb.ObjType,0,RepSpec.flags[3]==1,true,RepSpec.flags[8]==0,RepSpec.flags[7]==1,false);
+//DETAILS, PURCHASE
+          Gray_Divider(0,1);
+          StartFormat(35);
+          EndFormat;
+          StartFormat(15);
+          OutString(0,0,USetStr(34577),false);
+          EndFormat;
+          Gray_Divider(0,1);
+          StartFormat(15);
+          OutString(0,0,USetStr(34560),false);
+          OutString(160,0,CYb.CompName,true);
+          OutString(320,0,USetStr(34561),false);
+          OutString(1,0,CYb.OrgNr,true);
+          EndFormat;
+          StartFormat(15);
+          OutString(0,0,USetStr(34553),false);
+          OutString(160,0,GetYear(RepSpec.sStartDate),true);
+          OutString(320,0,USetStr(34562),false);
+          OutString(1,0,RepSpec.sStartDate & ":" & RepSpec.sEndDate,true);
+          EndFormat;
+          StartFormat(15);
+          if (PLf == false) then begin
+            OutString(0,0,USetStr(34563),false);
+          end;
+          if (RepSpec.flags[3] == 1) then begin
+            OutString(380,0,USetStr(34564),false);
+          end;
+          EndFormat;
+          if (PLf) then begin
+            PrintHeader(0);
+            PLf = CheckPLLimitInPeriod(RepSpec.sStartDate,RepSpec.sEndDate,VIRb.LimitPL,vVATCode,VATAccStr,RepSpec.Comparison,extobjs,LastVEChecked,VATr,VIRb.ObjType,1,RepSpec.flags[3]==1,false,RepSpec.flags[8]==0,RepSpec.flags[7]==1,false);
+            PrintHeaderAfter(0);
+          end;
+        end;
+      end; 
+    end;
+    ResetCompany(StringToInt(maincomp));
+  end;
+  StartFormat(15);
+  OutString(1,"DblVATInfEn",USetStr(34585),true);
+  EndFormat;
+LVATInfRn:;
+  EndJob;
+  return;
+end;
+
+global
+procedure VATInfEn(record RcVc RepSpec)
+begin
+  record CYBlock CYb;
+  record VATInfReportBlock VIRb;
+  record SMVc VATr;
+  record UserVc USr;
+  string 255 tstr,extobjs;
+  boolean SLf,PLf,GroupSales;
+  vector boolean vVATCode;
+  string 255 VATAccStr;
+  string 20 LastCUChecked,LastVEChecked;
+  val v;
+  transaction record RcVc KeyRepSpec;
+//group form
+  record CompaniesBlock Cb;
+  row CompaniesBlock Cbrw;
+  array string 60 aMainFormCode,aMainFormXML,aCompCode;
+  array string 255 aMainFormSpec;
+  array Integer aMainFormType;
+  array val aMainFormVal;
+  string 20 GroupVATNr,maincomp;
+  Integer aCnt,aCompCnt,a;
+
+  if (RepSpec.flags[10]==0) then begin
+    if (GetDay(RepSpec.sStartDate)!=1) or (GetDay(RepSpec.sEndDate)!=DaysInMonth(GetYear(RepSpec.sEndDate),GetMonth(RepSpec.sEndDate))) then begin
+      MessageBox(1163,"");
+      goto LVATInfEn;
+    end;
+    if (GetMonth(RepSpec.sStartDate)!=GetMonth(RepSpec.sEndDate)) or (GetYear(RepSpec.sStartDate)!=GetYear(RepSpec.sEndDate)) then begin
+      MessageBox(1163,"");
+      goto LVATInfEn;
+    end;
+  end;
+  RecordCopy(KeyRepSpec,RepSpec);
+  BLockLoad(CYb);  
+  BLockLoad(VIRb);  
+  GroupSales = RepSpec.flags[4];
+  if (GroupSales) then begin
+    GroupVATNr = CYb.VATNr;
+    maincomp = CurrentCompany;
+    CollectMainFormElements(aMainFormCode,aMainFormXML,aMainFormType,aCnt,extobjs);
+    CollectCompaniesData(aCompCode,aCompCnt,aMainFormSpec,aMainFormVal,aMainFormCode,aCnt,maincomp,GroupVATNr);
+    ResetCompany(StringToInt(maincomp));
+  end;
+  USr.Code = CurrentUser;
+  if (ReadFirstMain(USr,1,true)) then begin end;
+  ExportPlainString("<?xml version=""1.0"" encoding=""UTF-8""?>",0);
+  NewLineExport;
+  ExportPlainString("<vatDeclaration>",0);
+  NewLineExport;
+  AddTag_String("taxPayerRegCode","","",CYb.OrgNr,1);
+  if (nonblank(USr.IDCode)) then begin
+    AddTag_String("submitterPersonCode","","",USr.IDCode,1);
+  end;
+  AddTag_String("year","","",GetYear(RepSpec.sStartDate),1);
+  AddTag_String("month","","",GetMonth(RepSpec.sStartDate),1);
+  switch (RepSpec.flags[5]) begin
+    case 0: tstr = "1";
+    case 1: tstr = "2";
+  end;
+  AddTag_String("declarationType","","",tstr,1);
+//MAIN
+  ExportPlainString("<declarationBody>",1);
+  NewLineExport;
+  SetupVATArray(VATr,vVATCode,VATAccStr);
+  if (RepSpec.flags[0]==1) then begin
+    SLf = false;
+  end else begin
+    SLf = RepSpec.flags[6];
+    if (SLf==false) then begin
+      SLf = CheckSLLimitInPeriod(RepSpec.sStartDate,RepSpec.sEndDate,VIRb.LimitSL,vVATCode,extobjs,LastCUChecked,VATr,VIRb.ObjType,0,RepSpec.flags[2]==1,RepSpec.flags[9]==1,true,RepSpec.flags[8]==0,RepSpec.flags[7]==1,true);
+    end;
+  end;
+  tstr = "true";
+  if (SLf) then begin
+    tstr = "false";
+  end;
+  AddTag_String("noSales","","",tstr,2);
+  if (RepSpec.flags[1]==1) then begin
+    PLf = false;
+  end else begin
+    PLf = RepSpec.flags[6];
+    if (PLf==false) then begin
+      PLf = CheckPLLimitInPeriod(RepSpec.sStartDate,RepSpec.sEndDate,VIRb.LimitPL,vVATCode,VATAccStr,RepSpec.Comparison,extobjs,LastVEChecked,VATr,VIRb.ObjType,0,RepSpec.flags[3]==1,true,RepSpec.flags[8]==0,RepSpec.flags[7]==1,true);
+    end;
+  end;
+  tstr = "true";
+  if (PLf) then begin
+    tstr = "false";
+  end;
+  AddTag_String("noPurchases","","",tstr,2);
+  switch (RepSpec.flags[2]) begin
+    case 0: tstr = "false";
+    case 1: tstr = "true";
+  end;
+  AddTag_String("sumPerPartnerSales","","",tstr,2);
+  switch (RepSpec.flags[3]) begin
+    case 0: tstr = "false";
+    case 1: tstr = "true";
+  end;
+  AddTag_String("sumPerPartnerPurchases","","",tstr,2);
+
+//info from VAT report definition
+  if (GroupSales) then begin
+    ExportGroupInfoFromVATReport(aMainFormSpec,aMainFormXML,aMainFormVal,aMainFormType,aCnt,true);
+  end else begin
+    ExportInfoFromVATReport(VIRb.VATReportDef,extobjs,true);
+  end;
+  ExportPlainString("</declarationBody>",1);
+  NewLineExport;
+//DETAILS, SALES
+  ExportPlainString("<salesAnnex>",1);
+  NewLineExport;
+  if (SLf) then begin
+    SLf = CheckSLLimitInPeriod(RepSpec.sStartDate,RepSpec.sEndDate,VIRb.LimitSL,vVATCode,extobjs,LastCUChecked,VATr,VIRb.ObjType,1,RepSpec.flags[2]==1,RepSpec.flags[9]==1,true,RepSpec.flags[8]==0,RepSpec.flags[7]==1,true);    
+  end;
+  ExportPlainString("</salesAnnex>",1);
+  NewLineExport;
+  if (GroupSales) then begin
+    for (a=0; a<aCompCnt; a=a+1) begin
+      if (aCompCode[a] != maincomp) then begin
+        if (SetCompanyCode(aCompCode[a],false)) then begin
+          BlockLoad(VIRb);
+          BlockLoad(CYb);
+          ClearVATRecordValues(VATr);
+          VATAccStr = "";
+          SetupVATArray(VATr,vVATCode,VATAccStr);
+          ExportPlainString("<salesAnnex>",1);
+          NewLineExport;
+          LastCUChecked = "";
+          SLf = CheckSLLimitInPeriod(RepSpec.sStartDate,RepSpec.sEndDate,VIRb.LimitSL,vVATCode,extobjs,LastCUChecked,VATr,VIRb.ObjType,0,RepSpec.flags[2]==1,RepSpec.flags[9]==1,true,RepSpec.flags[8]==0,RepSpec.flags[7]==1,false);
+          tstr = "true";
+          if (SLf) then begin
+            tstr = "false";
+          end;
+          AddTag_String("groupMemberRegCode","","",CYb.OrgNr,2);
+          AddTag_String("noSales","","",tstr,2);
+          switch (RepSpec.flags[2]) begin
+            case 0: tstr = "false";
+            case 1: tstr = "true";
+          end;
+          AddTag_String("sumPerPartnerSales","","",tstr,2);
+          if (SLf) then begin
+            SLf = CheckSLLimitInPeriod(RepSpec.sStartDate,RepSpec.sEndDate,VIRb.LimitSL,vVATCode,extobjs,LastCUChecked,VATr,VIRb.ObjType,1,RepSpec.flags[2]==1,RepSpec.flags[9]==1,true,RepSpec.flags[8]==0,RepSpec.flags[7]==1,false);    
+          end;
+          ExportPlainString("</salesAnnex>",1);
+          NewLineExport;
+        end;
+      end; 
+    end;
+    ResetCompany(StringToInt(maincomp));
+  end;
+//DETAILS, PURCHASE
+  BlockLoad(CYb);
+  ExportPlainString("<purchasesAnnex>",1);
+  NewLineExport;
+  if (PLf) then begin
+    PLf = CheckPLLimitInPeriod(RepSpec.sStartDate,RepSpec.sEndDate,VIRb.LimitPL,vVATCode,VATAccStr,RepSpec.Comparison,extobjs,LastVEChecked,VATr,VIRb.ObjType,1,RepSpec.flags[3]==1,true,RepSpec.flags[8]==0,RepSpec.flags[7]==1,true);
+  end;
+  ExportPlainString("</purchasesAnnex>",1);
+  NewLineExport;
+  if (GroupSales) then begin
+    for (a=0; a<aCompCnt; a=a+1) begin
+      if (aCompCode[a] != maincomp) then begin
+        if (SetCompanyCode(aCompCode[a],false)) then begin
+          BlockLoad(VIRb);
+          BlockLoad(CYb);
+          ClearVATRecordValues(VATr);
+          VATAccStr = "";
+          SetupVATArray(VATr,vVATCode,VATAccStr);
+          ExportPlainString("<purchasesAnnex>",1);
+          NewLineExport;
+          LastVEChecked = "";
+          PLf = CheckPLLimitInPeriod(RepSpec.sStartDate,RepSpec.sEndDate,VIRb.LimitPL,vVATCode,VATAccStr,RepSpec.Comparison,extobjs,LastVEChecked,VATr,VIRb.ObjType,0,RepSpec.flags[3]==1,true,RepSpec.flags[8]==0,RepSpec.flags[7]==1,false);
+          tstr = "true";
+          if (PLf) then begin
+            tstr = "false";
+          end;
+          AddTag_String("groupMemberRegCode","","",CYb.OrgNr,2);
+          AddTag_String("noPurchases","","",tstr,2);
+          switch (RepSpec.flags[3]) begin
+            case 0: tstr = "false";
+            case 1: tstr = "true";
+          end;
+          AddTag_String("sumPerPartnerPurchases","","",tstr,2);
+          if (PLf) then begin
+            PLf = CheckPLLimitInPeriod(RepSpec.sStartDate,RepSpec.sEndDate,VIRb.LimitPL,vVATCode,VATAccStr,RepSpec.Comparison,extobjs,LastVEChecked,VATr,VIRb.ObjType,1,RepSpec.flags[3]==1,true,RepSpec.flags[8]==0,RepSpec.flags[7]==1,false);
+          end;
+          ExportPlainString("</purchasesAnnex>",1);
+          NewLineExport;
+        end;
+      end; 
+      ResetCompany(StringToInt(maincomp));
+    end;
+  end;
+  ExportPlainString("</vatDeclaration>",0);
+LVATInfEn:;
+  return;
+end;
+
+procedure PrintCUInfo(string CUCode,string dblstr)
+begin
+  record CUVc CUr;
+  
+  CUr.Code = CUCode;
+  if (ReadFirstMain(CUr,1,true)) then begin
+    StartFormat(15);
+    OutString(0,dblstr,CUr.Code,false);
+    OutString(2,0,CUr.Name,false);
+    OutString(3,0,CUr.RegNr1,false);
+    OutString(1,0,CUr.VATNr,true);
+    EndFormat;
+  end;
+  return;
+end;
+
+global
+procedure CUVATInfRn(record RcVc RepSpec)
+begin
+  record VATInfReportBlock VIRb;
+  record CUVc CUr;
+  record SMVc VATr;
+  record SMVc cuVATr;
+  record SMVc veVATr;
+  string 255 tstr,extobjs;
+  string 20 CUrRegNr;
+  array string 20 tmpCode;
+  Boolean res,TrHs,testf;
+  vector boolean vVATCode;
+  string 255 VATAccStr;
+  Integer rows,i,pos;
+  val totsales,totpurchase,totcredit;
+  LongInt tmppos;
+
+/*
+  if (GetDay(RepSpec.sStartDate)!=1) or (GetDay(RepSpec.sEndDate)!=DaysInMonth(GetYear(RepSpec.sEndDate),GetMonth(RepSpec.sEndDate))) then begin
+    MessageBox(1163,"");
+    goto LCUVATInfRn;
+  end;
+  if (GetMonth(RepSpec.sStartDate)!=GetMonth(RepSpec.sEndDate)) or (GetYear(RepSpec.sStartDate)!=GetYear(RepSpec.sEndDate)) then begin
+    MessageBox(1163,"");
+    goto LCUVATInfRn;
+  end;
+*/
+  BLockLoad(VIRb);  
+  StartReportJob(USetStr(34590));
+  HT2Per(RepSpec.sStartDate,RepSpec.sEndDate,tstr);
+  Header(1,tstr,1);
+  EndHeader;
+  SetRepCol(2,100);
+  SetRepCol(3,230);
+
+  SetupVATArray(VATr,vVATCode,VATAccStr);
+
+  StartFormat(15);
+  OutString(0,0,USetStr(34591),false);
+  OutString(2,0,USetStr(34592),false);
+  OutString(3,0,USetStr(34593),false);
+  OutString(1,0,USetStr(34594),true);
+  EndFormat;
+  Black_DIvider(0,1);
+
+//DETAILS, SALES
+  rows = 1;
+  res = false;
+  CUr.RegNr1 = "";
+  TrHs = true;
+  while (LoopKey("ActRegNr1",CUr,1,TrHs)) begin
+    if (TrHs) and (CUr.ExportFlag==0) then begin
+      testf = false;
+      if (blank(CUr.RegNr1)) then begin
+        testf = true;
+      end;
+      if (RepSpec.flags[0]==1) and (blank(CUr.VATNr)) then begin
+        testf = true;
+      end;
+      if (RepSpec.flags[1]==1) then begin
+        testf = true;
+      end;
+      if (CUr.CustType == 1) then begin testf = false; end;
+      if (testf) then begin
+        if (CUr.RegNr1 <> CUrRegNr) or (blank(CUr.RegNr1)) then begin
+          if (res) then begin
+            for (i=0; i<pos; i=i+1) begin
+              PrintCUInfo(tmpCode[i],"DblCUVc");
+            end;
+          end;
+          res = false;
+          totsales = 0;
+          totcredit = 0;
+          pos = 0;
+        end;
+        if (res == false) then begin
+          res = CuCheckSLLimitInPeriod(CUr.Code,RepSpec.sStartDate,RepSpec.sEndDate,VIRb.LimitSL,vVATCode,extobjs,VATr,cuVATr,VIRb.ObjType,0,0,0,rows,totsales,totcredit,pos,tmppos);
+        end;
+        tmpCode[pos] = CUr.Code;
+        pos = pos + 1;
+        CUrRegNr = CUr.RegNr1;
+      end;
+    end;
+  end;
+  if (res) then begin
+    for (i=0; i<pos; i=i+1) begin
+      PrintCUInfo(tmpCode[i],"DblCUVc");
+    end;
+  end;
+
+//DETAILS, PURCHASE
+  totcredit = 0;
+  pos = 0;
+  CUr.RegNr1 = "";
+  TrHs = true;
+  ResetLoop(CUr);
+  while (LoopKey("VEActRegNr1",CUr,1,TrHs)) begin
+    if (TrHs) and (CUr.ExportFlag==0) then begin
+      testf = false;
+      if (blank(CUr.RegNr1)) then begin
+        testf = true;
+      end;
+      if (RepSpec.flags[0]==1) and (blank(CUr.VATNr)) then begin
+        testf = true;
+      end;
+      if (RepSpec.flags[1]==1) then begin
+        testf = true;
+      end;
+      if (CUr.CustType == 1) then begin testf = false; end;
+      if (testf) then begin
+        if (CUr.RegNr1 <> CUrRegNr) or (blank(CUr.RegNr1)) then begin
+          if (res) then begin
+            for (i=0; i<pos; i=i+1) begin
+              PrintCUInfo(tmpCode[i],"DblVEVc");
+            end;
+          end;
+          res = false;
+          totpurchase = 0;
+          totcredit = 0;
+          pos = 0;
+        end;
+        if (res == false) then begin
+          res = veCheckPLLimitInPeriod(CUr.Code,RepSpec.sStartDate,RepSpec.sEndDate,VIRb.LimitPL,vVATCode,VATAccStr,RepSpec.Comparison,extobjs,VATr,veVATr,VIRb.ObjType,0,0,rows,totpurchase,totcredit,pos,tmppos,tmppos);
+        end;
+        tmpCode[pos] = CUr.Code;
+        pos = pos + 1;
+        CUrRegNr = CUr.RegNr1;
+      end;
+    end;
+  end;
+  if (res) then begin
+    for (i=0; i<pos; i=i+1) begin
+      PrintCUInfo(tmpCode[i],"DblVEVc");
+    end;
+  end;
+  EndJob;
+LCUVATInfRn:;
+  return;
+end;

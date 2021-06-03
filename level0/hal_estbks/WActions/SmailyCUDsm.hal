@@ -1,0 +1,35 @@
+//Bk //smaily //ts - 2019/07
+global
+updating procedure SendToSmailyCUDsm()
+begin
+  Integer wn;
+  record CUVc CUr;
+  record RcVc RepSpec;
+
+  wn = CurWindow;
+  if (WindowState(wn)==Rs_normal) then begin
+    DeselectWindow(wn,false);
+    GetWindowRecord(wn,CUr);
+    RepSpec.f3 = CUr.Code;
+    RepSpec.flags[0] = 1;
+    RepSpec.repname = "CUtoSmailyMn";
+    RepSpec.critname = "CUtoSmailyVClass";
+    RunMaintenance(RepSpec);
+  end;
+  return;
+end;
+
+global
+procedure CUtoSmailyVClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+  
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"CUtoSmailyVClass");  
+  RepSpec.flags[0] = 1;
+  RepSpec.flags[1] = 1;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;

@@ -27,14 +27,14 @@ begin
 //Puudumised
   Absr.AbsTypeCode = atcode;
   if (ReadFirstKey("AbsTypeCode",Absr,1,true)) then begin
-    res=true;
+    res = true;
     goto LATrInUse;
   end;
 
 //Lausendamine, Palk
   BlockLoad(SalSettingRec);
   if (SalSettingRec.VacAbsTypeCode==atcode) or (SalSettingRec.IllAbsTypeCode==atcode) or (SalSettingRec.StudyAbsTypeCode==atcode) or (SalSettingRec.ChildAbsTypeCode==atcode) then begin
-    res=true;
+    res = true;
     goto LATrInUse;
   end;
 
