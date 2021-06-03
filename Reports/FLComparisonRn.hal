@@ -116,12 +116,36 @@ begin
         rwcnt = MatRowCnt(TRr);
         for (i=0;i<rwcnt;i=i+1) begin
           MatRowGet(TRr,i,TRrw);
-          if (SetInSet(Objr.Code,TRrw.Objects)) then begin
-            if (TRrw.DebVal!=0) then begin
-              resv = resv + TRrw.DebVal;
-              if (lastdate<TRr.TransDate) then begin
-                lastdate = TRr.TransDate;
-                lastinvoice = TRr.Number;
+          if(blank(RepSpec.f4))then begin
+            if (SetInSet(Objr.Code,TRrw.Objects)) then begin
+              if (TRrw.DebVal!=0) then begin
+                resv = resv + TRrw.DebVal;
+                if (lastdate<TRr.TransDate) then begin
+                  lastdate = TRr.TransDate;
+                  lastinvoice = TRr.Number;
+                end;
+              end;
+            end;
+          end else begin
+            if(blank(RepSpec.f1))then begin
+              if (SetInSet(Objr.Code,TRrw.Objects)) then begin
+                if (TRrw.DebVal!=0) then begin
+                  resv = resv + TRrw.DebVal;
+                  if (lastdate<TRr.TransDate) then begin
+                    lastdate = TRr.TransDate;
+                    lastinvoice = TRr.Number;
+                  end;
+                end;
+              end;
+            end else begin
+              if (SetInSet(Objr.Code,TRrw.Objects) and SetInSet(RepSpec.f1,TRrw.Objects)) then begin
+                if (TRrw.DebVal!=0) then begin
+                  resv = resv + TRrw.DebVal;
+                  if (lastdate<TRr.TransDate) then begin
+                    lastdate = TRr.TransDate;
+                    lastinvoice = TRr.Number;
+                  end;
+                end;
               end;
             end;
           end;
@@ -175,12 +199,39 @@ begin
         rwcnt = MatRowCnt(TRr);
         for (i=0;i<rwcnt;i=i+1) begin
           MatRowGet(TRr,i,TRrw);
-          if (SetInSet(Objr.Code,TRrw.Objects)) then begin
-            if (TRrw.CredVal!=0) then begin
-              resv = resv + TRrw.CredVal;
-              if (lastdate<TRr.TransDate) then begin
-                lastdate = TRr.TransDate;
-                lastinvoice = TRr.Number;
+          if(blank(RepSpec.f4))then begin
+            if (SetInSet(Objr.Code,TRrw.Objects)) then begin
+              if (TRrw.CredVal!=0) then begin
+                resv = resv + TRrw.CredVal;
+                logtext(0,"3 " & TRrw.Objects);
+                if (lastdate<TRr.TransDate) then begin
+                  lastdate = TRr.TransDate;
+                  lastinvoice = TRr.Number;
+                end;
+              end;
+            end;
+          end else begin
+            if(blank(RepSpec.f2))then begin
+              if (SetInSet(Objr.Code,TRrw.Objects)) then begin
+                if (TRrw.CredVal!=0) then begin
+                  resv = resv + TRrw.CredVal;
+                  logtext(0,"2 " & TRrw.Objects);
+                  if (lastdate<TRr.TransDate) then begin
+                    lastdate = TRr.TransDate;
+                    lastinvoice = TRr.Number;
+                  end;
+                end;
+              end;
+            end else begin
+              if (SetInSet(Objr.Code,TRrw.Objects) and setinset(RepSpec.f2,TRrw.Objects)) then begin
+                if (TRrw.CredVal!=0) then begin
+                  resv = resv + TRrw.CredVal;
+                  logtext(0,"1 " & TRrw.Objects);
+                  if (lastdate<TRr.TransDate) then begin
+                    lastdate = TRr.TransDate;
+                    lastinvoice = TRr.Number;
+                  end;
+                end;
               end;
             end;
           end;
@@ -224,15 +275,42 @@ begin
   StartFormat(1);
   Gray_divider(0,1);
   EndFormat;
-
-  TrHs = true;
-  Objr.Code = RepSpec.f2;
-  while (LoopMain(Objr,1,TrHs)) begin
-    if (nonblank(RepSpec.f2) and Objr.Code!=RepSpec.f2) then begin
-      TrHs = false;
-    end else begin
+  
+  if(blank(RepSpec.f4))then begin
+    TrHs = true;
+    Objr.Code = RepSpec.f2;
+    while (LoopMain(Objr,1,TrHs)) begin
+      if (nonblank(RepSpec.f2) and Objr.Code!=RepSpec.f2) then begin
+        TrHs = false;
+      end else begin
+        testf = true;
+        if (nonblank(RepSpec.f3) and RepSpec.f3!=Objr.OTCode) then begin
+          testf = false;
+        end;
+        if (testf) then begin
+          GetDebitInfo(Objr,RepSpec,totdebit,lastdebitdate,lastdebitinvoice);
+          GetCreditInfo(Objr,RepSpec,totcredit,lastcreditdate,lastcreditinvoice);
+          if (totcredit!=0 or totdebit!=0) then begin
+            StartFormat(15);
+            OutString(0,"DblFLComparison",Objr.Code,false);
+            OutString(2,0,totdebit,true);
+            OutString(3,0,lastdebitdate,false);
+            OutString(4,"DblVIVc",lastdebitinvoice,false);
+            OutString(5,0,totcredit,true);
+            OutString(6,0,lastcreditdate,false);
+            OutString(7,"DblIVVc",lastcreditinvoice,false);
+            OutString(8,0,totcredit-totdebit,true);
+            EndFormat;
+          end;
+        end;
+      end;
+    end;
+  end else begin
+    TrHs = true;
+    Objr.Code = RepSpec.f2;
+    while (LoopMain(Objr,1,TrHs)) begin
       testf = true;
-      if (nonblank(RepSpec.f3) and RepSpec.f3!=Objr.OTCode) then begin
+      if (nonblank(RepSpec.f4) and RepSpec.f4!=Objr.OTCode) then begin
         testf = false;
       end;
       if (testf) then begin

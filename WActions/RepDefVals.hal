@@ -21,11 +21,16 @@ global
 procedure DblFLComparison(string dblstr,string l,integer currepwn)
 begin
   record RcVc RepSpec;
+  string 20 tstr;
 
   if (nonblank(dblstr)) then begin
     GetWindowRecord(currepwn,RepSpec);
     RepSpec.ArtMode = 1;
+    tstr = RepSpec.f2;
     RepSpec.f2 = dblstr;
+    if(nonblank(RepSpec.f4) and nonblank(tstr))then begin
+      RepSpec.f2 = RepSpec.f2 & "," & tstr;
+    end;
     RunReport(RepSpec,0);
   end;
   return;
