@@ -203,7 +203,6 @@ begin
             if (SetInSet(Objr.Code,TRrw.Objects)) then begin
               if (TRrw.CredVal!=0) then begin
                 resv = resv + TRrw.CredVal;
-                logtext(0,"3 " & TRrw.Objects);
                 if (lastdate<TRr.TransDate) then begin
                   lastdate = TRr.TransDate;
                   lastinvoice = TRr.Number;
@@ -215,7 +214,6 @@ begin
               if (SetInSet(Objr.Code,TRrw.Objects)) then begin
                 if (TRrw.CredVal!=0) then begin
                   resv = resv + TRrw.CredVal;
-                  logtext(0,"2 " & TRrw.Objects);
                   if (lastdate<TRr.TransDate) then begin
                     lastdate = TRr.TransDate;
                     lastinvoice = TRr.Number;
@@ -226,7 +224,6 @@ begin
               if (SetInSet(Objr.Code,TRrw.Objects) and setinset(RepSpec.f2,TRrw.Objects)) then begin
                 if (TRrw.CredVal!=0) then begin
                   resv = resv + TRrw.CredVal;
-                  logtext(0,"1 " & TRrw.Objects);
                   if (lastdate<TRr.TransDate) then begin
                     lastdate = TRr.TransDate;
                     lastinvoice = TRr.Number;
