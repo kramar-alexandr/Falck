@@ -127,7 +127,7 @@ begin
               end;
             end;
           end else begin
-            if(blank(RepSpec.f1))then begin
+            if(blank(RepSpec.f2))then begin
               if (SetInSet(Objr.Code,TRrw.Objects)) then begin
                 if (TRrw.DebVal!=0) then begin
                   resv = resv + TRrw.DebVal;
@@ -138,7 +138,7 @@ begin
                 end;
               end;
             end else begin
-              if (SetInSet(Objr.Code,TRrw.Objects) and SetInSet(RepSpec.f1,TRrw.Objects)) then begin
+              if (SetInSet(Objr.Code,TRrw.Objects) and SetInSet(RepSpec.f2,TRrw.Objects)) then begin
                 if (TRrw.DebVal!=0) then begin
                   resv = resv + TRrw.DebVal;
                   if (lastdate<TRr.TransDate) then begin
